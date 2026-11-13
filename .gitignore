@@ -1,0 +1,30 @@
+# 数据与大文件（用 scripts/ 下载复现）
+data/
+*.IMG
+*.img
+*.TIF
+*.tif
+*.JP2
+*.bsp
+*.bpc
+
+# 密钥与本地配置
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# 系统与编辑器
+.DS_Store
+.idea/
+.vscode/
