@@ -1,3 +1,3 @@
-项目规则统一维护在 AGENTS.md，不要在本文件里另写规则。
+Project rules live in AGENTS.md. Do not add separate rules to this file.
 
 @AGENTS.md

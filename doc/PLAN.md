@@ -1,84 +1,84 @@
-# Luna Lens — 施工规划（v0.1，早期规划）
+# Luna Lens — Build Plan (v0.1, early planning)
 
-> 赛题：月球南极着陆点「太阳 / 地球相对地平线位置」快速对比工具（原文见 `Background.md`、`Resources.md`）。
-> 团队 7 人，工期约 2 天（按 48h 计）。本文件是规划的唯一事实源，改动走 Git。
-> 更新日期：2026-11-13。
+> Challenge: a tool for rapidly comparing Sun and Earth positions relative to the horizon at lunar south pole landing sites (original text in `Background.md` and `Resources.md`).
+> Team of 7, roughly 2 days (planned as 48 h). This file is the single source of truth for the plan; changes go through Git.
+> Last updated: 2026-11-13.
 
-**标注约定**：`[VERIFIED]` 本次规划时实测过（2026-11-13）· `[KNOWN]` 领域既有事实 · `[COMPUTED]` 本文计算 · `[INFERRED]` 推断 · `[GUESS]` 无依据的估计。置信度 HIGH ≥80% / MED 50–80% / LOW <50%。
-
----
-
-## 0. 结论先行
-
-1. **只做「无地形」的太阳/地球仰角，这个项目没有价值。** 南极太阳最大仰角只有约 1.5° + 余纬 `[KNOWN, HIGH]`，地球仰角在约 ±6.7° 内摆动 `[KNOWN, HIGH]`，而周边地形遮挡动辄几度。不算地形地平线，南极的光照窗/通信窗结论基本是错的。JPL Horizons 给的就是无地形结果 `[VERIFIED]`——这正是赛题说的「现有工具不好用」的缺口。
-2. **所以核心工作量 = 地形地平线遮挡（horizon mask）+ 对比体验**，不是星历。星历半天能搞定，地形管线是关键路径。
-3. **官方给的 4 个资源不够。** 3 个是给人点的网站（Quickmap / Moon Trek / CSA 门户），只有 Horizons 能程序化调用，且不含地形。必须自己补 LOLA DEM 和 SPICE kernel——都是 NASA 公开数据，已确认可下载（见 §5）。
-4. **2 天 7 人能做完 P0，P1 能做一半左右** `[GUESS, LOW]`。最大的风险不是算法，是坐标系/投影约定搞错导致结果「看着对其实错」，以及集成拖到第二天下午。
+**Tagging convention**: `[VERIFIED]` checked live while writing this plan (2026-11-13) · `[KNOWN]` established domain fact · `[COMPUTED]` calculated in this document · `[INFERRED]` deduction · `[GUESS]` estimate with no basis. Confidence: HIGH ≥80% / MED 50–80% / LOW <50%.
 
 ---
 
-## 1. 产品定义
+## 0. Conclusions first
 
-**一句话**：选站点 + 选日期 → 3 秒内看到「太阳和地球在真实地形地平线上的位置、还剩多久日落/地落、这个组合能不能用」，并能把多个站点×日期并排比较。
+1. **Sun/Earth elevation without terrain is worthless for this project.** At the south pole the Sun's maximum elevation is only about 1.5° plus the colatitude `[KNOWN, HIGH]`, and Earth's elevation swings within about ±6.7° `[KNOWN, HIGH]`, while surrounding terrain routinely blocks several degrees. Without a terrain horizon, the illumination and communication windows at the pole are essentially wrong. JPL Horizons returns exactly this no-terrain result `[VERIFIED]`, which is the gap the challenge describes when it says existing tools are hard to use.
+2. **So the core work is the terrain horizon mask plus the comparison experience**, not the ephemeris. The ephemeris takes half a day; the terrain pipeline is the critical path.
+3. **The four official resources are not enough.** Three are websites built for people to click through (Quickmap, Moon Trek, the CSA portal); only Horizons can be called programmatically, and it has no terrain. We must add LOLA DEMs and SPICE kernels ourselves. Both are public NASA data and confirmed downloadable (see §5).
+4. **Seven people in two days can finish P0 and roughly half of P1** `[GUESS, LOW]`. The biggest risk is not the algorithm. It is getting a coordinate frame or projection convention wrong so that results look right but are not, and letting integration slip into the afternoon of day 2.
 
-**用户与场景**（按优先级）：
-| 用户 | 关键问题 | 对应功能 |
+---
+
+## 1. Product definition
+
+**One sentence**: pick a site and a date, and within 3 seconds see where the Sun and Earth sit above the real terrain horizon, how long until sunset and Earthset, and whether the combination is viable, with several site × date combinations side by side.
+
+**Users and scenarios** (by priority):
+| User | Key question | Feature |
 |---|---|---|
-| 任务规划者 | 发射推迟 N 天，原站点还行吗？换哪个？ | 日期滑移对比、可行性日历 |
-| 科学/工程协同 | 站点 A vs B 的供电与通信取舍 | 并排评分卡 |
-| 教育者/公众 | 为什么南极这么难？ | 全景动画、与赤道站点对照 |
+| Mission planner | Launch slips N days. Is the original site still viable? Which alternative? | Date-slip comparison, viability calendar |
+| Science/engineering coordination | Power vs. communication trade-off between site A and site B | Side-by-side scorecards |
+| Educators / public | Why is the south pole so hard? | Panorama animation, contrast with an equatorial site |
 
-**功能分级**
-- **P0（必须，Demo 主线）**
-  - 站点库（精选 10–15 个）+ 自定义经纬度
-  - 地平线全景图：方位 0–360° × 仰角，画地形剪影 + 太阳/地球轨迹与当前位置
-  - 时间轴：一个月球日（29.53 天 `[KNOWN, HIGH]`）内的光照窗 / 对地通信窗，含「距日落 / 距地落」倒计时
-  - 指标卡：太阳仰角、日面可见比例、连续光照时长、通信窗时长与占比
-  - 2–4 个「站点×日期」并排对比
-- **P1（亮点，做出差异）**
-  - 「日期滑移」视图：着陆日 ±N 天对各指标的影响（赛题背景第 3 段的核心痛点）
-  - 桅杆高度参数（天线/太阳翼离地 2 m / 10 m）——在极区对窗口影响很大 `[KNOWN, MED]`
-  - 南极 2D 地图选点（极方位立体投影 + 山影底图）
-  - 3D 地形 + 实时阴影
-  - 与 Horizons / PGDA 光照图的校验页面（直接服务评审的 Validity）
-- **P2（有空再做）**：年尺度季节视图、教育模式解说、导出报告、移动端适配
+**Feature tiers**
+- **P0 (required, the demo storyline)**
+  - Site library (10–15 curated sites) plus custom latitude/longitude
+  - Horizon panorama: azimuth 0–360° × elevation, showing the terrain silhouette plus Sun/Earth tracks and current positions
+  - Timeline: illumination and direct-to-Earth communication windows across one lunar day (29.53 days `[KNOWN, HIGH]`), with "time to sunset / time to Earthset" countdowns
+  - Metric cards: solar elevation, visible fraction of the solar disk, continuous illumination duration, communication window duration and share
+  - Side-by-side comparison of 2–4 site × date combinations
+- **P1 (differentiators)**
+  - Date-slip view: effect of moving the landing date ±N days on each metric (the core pain point in paragraph 3 of the challenge background)
+  - Mast height parameter (antenna or solar array 2 m / 10 m above ground), which strongly affects windows near the pole `[KNOWN, MED]`
+  - South pole 2D map for site picking (polar stereographic with hillshade basemap)
+  - 3D terrain with live shadows
+  - Validation page against Horizons and the PGDA illumination maps (directly serves the judges' validity criterion)
+- **P2 (if time allows)**: year-scale seasonal view, education-mode narration, report export, mobile layout
 
 ---
 
-## 2. 技术方案
+## 2. Technical approach
 
-### 2.1 架构
+### 2.1 Architecture
 
 ```
-[LOLA DEM .IMG] ──► terrain/ 地平线遮挡计算 ─┐
-[SPICE kernels] ──► ephem/ 太阳·地球方位仰角 ─┼─► api/ (FastAPI) ──► web/ (Vite+React+TS)
-[sites.json 精选站点] ───────────────────────┘        │
-                                  预计算 JSON（精选站点，离线兜底）
+[LOLA DEM .IMG] ──► terrain/ horizon mask ────────┐
+[SPICE kernels] ──► ephem/ Sun & Earth az/el ─────┼─► api/ (FastAPI) ──► web/ (Vite+React+TS)
+[sites.json curated sites] ───────────────────────┘        │
+                              precomputed JSON (curated sites, offline fallback)
 ```
 
-- **后端**：Python + FastAPI + `spiceypy` + `numpy`。DEM 的 `.IMG` 是裸 16-bit 栅格，可直接 `numpy.memmap` 读，不依赖 GDAL `[COMPUTED: 文件字节数 = 边长² × 2，见 §5；HIGH]`。
-- **前端**：Vite + React + TypeScript；全景与时间轴用 ECharts 或 D3；3D 用 Three.js。
-- **兜底**：精选站点的地平线遮挡与一年星历预计算成静态 JSON 放进前端——API 挂了 Demo 照样跑。
+- **Backend**: Python + FastAPI + `spiceypy` + `numpy`. The DEM `.IMG` files are raw 16-bit rasters readable with `numpy.memmap`, with no GDAL dependency `[COMPUTED: file bytes = side² × 2, see §5; HIGH]`.
+- **Frontend**: Vite + React + TypeScript; ECharts or D3 for the panorama and timeline; Three.js for 3D.
+- **Fallback**: precompute the horizon mask and one year of ephemeris for the curated sites into static JSON shipped with the frontend, so the demo runs even if the API is down.
 
-### 2.2 星历（简单，半天）
+### 2.2 Ephemeris (simple, half a day)
 
-- 本地 SPICE：`de440s.bsp` + `moon_pa_de440_200625.bpc` + 月固系 frame kernel + leap seconds。站点月固坐标 → 局部 ENU → 方位/仰角。单点计算微秒级，实时算即可。
-- **Horizons 只当校验真值，不当线上依赖**（外部服务、不宜并发请求、现场网络不可控）。
-- 已实测的 Horizons 调用方式（月面观测点）`[VERIFIED]`：
-  `CENTER='coord@301'`、`COORD_TYPE='GEODETIC'`、`SITE_COORD='东经,纬度,高程km'`、`QUANTITIES='4'`（无大气方位/仰角，方位自北顺时针）。
-- 回归样例（写进测试）`[VERIFIED]`：站点 222.69°E, 89.45°S, 0 km；目标地球；
-  2027-01-01 00:00 UT → Az 144.4607°, El −6.6957°；2027-01-02 00:00 UT → Az 143.8238°, El −7.2105°。
+- Local SPICE: `de440s.bsp` + `moon_pa_de440_200625.bpc` + a Moon-fixed frame kernel + leap seconds. Site Moon-fixed coordinates → local ENU → azimuth/elevation. A single point takes microseconds, so compute on demand.
+- **Horizons is the validation reference, not a runtime dependency** (external service, not suited to concurrent requests, venue network is out of our control).
+- Horizons call for a lunar surface observer, tested `[VERIFIED]`:
+  `CENTER='coord@301'`, `COORD_TYPE='GEODETIC'`, `SITE_COORD='east_lon,lat,alt_km'`, `QUANTITIES='4'` (airless azimuth/elevation, azimuth clockwise from north).
+- Regression fixture (goes into the tests) `[VERIFIED]`: site 222.69°E, 89.45°S, 0 km; target Earth;
+  2027-01-01 00:00 UT → Az 144.4607°, El −6.6957°; 2027-01-02 00:00 UT → Az 143.8238°, El −7.2105°.
 
-### 2.3 地形地平线（关键路径）
+### 2.3 Terrain horizon (critical path)
 
-- 算法：对站点沿 360 个方位（1° 步长）在 DEM 上射线步进，计入月球曲率，取每个方位的最大地形仰角 → `horizon[az]`。
-- 搜索半径必须够大：高 h 的地物在 √(2Rh) 外仍可见。R = 1737.4 km，h = 5 km → **约 132 km** `[COMPUTED, HIGH]`。所以半径取 ≥150 km，不能只裁一小块 DEM。
-- 计算量：360 方位 × (150 km / 80 m ≈ 1875 步) ≈ 67.5 万次采样 `[COMPUTED]`，numpy 向量化应在秒级以内 `[INFERRED, MED]`——自定义坐标可以现算。
-- 太阳按**圆面**处理（视直径约 0.53° `[KNOWN, HIGH]`）：输出日面露出地平线的比例，而不是 0/1。极区太阳长期「贴地滚」，这一点直接决定功率结论。
-- 通信判据：地球中心仰角 > 地形地平线 + 可配置裕度（默认值待定，标 `[GUESS]`，在 UI 上显式展示）。
-- 功率指标：给出「可见日面比例」（适用于竖直跟踪翼）与 `sin(仰角)`（水平翼）两种，不替用户做假设。
+- Algorithm: from the site, march rays across the DEM along 360 azimuths (1° step), account for lunar curvature, and take the maximum terrain elevation angle per azimuth → `horizon[az]`.
+- The search radius must be large: a feature of height h is visible out to √(2Rh). With R = 1737.4 km and h = 5 km that is **about 132 km** `[COMPUTED, HIGH]`. Use a radius ≥150 km; cropping a small DEM patch is not acceptable.
+- Cost: 360 azimuths × (150 km / 80 m ≈ 1875 steps) ≈ 675,000 samples `[COMPUTED]`. Vectorised numpy should finish in under a second or so `[INFERRED, MED]`, so custom coordinates can be computed on demand.
+- Treat the Sun as a **disk** (apparent diameter about 0.53° `[KNOWN, HIGH]`): output the fraction of the disk above the horizon, not 0/1. Near the pole the Sun rolls along the horizon for long periods, and this directly decides the power conclusion.
+- Communication criterion: Earth-centre elevation > terrain horizon + a configurable margin (default to be decided, tagged `[GUESS]`, shown explicitly in the UI).
+- Power metrics: report both the visible disk fraction (for a vertical tracking array) and `sin(elevation)` (for a horizontal array), without making the assumption for the user.
 
-### 2.4 接口契约（Day 1 上午冻结，改动需通知全员）
+### 2.4 API contract (frozen on the morning of day 1; changes require notifying everyone)
 
 ```
 GET /api/sites                                   → [{id, name, lat, lon, category, source}]
@@ -88,163 +88,163 @@ GET /api/windows?lat&lon&start&stop&mast_m       → {sun_windows, comm_windows,
                                                     next_earthset, metrics:{...}}
 ```
 
-约定：经度东经为正 0–360；纬度南纬为负；角度单位度；时间 ISO-8601 UTC；高程相对 1737.4 km 参考球，单位 m。
+Conventions: longitude east-positive 0–360; south latitude negative; angles in degrees; time in ISO-8601 UTC; elevation relative to the 1737.4 km reference sphere, in metres.
 
 ---
 
-## 3. 施工地图（48h）
+## 3. Build roadmap (48 h)
 
-| 时间 | 里程碑 | 验收标准 |
+| Time | Milestone | Acceptance |
 |---|---|---|
-| **赛前（T−1 天）** | 数据与环境就位 | DEM、kernel 下载完并放共享盘；仓库、契约草案、站点表初稿就绪；每人本机能跑通空壳 |
-| **H0–H4** | 走通骨架 | 前端 → API → 假数据 → 全景图出图。契约冻结 |
-| **H4–H12** | 真数据上线 | 星历与 Horizons 回归样例误差 < 0.01°；一个站点的 `horizon[az]` 出图 |
-| **H12–H16** | **集成检查点 1** | 全景 + 时间轴用真数据跑通一个南极站点。跑不通则砍 P1 |
-| **H16–H28** | P0 收齐 | 站点库、指标卡、并排对比、倒计时全部可用 |
-| **H28–H36** | P1 亮点 | 日期滑移视图、桅杆高度、校验页；3D/地图二选一 |
-| **H36** | **功能冻结** | 之后只修 bug、打磨、预计算兜底数据 |
-| **H36–H44** | 打磨与交付物 | 部署、演示视频/幻灯片、项目页文案、README |
-| **H44–H48** | 提交缓冲 | 提前 2h 提交，不压线 |
+| **Before the event (T−1 day)** | Data and environment ready | DEMs and kernels downloaded to shared storage; repo, draft contract, and first site table ready; everyone can run the empty skeleton locally |
+| **H0–H4** | Walking skeleton | Frontend → API → fake data → panorama renders. Contract frozen |
+| **H4–H12** | Real data in | Ephemeris within 0.01° of the Horizons fixture; `horizon[az]` plotted for one site |
+| **H12–H16** | **Integration checkpoint 1** | Panorama and timeline run on real data for one south pole site. If not, cut P1 |
+| **H16–H28** | P0 complete | Site library, metric cards, side-by-side comparison, countdowns all working |
+| **H28–H36** | P1 differentiators | Date-slip view, mast height, validation page; 3D or map, pick one |
+| **H36** | **Feature freeze** | Bug fixes, polish, and precomputed fallback data only |
+| **H36–H44** | Polish and deliverables | Deployment, demo video/slides, project page copy, README |
+| **H44–H48** | Submission buffer | Submit 2 h early, not at the deadline |
 
-**关键路径**：DEM 读取与投影校验 → 地平线遮挡 → 窗口计算 → 全景图。任何一环延误都直接推迟 Demo，优先配最强的人。
-
----
-
-## 4. 项目拆解与分工（7 人）
-
-| # | 角色 | 职责 | 交付物 |
-|---|---|---|---|
-| 1 | 星历 | SPICE 封装、方位仰角、Horizons 回归测试 | `ephem/` + 测试 |
-| 2 | 地形 A | DEM 读取、极投影换算、地平线遮挡算法 | `terrain/` + 校验图 |
-| 3 | 地形 B / 校验 | 窗口与指标计算、日面比例、与 PGDA 光照图比对、预计算 | `windows/` + 兜底 JSON |
-| 4 | 后端 / 集成 | FastAPI、契约、缓存、部署、CI | `api/` |
-| 5 | 前端 A | 全景图、时间轴、倒计时 | 核心可视化 |
-| 6 | 前端 B | 站点选择、并排对比、地图或 3D | 对比体验 |
-| 7 | 产品 / 交付 | 站点表核对、UX 文案、演示脚本、视频、提交 | 项目页与 Demo |
-
-2 号与 3 号前 12h 结对攻关键路径；7 号从第一小时起就写演示脚本，反推哪些功能必须真的能演。
-
-### 注意点（踩坑清单）
-
-1. **投影方向**：LOLA 极区产品为极方位立体投影。行列 ↔ 经纬的换算公式和轴向以随数据的 `.LBL` 标签为准，不要凭记忆写。用已知地物验收（如 Shackleton 坑，约 89.67°S, 129.8°E `[KNOWN, MED]`，应落在深坑内）。
-2. **高程编码**：`.IMG` 像素值的缩放系数与偏移从 `.LBL` 读取，不要硬编码。
-3. **月固坐标系**：ME（Mean Earth）与 PA（Principal Axis）两套系相差约数百米到 1 km 量级 `[KNOWN, MED]`。LOLA 产品用 ME；SPICE 的 PA 系要经 frame kernel 转到 ME。混用会让方位仰角出现小而难查的偏差。
-4. **极点附近方位角病态**：越靠近极点，「北」的方向越敏感。与 Horizons 对比时用同一站点坐标逐位核对。
-5. **时间系统**：对外一律 UTC；SPICE 内部用 ET/TDB，转换交给 `spiceypy`，不要手算。
-6. **高程基准**：Horizons 的 `SITE_COORD` 高程单位是 km、相对参考面；我们的 DEM 高程是 m。站点真实高程会改变几何地平线，必须传对。
-7. **DEM 分辨率的诚实表述**：80 m 网格看不到着陆器旁的石块和小坑。结论应表述为「区域地形约束下的窗口」，不是着陆点精确值。在 UI 和答辩里主动说明。
-8. **不要线上依赖第三方**：Horizons、Trek 瓦片都可能在演示时慢或挂。全部预取或自渲染。
-9. **大文件不进 Git**：DEM/kernels 放 `data/`（已 gitignore），用下载脚本复现。
-10. **精选站点坐标必须有出处**：见 §6，7 号逐条核对后才能进 `sites.json`。
+**Critical path**: DEM reading and projection check → horizon mask → window calculation → panorama. A delay in any of these delays the demo directly; staff them with the strongest people.
 
 ---
 
-## 5. 资源盘点
+## 4. Work breakdown and roles (7 people)
 
-### 5.1 官方资源（`Resources.md`）
-
-| 资源 | 实际能用来干什么 | 程序化 | 结论 |
+| # | Role | Responsibility | Deliverable |
 |---|---|---|---|
-| JPL Horizons | 任意月面坐标的太阳/地球方位仰角（无地形） | REST API，实测可用 `[VERIFIED]` | **校验真值**，不做线上依赖 |
-| Moon Trek | 浏览地形；另有 WMTS 瓦片服务（文档页可访问 `[VERIFIED]`） | WMTS | 可做底图；极区投影图层是否满足需求**未验证** |
-| Quickmap | 人工看影像/地形、挑站点、目视校验 | 无公开稳定 API `[KNOWN, MED]` | 仅人工参考 |
-| CSA Moon Exploration | 背景资料门户 | 无 | 仅用于讲故事 |
+| 1 | Ephemeris | SPICE wrapper, azimuth/elevation, Horizons regression tests | `ephem/` + tests |
+| 2 | Terrain A | DEM reading, polar projection conversion, horizon mask algorithm | `terrain/` + validation plots |
+| 3 | Terrain B / validation | Window and metric calculation, disk fraction, comparison with PGDA illumination maps, precomputation | `windows/` + fallback JSON |
+| 4 | Backend / integration | FastAPI, contract, caching, deployment, CI | `api/` |
+| 5 | Frontend A | Panorama, timeline, countdowns | Core visualisations |
+| 6 | Frontend B | Site selection, side-by-side comparison, map or 3D | Comparison experience |
+| 7 | Product / delivery | Site table verification, UX copy, demo script, video, submission | Project page and demo |
 
-**判断：不够。** 缺地形数据、缺可离线的星历、缺光照真值。以下自行补齐，全部是 NASA 公开数据。
+Roles 2 and 3 pair on the critical path for the first 12 h. Role 7 writes the demo script from hour one and works backwards to which features must actually work on stage.
 
-### 5.2 需补充的资源
+### Pitfalls
 
-| 资源 | 用途 | 状态 |
+1. **Projection orientation**: the LOLA polar products are polar stereographic. Take the row/column ↔ lat/lon formula and axis orientation from the `.LBL` label shipped with the data, not from memory. Validate against a known feature (e.g. Shackleton crater, about 89.67°S, 129.8°E `[KNOWN, MED]`, which should land inside a deep pit).
+2. **Elevation encoding**: read the scaling factor and offset for `.IMG` pixel values from the `.LBL`; do not hard-code them.
+3. **Moon-fixed frames**: the ME (Mean Earth) and PA (Principal Axis) frames differ by several hundred metres up to about 1 km `[KNOWN, MED]`. LOLA products use ME; SPICE's PA frame must be converted to ME through the frame kernel. Mixing them produces small, hard-to-find errors in azimuth and elevation.
+4. **Azimuth is ill-conditioned near the pole**: the closer to the pole, the more sensitive "north" becomes. When comparing with Horizons, use the identical site coordinates and check digit by digit.
+5. **Time systems**: UTC everywhere externally; SPICE uses ET/TDB internally. Leave conversion to `spiceypy`; never do it by hand.
+6. **Elevation datum**: Horizons `SITE_COORD` altitude is in km relative to the reference surface; our DEM elevation is in metres. The site's true elevation changes the geometric horizon and must be passed correctly.
+7. **Be honest about DEM resolution**: an 80 m grid cannot see rocks or small craters next to the lander. State conclusions as "windows under regional terrain constraints", not exact landing-point values. Say so in the UI and in the pitch.
+8. **No runtime third-party dependencies**: Horizons and Trek tiles may be slow or down during the demo. Prefetch or render everything ourselves.
+9. **No large files in Git**: DEMs and kernels live in `data/` (gitignored) and are reproduced with download scripts.
+10. **Every curated site coordinate needs a source**: see §6. Role 7 verifies each row before it enters `sites.json`.
+
+---
+
+## 5. Resource audit
+
+### 5.1 Official resources (`Resources.md`)
+
+| Resource | What it is actually good for | Programmatic | Verdict |
+|---|---|---|---|
+| JPL Horizons | Sun/Earth azimuth and elevation from any lunar coordinate (no terrain) | REST API, tested working `[VERIFIED]` | **Validation reference**, not a runtime dependency |
+| Moon Trek | Browsing terrain; also a WMTS tile service (docs page reachable `[VERIFIED]`) | WMTS | Possible basemap; whether a south polar projection layer meets our needs is **unverified** |
+| Quickmap | Manual inspection of imagery and terrain, picking sites, visual checks | No public stable API `[KNOWN, MED]` | Manual reference only |
+| CSA Moon Exploration | Background portal | None | Storytelling only |
+
+**Verdict: not enough.** Missing terrain data, an offline-capable ephemeris, and an illumination reference. We fill these ourselves below; all are public NASA data.
+
+### 5.2 Resources to add
+
+| Resource | Use | Status |
 |---|---|---|
-| LOLA 极区 DEM `imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/` | 地平线遮挡主数据 | 目录可访问 `[VERIFIED]`，文件清单见下 |
-| PGDA #78「High-Resolution LOLA Topography for Lunar South Pole Sites」 | 重点站点高分辨率 DEM（近场/3D 展示） | 页面可访问 `[VERIFIED]`；具体文件格式与大小未核 |
-| PGDA #81「South Pole LOLA DEM Mosaic」、#90「A New View of the Lunar South Pole from LOLA」 | 备选/更新版南极 DEM | 页面可访问 `[VERIFIED]`；内容未细读 |
-| PGDA #69「Lunar Polar Illumination」 | 平均光照/可见率栅格（如 `AVGVISIB_85S_060M_201608.TIF`），**用于校验我们的结果** | 页面与下载链接存在 `[VERIFIED]` |
-| NAIF generic kernels `naif.jpl.nasa.gov/pub/naif/generic_kernels/` | 本地星历 | `moon_pa_de440_200625.bpc`（12 MB）存在 `[VERIFIED]`；其余 kernel（de440s、frame、lsk）未逐个核对 `[KNOWN, HIGH]` 存在 |
-| PDS Geosciences LOLA GDR（JP2 版） | DEM 镜像源 | 目录可访问 `[VERIFIED]` |
+| LOLA polar DEMs `imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/` | Primary data for the horizon mask | Directory reachable `[VERIFIED]`; file list below |
+| PGDA #78 "High-Resolution LOLA Topography for Lunar South Pole Sites" | High-resolution DEMs for key sites (near field / 3D display) | Page reachable `[VERIFIED]`; file formats and sizes not checked |
+| PGDA #81 "South Pole LOLA DEM Mosaic", #90 "A New View of the Lunar South Pole from LOLA" | Alternative / newer south pole DEMs | Pages reachable `[VERIFIED]`; contents not read in detail |
+| PGDA #69 "Lunar Polar Illumination" | Average illumination/visibility rasters (e.g. `AVGVISIB_85S_060M_201608.TIF`), **used to validate our results** | Page and download links exist `[VERIFIED]` |
+| NAIF generic kernels `naif.jpl.nasa.gov/pub/naif/generic_kernels/` | Local ephemeris | `moon_pa_de440_200625.bpc` (12 MB) exists `[VERIFIED]`; the other kernels (de440s, frame, lsk) not individually checked, expected to exist `[KNOWN, HIGH]` |
+| PDS Geosciences LOLA GDR (JP2 version) | DEM mirror | Directory reachable `[VERIFIED]` |
 
-**南极 DEM 选型**（文件大小为服务器列表实测值 `[VERIFIED]`；覆盖范围由字节数反推 `[COMPUTED]`）：
+**South pole DEM selection** (file sizes are from the server listing `[VERIFIED]`; coverage is derived from byte counts `[COMPUTED]`):
 
-| 文件 | 大小 | 网格 | 覆盖 | 用途 |
+| File | Size | Grid | Coverage | Use |
 |---|---|---|---|---|
-| `LDEM_80S_80M.IMG` | 115.5 MB | 7600² | 极点周围约 ±304 km（80°S 以南） | **主力**：地平线遮挡 |
-| `LDEM_85S_40M.IMG` | 115.0 MB | 7584² | 约 ±152 km（85°S 以南） | 近极点站点加密 |
-| `LDEM_875S_20M.IMG` | 115.0 MB | 7584² | 约 ±76 km（87.5°S 以南） | Shackleton 一带近场 |
-| `LDEM_80S_20M.IMG` | 1.85 GB | — | 同 80S | 有余力再用 |
-| `LDEM_875S_5M.IMG` | 1.84 GB | 30336² | 同 87.5S | 只用于 3D 展示切片 |
-| `LDEM_60S_240M.IMG` | 120 MB | — | 60°S 以南 | 80°S 以北站点（如 Chandrayaan-3）的远场 |
+| `LDEM_80S_80M.IMG` | 115.5 MB | 7600² | About ±304 km around the pole (south of 80°S) | **Workhorse**: horizon mask |
+| `LDEM_85S_40M.IMG` | 115.0 MB | 7584² | About ±152 km (south of 85°S) | Refinement for near-pole sites |
+| `LDEM_875S_20M.IMG` | 115.0 MB | 7584² | About ±76 km (south of 87.5°S) | Near field around Shackleton |
+| `LDEM_80S_20M.IMG` | 1.85 GB | — | Same as 80S | Only if there is spare capacity |
+| `LDEM_875S_5M.IMG` | 1.84 GB | 30336² | Same as 87.5S | Only for 3D display tiles |
+| `LDEM_60S_240M.IMG` | 120 MB | — | South of 60°S | Far field for sites north of 80°S (e.g. Chandrayaan-3) |
 
-赛前下载前三个加 60S_240M，合计约 466 MB `[COMPUTED]`，够用。**注意**：站点若在 80–82°S，150 km 搜索半径会超出 80S 产品边界，要拼 60S 产品或明确标注。
+Download the first three plus 60S_240M before the event, about 466 MB in total `[COMPUTED]`. That is sufficient. **Note**: for a site at 80–82°S, a 150 km search radius runs past the edge of the 80S product; stitch in the 60S product or flag it explicitly.
 
-**非南极站点**（Apollo 等）：没有极区 DEM 覆盖。P0 阶段按「无地形球面地平线」处理并在 UI 标明；赤道站点太阳仰角高，地形影响相对小 `[INFERRED, MED]`。
+**Non-polar sites** (Apollo etc.): no polar DEM coverage. In P0 treat them with a no-terrain spherical horizon and say so in the UI; at equatorial sites the Sun is high and terrain matters relatively less `[INFERRED, MED]`.
 
-### 5.3 仍未落实的资源问题
+### 5.3 Open resource questions
 
-- Trek WMTS 是否有可直接用的南极极投影图层 → 未验证。**默认方案：用 DEM 自己渲染山影底图**，不等它。
-- PGDA #78 覆盖哪些站点、是否包含我们的精选站点 → 2 号赛前核对。
-- 参赛规则（提交物格式、AI 使用披露、评审标准）→ 7 号以当年官网为准核对，本文不替官方下结论。
+- Does Trek WMTS have a directly usable south polar projection layer → unverified. **Default: render our own hillshade basemap from the DEM** and do not wait on it.
+- Which sites PGDA #78 covers, and whether they include our curated sites → role 2 checks before the event.
+- Competition rules (submission format, AI-use disclosure, judging criteria) → role 7 checks against this year's official site. This document does not speak for the organisers.
 
 ---
 
-## 6. 精选站点（种子表，**未核对，不得直接入库**）
+## 6. Curated sites (seed table, **unverified, do not load as-is**)
 
-以下坐标来自记忆，仅供起步；7 号须逐条对照一手来源后写入 `sites.json` 并填 `source` 字段。
+These coordinates are from memory and are a starting point only. Role 7 must check each row against a primary source before writing it to `sites.json` and filling in the `source` field.
 
-| 站点 | 纬度 | 东经 | 类别 | 置信度 |
+| Site | Latitude | East longitude | Category | Confidence |
 |---|---|---|---|---|
-| Apollo 11 | 0.674°N | 23.473°E | 历史 | `[KNOWN, HIGH]` |
-| Apollo 15 | 26.13°N | 3.63°E | 历史 | `[KNOWN, HIGH]` |
-| Apollo 17 | 20.19°N | 30.77°E | 历史 | `[KNOWN, HIGH]` |
-| Chandrayaan-3 | 69.37°S | 32.32°E | 他国 | `[KNOWN, HIGH]` |
-| Chang'e-4 | 45.44°S | 177.60°E | 他国/背面 | `[KNOWN, MED]` |
-| Chang'e-6 | 41.64°S | 206.01°E (153.99°W) | 他国/背面 | `[KNOWN, MED]` |
-| SLIM | 13.32°S | 25.25°E | 他国 | `[KNOWN, MED]` |
-| IM-1 Odysseus（Malapert A 附近） | ≈80.1°S | ≈1.4°E | CLPS | `[KNOWN, MED]` |
-| IM-2 Athena（Mons Mouton） | ≈84.8°S | ≈29.2°E | CLPS | `[KNOWN, LOW–MED]` |
-| Shackleton 连接脊 | 89.45°S | 222.69°E | Artemis 候选 | `[KNOWN, MED]` |
-| Artemis III 候选区（Haworth、Malapert Massif、Mons Mouton Plateau、Nobile Rim 1/2、de Gerlache Rim 2、Slater Plain、Cabeus B 附近高地等） | 待查 | 待查 | Artemis 候选 | 名称 `[KNOWN, MED]`，坐标未知 |
+| Apollo 11 | 0.674°N | 23.473°E | Historic | `[KNOWN, HIGH]` |
+| Apollo 15 | 26.13°N | 3.63°E | Historic | `[KNOWN, HIGH]` |
+| Apollo 17 | 20.19°N | 30.77°E | Historic | `[KNOWN, HIGH]` |
+| Chandrayaan-3 | 69.37°S | 32.32°E | Other nations | `[KNOWN, HIGH]` |
+| Chang'e-4 | 45.44°S | 177.60°E | Other nations / far side | `[KNOWN, MED]` |
+| Chang'e-6 | 41.64°S | 206.01°E (153.99°W) | Other nations / far side | `[KNOWN, MED]` |
+| SLIM | 13.32°S | 25.25°E | Other nations | `[KNOWN, MED]` |
+| IM-1 Odysseus (near Malapert A) | ≈80.1°S | ≈1.4°E | CLPS | `[KNOWN, MED]` |
+| IM-2 Athena (Mons Mouton) | ≈84.8°S | ≈29.2°E | CLPS | `[KNOWN, LOW–MED]` |
+| Shackleton connecting ridge | 89.45°S | 222.69°E | Artemis candidate | `[KNOWN, MED]` |
+| Artemis III candidate regions (Haworth, Malapert Massif, Mons Mouton Plateau, Nobile Rim 1/2, de Gerlache Rim 2, Slater Plain, peak near Cabeus B, etc.) | TBD | TBD | Artemis candidate | Names `[KNOWN, MED]`, coordinates unknown |
 
-背面站点（Chang'e-4/6）永远看不到地球 `[KNOWN, HIGH]`——是很好的「通信窗 = 0」对照样例。
+Far-side sites (Chang'e-4/6) never see Earth `[KNOWN, HIGH]`, which makes them a good "communication window = 0" contrast case.
 
 ---
 
-## 7. 亮点与完成难度
+## 7. Highlights and difficulty
 
-### 亮点（按对评审的说服力排序）
+### Highlights (ordered by persuasiveness to judges)
 
-1. **真实地形地平线**：大多数队伍会停在「调 Horizons 画两条曲线」`[GUESS, LOW]`。我们把地形遮挡算进去，并用 PGDA 光照图做校验——结论可信度是另一个量级。
-2. **日期滑移对比**：直接回答赛题背景里「发射推迟后怎么办」的问题，而不是泛泛的可视化。
-3. **地平线全景图**：一张图同时看到地形剪影、太阳贴地滚动、地球上下摆动。信息密度高，非专业用户也看得懂，且实现成本低。
-4. **自带校验页**：公开展示与 Horizons 的误差、与 PGDA 平均光照的对比。主动暴露精度边界比宣称「精确」更有说服力。
-5. **极端对照**：Apollo 11（太阳高挂、地球几乎不动）vs Shackleton（太阳永远贴地、地球半个月不见）——教育价值直接成立。
+1. **Real terrain horizon**: most teams will stop at "call Horizons and plot two curves" `[GUESS, LOW]`. We include terrain occlusion and validate against the PGDA illumination maps, which puts the credibility of our conclusions in a different class.
+2. **Date-slip comparison**: answers the "what now that the launch has slipped" question from the challenge background directly, instead of generic visualisation.
+3. **Horizon panorama**: one chart shows the terrain silhouette, the Sun rolling along the ground, and Earth bobbing up and down. High information density, readable by non-specialists, and cheap to build.
+4. **Built-in validation page**: openly shows our error against Horizons and our comparison with PGDA average illumination. Exposing the accuracy limits is more convincing than claiming precision.
+5. **Extreme contrast**: Apollo 11 (Sun high overhead, Earth nearly fixed) vs. Shackleton (Sun always at the horizon, Earth gone for half of each month). The educational value is immediate.
 
-### 难度评估
+### Difficulty assessment
 
-| 模块 | 难度 | 主要风险 | 备注 |
+| Module | Difficulty | Main risk | Notes |
 |---|---|---|---|
-| 星历 + Horizons 校验 | 低 | 坐标系混用 | 有真值可对，错了能发现 |
-| DEM 读取与投影 | 中 | 轴向/缩放搞错 | 错了不报错，只会结果不对——最危险 |
-| 地平线遮挡 | 中 | 搜索半径、曲率修正、性能 | 算法本身成熟 `[KNOWN, HIGH]` |
-| 窗口与指标 | 低–中 | 日面比例的几何细节 | |
-| 全景图 / 时间轴 | 低–中 | — | P0 中性价比最高 |
-| 并排对比 UX | 中 | 信息过载 | 设计问题多于技术问题 |
-| 3D 地形 + 阴影 | 中–高 | 吃时间，易成黑洞 | **第一个砍** |
-| 集成与部署 | 中 | 拖到最后 | 用 H4 骨架 + H12 检查点对冲 |
+| Ephemeris + Horizons validation | Low | Mixed coordinate frames | A reference exists, so errors get caught |
+| DEM reading and projection | Medium | Wrong axis orientation or scaling | Fails silently with wrong results; the most dangerous |
+| Horizon mask | Medium | Search radius, curvature correction, performance | The algorithm itself is mature `[KNOWN, HIGH]` |
+| Windows and metrics | Low–medium | Geometry details of the disk fraction | |
+| Panorama / timeline | Low–medium | — | Best value in P0 |
+| Side-by-side comparison UX | Medium | Information overload | More a design problem than a technical one |
+| 3D terrain + shadows | Medium–high | Time sink | **First to cut** |
+| Integration and deployment | Medium | Left until the end | Hedged by the H4 skeleton and the H12 checkpoint |
 
-**整体**：P0 可完成，把握中等偏高 `[GUESS, LOW]`；P1 全做完不现实，日期滑移和校验页优先于 3D。
+**Overall**: P0 is achievable with moderately high confidence `[GUESS, LOW]`. Finishing all of P1 is unrealistic; the date-slip view and the validation page take priority over 3D.
 
-### 砍需求顺序
+### Cut order
 
-3D 地形 → 2D 地图选点（退化为下拉列表）→ 桅杆高度 → 年尺度视图。**不能砍**：地形地平线、全景图、并排对比。
+3D terrain → 2D map picker (degrade to a dropdown) → mast height → year-scale view. **Never cut**: terrain horizon, panorama, side-by-side comparison.
 
 ---
 
-## 8. 待决事项
+## 8. Open decisions
 
-| 事项 | 默认决定 | 负责 |
+| Item | Default | Owner |
 |---|---|---|
-| 后端实时算 vs 全预计算 | 实时算 + 精选站点预计算兜底 | 4 号 |
-| 底图来源 | DEM 自渲染山影 | 6 号 |
-| 通信裕度默认值 | 暂定 2°，UI 可调 `[GUESS]` | 3 号 |
-| 部署位置 | 待定（现场网络条件决定） | 4 号 |
-| 分工具体到人 | 待队长填 | 队长 |
+| Compute on demand vs. precompute everything | On demand, with precomputed fallback for curated sites | Role 4 |
+| Basemap source | Hillshade rendered from the DEM | Role 6 |
+| Default communication margin | 2° for now, adjustable in the UI `[GUESS]` | Role 3 |
+| Deployment location | TBD (depends on venue network) | Role 4 |
+| Names against roles | To be filled in by the team lead | Team lead |

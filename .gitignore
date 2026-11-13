@@ -1,4 +1,4 @@
-# 数据与大文件（用 scripts/ 下载复现）
+# Data and large files (reproduce with scripts/)
 data/
 *.IMG
 *.img
@@ -8,7 +8,7 @@ data/
 *.bsp
 *.bpc
 
-# 密钥与本地配置
+# Secrets and local config
 .env
 .env.*
 !.env.example
@@ -24,7 +24,7 @@ node_modules/
 dist/
 .vite/
 
-# 系统与编辑器
+# OS and editors
 .DS_Store
 .idea/
 .vscode/
