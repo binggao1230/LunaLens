@@ -35,8 +35,10 @@ the team sees your progress. How to work: `README.md` in this folder.
 
 ## Blocked / questions
 
-_Nothing yet. Write here when stuck for more than 30 minutes, with what you need and from whom._
+- Waiting for Eya's `web/` scaffold and shared-state/API interfaces before implementing the site picker and scenario settings. The required behavior is agreed: UTC date and time, one lunar day by default (29.53 days), and inline coordinate validation. Need the scaffold branch or merged commit from Eya.
 
 ## Progress log
 
-_One line per finished piece of work: `YYYY-MM-DD HH:MM — what was done — how it was checked — PR link`._
+2026-11-14 11:27 — defined the site picker and scenario settings behavior contract — checked against PRODUCT.md, WORKPLAN.md, and the prototype — no PR yet
+2026-11-14 11:30 — prepared functional, API-state, UTC, validation, and mobile test cases — documentation-only check: git diff --check — no PR yet
+2026-11-14 11:33 — prepared the frontend integration checklist and south-pole projection contract — checked against WORKPLAN.md, README.md, and the prototype — no PR yet
