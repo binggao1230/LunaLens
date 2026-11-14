@@ -448,7 +448,8 @@ function syncFromAtlas() {
 }
 
 function showView(v) {
-  if (!['start', 'mission', 'explore', 'compare', 'slip', 'data', 'build', 'atlas'].includes(v)) v = 'start';
+  if (v === 'compare' || v === 'slip') v = 'explore';
+  if (!['start', 'mission', 'explore', 'data', 'build', 'atlas'].includes(v)) v = 'start';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}${formatHash(v)}`);
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));

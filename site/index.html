@@ -177,7 +177,6 @@ table.bm th{font-weight:650;white-space:nowrap}
 table.bm tr:first-child th{color:var(--text2);font-weight:500}
 @media (max-width:760px){
   .side{display:none}
-  .tabbar{grid-template-columns:repeat(5,1fr)}
   .scrub .chart{flex-basis:100%;order:-1}
   .scrub #now{flex-basis:auto;flex:1}
 }
@@ -233,7 +232,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 <header class="appbar">
   <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span></b>
   <nav class="tabs" data-nav>
-    <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Date slip</button>
+    <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button>
   </nav>
   <div class="tray" id="tray"></div>
   <nav class="side" data-nav><button data-view="data">Data</button></nav>
@@ -417,7 +416,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
       and our grid is 240 m against their 120 m. The script is <code>site/tools/check_pgda.mjs</code>.</p>
     </section>
     <section class="card"><h2>Atlas page sources</h2>
-      <p>The Atlas page is a separate application with its own data and its own credits; it does not reuse the files behind Mission, Explore, Compare or Date slip. Its sources:</p>
+      <p>The Atlas page is a separate application with its own data and its own credits; it does not reuse the files behind Mission or Explore. Its sources:</p>
       <ul>
         <li>Average sunlight, average Earth view and permanent shadow: NASA GSFC PGDA product 69, 2016-08 release, 120 m, 75°S–90°S. Mazarico et al. (2011), <i>Icarus</i> 211, 1066–1081. Averages over 18.6 years, one lunar nodal cycle.</li>
         <li>Elevation and slope: LOLA south-polar tiles, 296.9 m and 80 m per pixel, derived from the LRO LOLA gridded products.</li>
@@ -460,7 +459,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   <div id="now"></div>
 </div>
 <nav class="tabbar" data-nav>
-  <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Slip</button>
+  <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button>
   <button data-view="data">Data</button>
 </nav>
 <div id="edu"></div>
