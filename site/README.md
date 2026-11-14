@@ -1,0 +1,35 @@
+# Luna Lens site on the real engine
+
+The prototype's layout (Explore, Compare, Date slip, Data) driven by real data instead of synthetic data:
+JPL Horizons Sun and Earth positions for 2026-2030 and LRO LOLA terrain horizons, computed in the browser,
+plus a 3D terrain and time view. English only.
+
+## Data
+
+`data/` is not in git (see `.gitignore`). It holds `ephemeris.*`, `sites.json`, `dem240.*`, `dem480.*`,
+`polar-hillshade.*`. Take it from the `data/` folder of the snapshot on the `lunalens-snapshot-2026-11-14`
+release (`archive/team/chenlin/WEBSITE.md` explains how to download it) and place it here as `site/data/`.
+
+## Open it
+
+```sh
+python3 tools/serve.py 8768
+```
+
+Then open <http://127.0.0.1:8768/>. Opening `index.html` as a file does not work (module loading is blocked on `file://`).
+
+## Checks
+
+```sh
+node tools/check_js.mjs      # browser engine vs. Python reference (needs python3 with numpy)
+node tools/check_team.mjs    # browser rules vs. backend/lunalens/windows on the same real inputs (uses ../backend/.venv)
+```
+
+## Not done
+
+- Map overlays and the scenario tray (add, duplicate, remove) are placeholders with dashed borders.
+- Mast height is fixed at 2 m; preset horizons are precomputed for that height.
+- No comparison with the PGDA illumination map.
+- Points north of 75°S have no terrain and use a smooth sphere.
+- Site groups use the `group` field of `sites.json`, not the API `category` that the site picker contract expects.
+- `js/app.js` still contains the unused planning-page tables (`renderBuild`).
