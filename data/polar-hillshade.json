@@ -1,8 +1,0 @@
-{
- "file": "polar-hillshade.webp",
- "sizePx": 2048,
- "halfWidthKm": 457.44,
- "projection": "south polar stereographic, lon 0 up, east clockwise, true scale at pole",
- "radiusKm": 1737.4,
- "source": "LRO LOLA LDEM_75S_240M hillshade (az 315, alt 32, z 2.2)"
-}

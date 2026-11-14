@@ -1,9 +1,0 @@
-{
-  "file": "dem480.i16.gz",
-  "n": 1906,
-  "resM": 480.0,
-  "scaleM": 0.5,
-  "radiusM": 1737400.0,
-  "layout": "row-major int16 LE, row 0 = top (lon 0 up), height_m = DN*0.5 relative to R",
-  "processing": "2 x 2 cell mean of dem240, rounded to the nearest 0.5 m; display only, not used in visibility calculations."
-}
