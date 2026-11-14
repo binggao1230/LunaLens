@@ -181,6 +181,15 @@ Rules for data work:
 Each milestone is one pull request, mergeable on its own, with the old view still working until M2 lands.
 Estimates are focused agent hours `[GUESS]`.
 
+Rules for whoever builds this:
+
+- Work in order, M0 → M1 → M2 → M3. A milestone starts only after the previous one is merged and its acceptance
+  check has passed.
+- Every pull request carries the acceptance check's result in its description, and screenshots at **1440 px and
+  390 px** of what changed.
+- If an acceptance check fails, stop and report it instead of merging.
+- **Do not start M4** until M0–M3 are merged and checked.
+
 ### M0 — Lock the truth (about 1 h)
 
 - `site/tools/check_ephemeris_svs.py`: compare `ephemeris.f64` with `mooninfo_2026.json`, fail above 0.01° or 2 km.
