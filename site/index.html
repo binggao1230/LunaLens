@@ -207,13 +207,14 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   #lang{max-width:110px}
 }
 </style>
+<link rel="stylesheet" href="css/mission.css">
 </head>
-<body data-view="explore">
+<body data-view="start">
 <div id="loading" role="status">Loading…</div>
 <header class="appbar">
   <b class="brand">Luna Lens</b>
   <nav class="tabs" data-nav>
-    <button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Date slip</button>
+    <button data-view="mission">Mission</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Date slip</button>
   </nav>
   <div class="tray" id="tray"></div>
   <nav class="side" data-nav><button data-view="data">Data</button></nav>
@@ -221,6 +222,8 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 </header>
 
 <main>
+  <section class="view" id="v-start"></section>
+  <section class="view" id="v-mission"></section>
   <!-- ================= View 1: Explore ================= -->
   <section class="view" id="v-explore">
     <div class="explore">
@@ -393,9 +396,10 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   <div id="now"></div>
 </div>
 <nav class="tabbar" data-nav>
-  <button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Slip</button>
+  <button data-view="mission">Mission</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Slip</button>
   <button data-view="data">Data</button>
 </nav>
+<div id="flight" role="dialog" aria-modal="true"></div>
 <div id="tip"></div><div id="toast"></div>
 
 <script type="module" src="js/app.js"></script>

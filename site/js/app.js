@@ -4,6 +4,7 @@ import { loadDem, computeHorizon } from './engine/dem.js';
 import { t, getLanguage, setLanguage, initTranslations, applyTranslations } from './i18n.js';
 import './team-messages.js';
 import { escapeHtml, fmtLatLon, utcMidnight } from './format.js';
+import { createMission } from './views/mission.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, DAY = 864e5, HOUR = 36e5;
 const SLIP_DAYS = 28, LOOKAHEAD_H = 60 * 24, SIM_H = SLIP_DAYS * 24 + LOOKAHEAD_H;
@@ -32,7 +33,7 @@ const state = {
   slipMinDays: 5, slipNeedLink: true, slipMetric: 'sun', version: 0,
 };
 const layout = { pano: null, tl: null, slip: null };
-let eph, SITES = [], sims = [];
+let eph, SITES = [], sims = [], mission = null;
 const stayH = () => STAYS[state.stayKey];
 
 /* ---------- sites and the real engine ---------- */
@@ -320,7 +321,7 @@ function renderSettings() {
 
 function toast(msg, ms) { const el = $('toast'); el.textContent = msg; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => { el.style.display = 'none'; }, ms || 1800); }
 function showView(v) {
-  if (!['explore', 'compare', 'slip', 'data', 'build'].includes(v)) v = 'explore';
+  if (!['start', 'mission', 'explore', 'compare', 'slip', 'data', 'build'].includes(v)) v = 'start';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}#/${v}`);
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
@@ -432,7 +433,7 @@ function renderSources() {
 /* ---------- wiring ---------- */
 
 function renderTime() { renderMaps(); renderTiles(); renderPano(); renderTimeline(); renderCompare(); render3d(); }
-function renderAll() { fillSelect(); renderSettings(); renderTime(); renderSlip(); }
+function renderAll() { fillSelect(); renderSettings(); renderTime(); renderSlip(); mission?.render(); }
 function recompute() { sims = SITES.map(simulate); renderAll(); }
 function setHour(h) { state.hour = Math.max(0, Math.min(stayH(), Math.round(h))); renderTime(); }
 
@@ -553,6 +554,12 @@ async function start() {
   SITES = siteData.sites.map((raw) => makeSite(raw));
   const first = SITES.findIndex((s) => s.id === DEFAULT_SITE);
   state.site = first >= 0 ? first : 0;
+  mission = createMission({
+    sites: () => SITES, eph: () => eph, landing: () => state.landing, margin: () => state.margin,
+    go: (view) => showView(view), toast, setLanding,
+    range: () => ({ min: utcMidnight(eph.t0), max: utcMidnight(eph.tEnd - SIM_H * HOUR) }),
+    arrive: (k) => { state.site = k; showView('explore'); },
+  });
   $('lang').value = getLanguage();
   initTranslations();
   bind();
