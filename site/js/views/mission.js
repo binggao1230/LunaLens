@@ -87,29 +87,12 @@ const MESSAGES = {
   'Previous day': ['Jour précédent', '前一天'],
   'Next day': ['Jour suivant', '后一天'],
   'Landing date (UTC)': ['Date d’alunissage (UTC)', '着陆日期（UTC）'],
-  'High feasibility': ['Faisabilité élevée', '高可行性'],
-  'Moderate feasibility': ['Faisabilité modérée', '中等可行性'],
-  'Low feasibility': ['Faisabilité faible', '低可行性'],
-  'High': ['Élevée', '高'],
-  'Moderate': ['Modérée', '中'],
-  'Low': ['Faible', '低'],
-  'Feasible': ['Faisable', '可行'],
-  'Caution': ['Prudence', '需注意'],
-  'Critical': ['Critique', '严苛'],
-  'Extended simultaneous solar power and direct Earth communication link.': ['Alimentation solaire et liaison Terre simultanées prolongées.', '拥有充裕的太阳能供电与对地直视通信窗口。'],
-  'Constrained operational window; intermittent power or communication passes.': ['Fenêtre opérationnelle restreinte ; alimentation ou liaisons intermittentes.', '作业窗口受限；供电或通信出现间歇。'],
-  'No simultaneous power and communication window; permanent shadow or blocked link.': ['Aucune fenêtre simultanée ; ombre permanente ou liaison bloquée.', '无并发供电与通信窗口；处于永久阴影区或通信被阻隔。'],
-  'Permanently shadowed region (PSR); no direct solar power.': ['Région d’ombre permanente (PSR) ; aucune énergie solaire directe.', '永久阴影区（PSR）；无太阳能直接照射。'],
-  'No direct line of sight to Earth; terrain completely blocks communication.': ['Aucune visibilité directe de la Terre ; le relief bloque la communication.', '无法直视地球；地形完全遮挡通信。'],
-  'Minimal simultaneous power and communication window (< 24 h).': ['Fenêtre simultanée minimale (< 24 h).', '并发供电与通信窗口极短（< 24 小时）。'],
-  'Narrow overlap between sunlight and Earth visibility; tight downlink window.': ['Faible chevauchement entre Soleil et Terre ; créneau de transmission serré.', '日照与对地可见时段重叠较少；下行通信窗口紧迫。'],
   'Include in comparison': ['Inclure dans la comparaison', '加入对比'],
   'Compare {name}': ['Comparer {name}', '对比 {name}'],
   'compared': ['comparés', '已对比'],
   'Total sunlight': ['Ensoleillement total', '累计日照'],
   'Total Earth link': ['Liaison Terre totale', '累计对地通信'],
   'Simultaneous window': ['Fenêtre simultanée', '同时可用窗口'],
-  'Feasibility': ['Faisabilité', '可行性评估'],
   'both': ['les deux', '同时'],
   'sites': ['sites', '个地点'],
   'All': ['Tous', '全选'],
@@ -486,87 +469,24 @@ export function createMission(ctx) {
     return { both, lit, link, hours: SPAN + 1 };
   }
 
-  function feasibilityOf(score) {
-    const hours = Math.max(1, score.hours || (SPAN + 1));
-    const bothPct = Math.round((score.both / hours) * 100);
-    const litPct = Math.round((score.lit / hours) * 100);
-    const linkPct = Math.round((score.link / hours) * 100);
-
-    // Red (Critical / Low feasibility):
-    // Severe deficit: simultaneous window under 24 hours, or no sunlight / no comms
-    if (score.both < 24 || score.lit < 24 || score.link < 24) {
-      const reason = score.lit === 0
-        ? t('Permanently shadowed region (PSR); no direct solar power.')
-        : score.link === 0
-        ? t('No direct line of sight to Earth; terrain completely blocks communication.')
-        : t('Minimal simultaneous power and communication window (< 24 h).');
-      return {
-        level: 'bad',
-        color: '#ff6b6b',
-        class: 'feas-bad',
-        label: t('Low feasibility'),
-        shortLabel: t('Low'),
-        dotColor: '#ff6b6b',
-        desc: reason,
-        bothPct, litPct, linkPct,
-      };
-    }
-
-    // Green (High feasibility / Optimal):
-    // Requires a substantial simultaneous window (at least 120 h or >= 20% of stay)
-    // AND baseline coverage of both sunlight (>= 150 h) and Earth link (>= 150 h)
-    if (score.both >= 120 && bothPct >= 20 && score.lit >= 150 && score.link >= 150) {
-      return {
-        level: 'good',
-        color: '#43d98a',
-        class: 'feas-good',
-        label: t('High feasibility'),
-        shortLabel: t('High'),
-        dotColor: '#43d98a',
-        desc: t('Extended simultaneous solar power and direct Earth communication link.'),
-        bothPct, litPct, linkPct,
-      };
-    }
-
-    // Orange (Moderate feasibility / Caution):
-    // Viable mission window (>= 24 h combined) but with operational constraints
-    const reason = bothPct < 15
-      ? t('Narrow overlap between sunlight and Earth visibility; tight downlink window.')
-      : t('Constrained operational window; intermittent power or communication passes.');
-    return {
-      level: 'warn',
-      color: '#f5c542',
-      class: 'feas-warn',
-      label: t('Moderate feasibility'),
-      shortLabel: t('Moderate'),
-      dotColor: '#f5c542',
-      desc: reason,
-      bothPct, litPct, linkPct,
-    };
-  }
-
   function detailsHtml(site, f) {
     const series = site.series, status = f.status.get(site.id), j = f.j;
     const sunNext = nextTransition(site, 'sun', f.index);
     let sunLine;
     if (sunNext.kind === 'none') sunLine = [t('Sun'), t(sunNext.state ? 'Stays in view' : 'Does not rise')];
     else sunLine = [t('{event} in', { event: t(sunNext.kind === 'set' ? 'Sunset' : 'Sunrise') }), dur(sunNext.timeMs - f.ms)];
-    const score = scoreOf(site);
-    const feas = feasibilityOf(score);
+    const score = scoreOf(site), bothPct = Math.round((score.both / score.hours) * 100);
+    const litPct = Math.round((score.lit / score.hours) * 100), linkPct = Math.round((score.link / score.hours) * 100);
     const rows = [
-      [t('Feasibility'), `${feas.label} (${feas.bothPct}%)`],
-      [t('Simultaneous window'), `${score.both} h / ${score.hours} h (${feas.bothPct}%)`],
-      [t('Total sunlight'), `${score.lit} h (${feas.litPct}%)`],
-      [t('Total Earth link'), `${score.link} h (${feas.linkPct}%)`],
+      [t('Simultaneous window'), `${score.both} h / ${score.hours} h (${bothPct}%)`],
+      [t('Total sunlight'), `${score.lit} h (${litPct}%)`],
+      [t('Total Earth link'), `${score.link} h (${linkPct}%)`],
       [t('Sun elevation'), fmtDeg(series.sunEl[j])],
       sunLine,
       [t('Earth elevation'), fmtDeg(series.earthEl[j])],
       [t('Direct-to-Earth link'), t(status.link ? 'Available' : 'Blocked')],
     ];
-    return `<div class="det-desc" style="color:${feas.color};display:flex;align-items:center;gap:6px">
-      <span class="traffic-light" style="background:${feas.dotColor};box-shadow:0 0 6px ${feas.dotColor}"></span>
-      <span>${escapeHtml(feas.desc)}</span>
-    </div>` + rows.map(([k, v]) => `<span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b>`).join('');
+    return rows.map(([k, v]) => `<span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b>`).join('');
   }
 
   function renderList(force) {
@@ -584,7 +504,6 @@ export function createMission(ctx) {
         const isCompared = local.compared.has(site.id);
         const terrain = !site.terrain || site.terrain === 'none' ? t('no terrain') : site.terrain;
         const badge = rank < 3 && score.both > 0 ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
-        const feas = feasibilityOf(score);
         return `<div class="srow${site.id === local.picked ? ' on' : ''}${open ? ' open' : ''}" data-row="${escapeHtml(site.id)}">
           <div class="srow-top">
             <label class="srow-chk" title="${escapeHtml(t('Include in comparison'))}">
@@ -596,9 +515,8 @@ export function createMission(ctx) {
                 <span class="srow-title">
                   <span class="nm">${escapeHtml(site.label)}</span>
                   ${badge}
-                  <span class="feas-badge ${feas.class}" title="${escapeHtml(feas.desc)}"><i class="traffic-light"></i>${escapeHtml(feas.shortLabel)}</span>
                 </span>
-                <span class="sub2">${escapeHtml(t('{n} h lit and linked', { n: score.both }))} (${feas.bothPct}%) · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}</span>
+                <span class="sub2">${escapeHtml(t('{n} h lit and linked', { n: score.both }))} (${Math.round((score.both / score.hours) * 100)}%) · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}</span>
               </span>
               <span class="chev">⌄</span>
             </button>
@@ -644,14 +562,12 @@ export function createMission(ctx) {
         const link = runsOf((s, i) => s.series.earthClr[i] > ctx.margin(), site);
         const both = runsOf((s, i) => s.series.sunVis[i] === 1 && s.series.earthClr[i] > ctx.margin(), site);
         const score = scoreOf(site);
-        const feas = feasibilityOf(score);
         return `<div class="lane-site">
           <div class="nm" title="${escapeHtml(site.label)}">
             <div style="display:flex;align-items:center;gap:6px">
-              <span class="traffic-light" style="background:${feas.dotColor};box-shadow:0 0 6px ${feas.dotColor}"></span>
               <span>${escapeHtml(site.short)}</span>
             </div>
-            <div class="lane-meta" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px">${score.both}h ${t('both')} (${feas.bothPct}%)</div>
+            <div class="lane-meta" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px">${score.both}h ${t('both')} (${Math.round((score.both / score.hours) * 100)}%)</div>
           </div>
           <svg viewBox="0 0 ${SPAN} 54" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(site.label)}">
             <rect x="0" y="0" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="20" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="40" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/>
