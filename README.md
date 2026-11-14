@@ -28,27 +28,31 @@ cd LunaLens
 
 ## Run the site
 
-`site/` is the product: real Sun and Earth positions from JPL Horizons, real LOLA terrain, a 3D view, and no
-build step. It needs Python 3 and **`site/data/`**, 34 MB that is not in git.
+`site/` is the product. There is no build step and nothing to install beyond Python 3 — but it needs its data
+folder, 34 MB that is kept out of git.
 
+**1. Get the data** (once, and again whenever the snapshot release changes):
+
+```sh
+gh release download lunalens-snapshot-2026-11-14 --pattern '*'   # or download it from the Releases page
+python3 restore-lunalens.py                                      # checks every part, unpacks lunalens/
+cp -a lunalens/site/data ./site/data
 ```
-gh release download lunalens-snapshot-2026-11-14 --pattern '*'      # or download it in the browser
-python3 restore-lunalens.py                                         # verifies the parts, unpacks lunalens/
-cp -a lunalens/site/data/. site/data/
+
+**2. Serve it:**
+
+```sh
 python3 site/tools/serve.py 8768
 ```
 
-Then open:
+**3. Open it.** On this machine, http://localhost:8768/. From a phone or another computer, use the same machine's
+own address instead of `localhost` — `ipconfig getifaddr en0` on macOS, `hostname -I` on Linux, or the address shown
+by your network settings. The server listens on `0.0.0.0`, so both work.
 
-- **http://100.76.141.11:8768/** — the canonical address, reachable on the tailnet and from a phone
-- `http://<this-machine's-LAN-IP>:8768/` for the same machine on the local network
-
-The server binds `0.0.0.0`, not `127.0.0.1`, or nothing but the machine itself could reach it.
-
-What to look at: Explore (map, tiles, horizon panorama, 3D view), Compare, Date slip, Data; the timeline at the
+Explore (map, tiles, horizon panorama, 3D view), Compare, Date slip and Data are the four views; the bar along the
 bottom is the time control. Controls with a dashed border are not built yet and say so on hover or tap.
 
-`prototype/` is the earlier fake-data layout and is retired; it is kept only as a reference.
+`prototype/` is the older fake-data layout. It is kept as a reference and is not published.
 
 ## Online version
 
