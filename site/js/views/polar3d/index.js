@@ -16,7 +16,7 @@ export async function createPolar3d(env) {
       controls.enablePan = false; controls.minDistance = 1.12; controls.maxDistance = 9; controls.rotateSpeed = 0.7;
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.02));
-      const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: new T.TextureLoader().load('assets/moon_1024.jpg', () => request()), roughness: 1, metalness: 0 }));
+      const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: new T.TextureLoader().load('assets/moon_color_4k.webp', () => request()), roughness: 1, metalness: 0 }));
       scene.add(moon);
 
       // ---- South polar cap, real relief from the 480 m LOLA grid (M1 of doc/PLAN_3D.md) ----
@@ -39,7 +39,9 @@ export async function createPolar3d(env) {
         const RINGS = 240, SPOKES = 512;
         const rMax = 2 * R_MOON_M * Math.tan(Math.PI / 4 + (-75 * Math.PI / 180) / 2);
         const positions = new Float32Array((RINGS + 1) * SPOKES * 3);
-        let k = 0;
+        const latsDeg = new Float32Array((RINGS + 1) * SPOKES);
+        const lonsDeg = new Float32Array((RINGS + 1) * SPOKES);
+        let k = 0, v = 0;
         for (let i = 0; i <= RINGS; i++) {
           const rho = (rMax * i) / RINGS;
           const lat = 2 * Math.atan(rho / (2 * R_MOON_M)) - Math.PI / 2;
@@ -54,8 +56,28 @@ export async function createPolar3d(env) {
             positions[k++] = r * cl * Math.cos(lon);
             positions[k++] = r * Math.sin(lat);
             positions[k++] = -r * cl * Math.sin(lon);
+            latsDeg[v] = (lat * 180) / Math.PI;
+            lonsDeg[v] = (lon * 180) / Math.PI;
+            v += 1;
           }
         }
+        // Albedo comes from the 4K LROC colour map, downsampled once into a canvas for per-vertex lookup.
+        const albedo = await (async () => {
+          const image = new Image();
+          image.src = 'assets/moon_color_4k.webp';
+          await image.decode();
+          const sc = document.createElement('canvas');
+          sc.width = 2048; sc.height = 1024;
+          const sg = sc.getContext('2d', { willReadFrequently: true });
+          sg.drawImage(image, 0, 0, 2048, 1024);
+          return sg.getImageData(0, 0, 2048, 1024).data;
+        })();
+        const albedoAt = (latDeg, lonDeg) => {
+          const u = Math.min(2047, Math.max(0, Math.round((((lonDeg + 180) % 360 + 360) % 360 / 360) * 2047)));
+          const w = Math.min(1023, Math.max(0, Math.round(((90 - latDeg) / 180) * 1023)));
+          const o = (w * 2048 + u) * 4;
+          return [albedo[o] / 255, albedo[o + 1] / 255, albedo[o + 2] / 255];
+        };
         const indices = new Uint32Array(RINGS * SPOKES * 6);
         let q = 0;
         for (let i = 0; i < RINGS; i++) {
@@ -99,6 +121,8 @@ export async function createPolar3d(env) {
             const lum = Math.max(0, normals.getX(i) * sun.x + normals.getY(i) * sun.y + normals.getZ(i) * sun.z);
             // Additive floor: relief stays readable in shadow (0.45 × hill) and brightens when lit.
             const tone = hill[i] * (0.45 + 0.55 * lum);
+            const [ar, ag, ab] = albedoAt(latsDeg[i], lonsDeg[i]);
+            colors[i * 3] = ar * 1.15 * tone; colors[i * 3 + 1] = ag * 1.12 * tone; colors[i * 3 + 2] = ab * 1.18 * tone;
             colors[i * 3] = 1.05 * tone; colors[i * 3 + 1] = 1.02 * tone; colors[i * 3 + 2] = 1.08 * tone;
           }
           geometry.getAttribute('color').needsUpdate = true;
@@ -125,7 +149,9 @@ export async function createPolar3d(env) {
           }
           return new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color, transparent: true, opacity }));
         };
-        capGroup.add(ring(-85, 0xffffff, 0.35), ring(-80, 0xffffff, 0.2));
+        // The amber circle is where the accurate terrain stops: inside it the mesh is the 480 m LOLA grid,
+        // outside it the colour map is all we have.
+        capGroup.add(ring(-75, 0xf5c542, 0.85), ring(-80, 0xffffff, 0.35), ring(-85, 0xffffff, 0.25));
         for (const lon of [0, 90, 180, 270]) {
           const pts = [];
           for (let la = -90; la <= -75; la += 1) {
