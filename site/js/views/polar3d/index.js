@@ -25,6 +25,7 @@ export async function createPolar3d(env) {
       const R_MOON_M = 1737400;
       const capGroup = new T.Group();
       scene.add(capGroup);
+      let capPaint = null;
       const capReady = (async () => {
         const meta = await (await fetch('data/dem480.json')).json();
         const compressed = await (await fetch(`data/${meta.file}`)).arrayBuffer();
@@ -69,9 +70,45 @@ export async function createPolar3d(env) {
         geometry.setAttribute('position', new T.BufferAttribute(positions, 3));
         geometry.setIndex(new T.BufferAttribute(indices, 1));
         geometry.computeVertexNormals();
-        const mesh = new T.Mesh(geometry, new T.MeshStandardMaterial({ color: 0x9c99ab, roughness: 1, metalness: 0 }));
+        // Relief has to read at 1.6° solar elevation, where a single directional light leaves almost every
+        // slope black. So the shading is baked: a hill-shade of the slope for shape, times the real term
+        // from the current Sun direction, repainted whenever the hour changes.
+        //
+        // The hill-shade must use the *tilt* of the normal away from the sphere's radial, not the normal
+        // itself: on a sphere the radial dominates and gives one smooth ramp, which is what made the first
+        // version look flat. tilt = N - R (N·R).
+        const normals = geometry.getAttribute('normal');
+        const colors = new Float32Array(positions.length);
+        geometry.setAttribute('color', new T.BufferAttribute(colors, 3));
+        const hill = new Float32Array(positions.length / 3);
+        const lightNW = new T.Vector3(-0.55, 0.62, 0.56).normalize();
+        for (let i = 0; i < hill.length; i++) {
+          const px = positions[i * 3], py = positions[i * 3 + 1], pz = positions[i * 3 + 2];
+          const pr = Math.hypot(px, py, pz) || 1;
+          const nx = normals.getX(i), ny = normals.getY(i), nz = normals.getZ(i);
+          const radialDot = (nx * px + ny * py + nz * pz) / pr;
+          const tx = nx - (px / pr) * radialDot, ty = ny - (py / pr) * radialDot, tz = nz - (pz / pr) * radialDot;
+          const relief = tx * lightNW.x + ty * lightNW.y + tz * lightNW.z;
+          hill[i] = Math.min(1, Math.max(0.15, 0.62 + 5.5 * relief));
+        }
+        let paintedSun = null;
+        const paintCap = (sun) => {
+          if (paintedSun && paintedSun.distanceToSquared(sun) < 1e-12) return;
+          paintedSun = sun.clone();
+          for (let i = 0; i < hill.length; i++) {
+            const lum = Math.max(0, normals.getX(i) * sun.x + normals.getY(i) * sun.y + normals.getZ(i) * sun.z);
+            // Additive floor: relief stays readable in shadow (0.45 × hill) and brightens when lit.
+            const tone = hill[i] * (0.45 + 0.55 * lum);
+            colors[i * 3] = 1.05 * tone; colors[i * 3 + 1] = 1.02 * tone; colors[i * 3 + 2] = 1.08 * tone;
+          }
+          geometry.getAttribute('color').needsUpdate = true;
+        };
+        const mesh = new T.Mesh(geometry, new T.MeshBasicMaterial({ vertexColors: true, side: T.DoubleSide }));
         mesh.name = 'cap';
+        paintCap(new T.Vector3(...(getFrame()?.sun ?? [1, 0, 0])));
+        capPaint = paintCap;
         capGroup.add(mesh);
+
         moon.scale.setScalar(0.999);   // the far sphere stays for the zoomed-out view, just under the cap
         request();
         return mesh;
@@ -83,7 +120,7 @@ export async function createPolar3d(env) {
         const ring = (latDeg, color, opacity) => {
           const pts = [];
           for (let a = 0; a <= 360; a += 2) {
-            const rr = 1.004, la = latDeg * Math.PI / 180, lo = a * Math.PI / 180;
+            const rr = 1.02, la = latDeg * Math.PI / 180, lo = a * Math.PI / 180;
             pts.push(new T.Vector3(rr * Math.cos(la) * Math.cos(lo), rr * Math.sin(la), -rr * Math.cos(la) * Math.sin(lo)));
           }
           return new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color, transparent: true, opacity }));
@@ -92,10 +129,10 @@ export async function createPolar3d(env) {
         for (const lon of [0, 90, 180, 270]) {
           const pts = [];
           for (let la = -90; la <= -75; la += 1) {
-            const rr = 1.004, t = la * Math.PI / 180, o = lon * Math.PI / 180;
+            const rr = 1.02, t = la * Math.PI / 180, o = lon * Math.PI / 180;
             pts.push(new T.Vector3(rr * Math.cos(t) * Math.cos(o), rr * Math.sin(t), -rr * Math.cos(t) * Math.sin(o)));
           }
-          capGroup.add(new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: lon === 0 ? 0.5 : 0.22 })));
+          capGroup.add(new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: lon === 0 ? 0.75 : 0.4 })));
         }
         const pole = new T.Mesh(new T.SphereGeometry(0.006, 12, 8), new T.MeshBasicMaterial({ color: 0xffffff }));
         pole.position.set(0, 1.004, 0);
@@ -169,7 +206,7 @@ export async function createPolar3d(env) {
         markers = list.filter((site) => site.lat <= -74.5).map((site) => {
           const normal = new T.Vector3(...unit(site.lat, site.lon));
           // Sit on the relief, not on the datum: groundM comes from sites.json, from the same DEM.
-          const radius = 1 + (Number(site.groundM) || 0) / 1737400 + 0.0015;
+          const radius = 1 + (Number(site.groundM) || 0) / 1737400 + 0.006;
           const dotMesh = new T.Mesh(sphereGeometry, new T.MeshBasicMaterial({ color: COLORS.dark }));
           dotMesh.position.copy(normal).multiplyScalar(radius);
           const ring = new T.Mesh(ringGeometry, new T.MeshBasicMaterial({ color: COLORS.sun, side: T.DoubleSide }));
@@ -195,6 +232,7 @@ export async function createPolar3d(env) {
         if (view() !== 'mission' || local.mode !== '3d' || !f) return;
         buildMarkers();
         sunLight.position.set(...f.sun).multiplyScalar(10);
+        capPaint?.(new T.Vector3(...f.sun).normalize());
         earth.position.set(...f.earth).multiplyScalar(3.0);
         paintEarth(new T.Vector3(...f.sun).normalize(), new T.Vector3(...f.earth).normalize());
         sunBody.position.set(...f.sun).multiplyScalar(8);
