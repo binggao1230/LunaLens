@@ -601,5 +601,5 @@ async function start() {
 
 start().catch((error) => {
   console.error(error);
-  $('loading').textContent = `Luna Lens could not start: ${error.message}`;
+  $('loading').textContent = `LunaLens could not start: ${error.message}`;
 });
