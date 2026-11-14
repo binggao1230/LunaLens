@@ -30,7 +30,8 @@ body[data-view=start] .appbar #mode-toggle,body[data-view=mission] .appbar #mode
 @keyframes wipe-pop{from{transform:translateY(10px) scale(.9);opacity:0}to{transform:none;opacity:1}}
 
 /* ---- Education mode is the simpler interface: no Expert navigation, numbers, exports or comparison controls ---- */
-body.edu-on .appbar .tabs,body.edu-on .appbar .side,body.edu-on .tabbar{display:none}
+/* Same navigation in both modes; Education only hides the Data page. */
+body.edu-on .appbar .side,body.edu-on .tabbar button[data-view=data]{display:none}
 body.edu-on .m-readout,body.edu-on .side-head-actions,body.edu-on .pill2,body.edu-on .lane-export,body.edu-on .lane-meta,
 body.edu-on .srow-chk,body.edu-on .srow .chev,body.edu-on .srow .det{display:none!important}
 body.edu-on .srow-top>button{padding-left:12px}
@@ -135,14 +136,14 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
   .guide-row .edu-char{width:56px;height:56px}
   .guide-bubble{font-size:13px;padding:10px 12px}
   body.edu-on[data-view=mission] main{padding-bottom:52vh}
-  body.edu-on{padding-bottom:0}
-  .edu-panel{left:0;right:0;bottom:0;width:auto;grid-template-columns:1fr;gap:0;max-height:50vh}
+  body.edu-on .tabbar{grid-template-columns:repeat(4,1fr)}
+  .edu-panel{left:0;right:0;bottom:54px;width:auto;grid-template-columns:1fr;gap:0;max-height:50vh}
   .edu-panel .edu-char{position:absolute;left:12px;bottom:calc(100% - 14px);width:64px;height:64px;z-index:1}
   .edu-panel{padding-top:0}
   .edu-bubble{border-radius:18px 18px 0 0;padding:14px 16px 14px;max-height:50vh;overflow:auto;position:relative;padding-top:18px}
   .edu-top{padding-left:68px;min-height:28px}
   .edu-levers{grid-template-columns:1fr}
-  .edu-mini{left:12px;bottom:12px}
+  .edu-mini{left:12px;bottom:66px}
   .edu-final{padding:18px 16px}
   .edu-final h2{font-size:28px}
 }

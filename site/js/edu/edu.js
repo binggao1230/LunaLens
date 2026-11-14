@@ -60,8 +60,6 @@ export function createEducation(ctx) {
   function activate() {
     st.active = true;
     document.body.classList.add('edu-on');
-    // Education mode has only the start page and the Mission page; Explore, Compare and the rest are Expert tools.
-    if (!['start', 'mission'].includes(ctx.view())) { ctx.showView('mission'); return; }
     if (ctx.view() === 'mission') startTour(); else render();
   }
   function deactivate() {
