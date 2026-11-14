@@ -146,6 +146,7 @@ body[data-view=start] #v-start,body[data-view=mission] #v-mission{display:block}
 }
 @media (max-width:760px){
   body[data-view=mission] main{padding:10px 10px 130px}
+  body[data-view=mission] .appbar #lang{margin-left:auto}
   .stage{height:56vh;min-height:360px}
   .stage h2{font-size:21px}
   .lane-site,.lane-axis{grid-template-columns:96px minmax(0,1fr)}
@@ -223,6 +224,7 @@ body[data-view=mission] .glass{background:#171a1e;backdrop-filter:none;-webkit-b
 body[data-view=mission] .stage{background:#101316}
 .mission [hidden]{display:none!important}
 body[data-view=mission] .appbar,body[data-view=mission] .tabbar{background:#121518}
+body[data-view=mission] .appbar .side{margin-left:auto}
 .mseg{background:#20242a;border-color:#353a42;border-radius:10px;padding:4px}
 .mseg button{border-radius:7px}
 .mseg button.on{background:#eceef1;color:#14171b;box-shadow:0 1px 3px #0003}
