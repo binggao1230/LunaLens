@@ -16,9 +16,12 @@ export async function createPolar3d(env) {
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       const scene = new T.Scene();
       const camera = new T.PerspectiveCamera(42, 1, 0.01, 200);
+      // The orbit axis is the Earth-facing axis (+x), not the Moon's polar axis: the scene opens looking down
+      // on the south pole, and orbiting around the axis you look along only spins the globe in place and
+      // jams against the polar clamp. OrbitControls reads camera.up once, in its constructor, so set it first.
+      camera.up.set(1, 0, 0);
       const controls = new OrbitControls(camera, canvas);
       controls.enablePan = false; controls.minDistance = 1.03; controls.maxDistance = 14; controls.rotateSpeed = 0.7;
-      camera.up.set(1, 0, 0);
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
       // The south pole is always within about 1.5° of the terminator, so the Sun alone leaves the terrain
