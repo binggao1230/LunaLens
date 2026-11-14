@@ -382,7 +382,19 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
       </ul>
     </section>
     <section class="card"><h2>Computation</h2><p>Everything on this page is computed in your browser from the data files, so it works with no server. The rules for sunlight, link and window totals follow the backend in backend/lunalens/windows.</p></section>
-    <section class="card"><h2>Validation status</h2><p>Comparison with the PGDA illumination map has not been computed yet, so no agreement is claimed. The checks that were run are listed under “Checks we ran”.</p></section>
+    <section class="card"><h2>Validation status</h2>
+      <p>Our share of time in sunlight has been compared with NASA's own long-term map. At 120 points sampled across
+      the south polar cap (80°S–90°S), the skyline from our 240 m grid and the full 2026–2030 ephemeris is compared with
+      PGDA product 69 (Mazarico et al. 2011, 18.6 years):</p>
+      <ul>
+        <li><b>Spearman rank correlation 0.98, Pearson 0.985.</b></li>
+        <li><b>Mean difference +1.3 percentage points, RMS 2.7 points.</b></li>
+        <li>Worst point +15.1 points at 82.7°S 137.3°E, on ground where both maps are low and a grid cell decides the answer.</li>
+      </ul>
+      <p>What the comparison does not cover: we average five years where NASA averages 18.6, we sample every tenth hour,
+      we count the Sun as up when any part of its disc clears the skyline while NASA's product does not state its rule,
+      and our grid is 240 m against their 120 m. The script is <code>site/tools/check_pgda.mjs</code>.</p>
+    </section>
     <section class="card"><h2>Atlas page sources</h2>
       <p>The Atlas page is a separate application with its own data and its own credits; it does not reuse the files behind Mission, Explore, Compare or Date slip. Its sources:</p>
       <ul>
