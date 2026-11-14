@@ -80,9 +80,10 @@ section above do that by hand. Background: `doc/PLAN.md` §2.5.
 
 ## Find your work
 
-1. `doc/PRODUCT.md` and `doc/PLAN.md` say what we build and how; `doc/WORKPLAN.md` holds the interfaces.
-2. Read `CONTRIBUTING.md` once: branches and pull requests.
-3. Take items from the plan or from the person you work with. The per-person folders in `archive/team/` are retired.
+1. **`TODO.md`** is what happens next: the list the 14 November call and the Figma file produced, ordered by what
+   the demo needs.
+2. `doc/PRODUCT.md` and `doc/PLAN.md` say what we build and how; `doc/WORKPLAN.md` holds the interfaces.
+3. Read `CONTRIBUTING.md` once: branches and pull requests. The per-person folders in `archive/team/` are retired.
 
 If you work with an AI agent, point it at `AGENTS.md` too.
 
