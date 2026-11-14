@@ -2,7 +2,7 @@
 
 The prototype's layout (Explore, Compare, Date slip, Data) driven by real data instead of synthetic data:
 JPL Horizons Sun and Earth positions for 2026-2030 and LRO LOLA terrain horizons, computed in the browser,
-plus a 3D terrain and time view. English only.
+plus a 3D terrain and time view. English, French and Chinese (selector in the top bar, or `?lang=fr` / `?lang=zh`; default English).
 
 ## Data
 
