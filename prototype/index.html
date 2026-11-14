@@ -105,7 +105,7 @@ main{max-width:1280px;padding:12px}
 .chip.on{border-color:var(--earth);font-weight:650}
 .chip.ghost{border-style:dashed;color:var(--text2)}
 .view{display:none}
-body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=data] #v-data{display:block}
+body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=data] #v-data,body[data-view=build] #v-build{display:block}
 .explore{display:grid;grid-template-columns:minmax(0,38fr) minmax(0,62fr);gap:12px;align-items:start}
 .cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
 .cardhead h2{margin:0}
@@ -144,24 +144,52 @@ body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-
   .fields{grid-template-columns:1fr 1fr}
   .fields button{grid-column:1/-1}
 }
+
+/* ---- minimal top bar, timeline dock, owners, build map ---- */
+.brand{font-size:16px}
+.tabs{margin-left:6px;gap:0}
+.tabs button{border-radius:0;padding:8px 12px}
+.tabs button.on{background:none;box-shadow:inset 0 -2px 0 var(--text)}
+.appbar .tray{flex:1;justify-content:flex-end;border:none;padding:0;background:none;min-width:0}
+.side{display:flex}
+.side button{border:none;background:none;color:var(--muted);font-size:13px;padding:6px 8px;min-height:32px}
+.side button.on{color:var(--text);font-weight:650}
+.scrub .chart{flex:1;min-width:220px}
+.scrub #now{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
+body.owners [data-owner]{position:relative;outline:1.5px dashed var(--muted);outline-offset:-1px}
+body.owners .scrub[data-owner]{position:sticky}
+body.owners [data-owner]::after{content:attr(data-owner);position:absolute;top:-9px;right:10px;background:var(--text);color:var(--surface);
+  font-size:11px;line-height:1.5;padding:0 8px;border-radius:99px;white-space:nowrap;z-index:4;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis}
+.wrap{overflow-x:auto}
+body[data-view=build] .scrub,body[data-view=data] .scrub{display:none}
+table.bm{border-collapse:collapse;font-size:13px;width:100%;min-width:860px}
+table.bm th,table.bm td{border:1px solid var(--border);padding:6px 8px;text-align:left;vertical-align:top}
+table.bm th{font-weight:650;white-space:nowrap}
+table.bm tr:first-child th{color:var(--text2);font-weight:500}
+@media (max-width:760px){
+  .side{display:none}
+  .tabbar{grid-template-columns:repeat(5,1fr)}
+  .scrub .chart{flex-basis:100%;order:-1}
+  .scrub #now{flex-basis:auto;flex:1}
+}
 </style>
 </head>
 <body data-view="explore">
 <header class="appbar">
-  <div class="brand"><b>Luna Lens</b><span class="pill">Prototype · fake data</span></div>
+  <b class="brand">Luna Lens</b>
   <nav class="tabs" data-nav>
-    <button data-view="explore">Explore</button><button data-view="compare">Compare</button>
-    <button data-view="slip">Date slip</button><button data-view="data">Data &amp; accuracy</button>
+    <button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Date slip</button>
   </nav>
+  <div class="tray" id="tray"></div>
+  <nav class="side" data-nav><button data-view="data">Data</button><button data-view="build">Build map</button></nav>
 </header>
-<div class="tray" id="tray"></div>
 
 <main>
   <!-- ================= View 1: Explore ================= -->
   <section class="view" id="v-explore">
     <div class="explore">
       <div>
-        <section class="card">
+        <section class="card" data-owner="Assem · map images: Maeva">
           <div class="cardhead"><h2>Map</h2>
             <div class="seg" id="mapseg"><button data-map="polar" class="on">South pole</button><button data-map="globe">Whole Moon</button></div></div>
           <div id="polarWrap">
@@ -172,9 +200,9 @@ body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-
             <div class="map" id="globe"><canvas id="globeC" width="1024" height="512"></canvas><svg id="globeS" viewBox="0 0 1024 512"></svg></div>
             <p class="mapcap">LROC colour mosaic, near side in the centre. The darkened part is the current night side. Tap to pick a point.</p>
           </div>
-          <div class="actions"><button data-fake="Colours the map by how much of the stay each spot is sunlit, so good ground is visible before you pick a point. (F8)">Overlay: sunlit share</button><button data-fake="Colours the map by how much of the stay each spot can see Earth. (F8)">Overlay: Earth-link share</button></div>
+          <div class="actions"><button data-fake="Colours the map by how much of the stay each spot is sunlit, so good ground is visible before you pick a point.">Overlay: sunlit share</button><button data-fake="Colours the map by how much of the stay each spot can see Earth.">Overlay: Earth-link share</button></div>
         </section>
-        <section class="card">
+        <section class="card" data-owner="Assem · site table: Bing">
           <h2>Site</h2><p class="sub">Curated sites, or enter coordinates.</p>
           <div id="sitelist"></div>
           <div class="fields">
@@ -183,19 +211,19 @@ body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-
             <button id="cgo">Use point</button>
           </div>
         </section>
-        <section class="card">
+        <section class="card" data-owner="Assem">
           <h2>Scenario settings</h2>
           <div class="fields two">
             <label>Landing date (UTC)<input id="date" type="date"></label>
-            <label>Stay length<select data-fake="How long the lander stays on the surface. The timeline, the totals and the comparison all cover this period. (F2)"><option>1 lunar day</option><option>14 Earth days</option><option>2 lunar days</option></select></label>
-            <label>Mast height<select data-fake="Height of the antenna or solar array above the ground. A taller mast sees over more terrain, which changes the windows. (F4)"><option>2 m</option><option>10 m</option></select></label>
-            <label>Link margin<select data-fake="How far Earth must be above the terrain before the link counts as available. (F4)"><option>2°</option><option>5°</option></select></label>
+            <label>Stay length<select data-fake="How long the lander stays on the surface. The timeline, the totals and the comparison all cover this period."><option>1 lunar day</option><option>14 Earth days</option><option>2 lunar days</option></select></label>
+            <label>Mast height<select data-fake="Height of the antenna or solar array above the ground. A taller mast sees over more terrain, which changes the windows."><option>2 m</option><option>10 m</option></select></label>
+            <label>Link margin<select data-fake="How far Earth must be above the terrain before the link counts as available."><option>2°</option><option>5°</option></select></label>
           </div>
         </section>
       </div>
       <div>
-        <section class="tiles" id="tiles"></section>
-        <section class="card">
+        <section class="tiles" id="tiles" data-owner="Eya · numbers: Chenlin"></section>
+        <section class="card" data-owner="Eya · horizon: Maeva · Sun/Earth: Bing">
           <h2>Horizon panorama</h2>
           <p class="sub">Looking out from the site across all compass directions. Vertical scale is exaggerated.</p>
           <div class="legend">
@@ -206,25 +234,20 @@ body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-
           </div>
           <div class="chart" id="pano"><div id="crosshair"></div></div>
         </section>
-        <section class="card">
-          <h2>Stay timeline</h2>
-          <p class="sub">One lunar day from landing. Tap or drag to move through time.</p>
-          <div class="chart" id="timeline"></div>
-        </section>
       </div>
     </div>
   </section>
 
   <!-- ================= View 2: Compare ================= -->
   <section class="view" id="v-compare">
-    <section class="card">
+    <section class="card" data-owner="Assem · data: Chenlin">
       <h2>Compare scenarios</h2>
       <p class="sub">Shared time axis. Upper strip: sunlight. Lower strip: direct-to-Earth link. In the real product each row
         is a scenario (site + date); this prototype lists the curated sites on one date. Tap a row to make it active.</p>
       <div id="compare"></div>
       <div class="actions">
-        <button data-fake="Adds another site + date to compare. Up to four scenarios side by side. (F6)">+ Add scenario</button><button data-fake="Copies the active scenario and lets you change only the landing date, to compare the same site on two dates. (F6)">Duplicate with another date</button>
-        <button data-fake="Copies the active scenario and lets you change only the site, to compare two sites on the same date. (F6)">Duplicate with another site</button><button data-fake="Removes the active scenario from the comparison. (F6)">Remove</button>
+        <button data-fake="Adds another site + date to compare. Up to four scenarios side by side.">+ Add scenario</button><button data-fake="Copies the active scenario and lets you change only the landing date, to compare the same site on two dates.">Duplicate with another date</button>
+        <button data-fake="Copies the active scenario and lets you change only the site, to compare two sites on the same date.">Duplicate with another site</button><button data-fake="Removes the active scenario from the comparison.">Remove</button>
         <button data-go="explore">Open active scenario in Explore</button>
       </div>
     </section>
@@ -232,25 +255,25 @@ body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-
 
   <!-- ================= View 3: Date slip ================= -->
   <section class="view" id="v-slip">
-    <section class="card">
+    <section class="card" data-owner="Assem">
       <h2>Thresholds</h2>
       <div class="fields">
-        <label>Need continuous sunlight of at least<select data-fake="Minimum unbroken sunlight after touchdown for a landing day to count as viable. (F7)"><option>5 days</option><option>10 days</option><option>14 days</option></select></label>
-        <label>Need Earth link at touchdown<select data-fake="Whether a landing day is only viable if Earth is visible at the moment of touchdown. (F7)"><option>Yes</option><option>No</option></select></label>
-        <button data-fake="Marks the days of delay that still meet the thresholds as viable landing windows on the chart below. (F7)">Apply</button>
+        <label>Need continuous sunlight of at least<select data-fake="Minimum unbroken sunlight after touchdown for a landing day to count as viable."><option>5 days</option><option>10 days</option><option>14 days</option></select></label>
+        <label>Need Earth link at touchdown<select data-fake="Whether a landing day is only viable if Earth is visible at the moment of touchdown."><option>Yes</option><option>No</option></select></label>
+        <button data-fake="Marks the days of delay that still meet the thresholds as viable landing windows on the chart below.">Apply</button>
       </div>
     </section>
-    <section class="card">
+    <section class="card" data-owner="Assem · data: Chenlin">
       <h2>If the landing date slips</h2>
       <p class="sub">Continuous sunlight available from touchdown, for each day of delay at the active site.</p>
       <div class="chart" id="slip"></div>
-      <div class="actions"><button data-fake="Tap a bar, then this button: that landing date becomes a new scenario in the tray and in Compare. (F7)">Add selected day as a scenario</button><button data-fake="Switches the chart to the share of the stay with a direct link to Earth, for each day of delay. (F7)">Show Earth-link share instead</button></div>
+      <div class="actions"><button data-fake="Tap a bar, then this button: that landing date becomes a new scenario in the tray and in Compare.">Add selected day as a scenario</button><button data-fake="Switches the chart to the share of the stay with a direct link to Earth, for each day of delay.">Show Earth-link share instead</button></div>
     </section>
   </section>
 
   <!-- ================= View 4: Data & accuracy ================= -->
   <section class="view" id="v-data">
-    <section class="card">
+    <section class="card" data-owner="Eya · content: Chenlin, Bing">
       <h2>What is real in this prototype</h2>
       <p class="sub">The two maps use real NASA terrain and imagery. Everything else is fake: horizon profiles are randomly
         generated and the Sun/Earth motion is a simplified model. No number in this prototype is a real mission value.</p>
@@ -263,18 +286,31 @@ body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-
       <div class="ph"><b>Glossary</b><br>Placeholder. Azimuth, elevation, lunar day, libration, direct-to-Earth.</div>
     </div>
   </section>
+  <!-- ================= Build map: planning page, delete before the demo ================= -->
+  <section class="view" id="v-build">
+    <section class="card">
+      <h2>Build map</h2>
+      <p class="sub">Planning page for the team: who builds which part, and when. Delete this page before the demo.
+        It mirrors <code>doc/WORKPLAN.md</code>; if they differ, the document is right.</p>
+      <button id="ownersBtn"></button>
+    </section>
+    <section class="card"><h2>Who builds what</h2><div class="wrap" id="bmWho"></div></section>
+    <section class="card"><h2>Who does what, when</h2>
+      <p class="sub">Hours count from the start of the event (48 h in total).</p><div class="wrap" id="bmWhen"></div></section>
+    <section class="card"><h2>Checkpoints</h2><div class="wrap" id="bmCheck"></div></section>
+  </section>
 </main>
 
-<div class="scrub">
+<div class="scrub" data-owner="Eya · windows: Chenlin">
   <button id="play" aria-label="Play one lunar day">▶ Play</button>
-  <button id="jsun">Next Sun event ⏭</button>
-  <button id="jearth">Next Earth event ⏭</button>
-  <input id="hour" type="range" min="0" step="1" value="0" aria-label="Time since landing">
+  <div class="chart" id="timeline"></div>
+  <button id="jsun">Sun ⏭</button>
+  <button id="jearth">Earth ⏭</button>
   <div id="now"></div>
 </div>
 <nav class="tabbar" data-nav>
-  <button data-view="explore">Explore</button><button data-view="compare">Compare</button>
-  <button data-view="slip">Date slip</button><button data-view="data">Data</button>
+  <button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Slip</button>
+  <button data-view="data">Data</button><button data-view="build">Build</button>
 </nav>
 <div id="tip"></div><div id="toast"></div>
 
@@ -374,7 +410,7 @@ function renderTiles(){
     T("Earth elevation", fmtDeg(r.eEl[i]), "Link needs terrain + "+MARGIN+"° margin", "earth") +
     T("Direct-to-Earth link", `<span style="color:var(--${link?"good":"critical"})">${link?"✓":"✕"}</span> ${link?"Available":"Blocked"}`, link?"Earth clears the margin":"Earth below the margin", "earth") +
     T(link?"Earthset in":"Link returns in", dur(ne), "From the current time", "earth");
-  $("now").textContent = "Landing + "+fmtDur(i)+"  ·  "+fmtUTC(state.landing+i*HOUR);
+  $("now").textContent = "Landing + "+fmtDur(i)+" · "+fmtUTC(state.landing+i*HOUR)+" · over the stay: sunlit "+r.litPct.toFixed(0)+"%, Earth link "+r.commPct.toFixed(0)+"%";
 }
 
 // ---------- panorama ----------
@@ -505,11 +541,11 @@ function fillSelect(){
   $("sitelist").innerHTML=SITES.map((s,k)=>`<button class="site${k===state.site?" sel":""}" data-k="${k}"><b>${s.name}</b><span>${s.tag} · ${fmtCoord(s)}</span></button>`).join("");
   const s=SITES[state.site]; $("clat").value=s.lat.toFixed(2); $("clon").value=s.lon.toFixed(2);
   const d=new Date(state.landing).toISOString().slice(0,10);
-  $("tray").innerHTML=`<span class="lbl">Scenarios</span><button class="chip on">A · ${s.name} · ${d}</button>`+
-    `<button class="chip" data-fake="A second scenario. Tapping a chip makes that scenario the active one in every view. (F6)">B · Mons Mouton · 2027-01-10</button><button class="chip ghost" data-fake="Adds another site + date. Up to four scenarios. (F6)">+ Add scenario</button>`;
+  $("tray").innerHTML=`<button class="chip on">${s.name} · ${d}</button>`+
+    `<button class="chip ghost" data-fake="Adds another site + date to compare, up to four. Tapping a chip makes that scenario the active one in every view.">+ Scenario</button>`;
 }
 function toast(msg,ms){ const t=$("toast"); t.textContent=msg; t.style.display="block"; clearTimeout(toast.t); toast.t=setTimeout(()=>t.style.display="none",ms||1800); }
-function showView(v){ if(!["explore","compare","slip","data"].includes(v)) v="explore"; document.body.dataset.view=v; history.replaceState(null,"","#/"+v); document.querySelectorAll("[data-nav] button").forEach(b=>b.classList.toggle("on",b.dataset.view===v)); window.scrollTo(0,0); renderAll(); }
+function showView(v){ if(!["explore","compare","slip","data","build"].includes(v)) v="explore"; document.body.dataset.view=v; history.replaceState(null,"","#/"+v); document.querySelectorAll("[data-nav] button").forEach(b=>b.classList.toggle("on",b.dataset.view===v)); window.scrollTo(0,0); renderAll(); }
 function jump(test,what){ const n=nextChange(test,state.hour); if(n!=null&&state.hour+n<=HOURS) setHour(state.hour+n); else toast("No "+what+" event left in this lunar day"); }
 function selectSite(k){ state.site=k; renderAll(); }
 function setCustom(lat,lon){
@@ -541,11 +577,41 @@ function loadMaps(){
   im.src="assets/moon_1024.jpg";
 }
 
+// ---------- build map (planning page, delete before the demo) ----------
+const TEAM=[
+ ["Bing Gao","Lead + Sun/Earth positions","Scope, site table, demo script, submission. Computes where the Sun and Earth are in the sky.","Site list content; the Sun and Earth angles everywhere","Agreed interfaces; a stand-in Sun/Earth function"],
+ ["Zeynep Uzan","Design","Colours, type, spacing, every screen, chart styling, wording, slides and video visuals.","The look of every page","Colour and type tokens; the Explore screen"],
+ ["Maeva Andriamaniraka","Terrain","Reads the Moon elevation data and computes the real horizon around a site. Makes the map images.","Terrain silhouette in the panorama; map images","A stand-in flat horizon function"],
+ ["Chenlin Wang","Windows + API","Turns angles and horizon into sunlight and link windows, countdowns and totals. Runs the server.","Status tiles, timeline, Compare numbers, Date-slip numbers","Example server responses the frontend can build on"],
+ ["Eya Amrach","Frontend: Explore","App shell, shared state, status tiles, horizon panorama, timeline dock, Data page.","Top bar, tiles, panorama, timeline dock, Data","App running on example data"],
+ ["Assem Hssini","Frontend: map + compare","Maps, site picker, settings, Compare page, Date-slip page.","Map, Site, Settings, Compare, Date slip","Site picker running on example data"],
+ ["Open seat","—","If filled by someone who writes Python: takes Sun/Earth positions from Bing.","—","—"]];
+const PHASES=["Before","H0–4","H4–12","H12–24","H24–36","H36–48"];
+const WHEN=[
+ ["Bing","Confirm roles and rules; verify site coordinates; get ephemeris data","Run the interface freeze; stand-in Sun/Earth function","Real Sun/Earth positions, checked against JPL Horizons; finish site table","Run checkpoint; write the demo script; help whoever is blocked","Run checkpoint; cut scope; more accuracy checks","Project page, video, submit 2 h early"],
+ ["Zeynep","Colour/type tokens; Explore screen for desktop and phone","Panorama, timeline and tile styling","Compare and Date-slip screens","Map markers; empty, loading and error states","Review the built pages with Eya and Assem; wording and glossary","Slides, video visuals, screenshots"],
+ ["Maeva","Download elevation data; pass the Shackleton position check","Stand-in horizon; elevation data reader","Real terrain horizon for one site","Speed; mast height; map images for Assem","Map overlay data, if the horizon is solid","Fixes; accuracy answers for the pitch"],
+ ["Chenlin","Backend skeleton","Response formats + example responses; server answering with stand-ins","Sun-disk fraction, windows, totals on real inputs","Date-slip numbers; caching; precompute curated sites","Validation numbers for the Data page; deploy","Fixes; keep the demo server up"],
+ ["Eya","Frontend skeleton: tabs, responsive shell","Shared state; data client on example data; timeline dock","Panorama and tiles on example data","Switch to the live server; jump buttons; shareable links","Phone pass; Data page; apply design tokens","Fixes only"],
+ ["Assem","Read the plan; set up","Site picker and settings on example data","South-pole map: markers, tap to pick","Whole-Moon map; Compare page","Date-slip page; apply design tokens","Fixes only"]];
+const CHECKS=[
+ ["H2","Interfaces agreed; stand-ins and example data committed; app shell runs","Stop and fix; nothing else matters yet"],
+ ["H12","Explore page on the live server for one polar site with a real terrain horizon","Bing joins Maeva; drop the map overlays"],
+ ["H24","Compare works; all curated sites load; usable on a phone","Drop Date-slip thresholds, keep the plain chart"],
+ ["H36","Feature freeze; the whole demo script runs start to finish","Cut whatever the script cannot show"]];
+function table(head,rows){ return `<table class="bm"><tr>${head.map(h=>`<th>${h}</th>`).join("")}</tr>${rows.map(r=>`<tr>${r.map((c,i)=>i?`<td>${c}</td>`:`<th>${c}</th>`).join("")}</tr>`).join("")}</table>`; }
+function renderBuild(){
+  $("bmWho").innerHTML=table(["Person","Role","Builds","Shows up on the page as","Delivers in hour 1"],TEAM);
+  $("bmWhen").innerHTML=table(["",...PHASES],WHEN);
+  $("bmCheck").innerHTML=table(["When","Everyone shows","If it fails"],CHECKS);
+  $("ownersBtn").textContent="Owner labels on every page: "+(document.body.classList.contains("owners")?"on":"off");
+}
+
 // ---------- wiring ----------
 function renderTime(){ renderMaps(); renderTiles(); renderPano(); renderTimeline(); renderCompare(); }
 function renderAll(){ fillSelect(); renderTime(); renderSlip(); }
 function recompute(){ sims=SITES.map(s=>simulate(s,state.landing)); renderAll(); }
-function setHour(h){ state.hour=Math.max(0,Math.min(HOURS,Math.round(h))); $("hour").value=state.hour; renderTime(); }
+function setHour(h){ state.hour=Math.max(0,Math.min(HOURS,Math.round(h))); renderTime(); }
 
 const tip=$("tip");
 function showTip(e,html){ tip.innerHTML=html; tip.style.display="block";
@@ -568,8 +634,6 @@ $("jsun").onclick=()=>jump(k=>sims[state.site].frac[k]>0,"Sun");
 $("jearth").onclick=()=>jump(k=>sims[state.site].comm[k]===1,"Earth");
 $("date").value=new Date(state.landing).toISOString().slice(0,10);
 $("date").onchange=e=>{ const t=Date.parse(e.target.value+"T00:00:00Z"); if(!isNaN(t)){ state.landing=t; recompute(); } };
-$("hour").max=HOURS;
-$("hour").oninput=e=>setHour(+e.target.value);
 $("play").onclick=()=>{ if(state.timer){ clearInterval(state.timer); state.timer=null; $("play").textContent="▶ Play"; return; }
   $("play").textContent="❚❚ Pause"; if(state.hour>=HOURS) setHour(0);
   state.timer=setInterval(()=>{ if(state.hour>=HOURS){ $("play").click(); return; } setHour(state.hour+3); },50); };
@@ -597,6 +661,8 @@ $("slip").addEventListener("pointerleave",hideTip);
 
 let lastW=0;
 new ResizeObserver(()=>{ const w=document.documentElement.clientWidth; if(w!==lastW&&sims.length){ lastW=w; renderAll(); } }).observe(document.documentElement);
+document.body.classList.add("owners"); renderBuild();
+$("ownersBtn").onclick=()=>{ document.body.classList.toggle("owners"); renderBuild(); };
 recompute();
 showView(location.hash.slice(2));
 mapPick("polar",PN,PN,polarXY,polarLL,s=>s.lat<-75);

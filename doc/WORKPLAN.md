@@ -20,36 +20,46 @@ and one **time scrubber**:
 
 ## 2. Layout
 
-Wireframes with numbered blocks: open `prototype/wireframe.html`
-(served on the owner's LAN at `http://192.168.1.36:8765/wireframe.html`). The numbers below are the same.
+The clickable prototype is the layout reference: open `prototype/index.html`
+(served on the owner's LAN at `http://192.168.1.36:8765/`). It is deliberately plain. Controls with a dashed border
+are not built; hovering or tapping them explains what they will do. Each block carries a label naming who builds it,
+and the **Build map** page in the prototype shows the same assignment as tables. That page and the labels are
+planning aids and are removed before the demo.
 
 ```
-EXPLORE — desktop                                   EXPLORE — phone
-┌──────────────────────────────────────────────┐    ┌────────────────┐
-│ 1 App bar: logo · Explore|Compare|Slip|Data   │    │ 1 App bar      │
-├──────────────────────────────────────────────┤    │ 2 Tray         │
-│ 2 Scenario tray: [A] [B] [+ add]              │    │ 3 Map (folds)  │
-├───────────────────┬──────────────────────────┤    │ 4+5 Site/date  │
-│ 3 Map             │ 6 Status tiles            │    │   (sheet)      │
-│   pole | Moon     ├──────────────────────────┤    │ 6 Tiles 2×3    │
-│                   │ 7 Horizon panorama        │    │ 7 Panorama     │
-├───────────────────┤                           │    │ 8 Timeline     │
-│ 4 Site picker     ├──────────────────────────┤    │ 9 Scrubber     │
-│ 5 Date · mast     │ 8 Stay timeline + totals  │    │ 1 Bottom tabs  │
-├───────────────────┴──────────────────────────┤    └────────────────┘
-│ 9 Time scrubber: ▶ · slider · jump buttons    │
-└──────────────────────────────────────────────┘
+DESKTOP                                                          PHONE
+┌───────────────────────────────────────────────────────────┐   ┌────────────────┐
+│ 1 Top bar: logo · Explore | Compare | Date slip            │   │ 1 Logo · 2     │
+│                      2 scenario chips · Data (small link)  │   ├────────────────┤
+├───────────────────┬───────────────────────────────────────┤   │ 3 Map          │
+│ 3 Map             │ 6 Status tiles                         │   │ 4 Site         │
+│   pole | Moon     ├───────────────────────────────────────┤   │ 5 Settings     │
+├───────────────────┤ 7 Horizon panorama                     │   │ 6 Tiles 2×3    │
+│ 4 Site picker     │                                        │   │ 7 Panorama     │
+│ 5 Settings        │                                        │   ├────────────────┤
+├───────────────────┴───────────────────────────────────────┤   │ 8+9 Timeline   │
+│ 8+9 Timeline dock, always visible:                         │   │     dock       │
+│     ▶ · sunlight strip + Earth-link strip (drag = scrub)   │   │ 1 Bottom tabs  │
+│     · jump to next Sun / Earth event · time and totals     │   └────────────────┘
+└───────────────────────────────────────────────────────────┘
 
-COMPARE: 1, 2, then 10 comparison table (one row per scenario), 11 scenario actions, 9 scrubber
-SLIP:    1, 2, then 12 thresholds, 13 slip chart, 14 "add this day as a scenario"
-DATA:    15 trust panel
+COMPARE:  1, 2, then 10 comparison table (one row per scenario), 11 scenario actions, timeline dock
+SLIP:     1, 2, then 12 thresholds, 13 slip chart, 14 "add this day as a scenario", timeline dock
+DATA:     15 trust panel (no dock)
 ```
 
-Layout rules: the left column answers "which scenario", the right column answers "what happens there";
-the scrubber is always visible; on a phone everything is one column in the order above.
+Layout rules, in order of priority:
 
-The wireframe fixes **position and content** of blocks. Colours, type, spacing, icons and chart styling are the
-designer's decisions and are not fixed by the wireframe or by the earlier fake-data demo.
+1. **Keep it minimal.** One top bar, one content area, one bottom dock. No banners, badges or decoration.
+2. Three primary views (Explore, Compare, Date slip) are tabs next to the logo. Data is a secondary page and is a
+   small link, not a fourth tab.
+3. The timeline **is** the time control: blocks 8 and 9 are one dock at the bottom, shared by the three primary
+   views. There is no separate slider.
+4. In Explore the left column answers "which scenario", the right column answers "what happens there".
+5. On a phone everything is one column in the same order, with the tabs at the bottom.
+
+The prototype fixes **position and content** of blocks. Colours, type, spacing, icons and chart styling are the
+designer's decisions.
 
 ---
 
