@@ -98,7 +98,11 @@ Yes.
 
 ## Check before pressing submit
 
-- [ ] Access gate off; the link opens in a private window with no login.
+- [ ] Access gate off; the link opens in a private window with no login. The gate is a Cloudflare Access
+      application named "Luna Lens" on `luna-lens.gaobing1230.workers.dev`; deleting the application, or replacing
+      its allow policy with "everyone", both work — the first is cleaner and also removes the login page.
+- [ ] Deploy is current: the site on `main` is what the judges open. The upload carries `site/` plus the release
+      data; a dry run reads 247 files, inside the free plan's 20,000 files and 25 MiB each.
 - [ ] Demo hosted publicly (seven slides or a 30-second video, not both exceeded).
 - [ ] Every field in English.
 - [ ] NASA data listed; SI disclosure filled.

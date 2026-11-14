@@ -89,6 +89,9 @@ alternative dates at the same site". The second half is what the product cannot 
   and the final-project link must open without an account.
 - **No NASA branding.** This year's rules forbid generated content that uses NASA logos or design elements; the
   NASA meatball was removed from the app bar on 2026-11-14 and its asset deleted. NASA data itself is encouraged.
-- Add future CLPS targets and landing sites of other countries' programmes to the curated list; the challenge text
-  names both. Every site carries a source for its coordinates.
+- **Site breadth: covered by the Atlas page for now.** Our own curated list stays at the twelve sites whose
+  coordinates carry a source, because every added point without a check would break the rule the list exists to
+  keep. The Atlas page already carries 41 past, failed and planned missions with their own terrain patches, so a
+  judge comparing the two entries sees the full field; the Data page states that those coordinates have not been
+  re-sourced. Adding them to our list stays worth doing once each pair is checked against a primary source.
 - Test on real phones: iOS Safari and one Android.
