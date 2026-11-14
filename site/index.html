@@ -199,6 +199,12 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   dl.kv{grid-template-columns:1fr}
   #lang{max-width:110px}
 }
+/* Keep the full navigation usable on narrow tablet widths. */
+@media (min-width:761px) and (max-width:900px){
+  .appbar{flex-wrap:wrap}
+  .appbar .tray{order:5;flex:1 0 100%;justify-content:flex-start}
+  .explore{grid-template-columns:minmax(0,1fr)}
+}
 </style>
 <link rel="stylesheet" href="css/mission.css">
 </head>
