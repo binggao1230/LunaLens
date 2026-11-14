@@ -159,6 +159,10 @@ body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-
 body[data-view=data] .scrub{display:none}
 @media (max-width:760px){
   .side{display:none}
+  .appbar{flex-wrap:wrap;row-gap:6px}
+  .appbar .tray{flex:1 0 100%;justify-content:flex-start}
+  .chip{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .chip.ghost{flex:0 0 auto}
   .tabbar{grid-template-columns:repeat(4,1fr)}
   .scrub .chart{flex-basis:100%;order:-1}
   .scrub #now{flex-basis:auto;flex:1}
