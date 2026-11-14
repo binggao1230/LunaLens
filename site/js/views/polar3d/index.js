@@ -13,9 +13,12 @@ export async function createPolar3d(env) {
       const scene = new T.Scene();
       const camera = new T.PerspectiveCamera(42, 1, 0.1, 200);
       const controls = new OrbitControls(camera, canvas);
+      window.__luna = { T, scene, camera, renderer };
       controls.enablePan = false; controls.minDistance = 1.12; controls.maxDistance = 9; controls.rotateSpeed = 0.7;
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.02));
+      let pending = false, sceneReady = false;
+      const request = () => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); };
       const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: new T.TextureLoader().load('assets/moon_color_4k.webp', () => request()), roughness: 1, metalness: 0 }));
       scene.add(moon);
 
@@ -119,8 +122,10 @@ export async function createPolar3d(env) {
           paintedSun = sun.clone();
           for (let i = 0; i < hill.length; i++) {
             const lum = Math.max(0, normals.getX(i) * sun.x + normals.getY(i) * sun.y + normals.getZ(i) * sun.z);
-            // Additive floor: relief stays readable in shadow (0.45 × hill) and brightens when lit.
-            const tone = hill[i] * (0.45 + 0.55 * lum);
+            // At 1.6° solar elevation the physical term is 0 nearly everywhere, which renders the cap black
+            // and hides the terrain the plan wants read by eye. So the Sun modulates brightness instead of
+            // gating it: full relief everywhere, 28% darker where the surface faces away.
+            const tone = hill[i] * (0.72 + 0.28 * lum);
             const [ar, ag, ab] = albedoAt(latsDeg[i], lonsDeg[i]);
             colors[i * 3] = ar * 1.15 * tone; colors[i * 3 + 1] = ag * 1.12 * tone; colors[i * 3 + 2] = ab * 1.18 * tone;
             colors[i * 3] = 1.05 * tone; colors[i * 3 + 1] = 1.02 * tone; colors[i * 3 + 2] = 1.08 * tone;
@@ -174,13 +179,24 @@ export async function createPolar3d(env) {
       };
       // Earth is a camera-facing disk shaded pixel by pixel from the Moon's line of sight, not the
       // camera's: the camera sits outside the Earth, so camera shading would show the wrong phase.
+      // Its albedo comes from the 2048x1024 Blue Marble frame under site/assets/.
       const earthCanvas = document.createElement('canvas');
-      earthCanvas.width = earthCanvas.height = 160;
+      earthCanvas.width = earthCanvas.height = 240;
       const earthTex = new T.CanvasTexture(earthCanvas);
       const earth = new T.Sprite(new T.SpriteMaterial({ map: earthTex, transparent: true, depthWrite: false }));
       earth.scale.set(0.72, 0.72, 1);
+      const earthAlbedo = await (async () => {
+        const image = new Image();
+        image.src = 'assets/earth_day_2k.webp';
+        await image.decode().catch(() => null);
+        const sc = document.createElement('canvas');
+        sc.width = 1024; sc.height = 512;
+        const sg = sc.getContext('2d', { willReadFrequently: true });
+        if (image.naturalWidth) sg.drawImage(image, 0, 0, 1024, 512);
+        return sg.getImageData(0, 0, 1024, 512).data;
+      })();
       const paintEarth = (sunDir, fwd) => {
-        const S = 160, R = S / 2 - 2, g = earthCanvas.getContext('2d');
+        const S = 240, R = S / 2 - 2, g = earthCanvas.getContext('2d');
         const img = g.createImageData(S, S), out = img.data;
         const right = new T.Vector3().crossVectors(fwd, new T.Vector3(0, 1, 0)).normalize();
         const up = new T.Vector3().crossVectors(right, fwd).normalize();
@@ -193,8 +209,13 @@ export async function createPolar3d(env) {
             const x = right.x * nx + up.x * ny - fwd.x * nz;
             const y = right.y * nx + up.y * ny - fwd.y * nz;
             const z = right.z * nx + up.z * ny - fwd.z * nz;
-            const shade = 0.05 + 0.95 * Math.pow(Math.max(0, x * sunDir.x + y * sunDir.y + z * sunDir.z), 0.55);
-            out[o] = 44 * shade; out[o + 1] = 108 * shade; out[o + 2] = 208 * shade; out[o + 3] = 255;
+            const shade = 0.04 + 0.96 * Math.pow(Math.max(0, x * sunDir.x + y * sunDir.y + z * sunDir.z), 0.5);
+            // Local body coordinates: latitude from the screen-up axis, longitude from the screen-right
+            // axis. The Earth does not rotate in the scene (no inertial frame yet), which M4 would add.
+            const u = Math.min(1023, Math.max(0, Math.round(((Math.atan2(nx, nz) + Math.PI) / (2 * Math.PI)) * 1023)));
+            const w = Math.min(511, Math.max(0, Math.round(((Math.asin(Math.max(-1, Math.min(1, ny))) + Math.PI / 2) / Math.PI) * 511)));
+            const t = (w * 1024 + u) * 4;
+            out[o] = earthAlbedo[t] * shade; out[o + 1] = earthAlbedo[t + 1] * shade; out[o + 2] = earthAlbedo[t + 2] * shade; out[o + 3] = 255;
           }
         }
         g.putImageData(img, 0, 0);
@@ -203,7 +224,9 @@ export async function createPolar3d(env) {
       const sunBody = new T.Mesh(new T.SphereGeometry(0.22, 24, 16), new T.MeshBasicMaterial({ color: 0xffd45a }));
       const sunGlow = new T.Sprite(new T.SpriteMaterial({ map: glowTexture('rgba(255,205,90,.7)'), blending: T.AdditiveBlending, depthWrite: false }));
       sunGlow.scale.set(2.8, 2.8, 1);
-      scene.add(earth, sunBody, sunGlow);
+      const sunDisk = new T.Sprite(new T.SpriteMaterial({ map: new T.TextureLoader().load('assets/sun_disk_1k.webp'), transparent: true, blending: T.AdditiveBlending, depthWrite: false }));
+      sunDisk.scale.set(0.5, 0.5, 1);
+      scene.add(earth, sunBody, sunGlow, sunDisk);
       const starPositions = [];
       for (let i = 0; i < 900; i++) {
         const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = Math.sqrt(1 - u * u), d = 40 + Math.random() * 30;
@@ -220,7 +243,7 @@ export async function createPolar3d(env) {
       const sunSpot = new T.Mesh(new T.SphereGeometry(1, 12, 8), new T.MeshBasicMaterial({ color: 0xffe066 }));
       sunSpot.scale.setScalar(0.018);
       scene.add(sunSpot);
-      let markers = [], markerKey = '', pending = false, tween = 0, home = null;
+      let markers = [], markerKey = '', tween = 0, home = null;
       const sphereGeometry = new T.SphereGeometry(1, 16, 12), ringGeometry = new T.RingGeometry(1.5, 2, 24);
 
       const buildMarkers = () => {
@@ -242,7 +265,6 @@ export async function createPolar3d(env) {
           return { site, normal, radius, dotMesh, ring };
         });
       };
-      const request = () => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); };
       const placeLabel = (position, normal) => {
         const label = $('m-label'), site = pickedSite();
         const facing = normal.dot(camera.position.clone().normalize()) > 0.08;
@@ -254,6 +276,9 @@ export async function createPolar3d(env) {
         label.textContent = labelText(site);
       };
       function draw() {
+        // The cap loads asynchronously and can ask for a redraw before the rest of this function has run;
+        // sceneReady flips only once every helper exists.
+        if (!sceneReady) return;
         const f = getFrame();
         if (view() !== 'mission' || local.mode !== '3d' || !f) return;
         buildMarkers();
@@ -263,6 +288,7 @@ export async function createPolar3d(env) {
         paintEarth(new T.Vector3(...f.sun).normalize(), new T.Vector3(...f.earth).normalize());
         sunBody.position.set(...f.sun).multiplyScalar(8);
         sunGlow.position.copy(sunBody.position);
+        sunDisk.position.copy(sunBody.position);
         sunSpot.position.set(...f.sun).multiplyScalar(1.004);
         // The angle at the Moon between Sun and Earth is the Moon's phase angle; Earth, seen from
         // the Moon, shows the complement of the Moon's illuminated fraction.
@@ -332,6 +358,8 @@ export async function createPolar3d(env) {
         reset: () => setHome(),
         focus: (site) => flyTo(new T.Vector3(...unit(site.lat, site.lon))),
       };
+      sceneReady = true;
+      request();
       resize();
     } catch (error) {
       console.error(error);

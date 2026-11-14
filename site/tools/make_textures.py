@@ -26,15 +26,21 @@ DATA = ROOT / "site" / "data"
 ASSETS = ROOT / "site" / "assets"
 
 SVS = "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720"
+GIBS = (
+    "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
+    "&LAYERS=BlueMarble_ShadedRelief_Bathymetry&STYLES=&CRS=EPSG:4326&BBOX=-90,-180,90,180"
+    "&WIDTH=2048&HEIGHT=1024&FORMAT=image/jpeg"
+)
 
 TEXTURES = {
     "moon": [
         (f"{SVS}/lroc_color_poles_4k.tif", "lroc_color_poles_4k.tif", "moon_color_4k.webp", 4096, 2048, 92),
         (f"{SVS}/ldem_4.tif", "ldem_4.tif", None, None, None, None),
     ],
-    # Filled in when the Earth and Sun steps run.
-    "earth": [],
-    "sun": [],
+    # NASA GIBS WMS: one 2048x1024 equirectangular frame of the Blue Marble shaded-relief layer.
+    "earth": [(GIBS, "earth_gibs_2k.jpg", "earth_day_2k.webp", 2048, 1024, 88)],
+    # SDO/AIA 304 A full disk, used as the Sun's apparent disk (it is 0.5 deg wide from the Moon).
+    "sun": [("https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0304.jpg", "sdo_304_1k.jpg", "sun_disk_1k.webp", 1024, 1024, 92)],
 }
 
 
