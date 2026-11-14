@@ -1,6 +1,6 @@
 # TODO — what the 14 November call and the Figma file ask for
 
-Sources: the design-review call (`chat.txt`, 14 Nov) and the Figma file *NASA SpaceApps*
+Sources: the team's 14 November design call and the Figma file *NASA SpaceApps*
 (`pj5bENLGkYn0XeqofTY4YW`). Everything below is about `site/`, the only build; `prototype/` was deleted on 14 November.
 
 ## What the call decided
