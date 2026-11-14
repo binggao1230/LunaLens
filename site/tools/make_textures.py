@@ -29,7 +29,7 @@ SVS = "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720"
 GIBS = (
     "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
     "&LAYERS=BlueMarble_ShadedRelief_Bathymetry&STYLES=&CRS=EPSG:4326&BBOX=-90,-180,90,180"
-    "&WIDTH=2048&HEIGHT=1024&FORMAT=image/jpeg"
+    "&WIDTH=4096&HEIGHT=2048&FORMAT=image/jpeg"
 )
 
 TEXTURES = {
@@ -37,10 +37,12 @@ TEXTURES = {
         (f"{SVS}/lroc_color_poles_4k.tif", "lroc_color_poles_4k.tif", "moon_color_4k.webp", 4096, 2048, 92),
         (f"{SVS}/ldem_4.tif", "ldem_4.tif", None, None, None, None),
     ],
-    # NASA GIBS WMS: one 2048x1024 equirectangular frame of the Blue Marble shaded-relief layer.
-    "earth": [(GIBS, "earth_gibs_2k.jpg", "earth_day_2k.webp", 2048, 1024, 88)],
-    # SDO/AIA 304 A full disk, used as the Sun's apparent disk (it is 0.5 deg wide from the Moon).
-    "sun": [("https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0304.jpg", "sdo_304_1k.jpg", "sun_disk_1k.webp", 1024, 1024, 92)],
+    # NASA GIBS WMS: one 4096x2048 equirectangular frame of the Blue Marble shaded-relief layer. The disk is
+    # a third of the screen when the scene faces Earth, so 4k is the point where it stops looking soft.
+    "earth": [(GIBS, "earth_gibs_4k.jpg", "earth_day_4k.webp", 4096, 2048, 90)],
+    # SDO/AIA 304 A full disk, used as the Sun's apparent disk (it is 0.5 deg wide from the Moon). Fetched at
+    # 2048 px and cut down, so the granulation survives the crop and the tint.
+    "sun": [("https://sdo.gsfc.nasa.gov/assets/img/latest/latest_2048_0304.jpg", "sdo_304_2k.jpg", "sun_disk_1k.webp", 1024, 1024, 92)],
 }
 
 
@@ -71,19 +73,20 @@ def convert(source: Path, target: Path, width: int, height: int, quality: int) -
 def convert_sun(source: Path, target: Path) -> None:
     """SDO/AIA 304 A frame -> a warm disk with a transparent surround.
 
-    The published 1024 px frame puts the disk inside a black field with a timestamp printed under it. Crop
-    above the caption, use luminance as the texture, and reuse it as an alpha mask so the sprite blends into
-    the sky instead of showing a black square. The 304 A colour is false colour, so it is desaturated and
-    tinted towards white rather than shown red.
+    The published frame puts the disk inside a black field with a timestamp printed under it. Crop above the
+    caption, use luminance as the texture and as the alpha mask so the sprite blends into the sky instead of
+    showing a black square, and unsharp-mask the result: the crop and the resize together take the
+    granulation out otherwise. 304 A is false colour, so it is desaturated and tinted towards white.
     """
     target.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        ["magick", str(source), "-crop", "900x850+62+86", "+repage", "-resize", "512x512!",
+        ["magick", str(source), "-crop", "1800x1700+124+172", "+repage", "-resize", "1024x1024!",
          "-colorspace", "Gray", "-normalize",
-         "(", "+clone", "-alpha", "off", "-level", "0%,30%", ")",
+         "-unsharp", "0x1+0.9+0.02",
+         "(", "+clone", "-alpha", "off", "-level", "2%,28%", ")",
          "-compose", "CopyOpacity", "-composite",
-         "-fill", "#ffcf87", "-colorize", "60", "-modulate", "108,125,100",
-         "-quality", "92", "-define", "webp:method=6", str(target)],
+         "-fill", "#ffd79b", "-colorize", "55", "-modulate", "110,120,100",
+         "-quality", "94", "-define", "webp:method=6", str(target)],
         check=True,
     )
     print(f"  product {target.relative_to(ROOT)} ({target.stat().st_size / 1048576:.2f} MB)")
