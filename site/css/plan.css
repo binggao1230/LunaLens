@@ -76,3 +76,9 @@
   #v-plan .plan { grid-template-columns: minmax(0, 1fr); }
   #v-plan .plan-canvas { height: min(52svh, 420px); }
 }
+
+#v-plan .plan-plain {
+  margin: 8px 0 0; padding: 8px 10px; border-radius: 8px;
+  background: rgba(245, 197, 66, .06); border-left: 2px solid var(--sun);
+  font-size: 12px; line-height: 1.55; color: var(--text2);
+}

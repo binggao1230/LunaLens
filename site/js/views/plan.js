@@ -369,6 +369,7 @@ export function createPlan(env) {
       <div class="plan-kv"><span>${escapeHtml(t('Earth elevation'))}</span><b>${f.earthEl.toFixed(1)}°</b></div>
       <div class="plan-kv"><span>${escapeHtml(t('Direct-to-Earth link'))}</span><b>${f.link ? escapeHtml(t('Available')) : escapeHtml(t('Blocked'))}</b></div>
       <div class="plan-kv"><span>${escapeHtml(t('Sun'))}</span><b>${f.sunUp ? escapeHtml(t('In sunlight')) : escapeHtml(t('In shadow'))}</b></div>
+      <p class="plan-plain">${escapeHtml(plainSite(f))}</p>
       <p class="plan-small">${escapeHtml(site.terrain ?? t('no terrain'))}${site.mastM ? ` · ${escapeHtml(t('mast'))} ${site.mastM * 1000} m` : ''}</p>` : '';
 
     els.sky.innerHTML = f ? `
@@ -396,6 +397,18 @@ export function createPlan(env) {
 
     drawStrip();
     updateSun();
+  }
+
+/** One sentence, no units a reader has to decode: what the two numbers above mean for a lander. */
+  function plainSite(f) {
+    const widths = Math.abs(f.sunEl / 0.53);
+    const sunPart = f.sunEl >= 0
+      ? `The Sun stands ${f.sunEl.toFixed(1)}° above the horizon, about ${widths.toFixed(0)} solar discs.`
+      : `The Sun is ${Math.abs(f.sunEl).toFixed(1)}° below the skyline.`;
+    const earthPart = f.link
+      ? 'Earth is clear of the terrain, so a direct link is possible.'
+      : `Earth sits ${Math.abs(f.earthEl).toFixed(1)}° ${f.earthEl >= 0 ? 'above' : 'below'} the skyline, short of the link margin.`;
+    return `${sunPart} ${earthPart}`;
   }
 
   function frameData(site) {
