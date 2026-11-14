@@ -31,3 +31,6 @@ dist/
 
 # Browser automation output
 .playwright-mcp/
+
+# Cloudflare local state
+.wrangler/
