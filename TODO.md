@@ -74,8 +74,8 @@ alternative dates at the same site". The second half is what the product cannot 
 - A glossary: azimuth, elevation, lunar day, libration, direct-to-Earth.
 - Visuals for the demo video and the slides.
 - Education mode (in progress): a guided six-step story on the Mission page, with a guide character.
-  Entry point on the start page: a Mission planner / Education mode chooser synced with an Expert / Education pill
-  in the top bar (global state in `site/js/mode.js`, kept in the URL hash and localStorage). In Education mode the
+  Entry point: an Expert / Education pill in the top bar of every page (global state in `site/js/mode.js`, kept in
+  the URL hash and localStorage). In Education mode the
   guide greets on the start page, the probe cards use plain wording, and "Start the mission" opens the Mission page
   at step 1 (objective). Then: pick a site, launch, a delayed launch breaks the plan, fix it with four levers,
   mission-complete card. A simplified teaching verdict (battery against the longest night, Earth-contact share,

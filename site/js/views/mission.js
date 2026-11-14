@@ -4,8 +4,7 @@ import { nextTransition } from '../engine/metrics.js';
 import { createPolar3d } from './polar3d/index.js';
 import { mountProbePreviews } from './probe-gallery.js';
 import { playProbeFlight } from './probe-flight.js';
-// Aliased: createMission has its own setMode (3D / 2D stage), which must not shadow the app-wide mode store.
-import { getMode as getAppMode, setMode as setAppMode, onMode, isEducation } from '../mode.js';
+import { onMode, isEducation } from '../mode.js';
 import { CHARACTER_SVG } from '../edu/character.js';
 import { BATTERY_H } from '../edu/verdict.js';
 
@@ -162,13 +161,6 @@ function batteryText(hours) {
   if (hours === 36) return t('a day and a half');
   return t('{n} days', { n: Math.round(hours / 24) });
 }
-const ICON_RADAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M12 12l6.4-6.4"/></svg>';
-const ICON_BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5A1.5 1.5 0 0 1 4.5 4H10a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4.5A1.5 1.5 0 0 1 3 15.5z"/><path d="M21 5.5A1.5 1.5 0 0 0 19.5 4H14a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h5.5a1.5 1.5 0 0 0 1.5-1.5z"/><path d="M6 8.5h3.5M6 11.5h3.5M14.5 8.5H18M14.5 11.5H18"/></svg>';
-const MODE_CARDS = [
-  { id: 'expert', name: 'Mission planner', sub: 'Compare sites, dates and margins', icon: ICON_RADAR },
-  { id: 'education', name: 'Education mode', sub: 'Learn with a guide, for curious minds and classrooms', icon: ICON_BOOK },
-];
-
 export function createMission(ctx) {
   const $ = (id) => document.getElementById(id);
   const startEl = $('v-start'), missionEl = $('v-mission'), flightEl = $('flight');
@@ -227,17 +219,9 @@ export function createMission(ctx) {
   function renderStart() {
     disposePreview();
     const selected = probe(), edu = isEducation();
-    const modeCard = (card) => `<button type="button" role="radio" class="mode-card${card.id === 'education' ? ' mode-card-edu' : ''}" data-choose="${card.id}" aria-checked="${card.id === getAppMode()}" tabindex="${card.id === getAppMode() ? 0 : -1}">
-        <span class="mode-icon" aria-hidden="true">${card.icon}</span>
-        <span class="mode-name">${escapeHtml(t(card.name))}</span>
-        <span class="mode-sub">${escapeHtml(t(card.sub))}</span>
-        <span class="mode-dot" aria-hidden="true"></span>
-        ${card.id === 'education' ? `<span class="mode-avatar" aria-hidden="true">${CHARACTER_SVG}</span>` : ''}
-      </button>`;
     startEl.innerHTML = `<div class="start">
       <h1 aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt=""><span>Lens</span></h1>
       <p class="lede">${escapeHtml(t('See which lunar landing sites have sunlight and a direct line of sight to Earth, hour by hour. Pick a lander, choose a site, then send a probe.'))}</p>
-      <div class="mode-choice" role="radiogroup" aria-label="${escapeHtml(t('Choose how to use LunaLens'))}">${MODE_CARDS.map(modeCard).join('')}</div>
       <div class="pick">${escapeHtml(t('Choose your probe'))}</div>
       <div class="guide-row" id="guide"${edu ? '' : ' hidden'}><div class="edu-char mood-happy" aria-hidden="true">${CHARACTER_SVG}</div>
         <p class="guide-bubble" role="status">${escapeHtml(t('Hi! I\'ll be your mission guide. Pick a lander and press Validate.'))}</p></div>
@@ -259,15 +243,11 @@ export function createMission(ctx) {
       <div class="start-actions"><button class="btn-primary" id="validate">${escapeHtml(t(edu ? 'Start the mission' : 'Validate'))}<span aria-hidden="true">→</span></button></div></div>`;
     disposePreview = mountProbePreviews(startEl.querySelector('.probe-grid'));
   }
-  /** The mode changed while the start page is up: update the chooser, the guide, the cards and the button in place
+  /** The mode changed while the start page is up: update the guide, the cards and the button in place
    *  (a full renderStart would reload the four 3D previews). */
   function applyStartMode() {
     if (!startEl.querySelector('.start')) return;
     const edu = isEducation();
-    for (const card of startEl.querySelectorAll('[data-choose]')) {
-      const on = card.dataset.choose === getAppMode();
-      card.setAttribute('aria-checked', String(on)); card.tabIndex = on ? 0 : -1;
-    }
     startEl.querySelector('#guide').hidden = !edu;
     startEl.querySelector('#illus').hidden = !edu;
     for (const p of PROBES) { const meta = startEl.querySelector(`[data-probe="${p.id}"] .probe-meta`); if (meta) meta.innerHTML = probeMetaHtml(p, edu); }
@@ -919,8 +899,6 @@ export function createMission(ctx) {
   }
 
   startEl.addEventListener('click', (event) => {
-    const choice = event.target.closest('[data-choose]');
-    if (choice) { setAppMode(choice.dataset.choose); return; }
     const card = event.target.closest('[data-probe]');
     if (card) {
       local.probe = card.dataset.probe; local.picked = null; local.open = null;
@@ -931,17 +909,6 @@ export function createMission(ctx) {
       return;
     }
     if (event.target.closest('#validate')) goMission();
-  });
-  // The mode chooser is a radio group: arrow keys move between the two cards and select as they go.
-  startEl.addEventListener('keydown', (event) => {
-    const card = event.target.closest('[data-choose]');
-    if (!card || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
-    event.preventDefault();
-    const cards = [...startEl.querySelectorAll('[data-choose]')], i = cards.indexOf(card);
-    const forward = ['ArrowRight', 'ArrowDown', 'End'].includes(event.key);
-    const target = event.key === 'Home' ? cards[0] : event.key === 'End' ? cards[cards.length - 1] : cards[(i + (forward ? 1 : cards.length - 1)) % cards.length];
-    setAppMode(target.dataset.choose); // onMode → applyStartMode
-    target.focus();
   });
   function goMission() {
     ctx.onValidate?.();
