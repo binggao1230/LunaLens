@@ -16,35 +16,40 @@ Team of 7, roughly 2 days. Current stage: **early planning, no code yet**.
 
 - Challenge text: `doc/Background.md`, `doc/Resources.md` (official content; do not rewrite)
 - Product plan: `doc/PRODUCT.md` (what we build: features, tiers, acceptance checks, minimum bar, out of scope)
-- Build plan: `doc/PLAN.md` (how and when: architecture, API contract, roadmap, roles, resources)
-- On features and tiers `PRODUCT.md` wins; on everything else `PLAN.md` is the source of truth. Change the document first, then the code.
+- Build plan: `doc/PLAN.md` (technical approach, roadmap, pitfalls, resources)
+- Work plan: `doc/WORKPLAN.md` (layout, code structure, interfaces, the seven work packages and their task lists)
+- On features and tiers `PRODUCT.md` wins; on everything else `PLAN.md` is the source of truth. On who owns what and on interfaces `WORKPLAN.md` wins. Change the document first, then the code.
 
 ## Read before starting work
 
-1. Read `doc/PRODUCT.md` §4–§6 (features, minimum bar, out of scope) and `doc/PLAN.md` §0, §2.4 (API contract), §4 (pitfalls).
+1. Read `doc/PRODUCT.md` §4–§6 (features, minimum bar, out of scope) and `doc/PLAN.md` §0, §2.4 (API contract), §4 (pitfalls). Then find your role in `doc/WORKPLAN.md` §5.
 2. If the work is not a feature in `PRODUCT.md`, add it there before starting. Do not expand scope silently.
 3. After the H36 feature freeze, fix bugs only; add no features.
 
-## Directory layout (follow this when code is created)
+## Directory layout
 
 ```
-doc/        plan and challenge documents
-api/        FastAPI service
-ephem/      ephemeris (SPICE wrapper)
-terrain/    DEM reading, horizon mask
-windows/    illumination and communication windows, metrics
-web/        frontend (Vite + React + TS)
-scripts/    data download and precomputation scripts
-data/       DEMs, SPICE kernels, precomputed intermediates — not in Git
-tests/      includes the Horizons regression fixture
-prototype/  throwaway fake-data UI demo — never import from it or build on it
+doc/                  PRODUCT.md, PLAN.md, WORKPLAN.md, challenge text
+backend/lunalens/     Python package: ephem/, terrain/, windows/, api/
+backend/scripts/      data download, map assets, precompute, validation
+backend/tests/        includes the Horizons regression fixture and the DEM projection check
+web/                  frontend (Vite + React + TS): app/, state/, api/, ui/, lib/, features/*
+data/                 DEMs, SPICE kernels, intermediates — not in Git
+prototype/            throwaway fake-data demo and wireframes — never import from it or build on it
 ```
+
+File-level structure and the owner of each directory are in `doc/WORKPLAN.md` §3. Follow it:
+
+- One owner per directory. Change another owner's directory through them or a reviewed pull request.
+- `web/src/features/*` do not import each other; they share through `state/`, `api/`, `ui/`, `lib/`.
+- Backend layers go one way: `api → windows → (ephem, terrain)`.
+- `backend/lunalens/api/schemas.py` is the API contract; `web/src/api/types.ts` is generated from it and never edited by hand.
 
 The frontend must be responsive and usable in a phone browser; check every UI change at a narrow width (about 390 px) as well as on desktop.
 
 ## Hard data conventions
 
-Changing any of these requires updating `doc/PLAN.md` §2.4 and notifying everyone.
+Changing any of these requires updating `doc/PLAN.md` §2.4 and `doc/WORKPLAN.md` §4 and notifying everyone.
 
 - Longitude: east-positive, range 0–360. Latitude: south is negative. Angles in degrees.
 - Azimuth: clockwise from north (north 0 → east 90).

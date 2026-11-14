@@ -5,7 +5,7 @@ Sources (public NASA data):
   Image https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_2k.jpg  (SVS CGI Moon Kit)
 
 Usage:
-  python3 -I scripts/make_prototype_assets.py <LDEM_75S_240M.IMG> <out_dir>
+  python3 -I prototype/make_prototype_assets.py <LDEM_75S_240M.IMG> <out_dir>
 
 Label values used (LDEM_75S_240M.LBL): 3812 x 3812, LSB 16-bit signed, height_m = DN * 0.5,
 polar stereographic centred on 90S / 0E, 240 m/pixel, projection offsets 1905.5.

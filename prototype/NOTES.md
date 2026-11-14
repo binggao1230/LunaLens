@@ -3,6 +3,9 @@
 **Throwaway.** This directory is a fake-data UI demo. Do not import from it, extend it into the product,
 or copy its numbers anywhere. The real frontend is built in `web/` against the API contract in `doc/PLAN.md` §2.4.
 
+`wireframe.html` in this directory is the low-fidelity layout for the real product (numbered blocks, owners);
+it is the reference for layout. `index.html` is the earlier fake-data demo and is frozen: do not polish it further.
+
 ## Question it answers
 
 What should Luna Lens look like, and do the five P0/P1 views read well together on desktop and on a phone?
@@ -27,7 +30,7 @@ On the owner's machine it is served by PM2 as `luna-lens-prototype` on port 8765
 ## What is real
 
 - **South pole map**: `assets/sp_dem_1200m.bin` is LOLA `LDEM_75S_240M` block-averaged to 1.2 km, built by
-  `scripts/make_prototype_assets.py`. The projection was checked at Shackleton crater (89.67°S, 129.8°E reads
+  `prototype/make_prototype_assets.py`. The projection was checked at Shackleton crater (89.67°S, 129.8°E reads
   −2786 m, a deep pit, with east to the right and 0° longitude up). The shading is relief only, lit from the
   model's Sun direction at a fixed 10° height. It is not a shadow map.
 - **Whole-Moon map**: `assets/moon_1024.jpg` is the LROC colour mosaic from the NASA SVS CGI Moon Kit, downscaled.

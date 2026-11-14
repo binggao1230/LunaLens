@@ -61,6 +61,7 @@
                               precomputed JSON (curated sites, offline fallback)
 ```
 
+- **Code layout**: one Python package `backend/lunalens/` (`ephem`, `terrain`, `windows`, `api`) and one frontend `web/`; file-level structure and owners are in `WORKPLAN.md` §3.
 - **Backend**: Python + FastAPI + `spiceypy` + `numpy`. The DEM `.IMG` files are raw 16-bit rasters readable with `numpy.memmap`, with no GDAL dependency `[COMPUTED: file bytes = side² × 2, see §5; HIGH]`.
 - **Frontend**: Vite + React + TypeScript; ECharts or D3 for the panorama and timeline; Three.js for 3D.
 - **Fallback**: precompute the horizon mask and one year of ephemeris for the curated sites into static JSON shipped with the frontend, so the demo runs even if the API is down.
@@ -83,15 +84,16 @@
 - Communication criterion: Earth-centre elevation > terrain horizon + a configurable margin (default to be decided, tagged `[GUESS]`, shown explicitly in the UI).
 - Power metrics: report both the visible disk fraction (for a vertical tracking array) and `sin(elevation)` (for a horizontal array), without making the assumption for the user.
 
-### 2.4 API contract (frozen on the morning of day 1; changes require notifying everyone)
+### 2.4 API contract (frozen in the first two hours; changes require notifying everyone)
 
 ```
-GET /api/sites                                   → [{id, name, lat, lon, category, source}]
-GET /api/horizon?lat&lon&mast_m                  → {az:[0..359], elev_deg:[...], dem, radius_km}
-GET /api/ephemeris?lat&lon&start&stop&step       → [{t, sun:{az,el,disk_frac}, earth:{az,el,visible}}]
-GET /api/windows?lat&lon&start&stop&mast_m       → {sun_windows, comm_windows, next_sunset,
-                                                    next_earthset, metrics:{...}}
+GET /api/sites                                              → [{id, name, lat, lon, category, source}]
+GET /api/scenario?lat&lon&start&days&mast_m&margin_deg      → {horizon, samples[], sun_windows, comm_windows, metrics}
+GET /api/slip?lat&lon&start&slip_days&mast_m&margin_deg     → [{slip_day, sunlit_at_touchdown, continuous_sun_h, link_share}]
+GET /api/validation                                         → static JSON
 ```
+
+One scenario is one request. Field-level definitions live in `backend/lunalens/api/schemas.py`; see `WORKPLAN.md` §4.
 
 Conventions: longitude east-positive 0–360; south latitude negative; angles in degrees; time in ISO-8601 UTC; elevation relative to the 1737.4 km reference sphere, in metres.
 
@@ -117,17 +119,7 @@ Conventions: longitude east-positive 0–360; south latitude negative; angles in
 
 ## 4. Work breakdown and roles (7 people)
 
-| # | Role | Responsibility | Deliverable |
-|---|---|---|---|
-| 1 | Ephemeris | SPICE wrapper, azimuth/elevation, Horizons regression tests | `ephem/` + tests |
-| 2 | Terrain A | DEM reading, polar projection conversion, horizon mask algorithm | `terrain/` + validation plots |
-| 3 | Terrain B / validation | Window and metric calculation, disk fraction, comparison with PGDA illumination maps, precomputation | `windows/` + fallback JSON |
-| 4 | Backend / integration | FastAPI, contract, caching, deployment, CI | `api/` |
-| 5 | Frontend A | Panorama, timeline, countdowns | Core visualisations |
-| 6 | Frontend B | Site selection, side-by-side comparison, map or 3D | Comparison experience |
-| 7 | Product / delivery | Site table verification, UX copy, demo script, video, submission | Project page and demo |
-
-Roles 2 and 3 pair on the critical path for the first 12 h. Role 7 writes the demo script from hour one and works backwards to which features must actually work on stage.
+The seven work packages (including the designer), their files, task lists and hand-offs are in `WORKPLAN.md` §5. In short: lead / product, designer, three science roles (ephemeris, terrain, windows + API) and two frontend roles (explore, map + compare). References below to "role N" follow the numbering in that file.
 
 ### Pitfalls
 
@@ -140,7 +132,7 @@ Roles 2 and 3 pair on the critical path for the first 12 h. Role 7 writes the de
 7. **Be honest about DEM resolution**: an 80 m grid cannot see rocks or small craters next to the lander. State conclusions as "windows under regional terrain constraints", not exact landing-point values. Say so in the UI and in the pitch.
 8. **No runtime third-party dependencies**: Horizons and Trek tiles may be slow or down during the demo. Prefetch or render everything ourselves.
 9. **No large files in Git**: DEMs and kernels live in `data/` (gitignored) and are reproduced with download scripts.
-10. **Every curated site coordinate needs a source**: see §6. Role 7 verifies each row before it enters `sites.json`.
+10. **Every curated site coordinate needs a source**: see §6. The lead verifies each row before it enters `sites.json`.
 
 ---
 
@@ -186,14 +178,14 @@ Download the first three plus 60S_240M before the event, about 466 MB in total `
 ### 5.3 Open resource questions
 
 - Does Trek WMTS have a directly usable south polar projection layer → unverified. **Default: render our own hillshade basemap from the DEM** and do not wait on it.
-- Which sites PGDA #78 covers, and whether they include our curated sites → role 2 checks before the event.
-- Competition rules (submission format, AI-use disclosure, judging criteria) → role 7 checks against this year's official site. This document does not speak for the organisers.
+- Which sites PGDA #78 covers, and whether they include our curated sites → Science B checks before the event.
+- Competition rules (submission format, AI-use disclosure, judging criteria) → the lead checks against this year's official site. This document does not speak for the organisers.
 
 ---
 
 ## 6. Curated sites (seed table, **unverified, do not load as-is**)
 
-These coordinates are from memory and are a starting point only. Role 7 must check each row against a primary source before writing it to `sites.json` and filling in the `source` field.
+These coordinates are from memory and are a starting point only. The lead must check each row against a primary source before writing it to `sites.json` and filling in the `source` field.
 
 | Site | Latitude | East longitude | Category | Confidence |
 |---|---|---|---|---|
@@ -248,8 +240,8 @@ Far-side sites (Chang'e-4/6) never see Earth `[KNOWN, HIGH]`, which makes them a
 
 | Item | Default | Owner |
 |---|---|---|
-| Compute on demand vs. precompute everything | On demand, with precomputed fallback for curated sites | Role 4 |
-| Basemap source | Hillshade rendered from the DEM | Role 6 |
-| Default communication margin | 2° for now, adjustable in the UI `[GUESS]` | Role 3 |
-| Deployment location | TBD (depends on venue network) | Role 4 |
+| Compute on demand vs. precompute everything | On demand, with precomputed fallback for curated sites | Science C |
+| Basemap source | Hillshade rendered from the DEM | Science B |
+| Default communication margin | 2° for now, adjustable in the UI `[GUESS]` | Science C |
+| Deployment location | TBD (depends on venue network) | Science C |
 | Names against roles | To be filled in by the team lead | Team lead |
