@@ -3,6 +3,7 @@ import { escapeHtml, fmtDeg, fmtLatLon, fmtDateTime, fmtDayMonth } from '../form
 import { nextTransition } from '../engine/metrics.js';
 import { createPolar3d } from './polar3d/index.js';
 import { mountProbePreviews } from './probe-gallery.js';
+import { playProbeFlight } from './probe-flight.js';
 
 const D2R = Math.PI / 180, HOUR = 36e5, SPAN = 709;
 const COLORS = { link: '#43d98a', sun: '#f5c542', dark: '#7d7993', both: '#9be7ff' };
@@ -11,6 +12,12 @@ const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 const MESSAGES = {
+  'Leave Earth': ['Quitter la Terre', '离开地球'],
+  'Lunar transfer': ['Transit lunaire', '地月巡航'],
+  'Moon approach': ['Approche lunaire', '接近月球'],
+  'Skip flight': ['Passer le vol', '跳过飞行'],
+  'Illustrative flight · not to scale': ['Vol illustratif · hors échelle', '飞行演示 · 非真实比例'],
+  'Preparing spacecraft…': ['Préparation du vaisseau…', '正在准备探测器…'],
   'Mission': ['Mission', 'Mission'],
   'See which lunar landing sites have sunlight and a direct line of sight to Earth, hour by hour. Pick a lander, choose a site, then send a probe.': ['Voyez quels sites d’alunissage reçoivent la lumière du Soleil et voient la Terre en direct, heure par heure. Choisissez un atterrisseur, un site, puis envoyez une sonde.', '逐小时查看哪些月面着陆点有阳光、又能直视地球。选择着陆器与地点，然后发射探测器。'],
   'Choose your probe': ['Choisissez votre sonde', '选择你的探测器'],
@@ -801,41 +808,58 @@ export function createMission(ctx) {
     stopPlay();
     flying = true;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const duration = reduced ? 600 : 3800;
-    const stars = Array.from({ length: 70 }, (_, i) => `<circle cx="${(i * 137.5) % 1000}" cy="${(i * 71.3) % 600}" r="${0.6 + (i % 3) * 0.4}" fill="#fff" opacity="${0.3 + (i % 5) * 0.12}"/>`).join('');
-    flightEl.innerHTML = `<svg viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs><radialGradient id="fm" cx="35%" cy="30%"><stop offset="0" stop-color="#e8e5f2"/><stop offset=".6" stop-color="#8d89a4"/><stop offset="1" stop-color="#2b2740"/></radialGradient>
-      <radialGradient id="fe" cx="35%" cy="30%"><stop offset="0" stop-color="#9fd0ff"/><stop offset=".55" stop-color="#2d73d6"/><stop offset="1" stop-color="#10285a"/></radialGradient></defs>
-      ${stars}<circle cx="150" cy="450" r="62" fill="url(#fe)"/>
-      <g id="fl-moon"><circle cx="820" cy="200" r="120" fill="url(#fm)"/></g>
-      <path id="fl-path" d="M200 420 Q470 60 730 190" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.5" stroke-dasharray="4 8"/>
-      <path id="fl-trail" d="M200 420 Q470 60 730 190" fill="none" stroke="#f5c542" stroke-width="2" stroke-linecap="round"/>
-      <g id="fl-probe"><polygon points="12,0 -8,-7 -4,0 -8,7" fill="#fff"/><circle cx="-10" cy="0" r="3" fill="#f5c542"/></g></svg>
-      <div class="cap"><h2>${escapeHtml(t('Probe on its way to {site}', { site: site.short }))}</h2><p>${escapeHtml(t('Click to skip'))}</p></div>`;
+    const selected = PROBES.find(probe => probe.id === local.probe);
+    flightEl.innerHTML = `<canvas class="flight-scene" aria-label="${escapeHtml(t(selected.name))}"></canvas>
+      <div class="flight-top"><span>${escapeHtml(t(selected.name))}</span><button class="btn-ghost flight-skip">${escapeHtml(t('Skip flight'))}<span aria-hidden="true">↗</span></button></div>
+      <div class="flight-caption"><p class="flight-phase" role="status">${escapeHtml(t('Preparing spacecraft…'))}</p>
+        <h2>${escapeHtml(site.short)}</h2>
+        <div class="flight-track" aria-hidden="true"><span class="flight-track-fill"></span></div>
+        <div class="flight-route"><span>${escapeHtml(t('Leave Earth'))}</span><span>${escapeHtml(t('Moon approach'))}</span></div>
+        <p class="flight-disclaimer">${escapeHtml(t('Illustrative flight · not to scale'))}</p></div>`;
     flightEl.classList.add('show');
+    flightEl.setAttribute('role', 'dialog');
+    flightEl.setAttribute('aria-modal', 'true');
+    flightEl.setAttribute('aria-label', t('Probe on its way to {site}', { site: site.short }));
     requestAnimationFrame(() => flightEl.classList.add('in'));
-    const path = $('fl-path'), trail = $('fl-trail'), probeEl = $('fl-probe'), moonEl = $('fl-moon');
-    const total = path.getTotalLength();
-    trail.style.strokeDasharray = `${total}`;
-    const begin = performance.now();
-    let done = false;
+    const skip = flightEl.querySelector('.flight-skip');
+    const phase = flightEl.querySelector('.flight-phase');
+    const fill = flightEl.querySelector('.flight-track-fill');
+    const returnFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    let done = false, disposeFlight, lastPhase = '';
     const finish = () => {
       if (done) return; done = true; flying = false;
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = previousOverflow;
       flightEl.classList.remove('in');
-      setTimeout(() => { flightEl.classList.remove('show'); flightEl.innerHTML = ''; }, 350);
+      disposeFlight?.();
+      setTimeout(() => {
+        flightEl.classList.remove('show'); flightEl.innerHTML = '';
+        if (document.activeElement === document.body || document.activeElement === skip) returnFocus?.focus();
+      }, 240);
       ctx.arrive(sites().indexOf(site));
     };
-    flightEl.onclick = finish;
-    const step = (now) => {
-      if (done) return;
-      const k = Math.min(1, (now - begin) / duration), e = k < 0.5 ? 2 * k * k : 1 - ((-2 * k + 2) ** 2) / 2;
-      const at = path.getPointAtLength(total * e), ahead = path.getPointAtLength(Math.min(total, total * e + 1));
-      probeEl.setAttribute('transform', `translate(${at.x} ${at.y}) rotate(${Math.atan2(ahead.y - at.y, ahead.x - at.x) / D2R})`);
-      trail.style.strokeDashoffset = `${total * (1 - e)}`;
-      moonEl.setAttribute('transform', `translate(820 200) scale(${1 + 0.35 * e}) translate(-820 -200)`);
-      if (k < 1) requestAnimationFrame(step); else setTimeout(finish, reduced ? 0 : 250);
+    const handleKey = event => {
+      if (event.key === 'Escape') { event.preventDefault(); finish(); }
+      if (event.key === 'Tab') { event.preventDefault(); skip.focus(); }
     };
-    requestAnimationFrame(step);
+    document.addEventListener('keydown', handleKey);
+    flightEl.onclick = null;
+    skip.onclick = finish;
+    skip.focus();
+    disposeFlight = playProbeFlight(flightEl.querySelector('canvas'), {
+      probe: selected.id, reduced, onComplete: finish,
+      onError: () => {
+        phase.textContent = t('Model unavailable. Select another probe or continue.');
+        disposeFlight?.();
+      },
+      onProgress: progress => {
+        fill.style.transform = `scaleX(${progress})`;
+        const key = progress < .25 ? 'Leave Earth' : progress < .74 ? 'Lunar transfer' : 'Moon approach';
+        if (key !== lastPhase) { phase.textContent = t(key); lastPhase = key; }
+      },
+    });
   }
 
   startEl.addEventListener('click', (event) => {
