@@ -167,7 +167,7 @@ body[data-view=start] #v-start,body[data-view=mission] #v-mission{display:block}
 @media (max-width:420px){.cards{grid-template-columns:1fr}.pcard .art{aspect-ratio:16/9}}
 @media (prefers-reduced-motion:reduce){.pcard,.btn-primary{transition:none}}
 
-.brand img:not(.nasa-mark){object-fit:contain;filter:invert(1)}
+.brand img{object-fit:contain;filter:invert(1)}
 body[data-view=start]{--page:#0f1113;--muted:#a0a7b2;--text2:#c3c7ce}
 /* Background: NASA Apollo 8 "Earthrise" (public domain), AS08-14-2383. */
 body[data-view=start]::before{background:linear-gradient(180deg,rgba(13,15,18,.6) 0%,rgba(13,15,18,.3) 38%,rgba(13,15,18,.12) 66%,rgba(13,15,18,.28) 100%),url("../assets/space-horizon.jpg") center bottom / cover no-repeat}
