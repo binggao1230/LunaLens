@@ -122,7 +122,9 @@ web/
 
 data/        DEMs, kernels, intermediates — not in Git
 doc/         PRODUCT.md, PLAN.md, WORKPLAN.md, challenge text
-prototype/   throwaway demo + wireframe.html — never imported
+team/        one folder per person: README.md (instructions) + TODO.md (tasks and progress)
+design/      exported screens, logo, slides                                       ← Designer
+prototype/   throwaway layout prototype — never imported
 ```
 
 Rules that keep seven people out of each other's way:
@@ -212,6 +214,9 @@ whatever the people in the conversation share, but everything written into the r
 
 ### Task list per person
 
+The working copy of each list, with checkboxes and progress, is `team/<name>/TODO.md`. The lists below are the
+planning summary; when they differ, the TODO file is current.
+
 Hours follow the roadmap in `PLAN.md` §3. "Pre" = before the event.
 
 **1. Lead / product**
@@ -221,12 +226,12 @@ Hours follow the roadmap in `PLAN.md` §3. "Pre" = before the event.
 - H36–H48: project page text, record the video with the designer, submit 2 h early.
 
 **2. Designer**
-- Pre: colour, type and spacing tokens (light and dark); high-fidelity Explore screen for desktop and phone, starting from the wireframe.
+- Pre: colour, type and spacing tokens (light and dark); high-fidelity Explore screen for desktop and phone, starting from the layout prototype.
 - H0–H8: panorama, timeline and tile styling (these are the hard ones: low Sun on a tall-and-narrow axis; partial-disk state; link OK / blocked without relying on colour alone).
 - H8–H20: Compare and Date slip screens; map marker and overlay styling; empty, loading and error states.
 - H20–H36: review the built UI against the screens with Frontend A and B; microcopy and glossary wording (F9).
 - H36–H48: slide deck, video titles, screenshots, logo.
-- Hands off to frontend as: `ui/tokens.css` values + screens in the design tool. No waiting: frontend starts on the wireframe and restyles as tokens land.
+- Hands off to frontend as: `ui/tokens.css` values + screens in the design tool. No waiting: frontend starts on the layout prototype and restyles as tokens land.
 
 **3. Science A — ephemeris**
 - Pre: download kernels; get `spiceypy` running.
@@ -266,7 +271,7 @@ Science A ─┐
 Science B ─┘        │
 Science B ─► map images ─► Frontend B                             (placeholder image until H6)
 Lead ─► sites.json ─► Science C, Frontend B                       (seed table until verified)
-Designer ─► tokens + screens ─► Frontend A, Frontend B            (wireframe until tokens land)
+Designer ─► tokens + screens ─► Frontend A, Frontend B            (plain styling until tokens land)
 ```
 
 Every arrow has a stand-in listed on the right, so nobody is idle in the first hours.

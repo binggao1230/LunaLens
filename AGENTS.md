@@ -22,6 +22,8 @@ Team of 7, roughly 2 days. Current stage: **early planning, no code yet**.
 
 ## Read before starting work
 
+**Start in your own folder: `team/<name>/README.md`, then `team/<name>/TODO.md`.** If you are an agent, ask the person you work for which folder is theirs. Contribution rules (branches, pull requests) are in `CONTRIBUTING.md`.
+
 1. Read `doc/PRODUCT.md` §4–§6 (features, minimum bar, out of scope) and `doc/PLAN.md` §0, §2.4 (API contract), §4 (pitfalls). Then find your role in `doc/WORKPLAN.md` §5.
 2. If the work is not a feature in `PRODUCT.md`, add it there before starting. Do not expand scope silently.
 3. After the H36 feature freeze, fix bugs only; add no features.
@@ -35,7 +37,9 @@ backend/scripts/      data download, map assets, precompute, validation
 backend/tests/        includes the Horizons regression fixture and the DEM projection check
 web/                  frontend (Vite + React + TS): app/, state/, api/, ui/, lib/, features/*
 data/                 DEMs, SPICE kernels, intermediates — not in Git
-prototype/            throwaway fake-data demo and wireframes — never import from it or build on it
+team/<name>/          your folder: README.md (how to work) and TODO.md (your tasks and progress)
+design/               exported screens, logo, slides
+prototype/            throwaway layout prototype — never import from it or build on it
 ```
 
 File-level structure and the owner of each directory are in `doc/WORKPLAN.md` §3. Follow it:
@@ -77,7 +81,7 @@ Changing any of these requires updating `doc/PLAN.md` §2.4 and `doc/WORKPLAN.md
 - One commit per request or task, with a message saying what changed and why.
 - Do not commit: large files under `data/`, secrets, `.env`, build output, `node_modules`.
 - Data is reproduced through download scripts in `scripts/`, each stating its source URL.
-- When several people work in parallel, each uses a branch; regression tests must pass before merging. Do not force-push shared branches.
+- Remote: `git@github.com:binggao1230/LunaLens.git`. Nobody commits to `main` directly; work on a branch and open a pull request as described in `CONTRIBUTING.md`. Do not force-push `main`.
 - When changing the API contract or scope in `doc/PLAN.md`, start the commit message with `plan:` so others can find it.
 
 ## Actions that need human confirmation
