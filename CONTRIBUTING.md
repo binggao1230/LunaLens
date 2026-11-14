@@ -35,24 +35,21 @@ Then read, in this order: `AGENTS.md`, then the plan documents it lists.
    ```
    Title: what changed, in plain words. Description: what, why, how you checked it.
 
-## Who merges
+## Pull requests
 
-**Bing merges, after checking the change.** Everyone else opens the pull request and leaves it alone.
+A pull request is how the rest of the team hears about a change. `.github/CODEOWNERS` lists all six members for
+every path, so GitHub asks each of them for a review the moment one opens, and review requests are emailed by
+default (GitHub → Settings → Notifications). No setting can turn on someone else's email for them, so if you want
+certainty, click **Watch → Custom → Pull requests** on the repository page once.
 
-`.github/CODEOWNERS` lists all six members for every path, so GitHub asks each of them for a review the moment a
-pull request opens, and review requests are emailed by default (GitHub → Settings → Notifications). No setting can
-turn on another person's email for them, so if you want certainty, also click **Watch → Custom → Pull requests**
-on the repository page once.
+**Anyone can merge, the author included, once the checks are green.** The pull request is there so the change is
+seen, discussed in the thread and recorded, not to make anyone wait for permission. Two exceptions: a change to
+someone else's paths waits for that owner's word in the thread, and a change to `doc/` or to the API contract
+(`backend/lunalens/api/schemas.py`, `web/src/api/mock/`) also gets a message to both frontend developers, because
+everyone builds against them.
 
-| The pull request touches | Needs before Bing merges |
-|---|---|
-| Only the author's paths | Checks pass |
-| Someone else's paths | That owner's approval in the thread |
-| The API contract (`backend/lunalens/api/schemas.py`, `web/src/api/mock/`) or `doc/` | Bing's approval, and a message to both frontend developers |
-
-The squash merge is Bing's, not the author's. If `main` moved while you worked: `git fetch && git rebase
-origin/main`, fix conflicts in your own files, and ask the other owner about conflicts in theirs. Never force-push
-`main`.
+If `main` moved while you worked: `git fetch && git rebase origin/main`, fix conflicts in your own files, and ask
+the other owner about conflicts in theirs. Never force-push `main`.
 
 ## Rules that do not bend
 
