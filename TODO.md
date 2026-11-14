@@ -79,8 +79,16 @@ alternative dates at the same site". The second half is what the product cannot 
 
 ## G. Before submission
 
+- **Format and deadline, checked on the official site on 2026-11-14.** Submission happens on the team page's
+  Project tab: it opened Saturday 14 November at 09:00 and closes **Sunday 15 November at 23:59 local event time**;
+  a saved draft is not a submission, "Submit for Judging" must be clicked. Required fields: project name, summary,
+  demo link (slide deck of at most seven slides, or a video of at most 30 seconds, hosted publicly), final project
+  link, detailed description, the Super Intelligence disclosure, the NASA data used, and every other reference.
+  English throughout. Teams of at most six — we are six.
+- **Public links only.** Judges cannot log in: the Cloudflare Access email gate has to come off before submission,
+  and the final-project link must open without an account.
+- **No NASA branding.** This year's rules forbid generated content that uses NASA logos or design elements; the
+  NASA meatball was removed from the app bar on 2026-11-14 and its asset deleted. NASA data itself is encouraged.
 - Add future CLPS targets and landing sites of other countries' programmes to the curated list; the challenge text
   names both. Every site carries a source for its coordinates.
 - Test on real phones: iOS Safari and one Android.
-- Confirm the official submission format and deadline. Nobody has checked this year's rules yet.
-- Decide what happens to the Cloudflare email check before the judges open the link.
