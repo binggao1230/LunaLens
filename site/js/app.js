@@ -371,12 +371,24 @@ function showAtlas() {
     frame = document.createElement('iframe');
     frame.title = 'Atlas';
     frame.src = atlasUrl();
-    frame.addEventListener('load', () => { try { atlasHash = frame.contentWindow.location.hash; } catch { /* ignore */ } });
+    frame.addEventListener('load', () => {
+      try {
+        atlasHash = frame.contentWindow.location.hash;
+        // Its page title repeats our brand two lines under our own header. Drop the title block, keep
+        // every control in that bar (mode switch, mission jump, help) exactly where it is.
+        const doc = frame.contentDocument;
+        if (doc && !doc.getElementById('lunalens-frame-style')) {
+          const style = doc.createElement('style');
+          style.id = 'lunalens-frame-style';
+          style.textContent = 'header.top h1{display:none} header.top{padding-top:6px;padding-bottom:6px}';
+          doc.head.append(style);
+        }
+      } catch { /* cross-origin frame: nothing to do */ }
+    });
     host.append(frame);
   } else {
     frame.src = atlasUrl();
   }
-  if (!atlasPoll) atlasPoll = setInterval(syncFromAtlas, 900);
 }
 
 function syncFromAtlas() {
