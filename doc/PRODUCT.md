@@ -131,7 +131,8 @@ Tiers: **Must** = without it the entry does not answer the challenge. **Should**
   the non-polar sites and for the public audience.
 - **Illumination overlay** (Should): colour the polar map by sunlit share or link share so good ground is visible
   before the user taps. Source: the PGDA average-illumination rasters, or our own computation if time allows.
-- **3D terrain with cast shadows** (Could): strong on stage, expensive to build, first thing to cut.
+- **3D south-pole navigator** (Must since the 14 November call, see `TODO.md` P0): the polar cap with real relief and
+  terrain-true shadows, a site close-up and the view from the lander. How it is built: `PLAN_3D.md`.
 - Accept: a user who has never seen the tool can find and select a site near the pole using only the map.
 
 ### F9. Explanations for non-specialists — Should
@@ -176,7 +177,7 @@ Below that bar, in order of what we would give up last:
 5. Custom coordinates
 
 Above the bar, in the order we add: F7 date-slip → F10 validation → F8 illumination overlay → F9 explanations →
-mast height → F11 sharing → 3D.
+mast height → F11 sharing.
 
 ---
 

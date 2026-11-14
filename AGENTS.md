@@ -18,6 +18,7 @@ Team of 7, roughly 2 days. Current stage: **early planning, no code yet**.
 - Challenge text: `doc/Background.md`, `doc/Resources.md` (official content; do not rewrite)
 - Product plan: `doc/PRODUCT.md` (what we build: features, tiers, acceptance checks, minimum bar, out of scope)
 - Build plan: `doc/PLAN.md` (technical approach, roadmap, pitfalls, resources)
+- 3D plan: `doc/PLAN_3D.md` (the south-pole 3D navigator: decisions, data, milestones, acceptance checks)
 - Work plan: `doc/WORKPLAN.md` (layout, code structure, interfaces, the seven work packages and their task lists)
 - On features and tiers `PRODUCT.md` wins; on everything else `PLAN.md` is the source of truth. On who owns what and on interfaces `WORKPLAN.md` wins. Change the document first, then the code.
 

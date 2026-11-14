@@ -40,9 +40,7 @@ Sources: the team's 14 November design call and the Figma file *NASA SpaceApps*
 
 ## Open questions
 
-- **Which source for the positions**: precomputed table, SPICE inside the browser, or one as the default and the
-  other for arbitrary dates.
-- **Which renderer**: three.js (already vendored), CesiumJS, or globe.gl.
-- **How far the scene goes**: Moon and terminator only, Moon plus Earth, or the full Sun–Earth–Moon geometry.
+- Settled in `doc/PLAN_3D.md`: positions come from the precomputed Horizons table, the renderer stays three.js,
+  and the scene is the south pole at three distances (pole, site, surface). Item 1 above is built by that plan.
 - **What decides "better"**: average sunlight, uninterrupted hours, Earth-link minutes, or a weighted score — and
   the score must never appear without its inputs.
