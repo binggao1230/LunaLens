@@ -15,12 +15,14 @@ A NASA challenge entry: a tool for rapidly comparing Sun and Earth positions rel
 Team of 7, roughly 2 days. Current stage: **early planning, no code yet**.
 
 - Challenge text: `doc/Background.md`, `doc/Resources.md` (official content; do not rewrite)
-- Plan and decisions: `doc/PLAN.md` (single source of truth; change scope, roles, and the API contract here first)
+- Product plan: `doc/PRODUCT.md` (what we build: features, tiers, acceptance checks, minimum bar, out of scope)
+- Build plan: `doc/PLAN.md` (how and when: architecture, API contract, roadmap, roles, resources)
+- On features and tiers `PRODUCT.md` wins; on everything else `PLAN.md` is the source of truth. Change the document first, then the code.
 
 ## Read before starting work
 
-1. Read `doc/PLAN.md` §0, §2.4 (API contract), and §4 (pitfalls).
-2. If the work is not in the P0/P1 scope of the plan, add it to the plan before starting. Do not expand scope silently.
+1. Read `doc/PRODUCT.md` §4–§6 (features, minimum bar, out of scope) and `doc/PLAN.md` §0, §2.4 (API contract), §4 (pitfalls).
+2. If the work is not a feature in `PRODUCT.md`, add it there before starting. Do not expand scope silently.
 3. After the H36 feature freeze, fix bugs only; add no features.
 
 ## Directory layout (follow this when code is created)

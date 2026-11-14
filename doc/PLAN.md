@@ -28,9 +28,12 @@
 | Science/engineering coordination | Power vs. communication trade-off between site A and site B | Side-by-side scorecards |
 | Educators / public | Why is the south pole so hard? | Panorama animation, contrast with an equatorial site |
 
+**Feature definitions, acceptance checks, and the minimum bar for a complete entry live in `PRODUCT.md`.** The tiers below are the build-order summary; if they disagree with `PRODUCT.md`, that file wins. Note that `PRODUCT.md` treats the 2D site-picking maps as required, not as a P1 extra.
+
 **Feature tiers**
 - **P0 (required, the demo storyline)**
   - Site library (10–15 curated sites) plus custom latitude/longitude
+  - 2D maps for site picking: south pole (polar stereographic, hillshade from the DEM) and a whole-Moon locator
   - Horizon panorama: azimuth 0–360° × elevation, showing the terrain silhouette plus Sun/Earth tracks and current positions
   - Timeline: illumination and direct-to-Earth communication windows across one lunar day (29.53 days `[KNOWN, HIGH]`), with "time to sunset / time to Earthset" countdowns
   - Metric cards: solar elevation, visible fraction of the solar disk, continuous illumination duration, communication window duration and share
@@ -39,7 +42,6 @@
 - **P1 (differentiators)**
   - Date-slip view: effect of moving the landing date ±N days on each metric (the core pain point in paragraph 3 of the challenge background)
   - Mast height parameter (antenna or solar array 2 m / 10 m above ground), which strongly affects windows near the pole `[KNOWN, MED]`
-  - South pole 2D map for site picking (polar stereographic with hillshade basemap)
   - 3D terrain with live shadows
   - Validation page against Horizons and the PGDA illumination maps (directly serves the judges' validity criterion)
 - **P2 (if time allows)**: year-scale seasonal view, education-mode narration, report export
@@ -238,7 +240,7 @@ Far-side sites (Chang'e-4/6) never see Earth `[KNOWN, HIGH]`, which makes them a
 
 ### Cut order
 
-3D terrain → 2D map picker (degrade to a dropdown) → mast height → year-scale view. **Never cut**: terrain horizon, panorama, side-by-side comparison.
+3D terrain → illumination overlay on the map → mast height → year-scale view. **Never cut**: terrain horizon, panorama, side-by-side comparison, 2D map picker.
 
 ---
 
