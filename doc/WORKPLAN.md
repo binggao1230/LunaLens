@@ -166,26 +166,40 @@ Both frontend developers build against those files and switch to the live API at
 
 ## 5. Seven work packages
 
-Role names are placeholders; the team lead maps people to them. The split assumes one designer, two frontend
-developers and three people comfortable with Python and some maths. If the team's skills differ, move people
-between Science and Frontend, but keep one owner per package.
+Six people are confirmed; the seventh seat is open. The assignment below is a **proposal by the planning agent,
+not yet confirmed by the people named**. Zeynep, Eya and Assem are placed from their own introductions. The split
+between the three ESILV members is a guess, because their individual skills are not recorded here; swap them
+freely, but keep one owner per package.
 
-| # | Role | Owns | Features |
-|---|---|---|---|
-| 1 | **Lead / product** | Scope, `sites.json`, demo script, submission, merging, unblocking | F1 data, all of §7 demo |
-| 2 | **Designer** | Visual system, high-fidelity screens, chart styling, copy, slides and video visuals | F9 wording, all screens |
-| 3 | **Science A — ephemeris** | `ephem/`, Horizons tests; then helps C | F3 (angles) |
-| 4 | **Science B — terrain** | `terrain/`, data download, map images | F3 (horizon), F8 (map data) |
-| 5 | **Science C — windows + API** | `windows/`, `api/`, precompute, validation | F4, F5, F7, F10 data |
-| 6 | **Frontend A — explore** | `app/`, `state/`, `api/`, blocks 1, 2, 6, 7, 8, 9, 15 | F2, F3, F4, F5 |
-| 7 | **Frontend B — map + compare** | Blocks 3, 4, 5, 10–14 | F1, F6, F7, F8 |
+| # | Role | Person (proposed) | Basis | Owns | Features |
+|---|---|---|---|---|---|
+| 1 | **Lead / product** | Bing Gao | Team organiser | Scope, `sites.json`, demo script, submission, merging, unblocking | F1 data, all of §7 demo |
+| 2 | **Designer** | Zeynep Uzan | UX/UI designer, Figma, presentation materials | Visual system, high-fidelity screens, chart styling, copy, slides and video visuals | F9 wording, all screens |
+| 3 | **Science A — ephemeris** | Bing Gao until a seventh member joins | Smallest science package (about half a day) | `ephem/`, Horizons tests; then helps C | F3 (angles) |
+| 4 | **Science B — terrain** | Chenlin Wang *(guess)* | — | `terrain/`, data download, map images | F3 (horizon), F8 (map data) |
+| 5 | **Science C — windows + API** | Maeva Andriamaniraka *(guess)* | — | `windows/`, `api/`, precompute, validation | F4, F5, F7, F10 data |
+| 6 | **Frontend A — explore** | Eya Amrach | Computer engineering graduate, UX/UI + web development | `app/`, `state/`, `api/`, blocks 1, 2, 6, 7, 8, 9, 15 | F2, F3, F4, F5 |
+| 7 | **Frontend B — map + compare** | Assem Hssini | Web engineering student, builds interfaces | Blocks 3, 4, 5, 10–14 | F1, F6, F7, F8 |
+
+Consequences of having six people:
+
+- The lead carries the ephemeris package for the first 8–12 hours. It is the best one to double up on: it is
+  short, it has a reference to test against, and it ends before the first checkpoint the lead has to run.
+- After H12 nobody is free to reinforce Science B and C. The terrain horizon is the critical path, so if it is
+  late at H12 the lead joins Science B and the demo script waits.
+- If a seventh member joins and can write Python, they take Science A from hour 0. If they are a third web
+  developer instead, Frontend A hands them `state/` and `api/` and the lead keeps ephemeris.
+- Eya also has UX/UI experience and is the natural reviewer for the designer's hand-off to code.
+
+Working language is English (see `AGENTS.md`). Several members also speak French; spoken coordination can use
+whatever the people in the conversation share, but everything written into the repository stays English.
 
 ### Task list per person
 
 Hours follow the roadmap in `PLAN.md` §3. "Pre" = before the event.
 
 **1. Lead / product**
-- Pre: map people to roles; confirm rules, deadline and submission format on the official site; verify every row of the site table against a primary source.
+- Pre: confirm people against roles; confirm rules, deadline and submission format on the official site; verify every row of the site table against a primary source.
 - H0–H2: run the interface freeze (§4); H2–H12: finish `sites.json`, write the 3-minute demo script.
 - H12, H24, H36: run the checkpoints, cut scope using the order in `PRODUCT.md` §5.
 - H36–H48: project page text, record the video with the designer, submit 2 h early.
@@ -254,7 +268,8 @@ Every arrow has a stand-in listed on the right, so nobody is idle in the first h
 
 ## 7. Before the event
 
-- [ ] Lead: names against the seven roles; repository access for everyone
+- [ ] Lead: confirm the proposed names in §5 with each person; fill or close the seventh seat; repository access for everyone
+- [ ] Lead: confirm with Chenlin and Maeva which of terrain / windows + API fits each of them
 - [ ] Everyone: clone, read `AGENTS.md`, `PRODUCT.md` §4–§6 and their section here
 - [ ] Science A + B: data downloaded and shared (about 0.5 GB)
 - [ ] Frontend A: `web/` scaffold merged; Science C: `backend/` scaffold merged
