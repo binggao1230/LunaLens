@@ -20,6 +20,11 @@ the full-width Atlas layout and keep the Plan page retired.
 - The deployed homepage answered without login. Explore, Compare and Date slip had no horizontal
   overflow at 390 px in headless Chromium. Physical phones and the final demo link remain unchecked.
 
+- Education mode from #59 adds a six-step guided Mission story and a mascot. The mode can be
+  selected in the header and is preserved in the URL and local storage. Story text lives in
+  `site/i18n/story.*.json`. Its battery, Earth-contact and relay verdict is illustrative
+  and separate from the Expert calculations.
+
 ## P0 — Make the date-slip decision work
 
 - [ ] **Add the exact site and time the user chose.** Add a direct action from the selected point
