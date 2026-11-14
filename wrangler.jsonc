@@ -1,0 +1,7 @@
+// Cloudflare deployment of the static site (free plan). See doc/PLAN.md §2.5.
+// Today this publishes the layout prototype; switch "directory" to the frontend build (web/dist) when it exists.
+{
+  "name": "luna-lens",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./prototype" }
+}
