@@ -103,21 +103,21 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
 .edu-final .edu-actions{justify-content:center}
 
 /* ---- character moods ---- */
-.edu-char .c-eyes-closed,.edu-char .c-brows,.edu-char .c-flat,.edu-char .c-open,.edu-char .c-zzz,.edu-char .c-stars{display:none}
-.edu-char.mood-worried .c-brows,.edu-char.mood-worried .c-flat{display:block}
-.edu-char.mood-worried .c-smile{display:none}
-.edu-char.mood-sleeping .c-eyes-closed,.edu-char.mood-sleeping .c-flat,.edu-char.mood-sleeping .c-zzz{display:block}
-.edu-char.mood-sleeping .c-eyes,.edu-char.mood-sleeping .c-smile{display:none}
-.edu-char.mood-sleeping .c-tip{fill:#5a6170}
-.edu-char.mood-sleeping .c-eyes-closed path{d:path("M51 38q3 4 6 0M63 38q3 4 6 0")}
-.edu-char.mood-celebrating .c-open,.edu-char.mood-celebrating .c-stars{display:block}
-.edu-char.mood-celebrating .c-smile{display:none}
+/* Default (happy): closed smiling eyes, open mouth, one arm up, cheer lines, like the team's illustration. */
+.edu-char .c-eyes,.edu-char .c-brows,.edu-char .c-flat,.edu-char .c-smile,.edu-char .c-zzz,.edu-char .c-stars{display:none}
+.edu-char.mood-worried .c-eyes,.edu-char.mood-worried .c-brows,.edu-char.mood-worried .c-flat{display:block}
+.edu-char.mood-worried .c-eyes-closed,.edu-char.mood-worried .c-open,.edu-char.mood-worried .c-cheer{display:none}
+.edu-char.mood-sleeping .c-flat,.edu-char.mood-sleeping .c-zzz{display:block}
+.edu-char.mood-sleeping .c-open,.edu-char.mood-sleeping .c-cheer{display:none}
+.edu-char.mood-sleeping .c-eyes-closed path{d:path("M55 36q3 4 6 0M65 36q3 4 6 0")}
+.edu-char.mood-sleeping .c-tip{fill:#4e5a63}
+.edu-char.mood-celebrating .c-stars{display:block}
 .edu-char .c-arm{transform-box:view-box;transition:transform .4s ease}
-.edu-char .c-arm-l{transform-origin:44px 70px}
-.edu-char .c-arm-r{transform-origin:76px 70px}
-.edu-char.mood-celebrating .c-arm-l{transform:rotate(95deg)}
-.edu-char.mood-celebrating .c-arm-r{transform:rotate(-95deg)}
-.edu-char .c-body{transform-box:view-box;transform-origin:60px 106px}
+.edu-char .c-arm-l{transform-origin:46px 70px}
+.edu-char .c-arm-r{transform-origin:74px 68px}
+.edu-char.mood-worried .c-arm-r,.edu-char.mood-sleeping .c-arm-r{transform:rotate(70deg)}
+.edu-char.mood-celebrating .c-arm-l{transform:rotate(60deg)}
+.edu-char .c-body{transform-box:view-box;transform-origin:60px 110px}
 .edu-char.mood-happy .c-body{animation:edu-bob 2.6s ease-in-out infinite}
 .edu-char.mood-celebrating .c-body{animation:edu-jump .7s ease-in-out infinite}
 .edu-char.mood-celebrating .c-stars{animation:edu-twinkle 1s ease-in-out infinite alternate}
@@ -156,4 +156,83 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
   .edu-mini{left:12px;bottom:12px}
   .edu-final{padding:18px 16px}
   .edu-final h2{font-size:28px}
+}
+
+/* ---- Education mode look (after the team's mockup): deep navy, hairline dividers, thin tracked labels, blue pills ---- */
+body.edu-on[data-view=mission]{--page:#070b14;--surface:#0b111c;--border:rgba(200,220,240,.12);--text2:#b9c4d4;--muted:#7f8da3;--earth:#5aa7f0}
+body.edu-on[data-view=mission]::before{background:radial-gradient(120% 80% at 20% 0%,#0d1626 0%,#070b14 55%,#05080f 100%)}
+body.edu-on[data-view=mission] .appbar,body.edu-on[data-view=mission] .tabbar{background:rgba(7,11,20,.88);border-bottom-color:var(--border)}
+body.edu-on[data-view=mission] .brand{font-weight:300;letter-spacing:.22em;text-transform:uppercase;font-size:17px}
+body.edu-on[data-view=mission] main{max-width:1600px;padding:0 28px 56px}
+body.edu-on[data-view=mission] .mission{grid-template-columns:minmax(0,1fr) 420px;gap:0}
+body.edu-on[data-view=mission] .glass{background:transparent;border:0;border-radius:0;box-shadow:none}
+body.edu-on[data-view=mission] button:focus-visible,body.edu-on[data-view=mission] input:focus-visible{outline-color:#5aa7f0}
+/* date bar */
+body.edu-on[data-view=mission] .datebar{border-bottom:1px solid var(--border);padding:18px 8px 20px;gap:14px 22px;margin-bottom:18px}
+body.edu-on[data-view=mission] .datebar label{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+body.edu-on[data-view=mission] .datebar input[type=date]{background:transparent;border:0;border-radius:0;padding:0 2px;font-family:inherit;font-size:17px;font-weight:300;color:var(--text)}
+body.edu-on[data-view=mission] #m-prev,body.edu-on[data-view=mission] #m-next{background:transparent;border:1px solid var(--border);border-radius:99px;color:var(--text2);min-width:36px;min-height:36px;padding:0}
+body.edu-on[data-view=mission] #m-today{background:rgba(90,167,240,.08);border:1px solid rgba(90,167,240,.6);color:#5aa7f0;border-radius:99px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:8px 22px;min-height:40px}
+body.edu-on[data-view=mission] #m-play{background:transparent;border:1px solid var(--border);border-radius:99px;color:var(--text2);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500}
+body.edu-on[data-view=mission] .datebar input[type=range]{accent-color:#5aa7f0}
+body.edu-on[data-view=mission] .datebar .when{font-family:inherit;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+/* stage */
+body.edu-on[data-view=mission] .stage{background:transparent;border-right:1px solid var(--border);border-radius:0}
+body.edu-on[data-view=mission] .stage h2{font-family:inherit;font-weight:300;font-size:30px;letter-spacing:.01em}
+body.edu-on[data-view=mission] .stage .hint{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+body.edu-on[data-view=mission] .mseg{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:99px;padding:4px}
+body.edu-on[data-view=mission] .mseg button{border-radius:99px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--muted);padding:6px 16px}
+body.edu-on[data-view=mission] .mseg button.on{background:#5aa7f0;color:#07111c;box-shadow:0 0 18px rgba(90,167,240,.45)}
+body.edu-on[data-view=mission] .btn-ghost{background:transparent;border-color:var(--border);border-radius:99px;color:var(--text2);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500}
+body.edu-on[data-view=mission] .btn-ghost:hover{background:rgba(90,167,240,.1);border-color:rgba(90,167,240,.5)}
+body.edu-on[data-view=mission] .zoom2 button{background:transparent;border-color:var(--border)}
+body.edu-on[data-view=mission] .legend2{background:transparent;border:0;padding:0 0 4px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);gap:10px}
+body.edu-on[data-view=mission] .legend2 i{box-shadow:0 0 8px currentColor}
+body.edu-on[data-view=mission] .note2{background:rgba(7,11,20,.8);border-color:var(--border);font-size:11px;letter-spacing:.06em}
+body.edu-on[data-view=mission] .site-label{background:#0b111c;border:1px solid rgba(200,220,240,.35);border-radius:8px;padding:6px 14px;font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+/* side panel */
+body.edu-on[data-view=mission] .side-panel{padding:4px 0 0 28px;gap:16px}
+body.edu-on[data-view=mission] .side-head h3{font-size:30px;font-weight:300;letter-spacing:.01em}
+body.edu-on[data-view=mission] .side-panel input[type=search]{background:transparent;border:0;border-bottom:1px solid var(--border);border-radius:0;padding:8px 0;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text)}
+body.edu-on[data-view=mission] .side-panel input::placeholder{color:var(--muted)}
+body.edu-on[data-view=mission] .sl{gap:0;margin:0;padding:0;border-top:1px solid var(--border)}
+body.edu-on[data-view=mission] .srow{background:transparent;border:0;border-bottom:1px solid var(--border);border-left:2px solid transparent;border-radius:0;transition:background-color .2s ease,border-color .2s ease}
+body.edu-on[data-view=mission] .srow.on{background:linear-gradient(90deg,rgba(90,167,240,.12),transparent 75%);border-left-color:#5aa7f0}
+body.edu-on[data-view=mission] .srow-top>button{padding:16px 10px 16px 16px;min-height:0;gap:14px}
+body.edu-on[data-view=mission] .srow-top>button:hover{background:rgba(255,255,255,.025)}
+body.edu-on[data-view=mission] .srow .nm{font-size:17px;font-weight:400}
+body.edu-on[data-view=mission] .srow .sub2{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+body.edu-on[data-view=mission] .srow .badge{background:transparent;color:#f5c542;border:1px solid rgba(245,197,66,.5);font-weight:500;letter-spacing:.14em;padding:2px 8px}
+body.edu-on[data-view=mission] .srow .dotc{width:8px;height:8px;outline:4px solid rgba(255,255,255,.04);outline-offset:0}
+body.edu-on[data-view=mission] .empty{font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+body.edu-on[data-view=mission] #m-send{background:linear-gradient(180deg,#7cb8f3,#5aa7f0);color:#07111c;border-radius:99px;min-height:56px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;box-shadow:0 0 30px rgba(90,167,240,.45),0 12px 30px -12px rgba(90,167,240,.8)}
+body.edu-on[data-view=mission] #m-send:hover{filter:brightness(1.06)}
+/* window comparison */
+body.edu-on[data-view=mission] .lanes{border-top:1px solid var(--border);border-radius:0;padding:24px 8px 8px;margin-top:0;gap:14px}
+body.edu-on[data-view=mission] .lane-axis,body.edu-on[data-view=mission] .lane-legend{font-family:inherit;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+body.edu-on[data-view=mission] .lane-site .nm{font-size:16px;font-weight:400}
+body.edu-on[data-view=mission] .lane-site svg{height:40px}
+/* story panel */
+body.edu-on .edu-bubble{background:rgba(11,17,28,.96);border-color:rgba(90,167,240,.4);box-shadow:0 0 30px rgba(90,167,240,.15),0 18px 50px -20px rgba(0,0,0,.8)}
+body.edu-on .edu-step{letter-spacing:.18em}
+body.edu-on .edu-actions .btn-primary{background:#5aa7f0;color:#07111c;border-radius:99px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;box-shadow:0 0 18px rgba(90,167,240,.4)}
+body.edu-on .edu-actions .btn-ghost{background:transparent;border-radius:99px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500}
+body.edu-on .edu-lever{border-radius:14px;background:rgba(255,255,255,.03)}
+body.edu-on .edu-lever.on{border-color:#5aa7f0;background:rgba(90,167,240,.1)}
+body.edu-on .edu-lever i{color:#5aa7f0}
+body.edu-on .edu-verdict.v-go{background:#43d98a}
+body.edu-on .edu-final{background:#0b111c;border-color:rgba(90,167,240,.35)}
+body.edu-on .edu-final .btn-primary{background:#5aa7f0;color:#07111c;border-radius:99px;letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+@media (max-width:1060px){
+  body.edu-on[data-view=mission] .mission{grid-template-columns:1fr}
+  body.edu-on[data-view=mission] .stage{border-right:0;border-bottom:1px solid var(--border)}
+  body.edu-on[data-view=mission] .side-panel{padding-left:0;padding-top:18px}
+}
+@media (max-width:760px){
+  body.edu-on[data-view=mission] main{padding:0 14px 260px}
+  body.edu-on[data-view=mission] .datebar{padding:14px 4px 16px}
+  body.edu-on[data-view=mission] .stage h2{font-size:20px}
+  body.edu-on[data-view=mission] .side-head h3{font-size:24px}
+  body.edu-on[data-view=mission] .stage .hint{font-size:9px}
+  body.edu-on[data-view=mission] .brand{font-size:15px;letter-spacing:.18em}
 }
