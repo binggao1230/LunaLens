@@ -88,83 +88,195 @@ footer{color:var(--muted);font-size:12px;margin-top:16px}
   .row{grid-template-columns:1fr}
   .card{padding:12px}
 }
+
+/* ---- app structure ---- */
+body{padding-bottom:0}
+main{max-width:1280px;padding:12px}
+.appbar{position:sticky;top:0;z-index:6;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:16px;padding:8px 14px;margin:0}
+.brand{display:flex;align-items:center;gap:10px;font-size:17px;white-space:nowrap}
+.pill{font-size:11px;background:var(--warn-bg);color:var(--warn-text);border-radius:99px;padding:2px 9px;font-weight:600}
+.tabs{display:flex;gap:4px;margin-left:auto}
+.tabs button,.tabbar button{border:none;background:none;border-radius:8px;padding:8px 12px;min-height:36px;color:var(--text2)}
+.tabs button.on,.tabbar button.on{background:var(--page);color:var(--text);font-weight:650}
+.tray{display:flex;gap:8px;align-items:center;padding:8px 14px;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--surface)}
+.tray .lbl{font-size:12px;color:var(--muted);white-space:nowrap}
+.chip{white-space:nowrap;border-radius:99px;padding:6px 12px;min-height:34px;font-size:13px}
+.chip.on{border-color:var(--earth);font-weight:650}
+.chip.ghost{border-style:dashed;color:var(--text2)}
+.view{display:none}
+body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=data] #v-data{display:block}
+.explore{display:grid;grid-template-columns:minmax(0,38fr) minmax(0,62fr);gap:12px;align-items:start}
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.cardhead h2{margin:0}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{border:none;border-radius:0;min-height:32px;padding:4px 10px;font-size:13px;background:none;color:var(--text2)}
+.seg button.on{background:var(--page);color:var(--text);font-weight:650}
+#sitelist{display:grid;gap:4px;max-height:232px;overflow:auto;margin-bottom:10px}
+.site{display:block;width:100%;text-align:left;padding:6px 10px;min-height:0;border-color:transparent;background:none}
+.site b{display:block;font-weight:600}.site span{font-size:12px;color:var(--muted)}
+.site.sel{border-color:var(--earth);background:var(--page)}
+.fields{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+.fields.two{grid-template-columns:1fr 1fr}
+.fields label{font-size:12px;color:var(--text2);display:block}
+.fields input,.fields select{width:100%;font:inherit;color:var(--text);background:var(--page);border:1px solid var(--border);border-radius:8px;padding:7px 9px;min-height:38px;margin-top:3px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+[data-fake]{border-style:dashed;cursor:help}
+.scrub{position:sticky;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--border);
+  padding:8px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.scrub button{min-height:36px;padding:6px 10px;font-size:13px;white-space:nowrap}
+.scrub input[type=range]{flex:1;min-width:140px;accent-color:var(--earth);height:30px}
+.scrub #now{flex-basis:100%;grid-column:auto}
+.tabbar{display:none}
+#toast{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:var(--text);color:var(--surface);
+  padding:8px 14px;border-radius:8px;font-size:13px;z-index:20;display:none;max-width:90vw;text-align:center}
+.ph{border:1.5px dashed var(--border);border-radius:10px;padding:12px;color:var(--text2);font-size:13px}
+.ph b{color:var(--text)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:760px){
+  .tabs{display:none}
+  .explore,.grid2{grid-template-columns:1fr}
+  body{padding-bottom:54px}
+  .scrub{bottom:54px;padding:6px 10px}
+  .tabbar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;height:54px;z-index:7;
+    background:var(--surface);border-top:1px solid var(--border);padding:4px}
+  .tabbar button{padding:4px;font-size:12px}
+  .fields{grid-template-columns:1fr 1fr}
+  .fields button{grid-column:1/-1}
+}
 </style>
 </head>
-<body>
+<body data-view="explore">
+<header class="appbar">
+  <div class="brand"><b>Luna Lens</b><span class="pill">Prototype · fake data</span></div>
+  <nav class="tabs" data-nav>
+    <button data-view="explore">Explore</button><button data-view="compare">Compare</button>
+    <button data-view="slip">Date slip</button><button data-view="data">Data &amp; accuracy</button>
+  </nav>
+</header>
+<div class="tray" id="tray"></div>
+
 <main>
-  <header>
-    <h1>Luna Lens</h1>
-    <p>Sun and Earth above the real horizon, site by site, date by date.</p>
-  </header>
-  <div class="banner"><b>Prototype — synthetic data.</b> The two maps use real NASA terrain and imagery. Everything
-    else is fake: horizon profiles are randomly generated and the Sun/Earth motion is a simplified model. No number
-    on this page is a real mission value. It exists to agree on layout and interactions.</div>
-
-  <section class="card">
-    <div class="controls">
-      <div><label for="site">Landing site</label><select id="site"></select></div>
-      <div><label for="date">Landing date (UTC)</label><input id="date" type="date"></div>
-      <div class="timeRow">
-        <button id="play" aria-label="Play one lunar day">▶ Play</button>
-        <input id="hour" type="range" min="0" step="1" value="0" aria-label="Time since landing">
-      </div>
-      <div id="now"></div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>Pick a site</h2>
-    <p class="sub">Tap a marker, or anywhere on either map for a custom point. Lighting follows the time slider.</p>
-    <div class="maps">
+  <!-- ================= View 1: Explore ================= -->
+  <section class="view" id="v-explore">
+    <div class="explore">
       <div>
-        <div class="map" id="polar"><canvas id="polarC" width="762" height="762"></canvas><svg id="polarS" viewBox="0 0 762 762"></svg></div>
-        <p class="mapcap">South pole, 75°S to 90°S. Real LOLA terrain on a 1.2 km grid, lit from the current Sun direction.
-          Relief shading only, not cast shadows; Sun height is raised to 10° so the relief stays readable.</p>
+        <section class="card">
+          <div class="cardhead"><h2>Map</h2>
+            <div class="seg" id="mapseg"><button data-map="polar" class="on">South pole</button><button data-map="globe">Whole Moon</button></div></div>
+          <div id="polarWrap">
+            <div class="map" id="polar"><canvas id="polarC" width="762" height="762"></canvas><svg id="polarS" viewBox="0 0 762 762"></svg></div>
+            <p class="mapcap">75°S to 90°S, real LOLA terrain, lit from the current Sun direction (relief shading, not cast shadows). Tap to pick a point.</p>
+          </div>
+          <div id="globeWrap" hidden>
+            <div class="map" id="globe"><canvas id="globeC" width="1024" height="512"></canvas><svg id="globeS" viewBox="0 0 1024 512"></svg></div>
+            <p class="mapcap">LROC colour mosaic, near side in the centre. The darkened part is the current night side. Tap to pick a point.</p>
+          </div>
+          <div class="actions"><button data-fake="Colours the map by how much of the stay each spot is sunlit, so good ground is visible before you pick a point. (F8)">Overlay: sunlit share</button><button data-fake="Colours the map by how much of the stay each spot can see Earth. (F8)">Overlay: Earth-link share</button></div>
+        </section>
+        <section class="card">
+          <h2>Site</h2><p class="sub">Curated sites, or enter coordinates.</p>
+          <div id="sitelist"></div>
+          <div class="fields">
+            <label>Latitude (°, south negative)<input id="clat" type="number" step="0.01" min="-90" max="90"></label>
+            <label>Longitude (°E)<input id="clon" type="number" step="0.01" min="0" max="360"></label>
+            <button id="cgo">Use point</button>
+          </div>
+        </section>
+        <section class="card">
+          <h2>Scenario settings</h2>
+          <div class="fields two">
+            <label>Landing date (UTC)<input id="date" type="date"></label>
+            <label>Stay length<select data-fake="How long the lander stays on the surface. The timeline, the totals and the comparison all cover this period. (F2)"><option>1 lunar day</option><option>14 Earth days</option><option>2 lunar days</option></select></label>
+            <label>Mast height<select data-fake="Height of the antenna or solar array above the ground. A taller mast sees over more terrain, which changes the windows. (F4)"><option>2 m</option><option>10 m</option></select></label>
+            <label>Link margin<select data-fake="How far Earth must be above the terrain before the link counts as available. (F4)"><option>2°</option><option>5°</option></select></label>
+          </div>
+        </section>
       </div>
       <div>
-        <div class="map" id="globe"><canvas id="globeC" width="1024" height="512"></canvas><svg id="globeS" viewBox="0 0 1024 512"></svg></div>
-        <p class="mapcap">Whole Moon (LROC colour mosaic), near side in the centre. The darkened part is the current night side.</p>
+        <section class="tiles" id="tiles"></section>
+        <section class="card">
+          <h2>Horizon panorama</h2>
+          <p class="sub">Looking out from the site across all compass directions. Vertical scale is exaggerated.</p>
+          <div class="legend">
+            <span><i class="sw" style="background:var(--sun)"></i>Sun</span>
+            <span><i class="sw" style="background:var(--earth)"></i>Earth</span>
+            <span><i class="sw" style="background:var(--terrain)"></i>Terrain</span>
+            <span><i class="sw" style="height:0;border-top:1px dashed var(--muted)"></i>Horizon with no terrain</span>
+          </div>
+          <div class="chart" id="pano"><div id="crosshair"></div></div>
+        </section>
+        <section class="card">
+          <h2>Stay timeline</h2>
+          <p class="sub">One lunar day from landing. Tap or drag to move through time.</p>
+          <div class="chart" id="timeline"></div>
+        </section>
       </div>
     </div>
   </section>
 
-  <section class="tiles" id="tiles"></section>
+  <!-- ================= View 2: Compare ================= -->
+  <section class="view" id="v-compare">
+    <section class="card">
+      <h2>Compare scenarios</h2>
+      <p class="sub">Shared time axis. Upper strip: sunlight. Lower strip: direct-to-Earth link. In the real product each row
+        is a scenario (site + date); this prototype lists the curated sites on one date. Tap a row to make it active.</p>
+      <div id="compare"></div>
+      <div class="actions">
+        <button data-fake="Adds another site + date to compare. Up to four scenarios side by side. (F6)">+ Add scenario</button><button data-fake="Copies the active scenario and lets you change only the landing date, to compare the same site on two dates. (F6)">Duplicate with another date</button>
+        <button data-fake="Copies the active scenario and lets you change only the site, to compare two sites on the same date. (F6)">Duplicate with another site</button><button data-fake="Removes the active scenario from the comparison. (F6)">Remove</button>
+        <button data-go="explore">Open active scenario in Explore</button>
+      </div>
+    </section>
+  </section>
 
-  <section class="card">
-    <h2>Horizon panorama</h2>
-    <p class="sub">Looking out from the site across all compass directions. Vertical scale is exaggerated.
-      Tracks cover one lunar day from landing.</p>
-    <div class="legend">
-      <span><i class="sw" style="background:var(--sun)"></i>Sun</span>
-      <span><i class="sw" style="background:var(--earth)"></i>Earth</span>
-      <span><i class="sw" style="background:var(--terrain)"></i>Terrain</span>
-      <span><i class="sw" style="height:0;border-top:1px dashed var(--muted)"></i>Horizon with no terrain</span>
+  <!-- ================= View 3: Date slip ================= -->
+  <section class="view" id="v-slip">
+    <section class="card">
+      <h2>Thresholds</h2>
+      <div class="fields">
+        <label>Need continuous sunlight of at least<select data-fake="Minimum unbroken sunlight after touchdown for a landing day to count as viable. (F7)"><option>5 days</option><option>10 days</option><option>14 days</option></select></label>
+        <label>Need Earth link at touchdown<select data-fake="Whether a landing day is only viable if Earth is visible at the moment of touchdown. (F7)"><option>Yes</option><option>No</option></select></label>
+        <button data-fake="Marks the days of delay that still meet the thresholds as viable landing windows on the chart below. (F7)">Apply</button>
+      </div>
+    </section>
+    <section class="card">
+      <h2>If the landing date slips</h2>
+      <p class="sub">Continuous sunlight available from touchdown, for each day of delay at the active site.</p>
+      <div class="chart" id="slip"></div>
+      <div class="actions"><button data-fake="Tap a bar, then this button: that landing date becomes a new scenario in the tray and in Compare. (F7)">Add selected day as a scenario</button><button data-fake="Switches the chart to the share of the stay with a direct link to Earth, for each day of delay. (F7)">Show Earth-link share instead</button></div>
+    </section>
+  </section>
+
+  <!-- ================= View 4: Data & accuracy ================= -->
+  <section class="view" id="v-data">
+    <section class="card">
+      <h2>What is real in this prototype</h2>
+      <p class="sub">The two maps use real NASA terrain and imagery. Everything else is fake: horizon profiles are randomly
+        generated and the Sun/Earth motion is a simplified model. No number in this prototype is a real mission value.</p>
+    </section>
+    <div class="grid2">
+      <div class="ph"><b>Data sources</b><br>Placeholder. LOLA DEMs, SPICE kernels, site coordinates with citations.</div>
+      <div class="ph"><b>Sun and Earth angles vs. JPL Horizons</b><br>Placeholder. Table of test cases and errors.</div>
+      <div class="ph"><b>Sunlit share vs. PGDA illumination map</b><br>Placeholder. Per-site comparison.</div>
+      <div class="ph"><b>Limits</b><br>Placeholder. DEM resolution, what is not modelled.</div>
+      <div class="ph"><b>Glossary</b><br>Placeholder. Azimuth, elevation, lunar day, libration, direct-to-Earth.</div>
     </div>
-    <div class="chart" id="pano"><div id="crosshair"></div></div>
   </section>
-
-  <section class="card">
-    <h2>One lunar day at this site</h2>
-    <p class="sub">Tap or drag to move through time.</p>
-    <div class="chart" id="timeline"></div>
-  </section>
-
-  <section class="card">
-    <h2>Compare sites</h2>
-    <p class="sub">Same landing date, one lunar day. Upper strip: sunlight. Lower strip: direct-to-Earth link.
-      Tap a row to select it.</p>
-    <div id="compare"></div>
-  </section>
-
-  <section class="card">
-    <h2>If the landing date slips</h2>
-    <p class="sub">Continuous sunlight available from touchdown, for each day of delay at the selected site.</p>
-    <div class="chart" id="slip"></div>
-  </section>
-
-  <footer>Throwaway prototype. See <code>prototype/NOTES.md</code>. Site coordinates are unverified seed values.</footer>
 </main>
-<div id="tip"></div>
+
+<div class="scrub">
+  <button id="play" aria-label="Play one lunar day">▶ Play</button>
+  <button id="jsun">Next Sun event ⏭</button>
+  <button id="jearth">Next Earth event ⏭</button>
+  <input id="hour" type="range" min="0" step="1" value="0" aria-label="Time since landing">
+  <div id="now"></div>
+</div>
+<nav class="tabbar" data-nav>
+  <button data-view="explore">Explore</button><button data-view="compare">Compare</button>
+  <button data-view="slip">Date slip</button><button data-view="data">Data</button>
+</nav>
+<div id="tip"></div><div id="toast"></div>
 
 <script>
 "use strict";
@@ -267,6 +379,7 @@ function renderTiles(){
 
 // ---------- panorama ----------
 function renderPano(){
+  if(!$("pano").clientWidth) return;
   const el=$("pano"), W=el.clientWidth, H=W<520?250:330, L=36, R=10, T=12, B=26;
   const r=sims[state.site], s=SITES[state.site], i=state.hour;
   let mx=-90; for(let k=0;k<=HOURS;k++) mx=Math.max(mx,r.sEl[k],r.eEl[k]);
@@ -306,6 +419,7 @@ function stripComm(r, x0, wPerH, y, h){
   return o+runs(HOURS,i=>r.comm[i]).filter(q=>q[2]).map(q=>`<rect x="${x0+q[0]*wPerH}" y="${y}" width="${(q[1]-q[0])*wPerH}" height="${h}" fill="var(--earth)"/>`).join("");
 }
 function renderTimeline(){
+  if(!$("timeline").clientWidth) return;
   const el=$("timeline"), W=el.clientWidth, L=W<520?4:76, R=8, pw=W-L-R, w=pw/HOURS, r=sims[state.site];
   const top=W<520?14:4, H=top+22+6+22+24;
   layout.tl={L,pw};
@@ -334,6 +448,7 @@ function slipData(){ const r=sims[state.site], out=[];
   for(let d=0;d<=SLIP_DAYS;d++){ let i=d*24,n=0; while(i+n<=SIM_H && n<LOOKAHEAD_H && r.frac[i+n]>=0.5) n++; out.push(n); }
   return out; }
 function renderSlip(){
+  if(!$("slip").clientWidth) return;
   const el=$("slip"), W=el.clientWidth, H=190, L=36, R=8, T=10, B=26, pw=W-L-R, ph=H-T-B, data=slipData();
   const mxD=Math.max(5,Math.ceil(Math.max(...data)/24/5)*5), bw=pw/data.length, Y=v=>T+ph-(v/24/mxD)*ph;
   layout.slip={L,bw,data};
@@ -386,8 +501,17 @@ function renderGlobe(){
   $("globeS").innerHTML=o;
 }
 function renderMaps(){ renderPolar(); renderGlobe(); }
-function fillSelect(){ $("site").innerHTML=SITES.map((s,k)=>`<option value="${k}">${s.name} — ${s.tag}</option>`).join(""); $("site").value=state.site; }
-function selectSite(k){ state.site=k; $("site").value=k; renderAll(); }
+function fillSelect(){
+  $("sitelist").innerHTML=SITES.map((s,k)=>`<button class="site${k===state.site?" sel":""}" data-k="${k}"><b>${s.name}</b><span>${s.tag} · ${fmtCoord(s)}</span></button>`).join("");
+  const s=SITES[state.site]; $("clat").value=s.lat.toFixed(2); $("clon").value=s.lon.toFixed(2);
+  const d=new Date(state.landing).toISOString().slice(0,10);
+  $("tray").innerHTML=`<span class="lbl">Scenarios</span><button class="chip on">A · ${s.name} · ${d}</button>`+
+    `<button class="chip" data-fake="A second scenario. Tapping a chip makes that scenario the active one in every view. (F6)">B · Mons Mouton · 2027-01-10</button><button class="chip ghost" data-fake="Adds another site + date. Up to four scenarios. (F6)">+ Add scenario</button>`;
+}
+function toast(msg,ms){ const t=$("toast"); t.textContent=msg; t.style.display="block"; clearTimeout(toast.t); toast.t=setTimeout(()=>t.style.display="none",ms||1800); }
+function showView(v){ if(!["explore","compare","slip","data"].includes(v)) v="explore"; document.body.dataset.view=v; history.replaceState(null,"","#/"+v); document.querySelectorAll("[data-nav] button").forEach(b=>b.classList.toggle("on",b.dataset.view===v)); window.scrollTo(0,0); renderAll(); }
+function jump(test,what){ const n=nextChange(test,state.hour); if(n!=null&&state.hour+n<=HOURS) setHour(state.hour+n); else toast("No "+what+" event left in this lunar day"); }
+function selectSite(k){ state.site=k; renderAll(); }
 function setCustom(lat,lon){
   const polar=lat<-75; let k=SITES.findIndex(s=>s.custom);
   const s={name:"Custom point",tag:"Picked on map",lat,lon,custom:true,seed:Math.round((lat+90)*1000)*7919+Math.round(lon*1000),base:polar?0.7:0.3,amp:polar?1.4:0.4};
@@ -419,7 +543,7 @@ function loadMaps(){
 
 // ---------- wiring ----------
 function renderTime(){ renderMaps(); renderTiles(); renderPano(); renderTimeline(); renderCompare(); }
-function renderAll(){ renderTime(); renderSlip(); }
+function renderAll(){ fillSelect(); renderTime(); renderSlip(); }
 function recompute(){ sims=SITES.map(s=>simulate(s,state.landing)); renderAll(); }
 function setHour(h){ state.hour=Math.max(0,Math.min(HOURS,Math.round(h))); $("hour").value=state.hour; renderTime(); }
 
@@ -429,8 +553,19 @@ function showTip(e,html){ tip.innerHTML=html; tip.style.display="block";
   tip.style.left=x+"px"; tip.style.top=Math.max(e.clientY-tip.offsetHeight-12,6)+"px"; }
 function hideTip(){ tip.style.display="none"; $("crosshair").style.display="none"; }
 
-fillSelect();
-$("site").onchange=e=>{ state.site=+e.target.value; renderAll(); };
+$("sitelist").onclick=e=>{ const b=e.target.closest(".site"); if(b) selectSite(+b.dataset.k); };
+$("cgo").onclick=()=>{ const la=parseFloat($("clat").value), lo=parseFloat($("clon").value);
+  if(isNaN(la)||isNaN(lo)||la<-90||la>90) return toast("Enter a latitude between −90 and 90 and a longitude in °E"); setCustom(la,((lo%360)+360)%360); };
+document.querySelectorAll("[data-nav] button").forEach(b=>b.onclick=()=>showView(b.dataset.view));
+document.addEventListener("click",e=>{ const g=e.target.closest("[data-go]"); if(g) return showView(g.dataset.go);
+  const f=e.target.closest("button[data-fake]"); if(f) toast("Not built yet. "+f.dataset.fake,4500); });
+document.addEventListener("change",e=>{ const f=e.target.closest("select[data-fake]"); if(f) toast("Not built yet. "+f.dataset.fake,4500); });
+document.addEventListener("pointerover",e=>{ const f=e.target.closest("[data-fake]"); if(f&&e.pointerType==="mouse") showTip(e,"<b>Planned, not built yet</b><br>"+f.dataset.fake); });
+document.addEventListener("pointerout",e=>{ if(e.target.closest("[data-fake]")) hideTip(); });
+$("mapseg").onclick=e=>{ const b=e.target.closest("button"); if(!b) return; const polar=b.dataset.map==="polar";
+  $("polarWrap").hidden=!polar; $("globeWrap").hidden=polar; $("mapseg").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); renderMaps(); };
+$("jsun").onclick=()=>jump(k=>sims[state.site].frac[k]>0,"Sun");
+$("jearth").onclick=()=>jump(k=>sims[state.site].comm[k]===1,"Earth");
 $("date").value=new Date(state.landing).toISOString().slice(0,10);
 $("date").onchange=e=>{ const t=Date.parse(e.target.value+"T00:00:00Z"); if(!isNaN(t)){ state.landing=t; recompute(); } };
 $("hour").max=HOURS;
@@ -461,8 +596,9 @@ $("slip").addEventListener("pointermove",e=>{ const p=layout.slip, b=$("slip").g
 $("slip").addEventListener("pointerleave",hideTip);
 
 let lastW=0;
-new ResizeObserver(()=>{ const w=$("pano").clientWidth; if(w!==lastW&&sims.length){ lastW=w; renderAll(); } }).observe($("pano"));
+new ResizeObserver(()=>{ const w=document.documentElement.clientWidth; if(w!==lastW&&sims.length){ lastW=w; renderAll(); } }).observe(document.documentElement);
 recompute();
+showView(location.hash.slice(2));
 mapPick("polar",PN,PN,polarXY,polarLL,s=>s.lat<-75);
 mapPick("globe",GW,GH,globeXY,(x,y)=>({lat:90-y/GH*180, lon:((x/GW*360-180)%360+360)%360}),()=>true);
 loadMaps();

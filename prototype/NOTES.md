@@ -4,7 +4,9 @@
 or copy its numbers anywhere. The real frontend is built in `web/` against the API contract in `doc/PLAN.md` §2.4.
 
 `wireframe.html` in this directory is the low-fidelity layout for the real product (numbered blocks, owners);
-it is the reference for layout. `index.html` is the earlier fake-data demo and is frozen: do not polish it further.
+it is the reference for layout. `index.html` is the **clickable prototype of that layout**: four views behind tabs, a
+two-column Explore view, a sticky time scrubber, bottom tabs on a phone. Controls with a dashed border are
+placeholders that only show a notice. Do not add real computation to it.
 
 ## Question it answers
 
