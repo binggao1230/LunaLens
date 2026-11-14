@@ -1,44 +1,81 @@
-# TODO — next steps
+# TODO
 
-Sources: the team's 14 November design call and the Figma file *NASA SpaceApps*
-(`pj5bENLGkYn0XeqofTY4YW`). Everything is about `site/`, the only build.
+What is left to do on `site/`, the only build. The measure is the challenge text: `doc/Background.md` and
+`doc/Resources.md`. Written 2026-11-14 against `main` at `9b70eb2`; still under discussion.
 
-## What the call decided
+## Where we stand against the challenge
 
-- The job is **re-planning**: a site and date were chosen, the mission slipped, and the user must see at a glance
-  whether the new site or date is the same, better or worse.
-- Two quantities decide that: **sunlight** (power) and the **direct-to-Earth link** (communication). Everything
-  else is explanation.
-- Comparison has to be **visual first, numbers second**: colour and a percentage, the table behind a click.
-- One lunar day is two Earth weeks: the moment the Sun sets, there is no power for half a month.
-- Layout follows the house-hunting pattern: map on one side, the list of sites on the other, one active site.
+| Objective in `Background.md` | State | Gap |
+|---|---|---|
+| Site selection and comparison | Partly | 12 curated sites and custom coordinates work. Compare only shows different sites on one date |
+| Date and time flexibility | Partly | A date can be chosen, not a time of day. No view across seasons |
+| Sun and Earth relative to the horizon | Done | The horizon panorama and the countdowns are in Explore. The Mission page has neither |
+| Power and communication assessment | Done | Mast height is fixed at 2 m |
+| Multiple visualisation approaches | Partly | The 2D polar map and the terrain 3D in Explore work. The Mission 3D is weak. Two map overlays are placeholders |
+| Temporal dynamics | Done | Timeline and play work |
+| Accessibility across skill levels | Weak | Three languages. No plain-language explanations, no glossary |
 
-## P0 — the 3D navigator comes first
+The background section's own scenario is a mission that slips: "alternative sites in the same region, or
+alternative dates at the same site". The second half is what the product cannot do yet, so it comes first.
+3D is "may explore" in the challenge text; it is not where the remaining time should go.
 
-1. **One 3D scene of the Moon, Earth and Sun, driven by time.** The Moon as a sphere with the real terminator, the
-   chosen site marked and coloured by its link state, Earth and Sun drawn in the directions the ephemeris gives,
-   libration and the orbit visible. It replaces the flat whole-Moon map as the main visual of the Mission page.
-   - Positions come from the same Horizons run that already fills `site/data/ephemeris.*`; the scene reads
-     sub-solar and sub-Earth point per hour and interpolates. Nothing is recomputed per frame.
-   - The terminator is geometry — `dot(surface normal, sun direction)` — not a painted texture.
-   - Site markers reuse the existing colour rule: green with an Earth link, yellow sunlit without one, grey in
-     shadow.
-   - The date picker and the time scrubber in `site/` drive the scene.
-2. **Compare two scenarios on purpose**: pick two, get a summary table, one overlap graphic, and a sentence saying
-   whether the windows meet.
-3. **Countdown to sunset and Earthset with the consequence** spelled out.
-4. **Map and list point at each other.**
+## A. Compare scenarios, not only sites
 
-## P1 — if the clock allows
+- Finish the scenario tray: add, duplicate with another date, duplicate with another site, remove. All four are
+  dashed placeholders today.
+- A row in Compare is a scenario (site + landing date), not a fixed list of the curated sites.
+- Accept: Shackleton rim crest on 14 November and on 23 November sit in two rows, in no more steps than comparing
+  two sites.
 
-6. **Education mode / Expert mode**: same data, plain sentences versus units and margins.
-7. **Send probe**: the 10→1 countdown and the flight, if it does not delay the numbers.
-8. **Finish or drop the placeholders** in Compare and the two map overlays (sunlit share, Earth-link share).
-9. **Real-phone pass**: iOS Safari and one Android, portrait and landscape; only headless 390 px exists.
+## B. A one-line verdict when the date slips
 
-## Open questions
+- Wire "Add selected day as a scenario" in Date slip to the tray from A.
+- When two scenarios are compared, say it in one sentence: hours of sunlight gained or lost, hours of Earth link
+  gained or lost, whether touchdown is in sunlight.
+- Add a landing time of day; it is fixed at 00:00 UTC.
+- Accept: "we slip 9 days, is the site still viable?" is answered without reading a table.
 
-- Settled in `doc/PLAN_3D.md`: positions come from the precomputed Horizons table, the renderer stays three.js,
-  and the scene is the south pole at three distances (pole, site, surface). Item 1 above is built by that plan.
-- **What decides "better"**: average sunlight, uninterrupted hours, Earth-link minutes, or a weighted score — and
-  the score must never appear without its inputs.
+## C. One product, not two
+
+- The Mission page (start page, probe, send probe) and Explore / Compare / Date slip look like two products.
+  Check whether they share the landing date and the picked site; this has not been verified. If they do not, make
+  them share one state.
+- On the Mission page, show the countdown to sunset and to Earthset for the picked site, and one action that opens
+  it in Explore.
+- Open a pull request for the two commits left on `chenlin/mission-start` (lander model, GLTF loader), or drop them.
+- Accept: change the date on Mission, switch to Explore, and the date and the site are the same.
+
+## D. 3D: stop the loss (two hours at most)
+
+- Drop the rendering code on `bing/3d-m1-wip`: the scene there shows a tan slab and a white dot. Keep only
+  `moon_color_4k.webp`. The Sun and Earth textures are not needed.
+- Mission 3D becomes: the camera starts over the south pole, the Moon uses the 4K texture, and picking a polar site
+  reuses the terrain patch that already works in Explore (`terrain-mesh.js`).
+- Heights at ×1 by default, or a caption that says the shadows are illustrative.
+- If the two hours run out, keep what is on `main` and change only the starting camera.
+
+## E. Terrain and trust
+
+- Fix the ranking: sites with no terrain (Chandrayaan-3 and the Apollo sites) rank above polar sites computed on
+  real terrain, and one of them carries the "Recommended" badge. Leave them out of the recommendation, or group
+  them apart and say why.
+- Put the scripts that produced `ephemeris.*`, `dem240.*`, `dem480.*` and `polar-hillshade.*` into `site/tools/`.
+  If they cannot be recovered, say so in `PROVENANCE.json`.
+- Compare the sunlit share at a few polar sites with the PGDA 69 average-illumination raster and show the result on
+  the Data page.
+- The two map overlays (sunlit share, Earth-link share): build them, or remove the buttons.
+
+## F. For people who are not specialists
+
+- One plain sentence next to each number, for example "the Sun is 1.6° above the horizon, about three Sun-widths".
+- One action that sets Apollo 11 beside a south-pole site on the same date, to show why the pole is hard.
+- A glossary: azimuth, elevation, lunar day, libration, direct-to-Earth.
+- Visuals for the demo video and the slides.
+
+## G. Before submission
+
+- Add future CLPS targets and landing sites of other countries' programmes to the curated list; the challenge text
+  names both. Every site carries a source for its coordinates.
+- Test on real phones: iOS Safari and one Android.
+- Confirm the official submission format and deadline. Nobody has checked this year's rules yet.
+- Decide what happens to the Cloudflare email check before the judges open the link.

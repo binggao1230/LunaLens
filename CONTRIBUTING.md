@@ -11,7 +11,7 @@ git clone git@github.com:binggao1230/LunaLens.git
 cd LunaLens
 ```
 
-Then read, in this order: `AGENTS.md`, then the plan documents it lists.
+Then read `AGENTS.md` and `TODO.md`.
 
 ## Every piece of work
 
@@ -20,9 +20,9 @@ Then read, in this order: `AGENTS.md`, then the plan documents it lists.
    git switch main && git pull
    git switch -c <name>/<short-topic>        # e.g. maeva/horizon-mask, eya/timeline-dock
    ```
-2. **Work only inside the paths `doc/WORKPLAN.md` §3 lists as yours.** If you need a change somewhere else, ask
-   that owner, or open a separate pull request and request their review.
-3. **Keep it small.** One item from the plan, or one part of it, per pull request. Aim for a pull request every few hours,
+2. **Work on one `TODO.md` item at a time.** If someone else is already changing the same files, ask
+   them first, or open a separate pull request and request their review.
+3. **Keep it small.** One `TODO.md` item, or one part of it, per pull request. Aim for a pull request every few hours,
    not one at the end.
 4. **Check before you push.** Run what exists for your area (`pytest backend/tests`, `npm run build` in `web/`).
    For anything touching projection, coordinate frames or units, include a check a human can verify by eye.
@@ -47,12 +47,10 @@ own pull request, so a pull request by a teammate cannot be merged by its author
 then whoever is around squash-merges it. `binggao1230` merges anything at any time, his own included, and does
 not wait for an approval. Approvals are dismissed when new commits are pushed.
 
-Two changes also wait for a particular person: someone else's paths need that owner's word in the thread, and
-`doc/` or the API contract (`backend/lunalens/api/schemas.py`, `web/src/api/mock/`) needs a message to both
-frontend developers, because everyone builds against them.
+A change to files someone else is working in waits for their word in the thread.
 
 If `main` moved while you worked: `git fetch && git rebase origin/main`, fix conflicts in your own files, and ask
-the other owner about conflicts in theirs. Never force-push `main`.
+the other person about conflicts in theirs. Never force-push `main`.
 
 ## Rules that do not bend
 
@@ -64,8 +62,8 @@ the other owner about conflicts in theirs. Never force-push `main`.
 
 ## For AI agents
 
-- You work for one person. Keep to the paths `doc/WORKPLAN.md` §3 gives them; do not edit paths someone else is working in.
-- Take the next item from the plan or from your person, unless told otherwise. Report what you did in the pull request.
+- You work for one person. Do not edit files someone else is working in.
+- Take the next item from `TODO.md` or from your person, unless told otherwise. Report what you did in the pull request.
 - Do not invent coordinates, constants, URLs or citations. Mark anything unverified as "unverified".
 - Do not push to `main`, do not force-push, and do not merge: open the pull request and stop there.
 - Do not add `Co-Authored-By` lines or "generated with" footers naming an AI tool to commits or pull requests.

@@ -1,6 +1,6 @@
 """Response models: the source of truth for the frontend contract.
 
-``WORKPLAN.md`` section 4.2 freezes four endpoints. This file is the field-level
+``archive/doc/WORKPLAN.md`` section 4.2 freezes four endpoints. This file is the field-level
 definition of each response. A change here after the H2 interface freeze needs
 Bing's approval and a message to both frontend developers, and it must be
 reflected in the generated ``web/src/api/types.ts``.

@@ -7,7 +7,7 @@ windows and stay metrics that the API and frontend consume.
 The two science functions are injected as keyword arguments so the whole
 pipeline is testable by hand without SPICE kernels or DEM files. When they are
 omitted, the real ``lunalens.ephem`` and ``lunalens.terrain`` packages are
-imported lazily, matching ``WORKPLAN.md`` section 4.1.
+imported lazily, matching ``archive/doc/WORKPLAN.md`` section 4.1.
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ def scenario(
     horizon_profile=None,
     sun_radius_deg: float | np.ndarray = 0.265,
 ) -> dict:
-    """Compute one scenario. See ``WORKPLAN.md`` section 4.1 and 4.2."""
+    """Compute one scenario. See ``archive/doc/WORKPLAN.md`` section 4.1 and 4.2."""
     sun_earth_azel = sun_earth_azel or _resolve_sun_earth_azel()
     horizon_profile = horizon_profile or _resolve_horizon_profile()
 

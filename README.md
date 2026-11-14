@@ -8,14 +8,8 @@ https://www.spaceappschallenge.org/2026/challenges/lunar-landing-site-navigator
 
 ## Status
 
-Planning is done; the product code is not written yet. What exists today:
-
-| Part | State |
-|---|---|
-| Plans and rules (`doc/`, `AGENTS.md`, `CONTRIBUTING.md`) | Ready |
-| Site (`site/`) | The product. Real numbers, real terrain. Runs locally, see below |
-| Backend (`backend/`) | Not started. Skeleton owner: Chenlin |
-| Frontend (`web/`) | Not started. Skeleton owner: Eya |
+`site/` is the product: a static site with real Sun and Earth positions (JPL Horizons, 2026–2030) and real
+terrain horizons (LRO LOLA), computed in the browser. It runs locally and online. What is left is in `TODO.md`.
 
 ## Get the code
 
@@ -76,14 +70,12 @@ npx wrangler deploy
 
 What gets published is set in `wrangler.jsonc` (`site/`). Its 34 MB `data/` folder is not in git, so the workflow
 downloads the released snapshot and unpacks it into `site/data/` before deploying; the same two commands in the
-section above do that by hand. Background: `doc/PLAN.md` §2.5.
+section above do that by hand.
 
 ## Find your work
 
-1. **`TODO.md`** is what happens next: the list the 14 November call and the Figma file produced, ordered by what
-   the demo needs.
-2. `doc/PRODUCT.md` and `doc/PLAN.md` say what we build and how; `doc/WORKPLAN.md` holds the interfaces.
-3. Read `CONTRIBUTING.md` once: branches and pull requests. The per-person folders in `archive/team/` are retired.
+1. **`TODO.md`** is what is left to do, measured against the challenge text in `doc/`.
+2. Read `CONTRIBUTING.md` once: branches and pull requests.
 
 If you work with an AI agent, point it at `AGENTS.md` too.
 
@@ -94,24 +86,12 @@ Nobody commits to `main` directly.
 ```
 git switch main && git pull
 git switch -c <your-name>/<short-topic>
-# ... work, then update your TODO.md ...
+# ... work ...
 git push -u origin <your-name>/<short-topic>
 ```
 
 Then open a pull request on GitHub. If it only touches your own paths, merge it yourself once checks pass.
 Full rules: `CONTRIBUTING.md`.
-
-## Run the backend and the frontend
-
-Not available yet. These sections are filled in by their owners when the skeletons merge, and must then contain
-commands that work from a fresh clone:
-
-- **Backend** (Python, FastAPI) — install, download data, run the server, run tests. Owner: Chenlin.
-- **Frontend** (Vite, React, TypeScript) — install, run the dev server, build. Owner: Eya.
-- **Data** (Moon elevation files and ephemeris kernels, about 0.5 GB, not stored in Git) — download script. Owner: Maeva.
-
-Two rules already apply to both: servers bind `0.0.0.0` so teammates on the same network can open them, and the
-demo must run without live calls to third-party services.
 
 ## Repository map
 
@@ -119,11 +99,11 @@ demo must run without live calls to third-party services.
 README.md          this file
 AGENTS.md          rules for everyone and every AI agent
 CONTRIBUTING.md    branches, pull requests, who merges
-doc/               PRODUCT.md (what we build) · PLAN.md (approach, roadmap, resources)
-                   WORKPLAN.md (layout, code structure, interfaces, roles) · challenge text
-archive/team/      retired per-person plans, history only
-site/              the published static site; site/data/ is not in git
-backend/  web/     product code, to come
+TODO.md            what is left to do
+doc/               the challenge text: Background.md, Resources.md
+site/              the product; site/data/ is not in git
+backend/           Python reference for the window rules, used by the site's checks
+archive/           retired plans, history only
 ```
 
 ## Conventions in one place
