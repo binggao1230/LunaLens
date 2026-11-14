@@ -4,9 +4,8 @@
 or copy its numbers anywhere. The real frontend is built in `web/` against the API contract in `doc/PLAN.md` §2.4.
 
 `index.html` is the **clickable layout prototype** for the real product: a minimal top bar with three tabs, a
-two-column Explore view, a timeline dock fixed at the bottom, bottom tabs on a phone. Controls with a dashed border
-are placeholders that explain themselves on hover or tap. The **Build map** page and the owner labels on each
-block are planning aids; delete them before the demo. Do not add real computation to this file.
+two-column Explore view, a timeline dock fixed at the bottom, four bottom tabs on a phone. Controls with a dashed
+border are placeholders that explain themselves on hover or tap. Do not add real computation to this file.
 
 ## Question it answers
 

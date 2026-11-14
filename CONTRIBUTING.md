@@ -11,7 +11,7 @@ git clone git@github.com:binggao1230/LunaLens.git
 cd LunaLens
 ```
 
-Then read, in this order: `AGENTS.md`, your `team/<name>/README.md`, your `team/<name>/TODO.md`.
+Then read, in this order: `AGENTS.md`, then the plan documents it lists.
 
 ## Every piece of work
 
@@ -52,12 +52,12 @@ conflicts in your own files, and ask the other owner about conflicts in theirs. 
 - No secrets, no `.env`, no large data files (`data/` is ignored; data is fetched by scripts).
 - After the feature freeze at hour 36: bug fixes only.
 - If something is wrong but raises no error (a number that looks off, a map that looks mirrored), stop and say so
-  in your TODO under "Blocked / questions" and tell Bing. Do not paper over it.
+  in the pull request description and tell Bing. Do not paper over it.
 
 ## For AI agents
 
-- You work for one person. Their folder is `team/<name>/`. Do not edit another person's folder or paths.
-- Do the next unticked item in `TODO.md` unless told otherwise. When an item is done, tick it and log it.
+- You work for one person. Keep to the paths that person is responsible for; do not edit paths someone else is working in.
+- Take the next item from the plan or from your person, unless told otherwise. Report what you did in the pull request.
 - Do not invent coordinates, constants, URLs or citations. Mark anything unverified as "unverified".
 - Do not push to `main`, do not force-push, do not merge pull requests that need someone else's approval.
 - Do not add `Co-Authored-By` lines or "generated with" footers naming an AI tool to commits or pull requests.
