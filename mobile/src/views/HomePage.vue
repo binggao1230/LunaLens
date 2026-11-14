@@ -4,106 +4,83 @@
       <main class="welcome-shell" aria-labelledby="welcome-title">
         <header class="welcome-topbar">
           <img class="welcome-logo" src="/lunalens-logo.svg" alt="LunaLens" />
-          <span class="offline-pill"><span aria-hidden="true">●</span> Ready to explore offline</span>
+          <ion-select
+            class="language-select"
+            :value="language"
+            :aria-label="t('Choose language')"
+            interface="popover"
+            @ion-change="setLanguage($event.detail.value)"
+          >
+            <ion-select-option value="fr">FR</ion-select-option>
+            <ion-select-option value="en">EN</ion-select-option>
+            <ion-select-option value="zh">简体中文</ion-select-option>
+          </ion-select>
         </header>
 
         <section class="welcome-hero">
           <div class="welcome-copy">
-            <p class="eyebrow">A tiny field trip. A very big Moon.</p>
-            <h1 id="welcome-title">Your Moon mission starts <em>here.</em></h1>
-            <p class="welcome-intro">
-              Pick a lunar place and a day. Discover when the ground is in sunlight, when Earth is in view, and why
-              those are two different things.
-            </p>
+            <p class="eyebrow">{{ t('Lunar exploration') }}</p>
+            <h1 id="welcome-title">{{ t('Explore the Moon') }}</h1>
+            <p class="welcome-intro">{{ t('Choose a place. Choose a day. See what changes.') }}</p>
             <ion-button class="launch-button" expand="block" router-link="/explore">
-              Start exploring <span aria-hidden="true">→</span>
+              {{ t('Start exploring') }} <span aria-hidden="true">→</span>
             </ion-button>
-            <p class="welcome-caption">A short, hands-on lesson for curious minds and classrooms.</p>
+            <p class="welcome-caption">
+              {{ t('12 curated lunar places') }} <span aria-hidden="true">·</span> {{ t('Sunlight · Earth · terrain') }}
+            </p>
           </div>
 
-          <div
-            class="welcome-illustration"
-            role="img"
-            aria-label="Earth above a curved lunar horizon under a starry sky"
-          >
+          <div class="welcome-illustration" role="img" :aria-label="t('Explore the Moon')">
             <span class="orbit orbit-one" aria-hidden="true"></span>
             <span class="orbit orbit-two" aria-hidden="true"></span>
             <span class="welcome-star star-a" aria-hidden="true">✦</span>
             <span class="welcome-star star-b" aria-hidden="true">·</span>
             <span class="welcome-star star-c" aria-hidden="true">✧</span>
             <span class="welcome-earth" aria-hidden="true"><i></i></span>
-            <span class="welcome-earth-label" aria-hidden="true">Earth</span>
             <span class="welcome-horizon" aria-hidden="true"></span>
             <span class="welcome-crater crater-one" aria-hidden="true"></span>
             <span class="welcome-crater crater-two" aria-hidden="true"></span>
-            <span class="illustration-label">Your view from the lunar surface</span>
           </div>
         </section>
 
-        <section class="welcome-learning" aria-labelledby="learn-title">
-          <div class="welcome-section-heading">
-            <p class="eyebrow">Three clues to look for</p>
-            <h2 id="learn-title">The Moon has more than one kind of “daylight.”</h2>
-          </div>
-          <div class="learn-cards">
-            <details class="learn-card sun-card">
-              <summary>
-                <span class="learn-icon" aria-hidden="true">☼</span>
-                <span><strong>Sunlight</strong><small>Can the Sun reach the ground?</small></span>
-                <span class="expand-mark" aria-hidden="true">+</span>
-              </summary>
-              <p>
-                Low hills can hide the Sun, even when it is daytime. Near the Moon’s south pole, the horizon can make
-                sunlight change from place to place.
-              </p>
-            </details>
-            <details class="learn-card earth-card">
-              <summary>
-                <span class="learn-icon" aria-hidden="true">◎</span>
-                <span><strong>Earth in view</strong><small>Can you see Earth above the horizon?</small></span>
-                <span class="expand-mark" aria-hidden="true">+</span>
-              </summary>
-              <p>
-                Earth can be above the horizon while the ground is dark. “In view” is a geometric view of Earth; it does
-                not check every part of a radio connection.
-              </p>
-            </details>
-            <details class="learn-card both-card">
-              <summary>
-                <span class="learn-icon" aria-hidden="true">↗</span>
-                <span><strong>Both together</strong><small>When do both happen at once?</small></span>
-                <span class="expand-mark" aria-hidden="true">+</span>
-              </summary>
-              <p>
-                That overlap is the interesting part: a place may have sunlight without Earth in view, Earth in view
-                without sunlight, or both at the same time.
-              </p>
-            </details>
-          </div>
-        </section>
-
-        <details class="classroom-tip">
+        <details class="moon-facts">
           <summary>
-            <span aria-hidden="true">✎</span> A quick idea for teachers and learners
+            <span aria-hidden="true">☼</span>
+            {{ t('Moon light and temperature') }}
             <span class="expand-mark" aria-hidden="true">+</span>
           </summary>
-          <div>
+          <div class="facts-body">
             <p>
-              Before exploring, make a prediction: will changing the place or the date change sunlight, Earth in view,
-              or both?
+              <strong>{{ t('The Moon has almost no air to hold heat.') }}</strong>
             </p>
             <p>
-              After exploring, compare your prediction with the timeline. There is no score—just a chance to explain
-              what you noticed.
+              {{
+                t(
+                  'In full sunlight, the surface can reach about 127°C. In darkness, it can fall to about −173°C. These are broad reference values, not a temperature forecast for your chosen place.',
+                )
+              }}
+            </p>
+            <p>
+              {{
+                t(
+                  'One full cycle takes about 29.5 Earth days. Near the equator, daylight and darkness each last about two weeks. At the poles, hills and craters make the pattern very different.',
+                )
+              }}
+            </p>
+            <p class="facts-sources">
+              <a href="https://science.nasa.gov/moon/facts/" target="_blank" rel="noopener noreferrer"
+                >{{ t('NASA Moon facts') }} ↗</a
+              >
+              <a href="https://science.nasa.gov/moon/moonlight/" target="_blank" rel="noopener noreferrer"
+                >{{ t('NASA: Moonlight and lunar day') }} ↗</a
+              >
             </p>
           </div>
         </details>
 
         <footer class="welcome-footer">
-          <span>Built for learning, not mission certification.</span>
-          <a href="https://luna-lens.gaobing1230.workers.dev" target="_blank" rel="noopener noreferrer"
-            >Visit the full LunaLens website <span aria-hidden="true">↗</span></a
-          >
+          <span>{{ t('Ready to explore offline') }}</span>
+          <router-link to="/explore">{{ t('Start exploring') }} <span aria-hidden="true">→</span></router-link>
         </footer>
       </main>
     </ion-content>
@@ -111,7 +88,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonContent, IonPage } from '@ionic/vue';
+import { IonButton, IonContent, IonPage, IonSelect, IonSelectOption } from '@ionic/vue';
+import { useLanguage } from '../i18n';
+
+const { language, setLanguage, t } = useLanguage();
 </script>
 
 <style scoped>
@@ -120,52 +100,46 @@ import { IonButton, IonContent, IonPage } from '@ionic/vue';
   --color: #19202a;
 }
 .welcome-shell {
-  width: min(100% - 32px, 1080px);
+  width: min(100% - 32px, 920px);
   margin: 0 auto;
-  padding: max(18px, env(safe-area-inset-top)) 0 max(28px, env(safe-area-inset-bottom));
+  padding: max(14px, env(safe-area-inset-top)) 0 max(20px, env(safe-area-inset-bottom));
 }
 .welcome-topbar {
   display: flex;
-  min-height: 48px;
+  min-height: 50px;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
 }
 .welcome-logo {
   display: block;
-  width: 54px;
-  height: 45px;
+  width: 48px;
+  height: 42px;
   object-fit: contain;
 }
-.offline-pill {
-  display: inline-flex;
-  min-height: 36px;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  border: 1px solid #d6ddd5;
-  border-radius: 999px;
+.language-select {
+  min-height: 42px;
+  min-width: 94px;
+  padding: 0 9px;
+  border: 1px solid #d3d5d5;
+  border-radius: 12px;
   background: #fffefa;
-  color: #31463b;
-  font-size: 12px;
-  font-weight: 650;
-}
-.offline-pill span {
-  color: #418a5d;
-  font-size: 10px;
+  color: #203b62;
+  font-size: 13px;
+  font-weight: 750;
 }
 .welcome-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.92fr);
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 0.85fr);
   align-items: center;
-  gap: clamp(24px, 5vw, 62px);
-  padding: clamp(36px, 7vw, 74px) 0 44px;
+  gap: clamp(22px, 5vw, 54px);
+  padding: clamp(24px, 6vw, 54px) 0 25px;
 }
 .welcome-copy {
-  animation: rise-in 0.65s both;
+  animation: rise-in 0.45s both;
 }
 .eyebrow {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: #58647a;
   font-size: 11px;
   font-weight: 750;
@@ -173,64 +147,60 @@ import { IonButton, IonContent, IonPage } from '@ionic/vue';
   text-transform: uppercase;
 }
 h1,
-h2,
 p {
   overflow-wrap: anywhere;
 }
 h1 {
-  max-width: 610px;
+  max-width: 560px;
   margin: 0;
   color: #172337;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(43px, 8vw, 76px);
+  font-size: clamp(42px, 7vw, 68px);
   font-weight: 500;
   letter-spacing: -0.05em;
   line-height: 0.99;
 }
-h1 em {
-  color: #9b6320;
-  font-weight: 500;
-}
 .welcome-intro {
-  max-width: 540px;
-  margin: 20px 0 23px;
+  max-width: 470px;
+  margin: 14px 0 18px;
   color: #3d4858;
-  font-size: 17px;
-  line-height: 1.6;
+  font-size: 16px;
+  line-height: 1.5;
 }
 .launch-button {
-  width: min(100%, 360px);
-  min-height: 56px;
+  width: min(100%, 340px);
+  min-height: 54px;
   --background: #203b62;
   --background-activated: #142b4d;
-  --border-radius: 14px;
-  --box-shadow: 0 8px 18px #203b6226;
+  --border-radius: 13px;
+  --box-shadow: 0 7px 16px #203b6222;
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 0;
 }
 .launch-button span {
-  margin-left: 12px;
-  font-size: 22px;
+  margin-left: 10px;
+  font-size: 21px;
   transition: transform 0.2s ease;
 }
 .launch-button:hover span {
   transform: translateX(4px);
 }
 .welcome-caption {
-  margin: 11px 0 0;
-  color: #5a6370;
+  margin: 10px 0 0;
+  color: #586273;
   font-size: 12px;
+  line-height: 1.45;
 }
 .welcome-illustration {
   position: relative;
-  min-height: 330px;
+  min-height: 280px;
   overflow: hidden;
   border: 1px solid #40516a;
-  border-radius: 26px;
+  border-radius: 24px;
   background: radial-gradient(ellipse at 66% 22%, #293c5a 0, #1b2941 42%, #121c2d 100%);
   isolation: isolate;
-  animation: rise-in 0.75s 0.08s both;
+  animation: rise-in 0.55s 0.05s both;
 }
 .welcome-illustration::before {
   position: absolute;
@@ -247,33 +217,32 @@ h1 em {
 }
 .orbit {
   position: absolute;
-  top: 23%;
-  left: 38%;
-  width: 58%;
-  height: 32%;
+  top: 21%;
+  left: 31%;
+  width: 67%;
+  height: 38%;
   border: 1px solid #a9c4e244;
   border-radius: 50%;
   transform: rotate(-20deg);
 }
 .orbit-two {
-  top: 19%;
-  left: 31%;
-  width: 72%;
-  height: 42%;
+  top: 15%;
+  left: 24%;
+  width: 80%;
+  height: 47%;
   transform: rotate(24deg);
 }
 .welcome-earth {
   position: absolute;
-  top: 20%;
-  right: 23%;
-  display: block;
-  width: clamp(72px, 15vw, 104px);
+  top: 18%;
+  right: 22%;
+  width: clamp(68px, 13vw, 95px);
   aspect-ratio: 1;
   overflow: hidden;
   border: 2px solid #cae6f1;
   border-radius: 50%;
   background: radial-gradient(circle at 34% 32%, #eef9f5 0 8%, #86c7d9 10% 31%, #357da1 32% 72%, #153750 74%);
-  box-shadow: 0 0 34px #86c7d966;
+  box-shadow: 0 0 30px #86c7d966;
   animation: float 5s ease-in-out infinite;
 }
 .welcome-earth i {
@@ -286,14 +255,6 @@ h1 em {
   background: #87a885;
   transform: rotate(25deg);
 }
-.welcome-earth-label {
-  position: absolute;
-  top: calc(20% + clamp(78px, 15vw, 110px));
-  right: calc(23% + 20px);
-  color: #edf4fb;
-  font-size: 13px;
-  font-weight: 700;
-}
 .welcome-star {
   position: absolute;
   z-index: 1;
@@ -302,7 +263,7 @@ h1 em {
 }
 .star-a {
   top: 25%;
-  left: 19%;
+  left: 17%;
   font-size: 17px;
 }
 .star-b {
@@ -320,7 +281,7 @@ h1 em {
 .welcome-horizon {
   position: absolute;
   right: -12%;
-  bottom: -33%;
+  bottom: -34%;
   left: -12%;
   height: 66%;
   border: 1px solid #e1d7bb;
@@ -344,9 +305,9 @@ h1 em {
 .welcome-crater {
   position: absolute;
   z-index: 2;
-  bottom: 21%;
-  width: 50px;
-  height: 17px;
+  bottom: 20%;
+  width: 48px;
+  height: 16px;
   border: 2px solid #716e65;
   border-top-color: #d6d0bd;
   border-radius: 50%;
@@ -358,175 +319,97 @@ h1 em {
 .crater-two {
   right: 22%;
   bottom: 15%;
-  width: 76px;
+  width: 70px;
 }
-.illustration-label {
-  position: absolute;
-  right: 15px;
-  bottom: 13px;
-  z-index: 3;
-  color: #fff;
-  font-size: 11px;
-  text-shadow: 0 1px 5px #000;
-}
-.welcome-learning {
-  padding: 16px 0 0;
-}
-.welcome-section-heading {
-  max-width: 580px;
-  margin-bottom: 17px;
-}
-.welcome-section-heading h2 {
-  margin: 0;
-  color: #172337;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(25px, 5vw, 36px);
-  font-weight: 500;
-  line-height: 1.12;
-}
-.learn-cards {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-.learn-card {
-  align-self: start;
-  min-width: 0;
-  padding: 16px;
+.moon-facts {
   border: 1px solid #d9d5cb;
   border-radius: 15px;
   background: #fffefa;
   box-shadow: 0 5px 18px #28354808;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  animation: rise-in 0.55s both;
 }
-.learn-card:nth-child(2) {
-  animation-delay: 0.08s;
-}
-.learn-card:nth-child(3) {
-  animation-delay: 0.16s;
-}
-.learn-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 9px 24px #28354812;
-}
-.learn-card summary {
-  display: grid;
-  min-height: 54px;
-  grid-template-columns: 40px minmax(0, 1fr) 22px;
+.moon-facts summary {
+  display: flex;
+  min-height: 56px;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
+  padding: 0 15px;
+  color: #1f2d40;
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
   list-style: none;
 }
-.learn-card summary::-webkit-details-marker,
-.classroom-tip summary::-webkit-details-marker {
+.moon-facts summary::-webkit-details-marker {
   display: none;
 }
-.learn-icon {
+.moon-facts summary > span:first-child {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   place-items: center;
-  border: 1px solid currentColor;
+  border: 1px solid #b27b15;
   border-radius: 50%;
-  font-size: 20px;
-}
-.sun-card .learn-icon {
-  color: #815500;
   background: #fff2ce;
-}
-.earth-card .learn-icon {
-  color: #145376;
-  background: #e1f2f8;
-}
-.both-card .learn-icon {
-  color: #365032;
-  background: #eaf1e1;
-}
-.learn-card strong,
-.learn-card small {
-  display: block;
-}
-.learn-card strong {
-  color: #1f2d40;
-  font-size: 15px;
-}
-.learn-card small {
-  margin-top: 3px;
-  color: #586273;
-  font-size: 12px;
-  line-height: 1.35;
+  color: #815500;
+  font-size: 19px;
 }
 .expand-mark {
   display: grid;
-  width: 22px;
-  height: 22px;
+  width: 25px;
+  height: 25px;
   place-items: center;
+  margin-left: auto;
   border: 1px solid #b8c0ca;
   border-radius: 50%;
   color: #43536a;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1;
   transition: transform 0.2s ease;
 }
 details[open] .expand-mark {
   transform: rotate(45deg);
 }
-.learn-card > p {
-  margin: 13px 0 0 50px;
+.facts-body {
+  padding: 0 18px 15px 60px;
+  animation: reveal 0.24s ease-out;
+}
+.facts-body p {
+  margin: 8px 0;
   color: #465365;
   font-size: 13px;
   line-height: 1.55;
-  animation: reveal 0.25s ease-out;
 }
-.classroom-tip {
-  margin-top: 14px;
-  padding: 0 16px;
-  border: 1px solid #d7dce2;
-  border-radius: 14px;
-  background: #eef2f6;
+.facts-body p strong {
+  color: #1f2d40;
 }
-.classroom-tip summary {
+.facts-sources {
   display: flex;
-  min-height: 54px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.facts-sources a {
+  min-height: 38px;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  color: #24354e;
-  cursor: pointer;
-  font-size: 14px;
+  color: #173e6b;
+  font-size: 12px;
   font-weight: 700;
-  list-style: none;
-}
-.classroom-tip summary > span:first-child {
-  font-size: 19px;
-}
-.classroom-tip .expand-mark {
-  margin-left: auto;
-}
-.classroom-tip > div {
-  padding: 0 5px 12px 30px;
-  animation: reveal 0.25s ease-out;
-}
-.classroom-tip p {
-  margin: 5px 0 9px;
-  color: #465365;
-  font-size: 13px;
-  line-height: 1.55;
 }
 .welcome-footer {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 10px 18px;
-  margin: 22px 2px 0;
+  margin: 14px 2px 0;
   color: #596273;
   font-size: 12px;
   line-height: 1.5;
 }
 .welcome-footer a {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: #173e6b;
   font-weight: 650;
 }
@@ -537,7 +420,7 @@ details[open] .expand-mark {
 @keyframes rise-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -550,7 +433,7 @@ details[open] .expand-mark {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-7px);
+    transform: translateY(-6px);
   }
 }
 @keyframes twinkle {
@@ -579,33 +462,22 @@ details[open] .expand-mark {
   }
   .welcome-hero {
     grid-template-columns: 1fr;
-    gap: 24px;
-    padding: 40px 0 34px;
+    gap: 18px;
+    padding: 31px 0 20px;
   }
   h1 {
     max-width: 560px;
-    font-size: clamp(43px, 12vw, 62px);
+    font-size: clamp(42px, 12vw, 58px);
+  }
+  .welcome-intro {
+    margin: 11px 0 15px;
+    font-size: 15px;
   }
   .welcome-illustration {
-    min-height: clamp(220px, 62vw, 310px);
+    min-height: clamp(190px, 54vw, 270px);
   }
-  .learn-cards {
-    grid-template-columns: 1fr;
-  }
-  .learn-card {
-    padding: 13px 15px;
-  }
-  .learn-card summary {
-    min-height: 54px;
-  }
-}
-@media (max-width: 380px) {
-  .offline-pill {
-    padding: 0 9px;
-    font-size: 11px;
-  }
-  .welcome-logo {
-    width: 48px;
+  .launch-button {
+    width: 100%;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -3,28 +3,36 @@
     <ion-content :fullscreen="true" class="lesson-content">
       <main class="shell" aria-labelledby="page-title">
         <header class="topline">
-          <router-link class="brand" to="/" aria-label="LunaLens Learn home">
+          <router-link class="brand" to="/" :aria-label="t('Explore the Moon')">
             <img class="brand-logo" src="/lunalens-logo.svg" alt="" />
             <span>LunaLens <span class="brand-subtitle">LEARN</span></span>
           </router-link>
-          <span class="offline-note"><span class="offline-dot" aria-hidden="true"></span>Works offline</span>
+          <ion-select
+            class="language-select"
+            :value="language"
+            :aria-label="t('Choose language')"
+            interface="popover"
+            @ion-change="setLanguage($event.detail.value)"
+          >
+            <ion-select-option value="fr">FR</ion-select-option>
+            <ion-select-option value="en">EN</ion-select-option>
+            <ion-select-option value="zh">简体中文</ion-select-option>
+          </ion-select>
         </header>
 
         <section class="hero" aria-labelledby="page-title">
-          <p class="eyebrow">A little lunar field trip</p>
-          <h1 id="page-title">What can you see from the Moon?</h1>
-          <p class="intro">
-            Choose a place and a day. Then explore when sunlight reaches the ground, when Earth is in view, and when
-            both happen together.
-          </p>
-          <div class="moon-art" role="img" aria-label="Illustration of the Moon's horizon, with Earth above it">
+          <p class="eyebrow">{{ t('Lunar exploration') }}</p>
+          <h1 id="page-title">{{ t('Explore the Moon') }}</h1>
+          <p class="intro">{{ t('Choose a place and a UTC date.') }}</p>
+          <div class="moon-art" role="img" :aria-label="t('Lunar horizon illustration')">
             <div class="moon-sky">
               <span class="star star-one" aria-hidden="true"></span
               ><span class="star star-two" aria-hidden="true"></span
-              ><span class="earth" aria-hidden="true"><span></span></span><span class="earth-label">Earth</span>
+              ><span class="earth" aria-hidden="true"><span></span></span
+              ><span class="earth-label">{{ t('Earth') }}</span>
             </div>
             <div class="moon-ground"><span class="ridge ridge-back"></span><span class="ridge ridge-front"></span></div>
-            <span class="art-caption">A view from the lunar surface</span>
+            <span class="art-caption">{{ t('Moon surface view') }}</span>
           </div>
         </section>
 
@@ -32,92 +40,53 @@
           <div class="section-heading">
             <span class="step-number" aria-hidden="true">1</span>
             <div>
-              <p class="eyebrow">Start exploring</p>
-              <h2 id="choose-title">Pick a place and a day</h2>
+              <p class="eyebrow">{{ t('Start exploring') }}</p>
+              <h2 id="choose-title">{{ t('Lunar exploration') }}</h2>
             </div>
           </div>
 
           <div class="form-grid">
             <ion-item class="field" lines="none">
-              <ion-label position="stacked" for="site-choice">Lunar place</ion-label>
-              <ion-select id="site-choice" v-model="selectedSite" interface="popover" aria-label="Choose a lunar place">
-                <ion-select-option value="apollo11">Tranquility Base · Apollo 11</ion-select-option>
-                <ion-select-option value="shackleton-rim">Shackleton rim · South Pole</ion-select-option>
+              <ion-label position="stacked" for="site-choice">{{ t('Lunar place') }}</ion-label>
+              <ion-select
+                id="site-choice"
+                v-model="selectedSite"
+                interface="action-sheet"
+                :aria-label="t('Lunar place')"
+              >
+                <ion-select-option v-for="site in learningSites" :key="site.id" :value="site.id">{{
+                  t(site.id)
+                }}</ion-select-option>
               </ion-select>
             </ion-item>
 
             <ion-item class="field" lines="none">
-              <ion-label position="stacked" for="landing-date">Day to explore (UTC)</ion-label>
+              <ion-label position="stacked" for="landing-date">{{ t('Day (UTC)') }}</ion-label>
               <ion-input
                 id="landing-date"
                 v-model="selectedDate"
                 type="date"
                 min="2026-01-01"
                 max="2030-12-31"
-                aria-label="Choose a date between 2026 and 2030, UTC"
+                :aria-label="t('Day (UTC)')"
               ></ion-input>
             </ion-item>
           </div>
 
-          <p class="field-hint" id="date-hint">
-            The current data covers 2026–2030. The selected date is interpreted at 00:00 UTC.
-          </p>
+          <p class="field-hint" id="date-hint">{{ t('Data: 2026–2030 · day starts at 00:00 UTC') }}</p>
           <ion-button expand="block" class="start-button" :disabled="loading" @click="openLesson">
-            {{ loading ? 'Loading local data…' : 'Explore this place' }}
+            {{ loading ? t('Loading lunar data…') : t('Show me this day') }}
             <span class="button-arrow" aria-hidden="true">→</span>
           </ion-button>
           <p v-if="errorMessage" class="error-note" role="alert">{{ errorMessage }}</p>
-        </section>
-
-        <section v-if="lessonOpen" class="concept-card" aria-labelledby="lesson-title" aria-live="polite">
-          <div class="section-heading">
-            <span class="step-number step-number-complete" aria-hidden="true">✓</span>
-            <div>
-              <p class="eyebrow">Your first idea</p>
-              <h2 id="lesson-title">Two different views of the sky</h2>
-            </div>
-          </div>
-          <p class="lesson-intro">
-            At <strong>{{ siteName }}</strong> on <strong>{{ formattedDate }}</strong>, we will look at two separate
-            questions:
-          </p>
-          <ul class="concept-list">
-            <li>
-              <span class="concept-symbol sun-symbol" aria-hidden="true">☼</span
-              ><span
-                ><strong>Sunlight</strong><span class="concept-copy">Does sunlight reach the ground here?</span></span
-              >
-            </li>
-            <li>
-              <span class="concept-symbol earth-symbol" aria-hidden="true">◎</span
-              ><span
-                ><strong>Earth in view</strong
-                ><span class="concept-copy">Can you see Earth above the local horizon?</span></span
-              >
-            </li>
-            <li>
-              <span class="concept-symbol overlap-symbol" aria-hidden="true">↗</span
-              ><span
-                ><strong>Both at once</strong
-                ><span class="concept-copy">When do sunlight and a direct view of Earth overlap?</span></span
-              >
-            </li>
-          </ul>
-          <p class="next-step">
-            Next, we’ll connect these ideas to a timeline and compare this place with another lunar site.
-          </p>
-          <p class="science-note">
-            <strong>A note about the science:</strong> “Earth in view” means a direct geometric view of Earth above the
-            terrain horizon. It does not calculate a complete radio link or certify a landing site.
-          </p>
         </section>
 
         <section v-if="dailyResult" class="results-card" aria-labelledby="results-title" aria-live="polite">
           <div class="section-heading">
             <span class="step-number step-number-complete" aria-hidden="true">2</span>
             <div>
-              <p class="eyebrow">Your lunar day</p>
-              <h2 id="results-title">What happens at {{ displaySiteName }}?</h2>
+              <p class="eyebrow">{{ t('Your lunar day') }}</p>
+              <h2 id="results-title">{{ t(displaySiteName) }}</h2>
             </div>
           </div>
           <p class="result-date">{{ dailyResult.date }} · 00:00–23:00 UTC</p>
@@ -125,52 +94,67 @@
           <div class="result-grid">
             <article class="result-item sunlight-result">
               <span class="result-icon" aria-hidden="true">☼</span>
-              <h3>Sunlight</h3>
-              <p class="result-number">{{ dailyResult.sunlightHours }} <span>of 24 hours</span></p>
-              <p>Hours when the Sun clears the available horizon.</p>
+              <h3>{{ t('Sunlight') }}</h3>
+              <p class="result-number">
+                {{ dailyResult.sunlightHours }} <span>{{ t('hours of 24') }}</span>
+              </p>
+              <p>{{ t('Hours when the Sun clears the modeled horizon.') }}</p>
               <details class="result-more">
-                <summary>Why does this matter?</summary>
+                <summary>{{ t('Why does sunlight matter?') }}</summary>
                 <p>
-                  Sunlight can warm the surface and provide energy to equipment. Nearby hills can block it, so the local
-                  horizon matters.
+                  {{
+                    t(
+                      'Sunlight can provide energy, but hills can cast long shadows. Near the poles the Sun stays low, so small changes in terrain matter.',
+                    )
+                  }}
                 </p>
               </details>
             </article>
             <article class="result-item earth-result">
               <span class="result-icon" aria-hidden="true">◎</span>
-              <h3>Earth in view</h3>
-              <p class="result-number">{{ dailyResult.earthVisibleHours }} <span>of 24 hours</span></p>
-              <p>Hours when Earth's centre is above the available horizon.</p>
+              <h3>{{ t('Earth in view') }}</h3>
+              <p class="result-number">
+                {{ dailyResult.earthVisibleHours }} <span>{{ t('hours of 24') }}</span>
+              </p>
+              <p>{{ t('Hours when Earth’s centre is above the modeled horizon.') }}</p>
               <details class="result-more">
-                <summary>What does “in view” mean?</summary>
+                <summary>{{ t('What does “Earth in view” mean?') }}</summary>
                 <p>
-                  From this spot, a straight geometric line toward Earth's centre clears the modeled horizon. Antennas,
-                  signal strength and a full radio link are not assessed.
+                  {{
+                    t(
+                      'A straight geometric view to Earth clears the modeled horizon. This does not check antennas, signal strength, or a full radio link.',
+                    )
+                  }}
                 </p>
               </details>
             </article>
             <article class="result-item overlap-result">
               <span class="result-icon" aria-hidden="true">↗</span>
-              <h3>Both at once</h3>
-              <p class="result-number">{{ dailyResult.overlapHours }} <span>of 24 hours</span></p>
-              <p>Hours when sunlight and Earth in view overlap.</p>
+              <h3>{{ t('Together') }}</h3>
+              <p class="result-number">
+                {{ dailyResult.overlapHours }} <span>{{ t('hours of 24') }}</span>
+              </p>
+              <p>{{ t('Hours when both are true at once.') }}</p>
               <details class="result-more">
-                <summary>Why look at both?</summary>
+                <summary>{{ t('Why look at both?') }}</summary>
                 <p>
-                  A mission may care about light and a direct view of Earth at the same time. This overlap is a useful
-                  clue, not a mission guarantee.
+                  {{
+                    t(
+                      'A mission may need sunlight and a direct view of Earth at the same time. This overlap is a helpful clue, not a mission guarantee.',
+                    )
+                  }}
                 </p>
               </details>
             </article>
           </div>
 
           <div class="timeline-block">
-            <h3>Hour-by-hour view</h3>
+            <h3>{{ t('Hourly sunlight and Earth view') }}</h3>
             <p class="timeline-key">
-              <span class="key-sun" aria-hidden="true">☼</span> Sunlight
-              <span class="key-earth" aria-hidden="true">◎</span> Earth in view
+              <span class="key-sun" aria-hidden="true">☼</span> {{ t('Sunlight') }}
+              <span class="key-earth" aria-hidden="true">◎</span> {{ t('Earth in view') }}
             </p>
-            <ol class="timeline" aria-label="Hourly timeline from 00:00 to 23:00 UTC">
+            <ol class="timeline" :aria-label="t('Hourly sunlight and Earth view')">
               <li v-for="sample in dailyResult.samples" :key="sample.hour" class="timeline-hour">
                 <span class="hour-label">{{ String(sample.hour).padStart(2, '0') }}</span>
                 <span
@@ -187,8 +171,8 @@
                 </span>
                 <span class="sr-only"
                   >{{ String(sample.hour).padStart(2, '0') }}:00 UTC:
-                  {{ sample.sunlight ? 'sunlight' : 'no sunlight' }},
-                  {{ sample.earthVisible ? 'Earth in view' : 'Earth below the horizon' }}.</span
+                  {{ sample.sunlight ? t('sunlight') : t('no sunlight') }},
+                  {{ sample.earthVisible ? t('Earth in view') : t('Earth below the horizon') }}.</span
                 >
               </li>
             </ol>
@@ -196,35 +180,46 @@
 
           <details class="reflection-card">
             <summary>
-              <span aria-hidden="true">✦</span> Think like a lunar explorer
+              <span aria-hidden="true">✦</span> {{ t('Think like an explorer') }}
               <span class="expand-mark" aria-hidden="true">+</span>
             </summary>
             <p>
-              What surprised you: the hours with sunlight, the hours with Earth in view, or how often they overlap? Try
-              changing just the place or just the date and compare again.
+              {{
+                t(
+                  'What changed when you changed the place or day? Did sunlight and Earth in view change in the same way?',
+                )
+              }}
             </p>
           </details>
 
-          <p class="science-note">
-            <strong>How to read this:</strong> Sunlight and a direct view of Earth are separate conditions. Earth in
-            view is a geometric horizon check; it is not a full radio link assessment.
+          <details class="temperature-note">
+            <summary>{{ t('The app shows sunlight, not temperature') }}</summary>
+            <p>
+              {{
+                t(
+                  'The Moon’s surface can get very hot in sunlight and very cold in darkness. This app does not calculate a temperature for this site.',
+                )
+              }}
+            </p>
+            <a href="https://science.nasa.gov/moon/facts/" target="_blank" rel="noopener noreferrer"
+              >{{ t('NASA Moon facts') }} ↗</a
+            >
+          </details>
+          <p class="terrain-note">
+            <strong>{{ t('Terrain') }}:</strong> {{ terrainNote }} <strong>{{ t('Data coverage') }}:</strong>
+            {{ dailyResult.coverage.start }}–{{ dailyResult.coverage.end }}.
           </p>
           <p class="terrain-note">
-            <strong>Terrain:</strong> {{ terrainNote }} Data coverage: {{ dailyResult.coverage.start }} to
-            {{ dailyResult.coverage.end }} UTC. Site coordinates: {{ dailyResult.site.source }}.
-          </p>
-          <p class="terrain-note">
-            <strong>Sun and Earth positions:</strong> NASA/JPL Horizons, DE441.
-            <a href="https://ssd.jpl.nasa.gov/horizons/manual.html" target="_blank" rel="noopener noreferrer"
-              >Calculation source</a
-            >.
+            <strong>{{ t('Coordinates and site source') }}:</strong> {{ dailyResult.site.source }}.
+            <strong>{{ t('Source') }}:</strong> NASA/JPL Horizons (DE441)
+            <a href="https://ssd.jpl.nasa.gov/horizons/manual.html" target="_blank" rel="noopener noreferrer">↗</a>.
           </p>
         </section>
 
         <footer class="page-footer">
-          <span>Built for curious minds, from classrooms to the Moon.</span>
+          <span>{{ t('Ready to explore offline') }}</span>
           <a href="https://luna-lens.gaobing1230.workers.dev" target="_blank" rel="noopener noreferrer"
-            >Open the full LunaLens website <span class="external-hint">(internet required)</span></a
+            >{{ t('Full LunaLens website') }} <span class="external-hint">↗</span></a
           >
         </footer>
       </main>
@@ -235,43 +230,42 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonPage, IonSelect, IonSelectOption } from '@ionic/vue';
-import { getDailyResult, type DailyResult } from '../services/learning-science';
+import { getDailyResult, getLearningSites, type DailyResult } from '../services/learning-science';
+import { useLanguage } from '../i18n';
 
+const { language, setLanguage, t } = useLanguage();
+const learningSites = getLearningSites();
 const selectedSite = ref('apollo11');
 const selectedDate = ref('2027-01-01');
-const lessonOpen = ref(false);
 const dailyResult = ref<DailyResult | null>(null);
 const loading = ref(false);
 const errorMessage = ref('');
 
-const siteName = computed(() =>
-  selectedSite.value === 'shackleton-rim'
-    ? 'Shackleton rim near the lunar south pole'
-    : 'Tranquility Base, where Apollo 11 landed',
-);
-
-const formattedDate = computed(() => {
-  if (!selectedDate.value) return 'the selected day';
-  const [year, month, day] = selectedDate.value.split('-');
-  return `${year}-${month}-${day} at 00:00 UTC`;
-});
-
-const displaySiteName = computed(() => dailyResult.value?.site.name.split(' · ')[0] ?? siteName.value);
+const displaySiteName = computed(() => dailyResult.value?.site.id ?? selectedSite.value);
 const terrainNote = computed(() =>
   dailyResult.value?.site.horizon
-    ? `A sampled lunar terrain horizon is included (${dailyResult.value.site.terrain}).`
-    : 'A flat geometric horizon is used because a sampled terrain horizon is not available for this historical reference site.',
+    ? t('A sampled terrain horizon is included.')
+    : t('No sampled terrain horizon is available; a smooth horizon is used.'),
 );
 
-async function openLesson() {
+function getErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : t('The offline lunar data could not be loaded.');
+  const range = message.match(/Choose a date within the available data: (\d{4}-\d{2}-\d{2}) to (\d{4}-\d{2}-\d{2})\./);
+  if (range)
+    return t('Choose a date within the available data: {start} to {end}.')
+      .replace('{start}', range[1])
+      .replace('{end}', range[2]);
+  return t(message);
+}
+
+async function openLesson(): Promise<void> {
   if (!selectedDate.value) return;
   loading.value = true;
   errorMessage.value = '';
   try {
     dailyResult.value = await getDailyResult(selectedSite.value, selectedDate.value);
-    lessonOpen.value = true;
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'The lunar data could not be loaded.';
+    errorMessage.value = getErrorMessage(error);
   } finally {
     loading.value = false;
   }
@@ -304,6 +298,18 @@ async function openLesson() {
   min-height: 48px;
   justify-content: space-between;
   gap: 12px;
+}
+
+.language-select {
+  min-height: 42px;
+  min-width: 94px;
+  padding: 0 9px;
+  border: 1px solid #d3d5d5;
+  border-radius: 12px;
+  background: #fffefa;
+  color: #203b62;
+  font-size: 13px;
+  font-weight: 750;
 }
 
 .brand {
@@ -720,6 +726,37 @@ h2 {
   font-size: 13px;
   line-height: 1.55;
   animation: result-reveal 0.22s ease-out;
+}
+
+.temperature-note {
+  margin-top: 16px;
+  padding: 0 14px;
+  border: 1px solid #d9d5cb;
+  border-radius: 12px;
+  background: #fffefa;
+}
+.temperature-note summary {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  color: #234b73;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+.temperature-note p {
+  margin: 0 0 8px;
+  color: #465365;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.temperature-note a {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  color: #173e6b;
+  font-size: 12px;
+  font-weight: 700;
 }
 @keyframes result-reveal {
   from {

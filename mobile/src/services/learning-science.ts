@@ -44,7 +44,7 @@ async function loadEphemeris() {
 }
 
 export function getLearningSites(): LearningSite[] {
-  return siteCatalog.sites.filter((site) => site.id === 'apollo11' || site.id === 'shackleton-rim');
+  return siteCatalog.sites;
 }
 
 export async function getDailyResult(siteId: string, date: string): Promise<DailyResult> {
