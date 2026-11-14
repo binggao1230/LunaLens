@@ -1,6 +1,10 @@
-// The Mission page's 3D scene. Moved out of mission.js in milestone M0 of archive/doc/PLAN_3D.md with behaviour
-// unchanged; M1 replaces the sphere with the polar cap. Deps come from the caller so this module owns no
-// state that the list, the 2D map or the probe flight also need.
+// The Mission page's 3D scene. M0 moved it out of mission.js; the stop-loss pass (TODO.md, D) starts the
+// camera over the south pole, paints the sphere with the 4K colour map, and lays the Explore terrain patch
+// under the picked polar site at true height. Deps come from the caller so this module owns no state that
+// the list, the 2D map or the probe flight also need.
+import { siteBasis } from '../../engine/geometry.js';
+import { loadDem } from '../../engine/dem.js';
+import { terrainPatch } from '../terrain-mesh.js';
 export async function createPolar3d(env) {
   const { $, view, local, sites, pickedSite, labelText, colorOf, refresh, ctx, t, escapeHtml, fmtLatLon, unit, dot3, clamp, COLORS, getFrame, setFailed } = env;
   let view3d = null;
@@ -11,12 +15,21 @@ export async function createPolar3d(env) {
       const renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       const scene = new T.Scene();
-      const camera = new T.PerspectiveCamera(42, 1, 0.1, 200);
+      const camera = new T.PerspectiveCamera(42, 1, 0.01, 200);
       const controls = new OrbitControls(camera, canvas);
-      controls.enablePan = false; controls.minDistance = 1.7; controls.maxDistance = 14; controls.rotateSpeed = 0.7;
+      controls.enablePan = false; controls.minDistance = 1.03; controls.maxDistance = 14; controls.rotateSpeed = 0.7;
+      camera.up.set(1, 0, 0);
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
-      const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: new T.TextureLoader().load('assets/moon_1024.jpg', () => request()), roughness: 1, metalness: 0 }));
+      // The south pole is always within about 1.5° of the terminator, so the Sun alone leaves the terrain
+      // black. A camera-side fill light, restricted to layer 1, lights the terrain patch only: the globe and
+      // the markers keep the Sun's real shading.
+      const reliefLight = new T.DirectionalLight(0xdfe6ff, 0.55);
+      reliefLight.layers.set(1);
+      scene.add(reliefLight);
+      camera.layers.enable(1);
+      const moonMap = new T.TextureLoader().load('assets/moon_color_4k.webp', () => request());
+      const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: moonMap, roughness: 1, metalness: 0 }));
       scene.add(moon);
 
       const glowTexture = (inner) => {
@@ -95,6 +108,56 @@ export async function createPolar3d(env) {
         });
       };
       const request = () => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); };
+      // Terrain at the picked site: the same generator Explore uses, heights at ×1 (no exaggeration).
+      const reliefGroup = new T.Group();
+      scene.add(reliefGroup);
+      let reliefKey = '', reliefDem = null, reliefLoading = false;
+      const R_KM = 1737.4, DEG = Math.PI / 180;
+      const buildRelief = () => {
+        const site = pickedSite();
+        if (!site || site.lat > -75) { if (reliefGroup.children.length) { reliefGroup.clear(); reliefKey = ''; } return; }
+        if (reliefKey === site.id) return;
+        if (!reliefDem) {
+          if (reliefLoading) return;
+          reliefLoading = true;
+          loadDem('data/dem480').then((dem) => { reliefDem = dem; reliefLoading = false; request(); })
+            .catch((error) => { console.error(error); reliefLoading = false; });
+          return;
+        }
+        const patch = terrainPatch(reliefDem, site, { heightScale: 1, widthKm: 80, segments: 128 });
+        const groundKm = reliefDem.height(site.lat * DEG, site.lon * DEG) / 1000;
+        if (!patch || !Number.isFinite(groundKm)) return;
+        reliefGroup.clear();
+        reliefKey = site.id;
+        const geometry = new T.BufferGeometry();
+        geometry.setAttribute('position', new T.Float32BufferAttribute(patch.positions, 3));
+        const side = patch.segments + 1, index = [];
+        for (let row = 0; row < patch.segments; row++) {
+          for (let col = 0; col < patch.segments; col++) {
+            const a = row * side + col, b = a + 1, c = a + side, d = c + 1;
+            index.push(a, c, b, b, c, d);
+          }
+        }
+        geometry.setIndex(index);
+        geometry.computeVertexNormals();
+        const basis = siteBasis(site.lat, site.lon);
+        // The patch is in kilometres on the site's tangent plane: x east, y up, z south. Rotate it onto
+        // the sphere, drop it at the site's ground level, then scale kilometres to scene units (R = 1).
+        // South-polar ground lies below the reference sphere, so the patch would sit inside it and never be
+        // drawn: the wrap is lifted 3 km clear of the sphere while the relief inside it keeps its true height.
+        const LIFT_KM = 3;
+        const wrap = new T.Group();
+        wrap.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(
+          new T.Vector3(...basis.east), new T.Vector3(...basis.up),
+          new T.Vector3(-basis.north[0], -basis.north[1], -basis.north[2])));
+        wrap.position.set(...basis.up).multiplyScalar(1 + (groundKm + LIFT_KM) / R_KM);
+        wrap.scale.setScalar(1 / R_KM);
+        const material = new T.MeshStandardMaterial({ color: 0x8f8b84, roughness: 1, metalness: 0, side: T.DoubleSide });
+        const mesh = new T.Mesh(geometry, material);
+        mesh.layers.set(1);
+        wrap.add(mesh);
+        reliefGroup.add(wrap);
+      };
       const placeLabel = (position, normal) => {
         const label = $('m-label'), site = pickedSite();
         const facing = normal.dot(camera.position.clone().normalize()) > 0.08;
@@ -109,6 +172,11 @@ export async function createPolar3d(env) {
         const f = getFrame();
         if (view() !== 'mission' || local.mode !== '3d' || !f) return;
         buildMarkers();
+        buildRelief();
+        reliefLight.position.copy(camera.position);
+        // The patch is a detail inset: from far away it reads as a bright blotch on the pole, so it only
+        // appears once the camera is close enough for the relief to mean something.
+        reliefGroup.visible = camera.position.length() < 1.5;
         sunLight.position.set(...f.sun).multiplyScalar(10);
         earth.position.set(...f.earth).multiplyScalar(3.0);
         paintEarth(new T.Vector3(...f.sun).normalize(), new T.Vector3(...f.earth).normalize());
@@ -126,16 +194,19 @@ export async function createPolar3d(env) {
         for (const m of markers) {
           const status = f.status.get(m.site.id), selected = m.site === chosen;
           m.dotMesh.material.color.set(colorOf(status));
-          m.dotMesh.scale.setScalar(selected ? 0.034 : 0.024);
+          // Markers keep roughly the same screen size: they are 60 km wide on the ground, which is only a few
+          // pixels from far away and a wall across the view once the camera is down at the relief.
+          const markerScale = clamp(camera.position.length() * 0.0012, 0.0009, 0.03);
+          m.dotMesh.scale.setScalar(selected ? markerScale * 1.4 : markerScale);
           m.ring.visible = status.link && status.sun;
-          m.ring.scale.setScalar(selected ? 0.034 : 0.024);
+          m.ring.scale.setScalar(selected ? markerScale * 1.4 : markerScale);
         }
         const picked = markers.find((m) => m.site === chosen);
         selectRing.visible = Boolean(picked);
         if (picked) {
           selectRing.position.copy(picked.normal).multiplyScalar(1.006);
           selectRing.lookAt(picked.normal.clone().multiplyScalar(2));
-          selectRing.scale.setScalar(0.034);
+          selectRing.scale.setScalar(Math.max(0.0016, camera.position.length() * 0.0016));
           placeLabel(picked.normal.clone().multiplyScalar(1.01), picked.normal);
         }
         renderer.render(scene, camera);
@@ -146,9 +217,10 @@ export async function createPolar3d(env) {
       };
       new ResizeObserver(resize).observe(stage);
       controls.addEventListener('change', request);
+      // The scene opens over the south pole, 0° meridian up, as the 2D map does.
+      const homeDir = () => new T.Vector3(...unit(-84, 0)).normalize();
       const setHome = () => {
-        const dir = new T.Vector3(...unit(getFrame().earthLat + 14, getFrame().earthLon - 24));
-        camera.position.copy(dir.multiplyScalar(6.4)); camera.lookAt(0, 0, 0); controls.update();
+        camera.position.copy(homeDir().multiplyScalar(3.6)); camera.lookAt(0, 0, 0); controls.update();
       };
       const flyTo = (dir, distance) => {
         cancelAnimationFrame(tween);
@@ -177,8 +249,8 @@ export async function createPolar3d(env) {
       });
       view3d = {
         request: () => { if (!home) { setHome(); home = true; } request(); },
-        reset: () => { const f = getFrame(); if (f) flyTo(new T.Vector3(...unit(f.earthLat + 14, f.earthLon - 24)), 6.4); },
-        focus: (site) => flyTo(new T.Vector3(...unit(site.lat, site.lon))),
+        reset: () => flyTo(homeDir(), 3.6),
+        focus: (site) => flyTo(new T.Vector3(...unit(site.lat, site.lon)), site.lat <= -75 ? 1.07 : undefined),
       };
       resize();
     } catch (error) {
