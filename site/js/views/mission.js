@@ -254,6 +254,7 @@ export function createMission(ctx) {
     fp.textContent = t('South pole'); fm.textContent = t('Whole Moon');
     fp.classList.toggle('on', local.flat === 'pole'); fm.classList.toggle('on', local.flat === 'moon');
     $('m-flat').hidden = local.mode !== '2d'; $('m-zoom').hidden = local.mode !== '2d';
+    $('m-readout').hidden = local.mode !== '3d';
     if (local.mode !== '2d') $('m-note').hidden = true;
     const [b3, b2] = $('m-seg').children;
     b3.textContent = t('3D'); b2.textContent = t('2D');
