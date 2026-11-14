@@ -101,7 +101,12 @@ Two layers, so the public link never depends on anyone's laptop:
   Precomputed JSON and map images must stay under 25 MiB each; raw DEMs are never deployed.
 - The lead runs deployments from their own machine (`npx wrangler deploy`, config in `wrangler.jsonc`).
 - Live since 2026-11-14 at `https://luna-lens.gaobing1230.workers.dev`, serving the prototype behind a Cloudflare
-  Access email check (one-time code, team emails only). The check comes off before submission so judges can open it.
+  Access email check (one-time code). The app sits in the Zero Trust organization shared with the PLM hackathon
+  project, so the login page's design is account-wide. The check comes off before submission so judges can open it.
+- Access reports "a code has been emailed" even when it delivers nothing: an address outside the app's Allow
+  policy, or a repeat request within a few minutes, is dropped silently. `[VERIFIED 2026-11-14]` A fresh address
+  receives the code from `noreply@notify.cloudflare.com` in about 20 s. To test delivery without bothering anyone,
+  request a code for an address you can read and compare; do not treat the confirmation text as proof.
 
 ### 2.4 API contract (frozen in the first two hours; changes require notifying everyone)
 
