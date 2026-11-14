@@ -79,6 +79,7 @@ Changing any of these requires updating `doc/PLAN.md` §2.4 and `doc/WORKPLAN.md
 ## Git
 
 - One commit per request or task, with a message saying what changed and why.
+- No AI attribution in commits or pull requests: no `Co-Authored-By` lines for AI tools and no "generated with" footers. The author is the person the agent works for.
 - Do not commit: large files under `data/`, secrets, `.env`, build output, `node_modules`.
 - Data is reproduced through download scripts in `scripts/`, each stating its source URL.
 - Remote: `git@github.com:binggao1230/LunaLens.git`. Nobody commits to `main` directly; work on a branch and open a pull request as described in `CONTRIBUTING.md`. Do not force-push `main`.
