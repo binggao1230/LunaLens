@@ -6,7 +6,6 @@ import { mountProbePreviews } from './probe-gallery.js';
 import { playProbeFlight } from './probe-flight.js';
 import { onMode, isEducation } from '../mode.js';
 import { CHARACTER_SVG } from '../edu/character.js';
-import { BATTERY_H } from '../edu/verdict.js';
 
 const D2R = Math.PI / 180, HOUR = 36e5, SPAN = 709;
 const COLORS = { link: '#43d98a', sun: '#f5c542', dark: '#7d7993', both: '#9be7ff' };
@@ -148,19 +147,14 @@ const PROBES = [
   { id: 'vikram', name: 'Vikram', meta: 'India’s lander; Chandrayaan-3 made the first soft landing in 2023.', sites: ['ch3'] },
 ];
 
-// Education mode wording for the probe cards: one plain sentence and the story battery, no raw numbers.
-// BATTERY_H holds the illustrative story values (edu/verdict.js); the card says so in a caption.
+// Education mode wording for the probe cards: one plain sentence, no raw numbers.
 const SIMPLE_META = {
   artemis: 'A concept lander for astronauts at the Moon’s south pole.',
   apollo: 'The lander that carried astronauts to the Moon from 1969 to 1972.',
   novac: 'A small robot lander that flew to the Moon in 2024 and 2025.',
   vikram: 'India’s robot lander, which landed in 2023.',
 };
-function batteryText(hours) {
-  if (hours === 24) return t('1 day');
-  if (hours === 36) return t('a day and a half');
-  return t('{n} days', { n: Math.round(hours / 24) });
-}
+
 export function createMission(ctx) {
   const $ = (id) => document.getElementById(id);
   const startEl = $('v-start'), missionEl = $('v-mission'), flightEl = $('flight');
@@ -212,10 +206,7 @@ export function createMission(ctx) {
 
   /* ---------- start page ---------- */
 
-  function probeMetaHtml(p, edu) {
-    if (!edu) return escapeHtml(t(p.meta));
-    return `${escapeHtml(t(SIMPLE_META[p.id] ?? p.meta))}<span class="battery">${escapeHtml(t('Battery: lasts about {time}', { time: batteryText(BATTERY_H[p.id] ?? 48) }))}</span>`;
-  }
+  const probeMetaHtml = (p, edu) => escapeHtml(t(edu ? SIMPLE_META[p.id] ?? p.meta : p.meta));
   function renderStart() {
     disposePreview();
     const selected = probe(), edu = isEducation();
@@ -239,7 +230,6 @@ export function createMission(ctx) {
           </section>`;
         }).join('')}
       </div>
-      <p class="illus" id="illus"${edu ? '' : ' hidden'}>${escapeHtml(t('Battery sizes are illustrative, for the story.'))}</p>
       <div class="start-actions"><button class="btn-primary" id="validate">${escapeHtml(t(edu ? 'Start the mission' : 'Validate'))}<span aria-hidden="true">→</span></button></div></div>`;
     disposePreview = mountProbePreviews(startEl.querySelector('.probe-grid'));
   }
@@ -249,7 +239,6 @@ export function createMission(ctx) {
     if (!startEl.querySelector('.start')) return;
     const edu = isEducation();
     startEl.querySelector('#guide').hidden = !edu;
-    startEl.querySelector('#illus').hidden = !edu;
     for (const p of PROBES) { const meta = startEl.querySelector(`[data-probe="${p.id}"] .probe-meta`); if (meta) meta.innerHTML = probeMetaHtml(p, edu); }
     const validate = startEl.querySelector('#validate');
     if (validate) validate.firstChild.textContent = t(edu ? 'Start the mission' : 'Validate');

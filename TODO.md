@@ -76,12 +76,11 @@ alternative dates at the same site". The second half is what the product cannot 
 - Education mode (in progress): a guided six-step story on the Mission page, with a guide character.
   Entry point: an Expert / Education pill in the top bar of every page (global state in `site/js/mode.js`, kept in
   the URL hash and localStorage). In Education mode the
-  guide greets on the start page, the probe cards use plain wording, and "Start the mission" opens the Mission page
+  guide greets on the start page, the probe cards use plain wording (no numbers), and "Start the mission" opens the Mission page
   at step 1 (objective). Then: pick a site, launch, a delayed launch breaks the plan, fix it with four levers,
   mission-complete card. A simplified teaching verdict (battery against the longest night, Earth-contact share,
   relay satellite) lives in `site/js/edu/verdict.js`, is labelled as illustrative, and is used only there; Expert
   mode is unchanged. Story text is in `site/i18n/story.*.json` so it can be edited without code.
-  Still to do: the probe-card battery lines are story values, not mission data; say so on the Data page too.
 
 ## G. Before submission
 
