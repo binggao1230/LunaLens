@@ -214,20 +214,15 @@ export function createMission(ctx) {
       });
     };
     try {
-      const [T, { OrbitControls }, { GLTFLoader }, { DRACOLoader }, { OBJLoader }] = await Promise.all([
+      const [T, { OrbitControls }, { GLTFLoader }, { DRACOLoader }] = await Promise.all([
         import('../vendor/three/three.module.js'), import('../vendor/three/OrbitControls.js'),
         import('../vendor/three/GLTFLoader.js'), import('../vendor/three/DRACOLoader.js'),
-        import('../vendor/three/OBJLoader.js'),
       ]);
       if (cancelled) return;
       const decoder = new DRACOLoader().setDecoderPath('js/vendor/three/draco/');
       const loader = new GLTFLoader().setDRACOLoader(decoder);
       let gltf;
-      try {
-        gltf = id === 'artemis'
-          ? { scene: await new OBJLoader().loadAsync('assets/models/Artemis-Lander.obj') }
-          : await loader.loadAsync(`assets/models/${id === 'apollo' ? 'apollo-lm' : 'lunar-lander'}.glb`);
-      }
+      try { gltf = await loader.loadAsync(`assets/models/${{ apollo: 'apollo-lm', artemis: 'artemis-lite' }[id] ?? 'lunar-lander'}.glb`); }
       finally { decoder.dispose(); }
       model = gltf.scene;
       if (cancelled) { disposeModel(model); return; }
