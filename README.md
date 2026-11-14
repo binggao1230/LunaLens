@@ -54,7 +54,12 @@ What to look at:
 https://luna-lens.gaobing1230.workers.dev
 
 Today this serves the layout prototype. It is behind an email check (Cloudflare Access): enter your email, receive
-a one-time code, and you are in for a week. Only emails on the team list are accepted; ask Bing to add yours.
+a one-time code, and you are in for a week. Every address is accepted while the team is still being onboarded; the
+policy narrows to team addresses later, and the check comes off before submission.
+
+The code comes from `noreply@notify.cloudflare.com`. Cloudflare says "a code has been emailed" even when it sends
+nothing: an address outside the app's policy, or a repeat request within a few minutes, is dropped silently. If no
+code arrives after one try, check the spam folder, wait five minutes, and request one more.
 
 Publishing is done by Bing from the repository root, with Wrangler logged in to the Cloudflare account:
 
