@@ -24,12 +24,10 @@ Sources: the team's 14 November design call and the Figma file *NASA SpaceApps*
    - Site markers reuse the existing colour rule: green with an Earth link, yellow sunlit without one, grey in
      shadow.
    - The date picker and the time scrubber in `site/` drive the scene.
-2. **One feasibility number per site and date, with traffic-light colour**, shown on the markers and in the list,
-   inputs behind a click.
-3. **Compare two scenarios on purpose**: pick two, get a summary table, one overlap graphic, and a sentence saying
+2. **Compare two scenarios on purpose**: pick two, get a summary table, one overlap graphic, and a sentence saying
    whether the windows meet.
-4. **Countdown to sunset and Earthset with the consequence** spelled out.
-5. **Map and list point at each other.**
+3. **Countdown to sunset and Earthset with the consequence** spelled out.
+4. **Map and list point at each other.**
 
 ## P1 — if the clock allows
 

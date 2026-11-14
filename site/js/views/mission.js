@@ -87,6 +87,19 @@ const MESSAGES = {
   'Previous day': ['Jour précédent', '前一天'],
   'Next day': ['Jour suivant', '后一天'],
   'Landing date (UTC)': ['Date d’alunissage (UTC)', '着陆日期（UTC）'],
+  'Include in comparison': ['Inclure dans la comparaison', '加入对比'],
+  'Compare {name}': ['Comparer {name}', '对比 {name}'],
+  'compared': ['comparés', '已对比'],
+  'Total sunlight': ['Ensoleillement total', '累计日照'],
+  'Total Earth link': ['Liaison Terre totale', '累计对地通信'],
+  'Simultaneous window': ['Fenêtre simultanée', '同时可用窗口'],
+  'both': ['les deux', '同时'],
+  'sites': ['sites', '个地点'],
+  'All': ['Tous', '全选'],
+  'Clear': ['Effacer', '清空'],
+  'Select all sites to compare': ['Sélectionner tous les sites à comparer', '全选地点进行对比'],
+  'Clear comparison selection': ['Effacer la sélection de comparaison', '清空对比选择'],
+  'No sites selected for comparison. Tick checkboxes in Site locations to compare.': ['Aucun site sélectionné pour la comparaison. Cochez des cases dans Sites d’alunissage pour comparer.', '未选择对比地点。请在着陆地点列表中勾选以展开对比。'],
 };
 for (const [key, value] of Object.entries(MESSAGES)) if (!hasTranslation(key)) registerMessages({ [key]: value });
 
@@ -132,7 +145,7 @@ const PROBES = [
 export function createMission(ctx) {
   const $ = (id) => document.getElementById(id);
   const startEl = $('v-start'), missionEl = $('v-mission'), flightEl = $('flight');
-  const local = { flat: 'pole', probe: 'apollo', picked: null, mode: '3d', hour: 0, timer: null, open: null, query: '', listKey: '', laneKey: '' };
+  const local = { flat: 'pole', probe: 'apollo', picked: null, mode: '3d', hour: 0, timer: null, open: null, query: '', listKey: '', laneKey: '', compared: new Set() };
   let view3d = null, view3dLoading = false, view3dFailed = false, lastFrame = null, flying = false;
   let disposePreview = () => {};
 
@@ -156,6 +169,13 @@ export function createMission(ctx) {
     const list = sites();
     return list.find((s) => s.id === local.picked) ?? orderedSites()[0];
   }
+  function defaultCompared() {
+    const list = sites();
+    const probeSites = probe()?.sites?.filter((id) => list.some((s) => s.id === id)) ?? [];
+    const initial = probeSites.length >= 2 ? probeSites.slice(0, 4) : orderedSites().slice(0, 3).map((s) => s.id);
+    return new Set(initial);
+  }
+  local.compared = defaultCompared();
   function statusOf(site, j) {
     const series = site.series;
     return { sun: series.sunVis[j] === 1, link: series.earthClr[j] > ctx.margin() };
@@ -310,8 +330,18 @@ export function createMission(ctx) {
         <section class="glass timebar"><button id="m-play"></button><input type="range" id="m-time" min="0" max="${SPAN}" step="1" value="0"><span class="when" id="m-when"></span></section>
         <section class="glass lanes" id="m-lanes"></section>
       </div>
-      <aside class="glass side-panel"><h3 id="m-ph"></h3><input type="search" id="m-search" autocomplete="off"><div class="sl" id="m-list"></div>
-        <button class="btn-primary" id="m-send"></button></aside>
+      <aside class="glass side-panel">
+        <div class="side-head">
+          <h3 id="m-ph"></h3>
+          <div class="side-head-actions">
+            <button type="button" id="m-cmp-all" class="btn-ghost btn-xs"></button>
+            <button type="button" id="m-cmp-clear" class="btn-ghost btn-xs"></button>
+          </div>
+        </div>
+        <input type="search" id="m-search" autocomplete="off">
+        <div class="sl" id="m-list"></div>
+        <button class="btn-primary" id="m-send"></button>
+      </aside>
     </div>`;
     $('m-seg').onclick = (event) => { const b = event.target.closest('button'); if (b) setMode(b.dataset.mode); };
     $('m-reset').onclick = () => view3d?.reset();
@@ -327,13 +357,45 @@ export function createMission(ctx) {
     $('m-time').oninput = (event) => { local.hour = Number(event.target.value); refresh(); };
     $('m-search').oninput = (event) => { local.query = event.target.value.trim().toLowerCase(); renderList(true); };
     $('m-send').onclick = sendProbe;
+    $('m-cmp-all').onclick = () => {
+      local.compared = new Set(sites().map((s) => s.id));
+      renderList(true);
+      renderLanes(true);
+      updateHeaderCount();
+    };
+    $('m-cmp-clear').onclick = () => {
+      local.compared = new Set();
+      renderList(true);
+      renderLanes(true);
+      updateHeaderCount();
+    };
     $('m-list').onclick = (event) => {
+      const chk = event.target.closest('.site-chk');
+      if (chk) {
+        event.stopPropagation();
+        const id = chk.dataset.chk;
+        if (chk.checked) local.compared.add(id);
+        else local.compared.delete(id);
+        renderLanes(true);
+        updateHeaderCount();
+        return;
+      }
+      if (event.target.closest('.srow-chk')) return;
       const row = event.target.closest('[data-id]'); if (!row) return;
       const same = local.picked === row.dataset.id;
       local.picked = row.dataset.id;
       local.open = same && local.open === row.dataset.id ? null : row.dataset.id;
       refresh(true);
       focusSite();
+    };
+    $('m-list').onchange = (event) => {
+      const chk = event.target.closest('.site-chk');
+      if (!chk) return;
+      const id = chk.dataset.chk;
+      if (chk.checked) local.compared.add(id);
+      else local.compared.delete(id);
+      renderLanes(true);
+      updateHeaderCount();
     };
     $('m-lanes').onclick = (event) => {
       const svg = event.target.closest('svg'); if (!svg) return;
@@ -357,6 +419,10 @@ export function createMission(ctx) {
     $('m-next').disabled = ctx.landing() >= range.max;
   }
 
+  function updateHeaderCount() {
+    $('m-ph').innerHTML = `${escapeHtml(t('Site locations'))} <span class="pill2">${local.compared ? local.compared.size : 0} ${escapeHtml(t('compared'))}</span>`;
+  }
+
   function setStaticText() {
     $('m-datelabel').textContent = t('Landing date (UTC)');
     $('m-today').textContent = t('Today');
@@ -377,7 +443,11 @@ export function createMission(ctx) {
     $('m-reset').textContent = t('Reset view');
     $('m-reset').hidden = local.mode !== '3d';
     $('m-legend').innerHTML = `<span><i style="background:${COLORS.link}"></i>${escapeHtml(t('Earth link available'))}</span><span><i style="background:${COLORS.sun}"></i>${escapeHtml(t('Sunlit, no Earth link'))}</span><span><i style="background:${COLORS.dark}"></i>${escapeHtml(t('In shadow'))}</span>`;
-    $('m-ph').textContent = t('Site locations');
+    $('m-cmp-all').textContent = t('All');
+    $('m-cmp-all').title = t('Select all sites to compare');
+    $('m-cmp-clear').textContent = t('Clear');
+    $('m-cmp-clear').title = t('Clear comparison selection');
+    updateHeaderCount();
     $('m-search').placeholder = t('Search sites');
     $('m-search').setAttribute('aria-label', t('Search sites'));
     $('m-send').textContent = `${t('Send probe')} →`;
@@ -386,19 +456,6 @@ export function createMission(ctx) {
 
   /* ---------- site list and lanes ---------- */
 
-  function detailsHtml(site, f) {
-    const series = site.series, status = f.status.get(site.id), j = f.j;
-    const sunNext = nextTransition(site, 'sun', f.index);
-    let sunLine;
-    if (sunNext.kind === 'none') sunLine = [t('Sun'), t(sunNext.state ? 'Stays in view' : 'Does not rise')];
-    else sunLine = [t('{event} in', { event: t(sunNext.kind === 'set' ? 'Sunset' : 'Sunrise') }), dur(sunNext.timeMs - f.ms)];
-    const rows = [
-      [t('Sun elevation'), fmtDeg(series.sunEl[j])], sunLine,
-      [t('Earth elevation'), fmtDeg(series.earthEl[j])],
-      [t('Direct-to-Earth link'), t(status.link ? 'Available' : 'Blocked')],
-    ];
-    return rows.map(([k, v]) => `<span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b>`).join('');
-  }
   // Hours in the stay when the site is both sunlit and linked: the one number that answers "which site".
   function scoreOf(site) {
     const start = Math.round(ctx.eph().indexOf(ctx.landing())), margin = ctx.margin();
@@ -411,9 +468,30 @@ export function createMission(ctx) {
     }
     return { both, lit, link, hours: SPAN + 1 };
   }
+
+  function detailsHtml(site, f) {
+    const series = site.series, status = f.status.get(site.id), j = f.j;
+    const sunNext = nextTransition(site, 'sun', f.index);
+    let sunLine;
+    if (sunNext.kind === 'none') sunLine = [t('Sun'), t(sunNext.state ? 'Stays in view' : 'Does not rise')];
+    else sunLine = [t('{event} in', { event: t(sunNext.kind === 'set' ? 'Sunset' : 'Sunrise') }), dur(sunNext.timeMs - f.ms)];
+    const score = scoreOf(site), bothPct = Math.round((score.both / score.hours) * 100);
+    const litPct = Math.round((score.lit / score.hours) * 100), linkPct = Math.round((score.link / score.hours) * 100);
+    const rows = [
+      [t('Simultaneous window'), `${score.both} h / ${score.hours} h (${bothPct}%)`],
+      [t('Total sunlight'), `${score.lit} h (${litPct}%)`],
+      [t('Total Earth link'), `${score.link} h (${linkPct}%)`],
+      [t('Sun elevation'), fmtDeg(series.sunEl[j])],
+      sunLine,
+      [t('Earth elevation'), fmtDeg(series.earthEl[j])],
+      [t('Direct-to-Earth link'), t(status.link ? 'Available' : 'Blocked')],
+    ];
+    return rows.map(([k, v]) => `<span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b>`).join('');
+  }
+
   function renderList(force) {
     const f = lastFrame ?? frame();
-    const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), ctx.landing(), sites().length].join('|');
+    const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(',')].join('|');
     const listEl = $('m-list');
     if (force || key !== local.listKey) {
       local.listKey = key;
@@ -423,12 +501,28 @@ export function createMission(ctx) {
         .sort((a, b) => b.score.both - a.score.both);
       listEl.innerHTML = rows.length ? rows.map(({ site, score }, rank) => {
         const open = local.open === site.id;
+        const isCompared = local.compared.has(site.id);
         const terrain = !site.terrain || site.terrain === 'none' ? t('no terrain') : site.terrain;
         const badge = rank < 3 && score.both > 0 ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
         return `<div class="srow${site.id === local.picked ? ' on' : ''}${open ? ' open' : ''}" data-row="${escapeHtml(site.id)}">
-          <button data-id="${escapeHtml(site.id)}" aria-expanded="${open}"><span class="dotc"></span>
-            <span><span class="nm">${escapeHtml(site.label)}${badge}</span><span class="sub2">${escapeHtml(t('{n} h lit and linked', { n: score.both }))} · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}</span></span><span class="chev">⌄</span></button>
-          <div class="det"></div></div>`;
+          <div class="srow-top">
+            <label class="srow-chk" title="${escapeHtml(t('Include in comparison'))}">
+              <input type="checkbox" class="site-chk" data-chk="${escapeHtml(site.id)}" ${isCompared ? 'checked' : ''} aria-label="${escapeHtml(t('Compare {name}', { name: site.label }))}">
+            </label>
+            <button data-id="${escapeHtml(site.id)}" aria-expanded="${open}">
+              <span class="dotc" title="${escapeHtml(t('Current state (sky)'))}"></span>
+              <span style="flex:1;min-width:0">
+                <span class="srow-title">
+                  <span class="nm">${escapeHtml(site.label)}</span>
+                  ${badge}
+                </span>
+                <span class="sub2">${escapeHtml(t('{n} h lit and linked', { n: score.both }))} (${Math.round((score.both / score.hours) * 100)}%) · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}</span>
+              </span>
+              <span class="chev">⌄</span>
+            </button>
+          </div>
+          <div class="det">${open ? detailsHtml(site, f) : ''}</div>
+        </div>`;
       }).join('') : `<div class="empty">${escapeHtml(t('No site matches that search.'))}</div>`;
     }
     for (const row of listEl.querySelectorAll('[data-row]')) {
@@ -437,9 +531,12 @@ export function createMission(ctx) {
       if (row.classList.contains('open')) row.querySelector('.det').innerHTML = detailsHtml(site, f);
     }
   }
+
   function laneSites() {
-    const chosen = pickedSite();
-    return [chosen, ...orderedSites().filter((s) => s !== chosen)].slice(0, 3);
+    if (local.compared && local.compared.size > 0) {
+      return orderedSites().filter((s) => local.compared.has(s.id));
+    }
+    return [];
   }
   function runsOf(test, site) {
     const start = Math.round(ctx.eph().indexOf(ctx.landing()));
@@ -453,24 +550,51 @@ export function createMission(ctx) {
     return out;
   }
   function renderLanes(force) {
-    const key = [local.probe, local.picked, getLanguage(), ctx.margin(), ctx.landing(), sites().length].join('|');
+    const key = [local.probe, local.picked, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(',')].join('|');
     const el = $('m-lanes');
     if (force || key !== local.laneKey) {
       local.laneKey = key;
       const rect = (runs, y, color) => runs.map(([a, b]) => `<rect x="${a}" y="${y}" width="${b - a}" height="14" rx="2" fill="${color}"/>`).join('');
       const days = (SPAN / 24).toFixed(0);
-      const lanes = laneSites().map((site) => {
+      const activeSites = laneSites();
+      const lanes = activeSites.length ? activeSites.map((site) => {
         const sun = runsOf((s, i) => s.series.sunVis[i] === 1, site);
         const link = runsOf((s, i) => s.series.earthClr[i] > ctx.margin(), site);
         const both = runsOf((s, i) => s.series.sunVis[i] === 1 && s.series.earthClr[i] > ctx.margin(), site);
-        return `<div class="lane-site"><div class="nm">${escapeHtml(site.short)}</div>
+        const score = scoreOf(site);
+        return `<div class="lane-site">
+          <div class="nm" title="${escapeHtml(site.label)}">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span>${escapeHtml(site.short)}</span>
+            </div>
+            <div class="lane-meta" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px">${score.both}h ${t('both')} (${Math.round((score.both / score.hours) * 100)}%)</div>
+          </div>
           <svg viewBox="0 0 ${SPAN} 54" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(site.label)}">
             <rect x="0" y="0" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="20" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="40" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/>
             ${rect(sun, 0, COLORS.sun)}${rect(link, 20, COLORS.link)}${rect(both, 40, COLORS.both)}
-            <line class="cur" x1="0" x2="0" y1="0" y2="54" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg></div>`;
-      }).join('');
-      el.innerHTML = `<div class="lane-axis"><span></span><div style="justify-content:flex-start;gap:16px;font-family:inherit;flex-wrap:wrap"><span style="color:${COLORS.sun}">■ ${escapeHtml(t('Sun'))}</span><span style="color:${COLORS.link}">■ ${escapeHtml(t('Earth link'))}</span><span style="color:${COLORS.both}">■ ${escapeHtml(t('Both'))}</span><span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))}</span></div></div>${lanes}
-        <div class="lane-axis"><span></span><div><span>${escapeHtml(fmtDayMonth(ctx.landing()))}</span><span>${escapeHtml(fmtDayMonth(ctx.landing() + (SPAN / 2) * HOUR))}</span><span>${escapeHtml(fmtDayMonth(ctx.landing() + SPAN * HOUR))}</span></div></div>`;
+            <line class="cur" x1="0" x2="0" y1="0" y2="54" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+          </svg>
+        </div>`;
+      }).join('') : `<div class="empty" style="text-align:center;padding:18px;color:var(--muted);font-size:13px">${escapeHtml(t('No sites selected for comparison. Tick checkboxes in Site locations to compare.'))}</div>`;
+
+      el.innerHTML = `<div class="lane-axis">
+        <span></span>
+        <div style="justify-content:flex-start;gap:16px;font-family:inherit;flex-wrap:wrap">
+          <span style="color:${COLORS.sun}">■ ${escapeHtml(t('Sun'))}</span>
+          <span style="color:${COLORS.link}">■ ${escapeHtml(t('Earth link'))}</span>
+          <span style="color:${COLORS.both}">■ ${escapeHtml(t('Both'))}</span>
+          <span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))} <span class="pill2">${activeSites.length} ${escapeHtml(t('compared'))}</span></span>
+        </div>
+      </div>
+      ${lanes}
+      <div class="lane-axis">
+        <span></span>
+        <div>
+          <span>${escapeHtml(fmtDayMonth(ctx.landing()))}</span>
+          <span>${escapeHtml(fmtDayMonth(ctx.landing() + (SPAN / 2) * HOUR))}</span>
+          <span>${escapeHtml(fmtDayMonth(ctx.landing() + SPAN * HOUR))}</span>
+        </div>
+      </div>`;
     }
     for (const line of el.querySelectorAll('.cur')) { line.setAttribute('x1', local.hour); line.setAttribute('x2', local.hour); }
   }
@@ -763,9 +887,19 @@ export function createMission(ctx) {
 
   startEl.addEventListener('click', (event) => {
     const card = event.target.closest('[data-probe]');
-    if (card) { local.probe = card.dataset.probe; local.picked = null; local.open = null; renderStart(); return; }
+    if (card) {
+      local.probe = card.dataset.probe;
+      local.picked = null;
+      local.open = null;
+      local.compared = defaultCompared();
+      renderStart();
+      return;
+    }
     if (event.target.closest('#validate')) {
-      local.picked = orderedSites()[0]?.id ?? null; local.open = null; local.hour = 0;
+      local.picked = orderedSites()[0]?.id ?? null;
+      local.open = null;
+      local.hour = 0;
+      if (!local.compared || local.compared.size === 0) local.compared = defaultCompared();
       local.flat = (pickedSite()?.lat ?? 0) < -75 ? 'pole' : 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0;
       ctx.go('mission');
     }
