@@ -10,5 +10,5 @@ the folders were retired two days before submission.
 
 The seven work packages in `doc/WORKPLAN.md` §5 remain the planning summary; progress is tracked in pull requests.
 
-`team/chenlin/` also holds a 36 MB snapshot of a standalone website in twelve zip parts, with a restore script and
-a SHA-256 manifest. It is unrelated to the files in `prototype/`.
+`team/chenlin/` held a 35 MB snapshot of a standalone website in twelve zip parts. The parts now live on the
+`lunalens-snapshot-2026-11-14` release and are out of git; `WEBSITE.md` says how to fetch them.
