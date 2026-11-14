@@ -66,6 +66,14 @@ const MESSAGES = {
   'No site matches that search.': ['Aucun site ne correspond à cette recherche.', '没有匹配的地点。'],
   'Back to the probe choice': ['Retour au choix de la sonde', '返回探测器选择'],
   'Probe': ['Sonde', '探测器'],
+  'to Earth': ['vers la Terre', '朝向地球'],
+  'to Sun': ['vers le Soleil', '朝向太阳'],
+  'E': ['E', '东'],
+  'South pole': ['Pôle Sud', '南极'],
+  'Whole Moon': ['Lune entière', '整个月球'],
+  'LOLA relief, 75°S to the pole. Drag to pan, scroll to zoom. Dark is night.': ['Relief LOLA, de 75°S au pôle. Faites glisser pour déplacer, molette pour zoomer. Le sombre est la nuit.', 'LOLA 地形，南纬 75° 至极点。拖动平移，滚轮缩放。暗处为夜晚。'],
+  'Whole Moon, near side in the centre. Drag to pan, scroll to zoom. Dark is night.': ['Lune entière, face visible au centre. Faites glisser pour déplacer, molette pour zoomer. Le sombre est la nuit.', '整个月球，正面居中。拖动平移，滚轮缩放。暗处为夜晚。'],
+  '{count} sites lie north of this map. Switch to Whole Moon.': ['{count} sites se trouvent au nord de cette carte. Passez à Lune entière.', '{count} 个地点位于本地图以北，请切换到“整个月球”。'],
   'Today': ['Aujourd’hui', '今天'],
   'Previous day': ['Jour précédent', '前一天'],
   'Next day': ['Jour suivant', '后一天'],
@@ -114,7 +122,7 @@ const PROBES = [
 export function createMission(ctx) {
   const $ = (id) => document.getElementById(id);
   const startEl = $('v-start'), missionEl = $('v-mission'), flightEl = $('flight');
-  const local = { probe: 'novac', picked: null, mode: '3d', hour: 0, timer: null, open: null, query: '', listKey: '', laneKey: '' };
+  const local = { flat: 'pole', probe: 'novac', picked: null, mode: '3d', hour: 0, timer: null, open: null, query: '', listKey: '', laneKey: '' };
   let view3d = null, view3dLoading = false, view3dFailed = false, lastFrame = null, flying = false;
 
   const probe = () => PROBES.find((p) => p.id === local.probe);
@@ -181,9 +189,9 @@ export function createMission(ctx) {
           <button class="btn-ghost" id="m-prev">‹</button><input type="date" id="m-date"><button class="btn-ghost" id="m-next">›</button><button class="btn-ghost" id="m-today"></button></section>
         <section class="glass stage" id="m-stage">
           <canvas id="m-3d" aria-label="3D Moon"></canvas><canvas id="m-2d" aria-label="2D Moon" hidden></canvas>
-          <div class="overlay-tl"><div><h2 id="m-title"></h2><div class="hint" id="m-hint"></div></div>
+          <div class="overlay-tl"><div><h2 id="m-title"></h2><div class="hint" id="m-hint"></div><div class="mseg" id="m-flat" style="margin-top:10px"><button data-flat="pole"></button><button data-flat="moon"></button></div></div>
             <div style="display:flex;gap:8px;align-items:center"><button class="btn-ghost" id="m-reset"></button><div class="mseg" id="m-seg"><button data-mode="3d"></button><button data-mode="2d"></button></div></div></div>
-          <div class="legend2" id="m-legend"></div><div class="m-readout" id="m-readout"></div><div class="site-label" id="m-label"></div>
+          <div class="legend2" id="m-legend"></div><div class="m-readout" id="m-readout"></div><div class="note2" id="m-note" hidden></div><div class="zoom2" id="m-zoom"><button id="m-zout" aria-label="−">−</button><button id="m-zin" aria-label="+">+</button></div><div class="site-label" id="m-label"></div>
         </section>
         <section class="glass timebar"><button id="m-play"></button><input type="range" id="m-time" min="0" max="${SPAN}" step="1" value="0"><span class="when" id="m-when"></span></section>
         <section class="glass lanes" id="m-lanes"></section>
@@ -193,6 +201,9 @@ export function createMission(ctx) {
     </div>`;
     $('m-seg').onclick = (event) => { const b = event.target.closest('button'); if (b) setMode(b.dataset.mode); };
     $('m-reset').onclick = () => view3d?.reset();
+    $('m-flat').onclick = (event) => { const b = event.target.closest('button'); if (b) setFlat(b.dataset.flat); };
+    $('m-zin').onclick = () => zoomAt(layout2d?.baseX ?? 0, layout2d?.baseY ?? 0, 1.5);
+    $('m-zout').onclick = () => zoomAt(layout2d?.baseX ?? 0, layout2d?.baseY ?? 0, 1 / 1.5);
     const shiftDay = (days) => setDate(ctx.landing() + days * 864e5);
     $('m-prev').onclick = () => shiftDay(-1);
     $('m-next').onclick = () => shiftDay(1);
@@ -216,7 +227,7 @@ export function createMission(ctx) {
       local.hour = clamp(Math.round(((event.clientX - box.left) / box.width) * SPAN), 0, SPAN);
       refresh();
     };
-    bindPointer($('m-2d'));
+    bind2d($('m-2d'));
   }
 
   function setDate(ms) {
@@ -238,7 +249,12 @@ export function createMission(ctx) {
     $('m-prev').setAttribute('aria-label', t('Previous day'));
     $('m-next').setAttribute('aria-label', t('Next day'));
     $('m-title').textContent = t('Pick a landing site');
-    $('m-hint').textContent = t(local.mode === '3d' ? 'Drag to rotate, scroll to zoom. Earth and Sun are not to scale.' : 'The Moon as seen from Earth. Tap a dot to select a site.');
+    $('m-hint').textContent = t(local.mode === '3d' ? 'Drag to rotate, scroll to zoom. Earth and Sun are not to scale.' : local.flat === 'pole' ? 'LOLA relief, 75°S to the pole. Drag to pan, scroll to zoom. Dark is night.' : 'Whole Moon, near side in the centre. Drag to pan, scroll to zoom. Dark is night.');
+    const [fp, fm] = $('m-flat').children;
+    fp.textContent = t('South pole'); fm.textContent = t('Whole Moon');
+    fp.classList.toggle('on', local.flat === 'pole'); fm.classList.toggle('on', local.flat === 'moon');
+    $('m-flat').hidden = local.mode !== '2d'; $('m-zoom').hidden = local.mode !== '2d';
+    if (local.mode !== '2d') $('m-note').hidden = true;
     const [b3, b2] = $('m-seg').children;
     b3.textContent = t('3D'); b2.textContent = t('2D');
     b3.classList.toggle('on', local.mode === '3d'); b2.classList.toggle('on', local.mode === '2d');
@@ -551,24 +567,77 @@ export function createMission(ctx) {
 
   /* ---------- 2D ---------- */
 
-  let moonPixels = null, moonLoading = false, hits2d = [];
-  const disk = document.createElement('canvas');
-  function loadMoonPixels() {
-    if (moonPixels || moonLoading) return;
-    moonLoading = true;
-    const image = new Image();
-    image.onload = () => {
-      const c = document.createElement('canvas'); c.width = image.naturalWidth; c.height = image.naturalHeight;
-      const g = c.getContext('2d'); g.drawImage(image, 0, 0);
-      moonPixels = g.getImageData(0, 0, c.width, c.height);
-      refresh();
-    };
-    image.src = 'assets/moon_1024.jpg';
+  const POLE_KM = 457.44, MOON_KM = 1737.4, POLE_N = 768, MOON_W = 1024, MOON_H = 512;
+  const view2d = { z: 1, x: 0, y: 0 };
+  let poleTable = null, moonTable = null, hits2d = [], hoverId = null, layout2d = null;
+  const poleCanvas = document.createElement('canvas'), moonCanvas = document.createElement('canvas');
+  poleCanvas.width = poleCanvas.height = POLE_N; moonCanvas.width = MOON_W; moonCanvas.height = MOON_H;
+  const tabled = { pole: false, moon: false };
+
+  function loadImages() {
+    if (!tabled.pole) {
+      tabled.pole = true;
+      const image = new Image();
+      image.onload = () => {
+        const c = document.createElement('canvas'); c.width = c.height = POLE_N;
+        const g = c.getContext('2d'); g.drawImage(image, 0, 0, POLE_N, POLE_N);
+        const data = g.getImageData(0, 0, POLE_N, POLE_N).data, n = POLE_N * POLE_N;
+        const gray = new Uint8Array(n), nx = new Float32Array(n), ny = new Float32Array(n), nz = new Float32Array(n);
+        for (let py = 0; py < POLE_N; py++) {
+          const yUp = (1 - ((py + 0.5) / POLE_N) * 2) * POLE_KM;
+          for (let px = 0; px < POLE_N; px++) {
+            const x = (((px + 0.5) / POLE_N) * 2 - 1) * POLE_KM, i = py * POLE_N + px;
+            const lat = -Math.PI / 2 + 2 * Math.atan(Math.hypot(x, yUp) / (2 * MOON_KM)), lon = Math.atan2(x, yUp);
+            gray[i] = data[i * 4]; nx[i] = Math.cos(lat) * Math.cos(lon); ny[i] = Math.sin(lat); nz[i] = -Math.cos(lat) * Math.sin(lon);
+          }
+        }
+        poleTable = { gray, nx, ny, nz };
+        refresh();
+      };
+      image.src = 'data/polar-hillshade.webp';
+    }
+    if (!tabled.moon) {
+      tabled.moon = true;
+      const image = new Image();
+      image.onload = () => {
+        const c = document.createElement('canvas'); c.width = MOON_W; c.height = MOON_H;
+        const g = c.getContext('2d'); g.drawImage(image, 0, 0, MOON_W, MOON_H);
+        const sinLat = new Float32Array(MOON_H), cosLat = new Float32Array(MOON_H);
+        for (let y = 0; y < MOON_H; y++) { const lat = (0.5 - (y + 0.5) / MOON_H) * Math.PI; sinLat[y] = Math.sin(lat); cosLat[y] = Math.cos(lat); }
+        moonTable = { src: g.getImageData(0, 0, MOON_W, MOON_H).data, sinLat, cosLat };
+        refresh();
+      };
+      image.src = 'assets/moon_1024.jpg';
+    }
+  }
+  function shadePole(f) {
+    const { gray, nx, ny, nz } = poleTable, g = poleCanvas.getContext('2d'), img = g.createImageData(POLE_N, POLE_N), out = img.data;
+    const s0 = f.sun[0], s1 = f.sun[1], s2 = f.sun[2];
+    for (let i = 0, n = POLE_N * POLE_N; i < n; i++) {
+      const lit = nx[i] * s0 + ny[i] * s1 + nz[i] * s2, ramp = clamp((lit + 0.008) / 0.03, 0, 1);
+      const v = gray[i] * (0.2 + 0.8 * ramp), o = i * 4;
+      out[o] = v * (0.9 + 0.1 * ramp); out[o + 1] = v * (0.93 + 0.05 * ramp); out[o + 2] = v * (1.1 - 0.16 * ramp); out[o + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+  }
+  function shadeMoon(f) {
+    const { src, sinLat, cosLat } = moonTable, g = moonCanvas.getContext('2d'), img = g.createImageData(MOON_W, MOON_H), out = img.data;
+    const sLat = Math.sin(f.sunLat * D2R), cLat = Math.cos(f.sunLat * D2R), cosLon = new Float32Array(MOON_W);
+    for (let x = 0; x < MOON_W; x++) cosLon[x] = Math.cos(((x + 0.5) / MOON_W * 360 - 180 - f.sunLon) * D2R);
+    for (let y = 0, o = 0; y < MOON_H; y++) {
+      const a = sinLat[y] * sLat, b = cosLat[y] * cLat;
+      for (let x = 0; x < MOON_W; x++, o += 4) {
+        const ramp = clamp((a + b * cosLon[x] + 0.04) / 0.14, 0, 1), k = 0.2 + 0.8 * ramp;
+        out[o] = src[o] * k * (0.9 + 0.1 * ramp); out[o + 1] = src[o + 1] * k * (0.93 + 0.05 * ramp); out[o + 2] = src[o + 2] * k * (1.1 - 0.16 * ramp); out[o + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
   }
   function labelText(site) {
     const status = lastFrame.status.get(site.id);
     return `${site.short} · ${t(status.link ? (status.sun ? 'Sunlit as well' : 'Earth link available') : status.sun ? 'Sunlit, no Earth link' : 'In shadow')}`;
   }
+  const wrapLon = (lon) => ((((lon + 180) % 360) + 360) % 360) - 180;
   function draw2d() {
     const canvas = $('m-2d'), stage = $('m-stage');
     const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h || !lastFrame) return;
@@ -576,79 +645,117 @@ export function createMission(ctx) {
     if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
     const g = canvas.getContext('2d');
     g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-    const f = lastFrame;
-    const center = unit(f.earthLat, f.earthLon);
-    const east = [-Math.sin(f.earthLon * D2R), 0, -Math.cos(f.earthLon * D2R)];
-    const north = [-Math.sin(f.earthLat * D2R) * Math.cos(f.earthLon * D2R), Math.cos(f.earthLat * D2R), Math.sin(f.earthLat * D2R) * Math.sin(f.earthLon * D2R)];
-    const R = Math.max(80, Math.min(w * 0.36, (h - 120) / 2));
-    const cx = w * 0.5, cy = h * 0.5 + 24;
-    const sx = dot3(f.sun, east), sy = dot3(f.sun, north);
-    const glow = g.createRadialGradient(cx + sx * R * 1.9, cy - sy * R * 1.9, 0, cx + sx * R * 1.9, cy - sy * R * 1.9, R * 2.6);
-    glow.addColorStop(0, 'rgba(245,197,66,.34)'); glow.addColorStop(1, 'rgba(245,197,66,0)');
-    g.fillStyle = glow; g.fillRect(0, 0, w, h);
-    if (moonPixels) {
-      const size = Math.round(Math.min(2 * R * dpr, 440));
-      disk.width = disk.height = size;
-      const dg = disk.getContext('2d'), img = dg.createImageData(size, size), out = img.data;
-      const { data, width: tw, height: th } = moonPixels;
-      for (let py = 0; py < size; py++) {
-        const y = 1 - ((py + 0.5) / size) * 2;
-        for (let px = 0; px < size; px++) {
-          const x = ((px + 0.5) / size) * 2 - 1, r2 = x * x + y * y;
-          if (r2 > 1) continue;
-          const z = Math.sqrt(1 - r2);
-          const pxv = z * center[0] + x * east[0] + y * north[0], pyv = z * center[1] + x * east[1] + y * north[1], pzv = z * center[2] + x * east[2] + y * north[2];
-          const lat = Math.asin(clamp(pyv, -1, 1)), lon = Math.atan2(-pzv, pxv);
-          const tx = clamp(Math.floor(((lon / Math.PI + 1) / 2) * tw), 0, tw - 1), ty = clamp(Math.floor((0.5 - lat / Math.PI) * th), 0, th - 1);
-          const ti = (ty * tw + tx) * 4;
-          const lit = pxv * f.sun[0] + pyv * f.sun[1] + pzv * f.sun[2];
-          const ramp = clamp((lit + 0.02) / 0.25, 0, 1);
-          const shade = (0.15 + 0.85 * ramp * (0.6 + 0.4 * Math.max(lit, 0))) * (0.6 + 0.4 * Math.sqrt(z));
-          const warm = ramp, o = (py * size + px) * 4;
-          out[o] = data[ti] * shade * (0.82 + 0.18 * warm); out[o + 1] = data[ti + 1] * shade * (0.88 + 0.09 * warm); out[o + 2] = data[ti + 2] * shade * (1.04 - 0.16 * warm); out[o + 3] = 255;
-        }
+    const f = lastFrame, pole = local.flat === 'pole', table = pole ? poleTable : moonTable;
+    $('m-label').style.display = 'none'; hits2d = [];
+    if (!table) { loadImages(); return; }
+    const baseX = w / 2, baseY = h / 2 + 34;
+    const size = pole ? Math.max(120, Math.min(w - 40, h - 90)) : Math.max(160, Math.min(w - 40, (h - 110) * 2));
+    const cx = baseX + view2d.x, cy = baseY + view2d.y, z = view2d.z;
+    layout2d = { baseX, baseY };
+    let place, kmPx = 0;
+    if (pole) {
+      shadePole(f);
+      kmPx = (size * z) / (2 * POLE_KM);
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(poleCanvas, cx - (size * z) / 2, cy - (size * z) / 2, size * z, size * z);
+      place = (lat, lon) => { const r = 2 * MOON_KM * Math.tan(((90 + lat) * D2R) / 2); return [cx + r * Math.sin(lon * D2R) * kmPx, cy - r * Math.cos(lon * D2R) * kmPx, lat < -75]; };
+      g.save(); g.strokeStyle = 'rgba(255,255,255,.2)'; g.fillStyle = 'rgba(255,255,255,.72)'; g.lineWidth = 1; g.font = '12px "Geist Mono", ui-monospace, monospace';
+      for (const lat of [-80, -85]) { const r = 2 * MOON_KM * Math.tan(((90 + lat) * D2R) / 2) * kmPx; g.beginPath(); g.arc(cx, cy, r, 0, 6.2832); g.stroke(); g.textAlign = 'left'; g.fillText(`${-lat}°S`, cx + 6, cy - r - 4); }
+      const edge = POLE_KM * kmPx;
+      g.beginPath(); g.moveTo(cx, cy - edge); g.lineTo(cx, cy + edge); g.moveTo(cx - edge, cy); g.lineTo(cx + edge, cy); g.stroke();
+      g.textAlign = 'center'; g.fillText('0°', cx, cy - edge + 16); g.fillText('180°', cx, cy + edge - 34);
+      g.textAlign = 'right'; g.fillText(`90°${t('E')}`, cx + edge - 8, cy - 6); g.textAlign = 'left'; g.fillText(`270°${t('E')}`, cx - edge + 8, cy - 6);
+      g.restore();
+      for (const [lon, color, key] of [[f.earthLon, '#5aa2ff', 'to Earth'], [f.sunLon, COLORS.sun, 'to Sun']]) {
+        const r = POLE_KM * 0.84 * kmPx, x = cx + r * Math.sin(lon * D2R), y = cy - r * Math.cos(lon * D2R);
+        const glow = g.createRadialGradient(x, y, 0, x, y, 22); glow.addColorStop(0, color); glow.addColorStop(1, 'rgba(0,0,0,0)');
+        g.globalAlpha = 0.45; g.fillStyle = glow; g.beginPath(); g.arc(x, y, 22, 0, 6.2832); g.fill(); g.globalAlpha = 1;
+        g.fillStyle = color; g.beginPath(); g.arc(x, y, 7, 0, 6.2832); g.fill();
+        g.fillStyle = '#fff'; g.font = '12px Geist, system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(t(key), x, y + 24);
       }
-      dg.putImageData(img, 0, 0);
-      g.save(); g.beginPath(); g.arc(cx, cy, R, 0, 6.2832); g.clip(); g.imageSmoothingQuality = 'high'; g.drawImage(disk, cx - R, cy - R, 2 * R, 2 * R); g.restore();
-    } else { loadMoonPixels(); g.fillStyle = '#2a2640'; g.beginPath(); g.arc(cx, cy, R, 0, 6.2832); g.fill(); }
-    g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, R, 0, 6.2832); g.stroke();
-
-    const er = clamp(R * 0.16, 16, 34), ex = clamp(cx - R * 1.2, er + 14, w - er - 14), ey = clamp(cy - R * 0.78, er + 72, h - er - 20);
-    const eg = g.createRadialGradient(ex - er * 0.3, ey - er * 0.3, er * 0.1, ex, ey, er);
-    eg.addColorStop(0, '#9fd0ff'); eg.addColorStop(0.55, '#2d73d6'); eg.addColorStop(1, '#10285a');
-    g.fillStyle = eg; g.beginPath(); g.arc(ex, ey, er, 0, 6.2832); g.fill();
-    g.fillStyle = 'rgba(95,190,120,.75)'; g.beginPath(); g.ellipse(ex - er * 0.2, ey + er * 0.1, er * 0.38, er * 0.24, 0.5, 0, 6.2832); g.fill();
-    g.fillStyle = '#c9c5da'; g.font = '12px Geist, system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(t('Earth'), ex, ey + er + 16);
-    const sd = Math.hypot(sx, sy);
-    if (sd > 0.25) {
-      const px = cx + (sx / sd) * R * 1.55, py = cy - (sy / sd) * R * 1.55;
-      if (px > 20 && px < w - 20 && py > 70 && py < h - 20) {
-        g.fillStyle = '#ffd45a'; g.beginPath(); g.arc(px, py, 9, 0, 6.2832); g.fill();
-        g.fillStyle = '#c9c5da'; g.fillText(t('Sun'), px, py + 24);
+      g.save(); g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineWidth = 2; g.font = '12px "Geist Mono", ui-monospace, monospace';
+      const bar = 100 * kmPx, bx = w / 2 - bar / 2; g.beginPath(); g.moveTo(bx, h - 18); g.lineTo(bx + bar, h - 18); g.stroke(); g.textAlign = 'center'; g.fillText('100 km', w / 2, h - 26); g.restore();
+    } else {
+      shadeMoon(f);
+      const width = size * z, height = width / 2;
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(moonCanvas, cx - width / 2, cy - height / 2, width, height);
+      place = (lat, lon) => [cx + (wrapLon(lon) / 360) * width, cy - (lat / 180) * height, true];
+      g.save(); g.strokeStyle = 'rgba(255,255,255,.14)'; g.lineWidth = 1;
+      for (let lon = -150; lon <= 150; lon += 30) { const x = cx + (lon / 360) * width; g.beginPath(); g.moveTo(x, cy - height / 2); g.lineTo(x, cy + height / 2); g.stroke(); }
+      for (let lat = -60; lat <= 60; lat += 30) { const y = cy - (lat / 180) * height; g.beginPath(); g.moveTo(cx - width / 2, y); g.lineTo(cx + width / 2, y); g.stroke(); }
+      g.restore();
+      for (const [lat, lon, color, key] of [[f.earthLat, f.earthLon, '#5aa2ff', 'to Earth'], [f.sunLat, f.sunLon, COLORS.sun, 'to Sun']]) {
+        const [x, y] = place(lat, lon);
+        const glow = g.createRadialGradient(x, y, 0, x, y, 22); glow.addColorStop(0, color); glow.addColorStop(1, 'rgba(0,0,0,0)');
+        g.globalAlpha = 0.45; g.fillStyle = glow; g.beginPath(); g.arc(x, y, 22, 0, 6.2832); g.fill(); g.globalAlpha = 1;
+        g.fillStyle = color; g.beginPath(); g.arc(x, y, 7, 0, 6.2832); g.fill();
+        g.fillStyle = '#fff'; g.font = '12px Geist, system-ui, sans-serif'; g.textAlign = 'center'; g.fillText(t(key), x, y + 24);
       }
     }
-    hits2d = [];
     const chosen = pickedSite();
     for (const site of sites()) {
-      const normal = unit(site.lat, site.lon), depth = dot3(normal, center);
-      if (depth < 0.02) continue;
-      const x = cx + dot3(normal, east) * R, y = cy - dot3(normal, north) * R, status = f.status.get(site.id), selected = site === chosen;
+      const [x, y, inside] = place(site.lat, site.lon);
+      if (!inside) continue;
+      const status = f.status.get(site.id), selected = site === chosen;
       hits2d.push({ site, x, y });
-      if (status.link && status.sun) { g.strokeStyle = COLORS.sun; g.lineWidth = 2; g.beginPath(); g.arc(x, y, selected ? 10 : 7.5, 0, 6.2832); g.stroke(); }
-      g.fillStyle = colorOf(status); g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 1;
-      g.beginPath(); g.arc(x, y, selected ? 6.5 : 4.6, 0, 6.2832); g.fill(); g.stroke();
-      if (selected) { g.strokeStyle = '#fff'; g.lineWidth = 1.6; g.beginPath(); g.arc(x, y, 12, 0, 6.2832); g.stroke(); }
+      if (status.link && status.sun) { g.strokeStyle = COLORS.sun; g.lineWidth = 2; g.beginPath(); g.arc(x, y, selected ? 11 : 8.5, 0, 6.2832); g.stroke(); }
+      g.fillStyle = colorOf(status); g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 1;
+      g.beginPath(); g.arc(x, y, selected ? 7 : 5.2, 0, 6.2832); g.fill(); g.stroke();
+      if (selected) { g.strokeStyle = '#fff'; g.lineWidth = 1.6; g.beginPath(); g.arc(x, y, 13, 0, 6.2832); g.stroke(); }
     }
-    const label = $('m-label'), found = hits2d.find((hit) => hit.site === chosen);
-    if (found) { label.style.display = 'block'; label.style.left = `${found.x}px`; label.style.top = `${found.y - 6}px`; label.textContent = labelText(chosen); } else label.style.display = 'none';
+    const found = hits2d.find((hit) => hit.site === chosen), label = $('m-label');
+    if (found) { label.style.display = 'block'; label.style.left = `${found.x}px`; label.style.top = `${found.y - 8}px`; label.textContent = labelText(chosen); }
+    const hovered = hits2d.find((hit) => hit.site.id === hoverId && hit.site !== chosen);
+    if (hovered) {
+      const text = labelText(hovered.site);
+      g.font = '12px Geist, system-ui, sans-serif'; const tw = g.measureText(text).width + 16;
+      g.fillStyle = 'rgba(8,7,16,.88)'; g.strokeStyle = 'rgba(255,255,255,.2)'; g.beginPath(); g.roundRect(hovered.x - tw / 2, hovered.y - 40, tw, 26, 8); g.fill(); g.stroke();
+      g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(text, hovered.x, hovered.y - 23);
+    }
+    const outside = pole ? sites().filter((s) => s.lat >= -75).length : 0, note = $('m-note');
+    note.hidden = !outside;
+    if (outside) note.textContent = t('{count} sites lie north of this map. Switch to Whole Moon.', { count: outside });
   }
-  function bindPointer(canvas) {
-    canvas.addEventListener('pointerup', (event) => {
-      const box = canvas.getBoundingClientRect(), x = event.clientX - box.left, y = event.clientY - box.top;
-      let best = null, bestDistance = 18;
-      for (const hit of hits2d) { const d = Math.hypot(hit.x - x, hit.y - y); if (d < bestDistance) { best = hit; bestDistance = d; } }
-      if (best) { local.picked = best.site.id; refresh(true); }
+  function bind2d(canvas) {
+    let drag = null;
+    const nearest = (x, y) => { let best = null, bestDistance = 16; for (const hit of hits2d) { const d = Math.hypot(hit.x - x, hit.y - y); if (d < bestDistance) { best = hit; bestDistance = d; } } return best; };
+    canvas.addEventListener('pointerdown', (event) => { canvas.setPointerCapture(event.pointerId); drag = { x: event.clientX, y: event.clientY, vx: view2d.x, vy: view2d.y, moved: false }; });
+    canvas.addEventListener('pointermove', (event) => {
+      const box = canvas.getBoundingClientRect();
+      if (drag) {
+        const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+        if (Math.hypot(dx, dy) > 4) drag.moved = true;
+        if (drag.moved) { view2d.x = drag.vx + dx; view2d.y = drag.vy + dy; draw2d(); }
+        return;
+      }
+      const hit = nearest(event.clientX - box.left, event.clientY - box.top), id = hit ? hit.site.id : null;
+      canvas.style.cursor = hit ? 'pointer' : 'grab';
+      if (id !== hoverId) { hoverId = id; draw2d(); }
     });
+    canvas.addEventListener('pointerup', (event) => {
+      const moved = drag?.moved; drag = null;
+      if (moved) return;
+      const box = canvas.getBoundingClientRect(), hit = nearest(event.clientX - box.left, event.clientY - box.top);
+      if (hit) { local.picked = hit.site.id; refresh(true); }
+    });
+    canvas.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      const box = canvas.getBoundingClientRect();
+      zoomAt(event.clientX - box.left, event.clientY - box.top, event.deltaY < 0 ? 1.18 : 1 / 1.18);
+    }, { passive: false });
+  }
+  function zoomAt(x, y, factor) {
+    if (!layout2d) return;
+    const next = clamp(view2d.z * factor, 1, 12), ratio = next / view2d.z;
+    const relX = x - layout2d.baseX - view2d.x, relY = y - layout2d.baseY - view2d.y;
+    view2d.x = x - layout2d.baseX - relX * ratio; view2d.y = y - layout2d.baseY - relY * ratio; view2d.z = next;
+    if (next === 1) { view2d.x = 0; view2d.y = 0; }
+    draw2d();
+  }
+  function setFlat(kind) {
+    local.flat = kind; view2d.z = 1; view2d.x = 0; view2d.y = 0; hoverId = null;
+    refresh(true);
   }
 
   /* ---------- flow ---------- */
@@ -664,6 +771,8 @@ export function createMission(ctx) {
   function focusSite() { if (local.mode === '3d' && view3d) view3d.focus(pickedSite()); }
   function refresh(full) {
     if (view() !== 'mission' || !$('m-stage')) return;
+    const chosenSite = pickedSite();
+    if (full && local.mode === '2d' && local.flat === 'pole' && chosenSite && chosenSite.lat >= -75 && local.autoPick !== local.picked) { local.autoPick = local.picked; local.flat = 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0; }
     lastFrame = frame();
     if (full) setStaticText();
     $('m-3d').hidden = local.mode !== '3d'; $('m-2d').hidden = local.mode !== '2d';
@@ -722,6 +831,7 @@ export function createMission(ctx) {
     if (card) { local.probe = card.dataset.probe; local.picked = null; local.open = null; renderStart(); return; }
     if (event.target.closest('#validate')) {
       local.picked = orderedSites()[0]?.id ?? null; local.open = null; local.hour = 0;
+      local.flat = (pickedSite()?.lat ?? 0) < -75 ? 'pole' : 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0;
       ctx.go('mission');
     }
   });
