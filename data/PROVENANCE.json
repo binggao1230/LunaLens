@@ -1,0 +1,29 @@
+{
+  "project": "LunaLens",
+  "recordedDate": "2026-11-14",
+  "sources": {
+    "ephemeris": {
+      "provider": "NASA/JPL Horizons",
+      "documentation": "https://ssd.jpl.nasa.gov/horizons/manual.html",
+      "files": ["ephemeris.json", "ephemeris.f64"],
+      "processing": "Hourly sub-observer coordinates and distances, longitude unwrapping and a lunar rotation correction during light travel time."
+    },
+    "terrain": {
+      "provider": "NASA LRO LOLA",
+      "documentation": "https://pds-geosciences.wustl.edu/missions/lro/lola.htm",
+      "products": ["LDEM_75S_240M", "LDEM_85S_40M"],
+      "files": ["dem240.json", "dem240.i16.gz", "dem480.json", "dem480.i16.gz", "polar-hillshade.json", "polar-hillshade.webp", "sites.json"],
+      "processing": "Grid sampling, compressed elevation storage, fixed-light hillshade and sampled horizon profiles. The three rim points were selected computationally. The 480 m display grid averages 2 x 2 original 240 m cells and rounds to 0.5 m. The interactive 80 km terrain patch uses a local tangent frame and lunar curvature. Display height exaggeration, lighting and WebGL shadows are illustrative, independent of the original visibility calculation."
+    },
+    "coordinates": {
+      "references": "CREDITS.md at the project root and the source field of each preset in sites.json",
+      "status": "Approximate reference coordinates; not certified mission planning coordinates."
+    }
+  },
+  "generativeAIAssistance": {
+    "tools": ["Codex", "AI coding assistants used during earlier project preparation"],
+    "uses": ["Implementation planning", "Application code", "Data retrieval and processing scripts", "Interface text"],
+    "distinction": "The source ephemerides and terrain are scientific provider data, not language-model predictions or generated imagery. AI-assisted code deterministically processes them.",
+    "review": "Computational consistency checks passed; the team must review scientific assumptions, attribution and the final event disclosure."
+  }
+}

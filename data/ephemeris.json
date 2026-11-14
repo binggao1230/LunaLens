@@ -1,0 +1,16 @@
+{
+  "start": "2026-01-01T00:00:00Z",
+  "stepSeconds": 3600,
+  "count": 43824,
+  "columns": [
+    "sunLonDeg",
+    "sunLatDeg",
+    "sunDistKm",
+    "earthLonDeg",
+    "earthLatDeg",
+    "earthDistKm"
+  ],
+  "frame": "Moon mean-Earth/polar-axis (MOON_ME), east-positive, sub-observer point, light-time rotation corrected",
+  "source": "NASA/JPL Horizons API v1.2 (DE441), observer tables Q14+Q20",
+  "fetchedUtc": "2026-11-13T21:40Z"
+}
