@@ -64,6 +64,12 @@ const MESSAGES = {
   '{v} M km': ['{v} M km', '{v} 百万公里'],
   '{pct}% lit': ['{pct} % éclairée', '{pct}% 受照'],
   'Recommended': ['Recommandé', '推荐'],
+  'Sunset in': ['Coucher du Soleil dans', '日落倒计时'],
+  'Earthset in': ['Coucher de la Terre dans', '地落倒计时'],
+  'Earthrise': ['Lever de la Terre', '地升'],
+  'Open in Plan': ['Ouvrir dans Plan', '在 Plan 中打开'],
+  'Stays in view': ['Reste visible', '全程可见'],
+  'None in this stay': ['Aucun pendant le séjour', '停留期内无'],
   '{n} h lit and linked': ['{n} h éclairé et relié', '{n} 小时同时可用'],
   'Both': ['Les deux', '同时可见'],
   'min': ['min', '分钟'],
@@ -246,6 +252,7 @@ export function createMission(ctx) {
           </div>
         </div>
         <input type="search" id="m-search" autocomplete="off">
+        <div class="m-scenario" id="m-scenario"></div>
         <div class="sl" id="m-list"></div>
         <button class="btn-primary" id="m-send"></button>
       </aside>
@@ -398,6 +405,9 @@ export function createMission(ctx) {
   }
 
   function renderList(force) {
+  // A site has a terrain model when its horizon was computed from LOLA, not from a smooth sphere.
+  const hasModel = (site) => Boolean(site.terrain && site.terrain !== 'none');
+
     const f = lastFrame ?? frame();
     const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(',')].join('|');
     const listEl = $('m-list');
@@ -406,12 +416,14 @@ export function createMission(ctx) {
       const rows = orderedSites()
         .filter((site) => !local.query || `${site.label} ${site.short}`.toLowerCase().includes(local.query))
         .map((site) => ({ site, score: scoreOf(site) }))
-        .sort((a, b) => b.score.both - a.score.both);
+      // Rank inside each group: a site whose horizon is a smooth sphere cannot compete with one
+      // computed on real terrain, so terrain-backed sites come first and the badge only marks those.
+        .sort((a, b) => (Number(hasModel(b.site)) - Number(hasModel(a.site))) || (b.score.both - a.score.both));
       listEl.innerHTML = rows.length ? rows.map(({ site, score }, rank) => {
         const open = local.open === site.id;
         const isCompared = local.compared.has(site.id);
         const terrain = !site.terrain || site.terrain === 'none' ? t('no terrain') : site.terrain;
-        const badge = rank < 3 && score.both > 0 ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
+        const badge = rank < 3 && score.both > 0 && hasModel(site) ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
         return `<div class="srow${site.id === local.picked ? ' on' : ''}${open ? ' open' : ''}" data-row="${escapeHtml(site.id)}">
           <div class="srow-top">
             <label class="srow-chk" title="${escapeHtml(t('Include in comparison'))}">
@@ -799,7 +811,25 @@ export function createMission(ctx) {
     renderDate();
     renderList(full);
     renderLanes(full);
+    renderScenario();
     if (local.mode === '3d') { create3d(); view3d?.request(); } else draw2d();
+  }
+
+  // The two countdowns that decide a stay, for the picked site, and the way into the map page.
+  function renderScenario() {
+    const el = $('m-scenario'); const f = lastFrame;
+    const site = pickedSite();
+    if (!el || !site || !f) return;
+    const label = (next, setKey, riseWord) => next.kind === 'none'
+      ? escapeHtml(t(next.state ? 'Stays in view' : 'None in this stay'))
+      : next.kind === 'set' ? `${escapeHtml(t(setKey))} ${escapeHtml(dur(next.timeMs - f.ms))}`
+        : `${escapeHtml(t(riseWord))} ${escapeHtml(dur(next.timeMs - f.ms))}`;
+    const sunNext = nextTransition(site, 'sun', f.index);
+    const earthNext = nextTransition(site, 'earth', f.index);
+    el.innerHTML = `<button type="button" id="m-open-plan" class="btn-ghost btn-xs">${escapeHtml(t('Open in Plan'))}</button>`
+      + `<span><i class="dot sun"></i>${label(sunNext, 'Sunset in', 'Sunrise')}</span>`
+      + `<span><i class="dot earth"></i>${label(earthNext, 'Earthset in', 'Earthrise')}</span>`;
+    el.querySelector('#m-open-plan').onclick = () => ctx.go('plan');
   }
 
   function sendProbe() {

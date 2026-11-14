@@ -39,12 +39,15 @@ alternative dates at the same site". The second half is what the product cannot 
 
 - Preview a tracking-camera Earth-to-Moon flight using the selected lander's GLB, with skip, reduced motion and local textures.
 - Remove the extra model-reference captions from the start-page cards at the owner's request; retain asset provenance in `site/assets/models/README.md`.
-- The Mission page (start page, probe, send probe) and Explore / Compare / Date slip look like two products.
-  Check whether they share the landing date and the picked site; this has not been verified. If they do not, make
-  them share one state.
+- **Shared state: verified.** Mission, Explore, Compare, Date slip and Plan all read one `state` for the landing
+  date and the picked site; changing the date in Plan shows up in Explore's date field, and the site follows the
+  same way. The framed Atlas page is the exception: it receives the scenario through its URL hash and sends
+  nothing back.
 - On the Mission page, show the countdown to sunset and to Earthset for the picked site, and one action that opens
   it in Explore.
-- Open a pull request for the two commits left on `chenlin/mission-start` (lander model, GLTF loader), or drop them.
+- **`chenlin/mission-start`: superseded, do not merge.** Its four commits (carousel, Artemis model, GLTF and DRACO
+  loaders) arrived on `main` through #29 and #32; its tree is 1,999 lines behind and adding anything back would
+  revert work. No pull request; the owner can delete the branch.
 - Accept: change the date on Mission, switch to Explore, and the date and the site are the same.
 
 ## D. 3D: stop the loss (two hours at most)
@@ -76,8 +79,23 @@ alternative dates at the same site". The second half is what the product cannot 
 
 ## G. Before submission
 
-- Add future CLPS targets and landing sites of other countries' programmes to the curated list; the challenge text
-  names both. Every site carries a source for its coordinates.
-- Test on real phones: iOS Safari and one Android.
-- Confirm the official submission format and deadline. Nobody has checked this year's rules yet.
-- Decide what happens to the Cloudflare email check before the judges open the link.
+- **Format and deadline, checked on the official site on 2026-11-14.** Submission happens on the team page's
+  Project tab: it opened Saturday 14 November at 09:00 and closes **Sunday 15 November at 23:59 local event time**;
+  a saved draft is not a submission, "Submit for Judging" must be clicked. Required fields: project name, summary,
+  demo link (slide deck of at most seven slides, or a video of at most 30 seconds, hosted publicly), final project
+  link, detailed description, the Super Intelligence disclosure, the NASA data used, and every other reference.
+  English throughout. Teams of at most six — we are six.
+- **Public links only.** Judges cannot log in: the Cloudflare Access email gate has to come off before submission,
+  and the final-project link must open without an account.
+- **No NASA branding.** This year's rules forbid generated content that uses NASA logos or design elements; the
+  NASA meatball was removed from the app bar on 2026-11-14 and its asset deleted. NASA data itself is encouraged.
+- **Site breadth: covered by the Atlas page for now.** Our own curated list stays at the twelve sites whose
+  coordinates carry a source, because every added point without a check would break the rule the list exists to
+  keep. The Atlas page already carries 41 past, failed and planned missions with their own terrain patches, so a
+  judge comparing the two entries sees the full field; the Data page states that those coordinates have not been
+  re-sourced. Adding them to our list stays worth doing once each pair is checked against a primary source.
+- **Phone pass: engine-level done, hardware outstanding.** Plan, Compare and the framed Atlas were driven at
+  390 x 844 with touch in Chrome and again in WebKit (the engine behind iOS Safari): no horizontal overflow, WebGL 2
+  present, the Atlas frame renders its canvas, and neither run logged a console error. What is left needs a person:
+  open the three pages on one iOS and one Android device and check the address bar, the back gesture and the map's
+  pinch zoom.
