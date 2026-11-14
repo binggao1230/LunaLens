@@ -221,9 +221,10 @@ Every step maps to a Must or Should feature. If a step cannot be shown live, the
 
 ---
 
-## 9. Status of the prototype against this plan
+## 9. Status of the build against this plan
 
-`prototype/` is a throwaway layout demo on synthetic data (see `prototype/NOTES.md`). It sketches F1 (list, map
-tap), F2 (scrubber, play), F3, F4 (without mast height), F5, F6 (sites only, not dates), F7 (one metric), and the
-two 2D maps of F8. It does not show jump controls, scenario-by-date comparison, thresholds, the illumination
-overlay, F9, F10 or F11. None of its numbers are real.
+`site/` is the build people can open, online and locally: real Sun and Earth positions from JPL Horizons (2026–2030),
+real LOLA terrain horizons, a 3D terrain and time view, and three interface languages. It covers F1 (list, map tap),
+F2 (scrubber, play), F3, F4 (mast height fixed at 2 m), F5, F6 (sites only, not dates), F7 (one metric), the two 2D
+maps of F8 and the start of F11. It does not yet show jump controls, scenario-by-date comparison, thresholds, the
+illumination overlay, F9 or F10. The throwaway `prototype/` that came before it was deleted on 2026-11-14.

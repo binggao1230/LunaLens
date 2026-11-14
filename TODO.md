@@ -1,7 +1,7 @@
 # TODO — what the 14 November call and the Figma file ask for
 
 Sources: the design-review call (`chat.txt`, 14 Nov) and the Figma file *NASA SpaceApps*
-(`pj5bENLGkYn0XeqofTY4YW`). Everything below is about `site/`, the published build; `prototype/` is retired.
+(`pj5bENLGkYn0XeqofTY4YW`). Everything below is about `site/`, the only build; `prototype/` was deleted on 14 November.
 
 ## What the call decided
 
@@ -52,12 +52,12 @@ Sources: the design-review call (`chat.txt`, 14 Nov) and the Figma file *NASA Sp
 13. Test on a real phone; only a headless 390 px run exists.
 14. Typo pass on the Figma: *Crête de Noble*, *Solar disk*, `88.89°S` (`88.89°5` today).
 
-## Housekeeping
+## Settled on 14 November
 
-15. `site/js/app.js` still carries unused planning tables (`renderBuild`) from the prototype era — delete.
-16. `prototype/` is retired and unpublished; delete it before the submission, as `doc/PLAN.md` already says.
-17. `AGENTS.md` says UI copy is English-only, while `site/` now ships French and Chinese. Decide and write the
-    rule down; the current state contradicts itself.
+- The unused planning tables (`renderBuild` and its data) are gone from `site/js/app.js`.
+- `prototype/` is deleted; `site/` is the only build, online and local.
+- The language rule now matches reality: documents and code in English, interface copy may be multilingual
+  (`AGENTS.md` § Language).
 
 ## Open questions for the team
 

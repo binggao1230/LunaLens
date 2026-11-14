@@ -5,7 +5,8 @@ The workspace rules in `../AGENTS.md` also apply; where they conflict, this file
 
 ## Language
 
-- **Everything in this project is written in English**: documents, code, comments, identifiers, commit messages, UI copy, the demo script, slides, and submission materials. No Chinese in the repository.
+- **Documents, code, comments, identifiers and commit messages are written in English**: README, `doc/`, `TODO.md`, source, tests, commit subjects. No Chinese in those.
+- **The interface may be multilingual.** `site/` ships English, French and Chinese; user-facing strings live in `site/js/i18n.js`. English stays the default and the reference wording. Prose written for people to read as documents is English even when the product speaks three languages.
 - The only exceptions are the official challenge texts in `doc/Background.md` and `doc/Resources.md`, which stay as published.
 - The project owner talks to agents in Chinese. Reply to them in Chinese in the conversation, but write every file and deliverable in English. A request made in Chinese is not a request for Chinese output.
 
@@ -39,7 +40,7 @@ web/                  frontend (Vite + React + TS): app/, state/, api/, ui/, lib
 data/                 DEMs, SPICE kernels, intermediates — not in Git
 archive/team/         retired per-person plans, history only
 design/               exported screens, logo, slides
-prototype/            throwaway layout prototype — never import from it or build on it
+site/                 the published static site (real engine); site/data/ is not in git
 ```
 
 File-level structure and the owner of each directory are in `doc/WORKPLAN.md` §3. Follow it:
