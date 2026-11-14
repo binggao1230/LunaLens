@@ -1,0 +1,8 @@
+{
+ "file": "dem240.i16.gz",
+ "n": 3812,
+ "resM": 240.0,
+ "scaleM": 0.5,
+ "radiusM": 1737400.0,
+ "layout": "row-major int16 LE, row 0 = top (lon 0 up), height_m = DN*0.5 relative to R"
+}
