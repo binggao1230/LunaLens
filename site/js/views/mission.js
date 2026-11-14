@@ -398,6 +398,9 @@ export function createMission(ctx) {
   }
 
   function renderList(force) {
+  // A site has a terrain model when its horizon was computed from LOLA, not from a smooth sphere.
+  const hasModel = (site) => Boolean(site.terrain && site.terrain !== 'none');
+
     const f = lastFrame ?? frame();
     const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(',')].join('|');
     const listEl = $('m-list');
@@ -406,12 +409,14 @@ export function createMission(ctx) {
       const rows = orderedSites()
         .filter((site) => !local.query || `${site.label} ${site.short}`.toLowerCase().includes(local.query))
         .map((site) => ({ site, score: scoreOf(site) }))
-        .sort((a, b) => b.score.both - a.score.both);
+      // Rank inside each group: a site whose horizon is a smooth sphere cannot compete with one
+      // computed on real terrain, so terrain-backed sites come first and the badge only marks those.
+        .sort((a, b) => (Number(hasModel(b.site)) - Number(hasModel(a.site))) || (b.score.both - a.score.both));
       listEl.innerHTML = rows.length ? rows.map(({ site, score }, rank) => {
         const open = local.open === site.id;
         const isCompared = local.compared.has(site.id);
         const terrain = !site.terrain || site.terrain === 'none' ? t('no terrain') : site.terrain;
-        const badge = rank < 3 && score.both > 0 ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
+        const badge = rank < 3 && score.both > 0 && hasModel(site) ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
         return `<div class="srow${site.id === local.picked ? ' on' : ''}${open ? ' open' : ''}" data-row="${escapeHtml(site.id)}">
           <div class="srow-top">
             <label class="srow-chk" title="${escapeHtml(t('Include in comparison'))}">
