@@ -39,3 +39,6 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: 4.158.0
           command: deploy
+
+      - name: Preflight the deployed site
+        run: node site/tools/preflight.mjs
