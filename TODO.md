@@ -208,33 +208,9 @@ those checks.
 
 ## OMP run and recovery
 
-Use this repository file as the only authoritative task list. Start one OMP coding
-session in a persistent terminal on this branch. If the installed profile enables
-interactive goal continuation, set one persistent `/goal set` with this file, the
-per-slice acceptance rules and a ten-hour **checkpoint**. Do not nest `/loop` inside that
-goal: OMP disables goal auto-continuation while loop mode is enabled. Neither command
-guarantees ten hours of wall-clock execution or survives host failure on its own.
-
-Suggested kickoff, after switching to the feature branch:
-
-```text
-/goal set Read TODO.md and doc/Background.md. Deliver the native Explore touchdown-window workflow in W0–W6 order for user-selected dates and ranges. Treat the example dates as tests only. Use one writer, verify each checkbox, and log the next action. At ten hours leave a tested, recoverable state. Do not push or deploy.
-```
-
-After each verified slice, or after 45–60 minutes without a finished slice, write a
-checkpoint below. Use one writer and a small local commit after an accepted slice; leave
-a safe stopping point if interrupted. If two attempts cannot clear a blocker, record
-both and continue with independent work. A periodic read-only check can flag that the
-checkpoint is stale; it should not start another writer or restart a healthy session.
-At the ten-hour checkpoint, stop opening new slices. Finish a safe checkpoint, leave
-unverified boxes open, and hand off.
-
-Record the exact OMP session ID/path at startup. If the terminal dies, resume that
-session with `omp --resume <id-or-path>` and read the last verified checkpoint and Git
-status before editing. Use `/goal resume` if the goal is paused. Do not export an OMP
-checklist over this file; its default target can be `TODO.md`. The OMP JSONL records the
-conversation and tools. Continuous screen video requires a separate recorder and storage;
-neither the recorder nor a periodic check is the source of truth about completed work.
+Use the copyable goal and recovery commands in [OMP.md](OMP.md). This file remains the
+only construction plan and checkpoint log. W0–W6 is the ten-hour core; do not start
+M1–M5 under the same goal.
 
 ### Execution log
 
@@ -361,8 +337,8 @@ demo passes.
   coordinates against primary sources. Keep computed rim examples distinct from official
   landing targets. Extend search beyond the six current terrain presets only after
   adding validated terrain; slope and landing safety are separate work.
-- [ ] **Submission and retirement.** Revise [submission text](doc/SUBMISSION.md) to use only
-  a reproducible current scenario and no retired tabs. Verify the final URLs without
+- [ ] **Submission and retirement.** Check the [submission draft](doc/SUBMISSION.md) against
+  the exact release and reproduce the demo without retired tabs. Verify the final URLs without
   login and check submission separately from deployment. After the workflow is stable,
   remove the hidden markup, styles and handlers for Compare/Date slip and keep old
   hashes redirecting. Defer new flight effects, orbit mechanics and additional mobile work.

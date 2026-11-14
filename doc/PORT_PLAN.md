@@ -1,54 +1,48 @@
-# Atlas: the reference app vendored into our site
+# Atlas integration: current state and release decision
 
-Status: branch `bing/port-plan`, local only. Written 2026-11-14.
+Atlas is a separate lunar mapping application served within LunaLens, not the native
+Expert calculation engine. This note records what exists; [TODO](../TODO.md#mission-and-atlas-workstream)
+owns the next implementation.
 
-## What was decided
+## What is in the repository
 
-The reference entry for this challenge is the spec. Instead of re-implementing its map page in our
-buildless site, its production build is vendored and served as a page of its own.
+- The production build of [daniel27-space/lunar-navigator](https://github.com/daniel27-space/lunar-navigator)
+  was added in #52 under [`site/atlas/`](../site/atlas/index.html). LunaLens opens it
+  in a same-origin frame on the full-width Atlas tab. `.vendor/lunar-navigator/`,
+  when present, is an ignored local checkout, not an authoritative build manifest.
+- Atlas includes a polar terrain map, slope and long-term illumination layers, a
+  site finder, date ranking, and mission cards. The finder uses regional slope
+  and long-term averages. It does not implement the native selected-stay scoring
+  planned for the South Pole prototype.
+- Atlas ships its own [ephemeris metadata](../site/atlas/data/ephem/ephem.json)
+  (SPICE/DE440), terrain and PGDA layers. Native LunaLens uses a separate
+  Horizons/DE441 snapshot and native skyline rules. Shared coordinate conventions
+  do not make the two sets of visibility results interchangeable.
 
-- Source: `github.com/daniel27-space/lunar-navigator`, `web/` (Vite + React + TypeScript).
-- Built once with `npm ci && npm run build`; `base: './'` in its `vite.config.ts` already makes the
-  output path-independent.
-- Output copied to `site/atlas/` (151 files, 94 MB, of which 90 MB is its precomputed data:
-  ephemeris table, south-polar elevation and slope tiles, the three PGDA illumination layers,
-  per-site terrain patches, mission images and lander models).
-- Nav: `Atlas` is a view of this site (`#/atlas`) that frames `atlas/index.html` under our own header
-  and tab bar. The frame's `src` carries a share hash built from the current scenario
-  (`s=lat,lon,label&t=ISO`), so it opens on the site and date the rest of the page is showing.
-- `.vendor/lunar-navigator/` holds the clone used for the build and is git-ignored.
-- `site/atlas/data/` is re-included through `!site/atlas/data/` in `.gitignore`, because the global
-  `data/` rule would otherwise drop the app's data.
+## What the handoff supports
 
-## What it brings
+[LunaLens passes a site, UTC time and optional layer](../site/js/app.js#L385) into
+Atlas through its share hash. The current native date control produces a midnight
+landing time. A reverse helper exists in the code but is not connected to the
+running app: an Atlas selection does not update the native site automatically.
+Keep this limitation explicit when testing or demonstrating Atlas.
 
-Seven south-polar layers (`Find a site`, `Sun now`, `Avg sunlight`, `Avg Earth view`, `Shadow`,
-`Height`, `Slope`), a site finder with hard limits and a ranked shortlist, landing-date ranking with
-a baseline comparison, adjustable assumptions (sunlit rule, Earth mask, observer height), pinning by
-click or coordinates, a share link and CSV export, 41 landing sites with mission cards, and a 3D
-mission view.
+Mission and Atlas remain separate tabs. The planned **South Pole** tab will
+prototype a click from the 3D Moon to a detailed map without replacing either
+current tab. The core native Explore search and comparison do not depend on
+Atlas. Compare, Date slip and Plan are retired as standalone views.
 
-Its data contract matches ours (MOON_ME, R = 1737.4 km, east-positive, azimuth clockwise from
-north), which is why our own site can cite the same sources without a frame conversion.
+## Before using Atlas in the prototype or judged release
 
-## Verified
+- Verify permission to redistribute the upstream code and assets, and record
+  the exact built revision, attribution and build steps. The original vendoring
+  note did not pin a source revision; the local checkout alone does not prove it.
+- If the decision allows reuse, test the redesigned handoff with a custom point,
+  a non-midnight UTC time and a return to the original camera. Say which engine
+  produced each number and which rules it used.
+- If redistribution permission cannot be verified, use the native polar map for
+  the planned workflow and leave the vendor build out of the judged demo/build.
+  Do not present Atlas features as native LunaLens work.
 
-- Served from our own static server: page loads at `#/` and at `/atlas/`, layers switch, site finder
-  and time bar work, back link returns to `index.html`.
-- 1440 x 900 and 390 x 844: no overlap between the back link and the app's own controls after
-  moving it below the layer bar on desktop and below the title on mobile.
-- Console: only the app's own `THREE.Clock` deprecation warning and one a11y notice.
-
-## Still open
-
-1. **Deploy cost.** The deploy workflow uploads `site/` to Cloudflare Workers; 94 MB and 151 files
-   are inside the plan's limits (25 MiB per file, 20,000 files) but the upload time and the
-   repository size (`.git` is now about 196 MB) are real costs. Options: keep it, or move the data
-   to a release asset fetched at deploy time.
-2. **Two products, one nav.** The handoff is one-way: our date and site travel into the frame through
-   the URL hash, nothing travels back. Two-way sync needs `postMessage` both ways (the app already
-   serialises its own state, so the frame can be asked to send it).
-3. **Our own pages.** Mission, Explore, Compare and Date slip stay as they are. The Atlas page is
-   additive; nothing in it replaces them yet.
-4. **Provenance.** The app carries its own credits. Our Data page should link to the Atlas sources
-   (PGDA product 69, LOLA, JPL DE440) so the two pages do not disagree.
+The original vendoring decision and its historical browser checks are recorded
+in commit `d9584dc` (#52). Recheck any changed integration at desktop and 390 px.
