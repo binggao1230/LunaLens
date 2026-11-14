@@ -98,7 +98,7 @@ main{max-width:1280px;padding:12px}
 .chip.on{border-color:var(--earth);font-weight:650}
 .chip.ghost{border-style:dashed;color:var(--text2)}
 .view{display:none}
-body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=data] #v-data,body[data-view=build] #v-build,body[data-view=atlas] #v-atlas{display:block}
+body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=data] #v-data,body[data-view=build] #v-build,body[data-view=atlas] #v-atlas,body[data-view=plan] #v-plan{display:block}
 #v-atlas{height:calc(100svh - 57px)}
 #v-atlas iframe{display:block;width:100%;height:100%;border:0;background:#05070a}
 @media(max-width:820px){#v-atlas{height:calc(100svh - 57px - 56px)}}
@@ -157,7 +157,7 @@ body.owners .scrub[data-owner]{position:sticky}
 body.owners [data-owner]::after{content:attr(data-owner);position:absolute;top:-9px;right:10px;background:var(--text);color:var(--surface);
   font-size:11px;line-height:1.5;padding:0 8px;border-radius:99px;white-space:nowrap;z-index:4;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis}
 .wrap{overflow-x:auto}
-body[data-view=build] .scrub,body[data-view=data] .scrub,body[data-view=atlas] .scrub{display:none}
+body[data-view=build] .scrub,body[data-view=data] .scrub,body[data-view=atlas] .scrub,body[data-view=plan] .scrub{display:none}
 table.bm{border-collapse:collapse;font-size:13px;width:100%;min-width:860px}
 table.bm th,table.bm td{border:1px solid var(--border);padding:6px 8px;text-align:left;vertical-align:top}
 table.bm th{font-weight:650;white-space:nowrap}
@@ -210,13 +210,14 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 }
 </style>
 <link rel="stylesheet" href="css/mission.css">
+<link rel="stylesheet" href="css/plan.css">
 </head>
 <body data-view="start">
 <div id="loading" role="status">Loading…</div>
 <header class="appbar">
   <b class="brand"><img src="assets/lunalens-logo.svg" alt="" width="28" height="28">LunaLens<img src="assets/nasa-logo.svg" alt="NASA" class="nasa-mark" width="33" height="28"></b>
   <nav class="tabs" data-nav>
-    <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Date slip</button>
+    <button data-view="mission">Mission</button><button data-view="plan">Plan</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Date slip</button>
   </nav>
   <div class="tray" id="tray"></div>
   <nav class="side" data-nav><button data-view="data">Data</button></nav>
@@ -298,6 +299,8 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 
   <!-- ================= Atlas: the layer map page, in its own frame ================= -->
   <section class="view" id="v-atlas"></section>
+  <!-- ================= Plan: mission page with the Atlas map in a window ================= -->
+  <section class="view" id="v-plan"></section>
 
 
   <!-- ================= View 2: Compare ================= -->
@@ -414,7 +417,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   <div id="now"></div>
 </div>
 <nav class="tabbar" data-nav>
-  <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Slip</button>
+  <button data-view="mission">Mission</button><button data-view="plan">Plan</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Slip</button>
   <button data-view="data">Data</button>
 </nav>
 <div id="flight" role="dialog" aria-modal="true"></div>
