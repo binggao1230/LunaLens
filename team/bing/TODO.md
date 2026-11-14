@@ -33,6 +33,8 @@ the team sees your progress. How to work: `README.md` in this folder.
 ## H24–36
 
 - [ ] Cut scope using the order in `doc/PRODUCT.md` §5
+- [ ] Deploy the static site to Cloudflare; put the deploy commands in the root `README.md`
+- [ ] Optional: Cloudflare Tunnel from the Mac to the live backend, for custom coordinates during the demo
 - [ ] Rehearse the demo script on the real build twice
 - [ ] Hour-36 checkpoint: feature freeze; the full script runs
 

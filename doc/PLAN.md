@@ -84,6 +84,24 @@
 - Communication criterion: Earth-centre elevation > terrain horizon + a configurable margin (default to be decided, tagged `[GUESS]`, shown explicitly in the UI).
 - Power metrics: report both the visible disk fraction (for a vertical tracking array) and `sin(elevation)` (for a horizontal array), without making the assumption for the user.
 
+### 2.5 Deployment (decided 2026-11-14, no paid services)
+
+Two layers, so the public link never depends on anyone's laptop:
+
+| Layer | Runs where | Serves | Always on |
+|---|---|---|---|
+| **Public static site** | Cloudflare's network (Workers static assets, `*.workers.dev`) | The built frontend, map images, and precomputed JSON for every curated site | Yes |
+| **Live backend** (optional) | The lead's Mac, under PM2, exposed through a Cloudflare Tunnel | The same API computed on demand, which adds custom coordinates | Only while the Mac is on |
+
+- The frontend reads precomputed JSON by default and uses the live backend only when it answers a health check.
+  With the backend down, curated sites work fully and custom points show "available in the live demo".
+- None of Cloudflare Workers, Vercel or GitHub Pages can run our Python backend on a free plan (SPICE, numpy,
+  115 MB elevation files), which is why the public layer is static.
+- Free-plan limits checked on 2026-11-14 `[VERIFIED]`: 20,000 files per Worker version, 25 MiB per file.
+  Precomputed JSON and map images must stay under 25 MiB each; raw DEMs are never deployed.
+- The lead runs deployments from their own machine. Deploy commands go into the root `README.md` once the
+  frontend build exists.
+
 ### 2.4 API contract (frozen in the first two hours; changes require notifying everyone)
 
 ```
@@ -243,5 +261,5 @@ Far-side sites (Chang'e-4/6) never see Earth `[KNOWN, HIGH]`, which makes them a
 | Compute on demand vs. precompute everything | On demand, with precomputed fallback for curated sites | Science C |
 | Basemap source | Hillshade rendered from the DEM | Science B |
 | Default communication margin | 2° for now, adjustable in the UI `[GUESS]` | Science C |
-| Deployment location | TBD (depends on venue network) | Science C |
+| Deployment location | **Decided 2026-11-14: Cloudflare (free plan), see §2.5** | Lead deploys; Science C prepares the build |
 | Names against roles | To be filled in by the team lead | Team lead |
