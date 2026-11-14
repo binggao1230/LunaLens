@@ -175,7 +175,7 @@ lead's description of their strengths. Keep one owner per package.
 | 1 | **Lead / product** | Bing Gao | Team lead | Scope, `sites.json`, demo script, submission, merging, unblocking | F1 data, all of §7 demo |
 | 2 | **Designer** | Zeynep Uzan | UX/UI designer, Figma, presentation materials | Visual system, high-fidelity screens, chart styling, copy, slides and video visuals | F9 wording, all screens |
 | 3 | **Science A — ephemeris** | Bing Gao until a seventh member joins | Smallest science package (about half a day) | `ephem/`, Horizons tests; then helps C | F3 (angles) |
-| 4 | **Science B — terrain** | Maeva Andriamaniraka | Numerical computation, mathematics, theory | `terrain/`, data download, map images | F3 (horizon), F8 (map data) |
+| 4 | **Science B — terrain** | Maeva Andriamaniraka | Numerical computation, mathematics, theory; writes Python | `terrain/`, data download, map images | F3 (horizon), F8 (map data) |
 | 5 | **Science C — windows + API** | Chenlin Wang | Fast AI-assisted coding; this package is mostly integration | `windows/`, `api/`, precompute, validation | F4, F5, F7, F10 data |
 | 6 | **Frontend A — explore** | Eya Amrach | Computer engineering graduate, UX/UI + web development | `app/`, `state/`, `api/`, blocks 1, 2, 6, 7, 8, 9, 15 | F2, F3, F4, F5 |
 | 7 | **Frontend B — map + compare** | Assem Hssini | Web engineering student, builds interfaces | Blocks 3, 4, 5, 10–14 | F1, F6, F7, F8 |
