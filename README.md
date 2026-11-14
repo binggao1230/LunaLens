@@ -13,7 +13,7 @@ Planning is done; the product code is not written yet. What exists today:
 | Part | State |
 |---|---|
 | Plans and rules (`doc/`, `AGENTS.md`, `CONTRIBUTING.md`) | Ready |
-| Layout prototype (`prototype/`) | Runs locally, see below. Fake numbers, real maps |
+| Site (`site/`) | The product. Real numbers, real terrain. Runs locally, see below |
 | Backend (`backend/`) | Not started. Skeleton owner: Chenlin |
 | Frontend (`web/`) | Not started. Skeleton owner: Eya |
 
@@ -52,7 +52,7 @@ by your network settings. The server listens on `0.0.0.0`, so both work.
 Explore (map, tiles, horizon panorama, 3D view), Compare, Date slip and Data are the four views; the bar along the
 bottom is the time control. Controls with a dashed border are not built yet and say so on hover or tap.
 
-`prototype/` is the older fake-data layout. It is kept as a reference and is not published.
+The retired `prototype/` directory was deleted on 14 November: `site/` is the single build, online and local.
 
 ## Online version
 
@@ -122,7 +122,7 @@ CONTRIBUTING.md    branches, pull requests, who merges
 doc/               PRODUCT.md (what we build) · PLAN.md (approach, roadmap, resources)
                    WORKPLAN.md (layout, code structure, interfaces, roles) · challenge text
 archive/team/      retired per-person plans, history only
-prototype/         throwaway layout prototype; never import from it
+site/              the published static site; site/data/ is not in git
 backend/  web/     product code, to come
 ```
 

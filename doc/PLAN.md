@@ -46,7 +46,7 @@
   - Validation page against Horizons and the PGDA illumination maps (directly serves the judges' validity criterion)
 - **P2 (if time allows)**: year-scale seasonal view, education-mode narration, report export
 
-**Look-and-feel prototype**: `prototype/index.html` is a throwaway, fake-data demo of the P0 views plus the date-slip chart, used to agree on layout before the event. Its data is synthetic and its code does not seed `web/`. See `prototype/NOTES.md`.
+**Layout reference**: the Figma file *NASA SpaceApps* (`pj5bENLGkYn0XeqofTY4YW`) holds the screens and the three personas; `site/` is the running build and the source of truth for what exists. The throwaway `prototype/` that preceded both was deleted on 2026-11-14.
 
 ---
 

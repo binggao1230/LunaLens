@@ -429,39 +429,6 @@ function renderSources() {
     `<dt>${escapeHtml(s.label)}</dt><dd><span class="num">${fmtLatLon(s.lat, s.lon, 4)}</span> · <a href="${SITE_SOURCES[s.id]}" target="_blank" rel="noopener noreferrer">${escapeHtml(t(s.raw.source))}</a></dd>`).join('');
 }
 
-/* ---------- build map (planning page, delete before the demo) ---------- */
-
-const TEAM = [
-  ['Bing Gao', 'Lead + Sun/Earth positions', 'Scope, site table, demo script, submission. Computes where the Sun and Earth are in the sky.', 'Site list content; the Sun and Earth angles everywhere', 'Agreed interfaces; a stand-in Sun/Earth function'],
-  ['Zeynep Uzan', 'Design', 'Colours, type, spacing, every screen, chart styling, wording, slides and video visuals.', 'The look of every page', 'Colour and type tokens; the Explore screen'],
-  ['Maeva Andriamaniraka', 'Terrain', 'Reads the Moon elevation data and computes the real horizon around a site. Makes the map images.', 'Terrain silhouette in the panorama; map images', 'A stand-in flat horizon function'],
-  ['Chenlin Wang', 'Windows + API', 'Turns angles and horizon into sunlight and link windows, countdowns and totals. Runs the server.', 'Status tiles, timeline, Compare numbers, Date-slip numbers', 'Example server responses the frontend can build on'],
-  ['Eya Amrach', 'Frontend: Explore', 'App shell, shared state, status tiles, horizon panorama, timeline dock, Data page.', 'Top bar, tiles, panorama, timeline dock, Data', 'App running on example data'],
-  ['Assem Hssini', 'Frontend: map + compare', 'Maps, site picker, settings, Compare page, Date-slip page.', 'Map, Site, Settings, Compare, Date slip', 'Site picker running on example data'],
-  ['Open seat', '—', 'If filled by someone who writes Python: takes Sun/Earth positions from Bing.', '—', '—'],
-];
-const PHASES = ['Before', 'H0–4', 'H4–12', 'H12–24', 'H24–36', 'H36–48'];
-const WHEN = [
-  ['Bing', 'Confirm roles and rules; verify site coordinates; get ephemeris data', 'Run the interface freeze; stand-in Sun/Earth function', 'Real Sun/Earth positions, checked against JPL Horizons; finish site table', 'Run checkpoint; write the demo script; help whoever is blocked', 'Run checkpoint; cut scope; more accuracy checks', 'Project page, video, submit 2 h early'],
-  ['Zeynep', 'Colour/type tokens; Explore screen for desktop and phone', 'Panorama, timeline and tile styling', 'Compare and Date-slip screens', 'Map markers; empty, loading and error states', 'Review the built pages with Eya and Assem; wording and glossary', 'Slides, video visuals, screenshots'],
-  ['Maeva', 'Download elevation data; pass the Shackleton position check', 'Stand-in horizon; elevation data reader', 'Real terrain horizon for one site', 'Speed; mast height; map images for Assem', 'Map overlay data, if the horizon is solid', 'Fixes; accuracy answers for the pitch'],
-  ['Chenlin', 'Backend skeleton', 'Response formats + example responses; server answering with stand-ins', 'Sun-disk fraction, windows, totals on real inputs', 'Date-slip numbers; caching; precompute curated sites', 'Validation numbers for the Data page; deploy', 'Fixes; keep the demo server up'],
-  ['Eya', 'Frontend skeleton: tabs, responsive shell', 'Shared state; data client on example data; timeline dock', 'Panorama and tiles on example data', 'Switch to the live server; jump buttons; shareable links', 'Phone pass; Data page; apply design tokens', 'Fixes only'],
-  ['Assem', 'Read the plan; set up', 'Site picker and settings on example data', 'South-pole map: markers, tap to pick', 'Whole-Moon map; Compare page', 'Date-slip page; apply design tokens', 'Fixes only'],
-];
-const CHECKS = [
-  ['H2', 'Interfaces agreed; stand-ins and example data committed; app shell runs', 'Stop and fix; nothing else matters yet'],
-  ['H12', 'Explore page on the live server for one polar site with a real terrain horizon', 'Bing joins Maeva; drop the map overlays'],
-  ['H24', 'Compare works; all curated sites load; usable on a phone', 'Drop Date-slip thresholds, keep the plain chart'],
-  ['H36', 'Feature freeze; the whole demo script runs start to finish', 'Cut whatever the script cannot show'],
-];
-function table(head, rows) { return `<table class="bm"><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr>${rows.map((r) => `<tr>${r.map((c, i) => (i ? `<td>${c}</td>` : `<th>${c}</th>`)).join('')}</tr>`).join('')}</table>`; }
-function renderBuild() {
-  $('bmWho').innerHTML = table(['Person', 'Role', 'Builds', 'Shows up on the page as', 'Delivers in hour 1'], TEAM);
-  $('bmWhen').innerHTML = table(['', ...PHASES], WHEN);
-  $('bmCheck').innerHTML = table(['When', 'Everyone shows', 'If it fails'], CHECKS);
-}
-
 /* ---------- wiring ---------- */
 
 function renderTime() { renderMaps(); renderTiles(); renderPano(); renderTimeline(); renderCompare(); render3d(); }

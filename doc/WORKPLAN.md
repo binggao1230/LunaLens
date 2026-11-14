@@ -20,11 +20,9 @@ and one **time scrubber**:
 
 ## 2. Layout
 
-The clickable prototype is the layout reference: open `prototype/index.html`
-(served on the owner's LAN at `http://192.168.1.36:8765/`). It is deliberately plain. Controls with a dashed border
-are not built; hovering or tapping them explains what they will do. Each block carries a label naming who builds it,
-and the **Build map** page in the prototype shows the same assignment as tables. That page and the labels are
-planning aids and are removed before the demo.
+The layout reference is `site/index.html` — the shipping build — plus the Figma file *NASA SpaceApps*, which fixes
+position and content at higher fidelity. Controls with a dashed border are not built; hovering or tapping them says
+what they will do. The old planning aids (owner labels, the Build map page, `prototype/`) are gone.
 
 ```
 DESKTOP                                                          PHONE
@@ -124,7 +122,7 @@ data/        DEMs, kernels, intermediates — not in Git
 doc/         PRODUCT.md, PLAN.md, WORKPLAN.md, challenge text
 archive/team/ retired per-person plans, history only
 design/      exported screens, logo, slides                                       ← Designer
-prototype/   throwaway layout prototype — never imported
+site/        the shipping static site; site/data/ is not in git
 ```
 
 Rules that keep seven people out of each other's way:
@@ -226,12 +224,12 @@ Hours follow the roadmap in `PLAN.md` §3. "Pre" = before the event.
 - H36–H48: project page text, record the video with the designer, submit 2 h early.
 
 **2. Designer**
-- Pre: colour, type and spacing tokens (light and dark); high-fidelity Explore screen for desktop and phone, starting from the layout prototype.
+- Pre: colour, type and spacing tokens (light and dark); high-fidelity Explore screen for desktop and phone, starting from `site/` and the existing Figma frames.
 - H0–H8: panorama, timeline and tile styling (these are the hard ones: low Sun on a tall-and-narrow axis; partial-disk state; link OK / blocked without relying on colour alone).
 - H8–H20: Compare and Date slip screens; map marker and overlay styling; empty, loading and error states.
 - H20–H36: review the built UI against the screens with Frontend A and B; microcopy and glossary wording (F9).
 - H36–H48: slide deck, video titles, screenshots, logo.
-- Hands off to frontend as: `ui/tokens.css` values + screens in the design tool. No waiting: frontend starts on the layout prototype and restyles as tokens land.
+- Hands off to frontend as: `ui/tokens.css` values + screens in the design tool. No waiting: frontend restyles `site/` as tokens land.
 
 **3. Science A — ephemeris**
 - Pre: download kernels; get `spiceypy` running.
