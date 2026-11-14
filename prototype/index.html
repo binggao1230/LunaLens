@@ -73,9 +73,16 @@ svg text{fill:var(--text2);font-size:11px;font-family:inherit}
 .row .nums{display:flex;gap:14px;font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
 .row .nums b{display:block;font-size:15px;color:var(--text)}
 .row svg{width:100%;height:30px;display:block}
+.maps{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:14px;align-items:start}
+.map{position:relative;border-radius:10px;overflow:hidden;background:#000;cursor:crosshair;touch-action:pan-y}
+.map canvas{display:block;width:100%;height:auto}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.map svg text{fill:#fff;paint-order:stroke;stroke:#000;stroke-opacity:.8}
+.mapcap{font-size:12px;color:var(--text2);margin:6px 0 0}
 footer{color:var(--muted);font-size:12px;margin-top:16px}
 @media (max-width:640px){
   .controls{grid-template-columns:1fr}
+  .maps{grid-template-columns:1fr}
   .tiles{grid-template-columns:repeat(2,1fr)}
   .tile .v{font-size:20px}
   .row{grid-template-columns:1fr}
@@ -89,9 +96,9 @@ footer{color:var(--muted);font-size:12px;margin-top:16px}
     <h1>Luna Lens</h1>
     <p>Sun and Earth above the real horizon, site by site, date by date.</p>
   </header>
-  <div class="banner"><b>Prototype — synthetic data.</b> Terrain horizons are randomly generated and the
-    Sun/Earth motion is a simplified model. Nothing on this page is a real mission value. It exists to agree
-    on layout and interactions.</div>
+  <div class="banner"><b>Prototype — synthetic data.</b> The two maps use real NASA terrain and imagery. Everything
+    else is fake: horizon profiles are randomly generated and the Sun/Earth motion is a simplified model. No number
+    on this page is a real mission value. It exists to agree on layout and interactions.</div>
 
   <section class="card">
     <div class="controls">
@@ -102,6 +109,22 @@ footer{color:var(--muted);font-size:12px;margin-top:16px}
         <input id="hour" type="range" min="0" step="1" value="0" aria-label="Time since landing">
       </div>
       <div id="now"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Pick a site</h2>
+    <p class="sub">Tap a marker, or anywhere on either map for a custom point. Lighting follows the time slider.</p>
+    <div class="maps">
+      <div>
+        <div class="map" id="polar"><canvas id="polarC" width="762" height="762"></canvas><svg id="polarS" viewBox="0 0 762 762"></svg></div>
+        <p class="mapcap">South pole, 75°S to 90°S. Real LOLA terrain on a 1.2 km grid, lit from the current Sun direction.
+          Relief shading only, not cast shadows; Sun height is raised to 10° so the relief stays readable.</p>
+      </div>
+      <div>
+        <div class="map" id="globe"><canvas id="globeC" width="1024" height="512"></canvas><svg id="globeS" viewBox="0 0 1024 512"></svg></div>
+        <p class="mapcap">Whole Moon (LROC colour mosaic), near side in the centre. The darkened part is the current night side.</p>
+      </div>
     </div>
   </section>
 
@@ -322,8 +345,80 @@ function renderSlip(){
   el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Continuous sunlight by landing delay">${g}${bars}</svg>`;
 }
 
+// ---------- maps ----------
+const PN=762, PM=1200, PR=1737400, GW=1024, GH=512;
+let demG=null, moonBase=null;
+function polarXY(lat,lon){ const r=2*PR*Math.tan((90+lat)*D2R/2)/PM; return [PN/2+r*Math.sin(lon*D2R), PN/2-r*Math.cos(lon*D2R)]; }
+function polarLL(px,py){ const x=(px-PN/2)*PM, y=(PN/2-py)*PM; return {lat:-90+2*Math.atan(Math.hypot(x,y)/(2*PR))*R2D, lon:(Math.atan2(x,y)*R2D+360)%360}; }
+function globeXY(lat,lon){ return [(((lon+180)%360+360)%360)/360*GW, (90-lat)/180*GH]; }
+function marker(x,y,k,sel,label,vbW){
+  const left=x>vbW-150*k;
+  return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(sel?6.5:4.5)*k}" fill="${sel?"#ffd24a":"#fff"}" stroke="#000" stroke-width="${1.5*k}"/>`+
+    (label?`<text x="${(x+(left?-9:9)*k).toFixed(1)}" y="${(y+4*k).toFixed(1)}" text-anchor="${left?"end":"start"}" style="font-size:${12*k}px;stroke-width:${3*k}px" font-weight="${sel?700:500}">${label}</text>`:"");
+}
+function renderPolar(){
+  const t=state.landing+state.hour*HOUR, ss=subSun(t), se=subEarth(t), l=ss.lon*D2R;
+  if(demG){ const d=demG.img.data, gx=demG.gx, gy=demG.gy, alt=10*D2R;
+    const lx=Math.cos(alt)*Math.sin(l), ly=Math.cos(alt)*Math.cos(l), lz=Math.sin(alt), sc=255/(2*lz);
+    for(let i=0,n=PN*PN;i<n;i++){ const a=gx[i], b=gy[i]; let v=(lz-a*lx-b*ly)/Math.sqrt(a*a+b*b+1)*sc; v=v<0?0:v>255?255:v; const j=i*4; d[j]=d[j+1]=d[j+2]=v; }
+    $("polarC").getContext("2d").putImageData(demG.img,0,0); }
+  const k=PN/Math.max($("polar").clientWidth,1), c=PN/2; let o="";
+  [-80,-85].forEach(la=>{ const r=polarXY(la,0)[1]; o+=`<circle cx="${c}" cy="${c}" r="${c-r}" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="${k}"/><text x="${c+4*k}" y="${r+13*k}" style="font-size:${10*k}px;stroke-width:${3*k}px">${-la}°S</text>`; });
+  o+=`<path d="M${c},0V${PN}M0,${c}H${PN}" stroke="#fff" stroke-opacity=".2" stroke-width="${k}"/>`;
+  [["0° · Earth side",c,14*k,"middle"],["90°E",PN-4*k,c-5*k,"end"],["180° · far side",c,PN-6*k,"middle"],["270°E",4*k,c-5*k,"start"]].forEach(q=>{
+    o+=`<text x="${q[1]}" y="${q[2]}" text-anchor="${q[3]}" style="font-size:${10*k}px;stroke-width:${3*k}px">${q[0]}</text>`; });
+  const rim=(lon,rr)=>[c+rr*Math.sin(lon*D2R), c-rr*Math.cos(lon*D2R)], sp=rim(ss.lon,c-40*k), ep=rim(se.lon,c-40*k);
+  o+=`<circle cx="${ep[0]}" cy="${ep[1]}" r="${7*k}" fill="#3987e5" stroke="#fff" stroke-width="${1.5*k}"/><text x="${ep[0]}" y="${ep[1]+20*k}" text-anchor="middle" style="font-size:${11*k}px;stroke-width:${3*k}px">to Earth</text>`;
+  o+=`<circle cx="${sp[0]}" cy="${sp[1]}" r="${8*k}" fill="#eda100" stroke="#fff" stroke-width="${1.5*k}"/><text x="${sp[0]}" y="${sp[1]+21*k}" text-anchor="middle" style="font-size:${11*k}px;stroke-width:${3*k}px">to Sun</text>`;
+  SITES.forEach((s,i)=>{ if(s.lat<-75){ const p=polarXY(s.lat,s.lon); o+=marker(p[0],p[1],k,i===state.site,s.name,PN); } });
+  $("polarS").innerHTML=o;
+}
+function renderGlobe(){
+  const ss=subSun(state.landing+state.hour*HOUR);
+  if(moonBase){ const out=moonBase.out.data, src=moonBase.src, cc=moonBase.cc, sp=Math.sin(ss.lat*D2R), cp=Math.cos(ss.lat*D2R);
+    for(let x=0;x<GW;x++) cc[x]=Math.cos(((x+0.5)/GW*360-180-ss.lon)*D2R);
+    for(let y=0,j=0;y<GH;y++){ const a=moonBase.sl[y]*sp, b=moonBase.cl[y]*cp;
+      for(let x=0;x<GW;x++,j+=4){ const q=a+b*cc[x], f=q>0.06?1:q<-0.06?0.28:0.28+0.72*(q+0.06)/0.12; out[j]=src[j]*f; out[j+1]=src[j+1]*f; out[j+2]=src[j+2]*f; } }
+    $("globeC").getContext("2d").putImageData(moonBase.out,0,0); }
+  const k=GW/Math.max($("globe").clientWidth,1); let o="";
+  SITES.forEach((s,i)=>{ if(i!==state.site){ const p=globeXY(s.lat,s.lon); o+=marker(p[0],p[1],k,false,"",GW); } });
+  const s=SITES[state.site], p=globeXY(s.lat,s.lon); o+=marker(p[0],Math.min(p[1],GH-8*k),k,true,s.name,GW);
+  $("globeS").innerHTML=o;
+}
+function renderMaps(){ renderPolar(); renderGlobe(); }
+function fillSelect(){ $("site").innerHTML=SITES.map((s,k)=>`<option value="${k}">${s.name} — ${s.tag}</option>`).join(""); $("site").value=state.site; }
+function selectSite(k){ state.site=k; $("site").value=k; renderAll(); }
+function setCustom(lat,lon){
+  const polar=lat<-75; let k=SITES.findIndex(s=>s.custom);
+  const s={name:"Custom point",tag:"Picked on map",lat,lon,custom:true,seed:Math.round((lat+90)*1000)*7919+Math.round(lon*1000),base:polar?0.7:0.3,amp:polar?1.4:0.4};
+  s.hz=makeHorizon(s); if(k<0){ k=SITES.length; SITES.push(s); } else SITES[k]=s;
+  sims[k]=simulate(s,state.landing); state.site=k; fillSelect(); renderAll();
+}
+function mapPick(id,vbW,vbH,toXY,toLL,filter){
+  const el=$(id), pos=e=>{ const b=el.getBoundingClientRect(); return [(e.clientX-b.left)/b.width*vbW,(e.clientY-b.top)/b.height*vbH,vbW/b.width]; };
+  el.addEventListener("click",e=>{ const [x,y,k]=pos(e); let best=-1,bd=16*k;
+    SITES.forEach((s,i)=>{ if(filter(s)){ const p=toXY(s.lat,s.lon), d=Math.hypot(p[0]-x,p[1]-y); if(d<bd){bd=d;best=i;} } });
+    if(best>=0) selectSite(best); else { const q=toLL(x,y); if(q.lat<=90&&q.lat>=-90) setCustom(q.lat,q.lon); } });
+  el.addEventListener("pointermove",e=>{ const [x,y]=pos(e), q=toLL(x,y);
+    let h=`<b>${Math.abs(q.lat).toFixed(2)}°${q.lat<0?"S":"N"}, ${q.lon.toFixed(2)}°E</b>`;
+    if(id==="polar"&&demG){ const xi=Math.min(PN-1,Math.max(0,Math.floor(x))), yi=Math.min(PN-1,Math.max(0,Math.floor(y))); h+=`<br>Elevation ${demG.z[yi*PN+xi]} m (LOLA)`; }
+    showTip(e,h+"<br>Tap to select"); });
+  el.addEventListener("pointerleave",hideTip);
+}
+function loadMaps(){
+  fetch("assets/sp_dem_1200m.bin").then(r=>r.arrayBuffer()).then(buf=>{
+    const z=new Int16Array(buf), gx=new Float32Array(PN*PN), gy=new Float32Array(PN*PN);
+    for(let r=1;r<PN-1;r++) for(let c=1;c<PN-1;c++){ const i=r*PN+c; gx[i]=(z[i+1]-z[i-1])/(2*PM); gy[i]=(z[i-PN]-z[i+PN])/(2*PM); }
+    const img=new ImageData(PN,PN); img.data.fill(255); demG={z,gx,gy,img}; renderPolar(); });
+  const im=new Image(); im.onload=()=>{ const cv=document.createElement("canvas"); cv.width=GW; cv.height=GH; const cx=cv.getContext("2d"); cx.drawImage(im,0,0,GW,GH);
+    const d=cx.getImageData(0,0,GW,GH), sl=new Float32Array(GH), cl=new Float32Array(GH);
+    for(let y=0;y<GH;y++){ const la=(90-(y+0.5)/GH*180)*D2R; sl[y]=Math.sin(la); cl[y]=Math.cos(la); }
+    moonBase={src:d.data.slice(), out:d, sl, cl, cc:new Float32Array(GW)}; renderGlobe(); };
+  im.src="assets/moon_1024.jpg";
+}
+
 // ---------- wiring ----------
-function renderTime(){ renderTiles(); renderPano(); renderTimeline(); renderCompare(); }
+function renderTime(){ renderMaps(); renderTiles(); renderPano(); renderTimeline(); renderCompare(); }
 function renderAll(){ renderTime(); renderSlip(); }
 function recompute(){ sims=SITES.map(s=>simulate(s,state.landing)); renderAll(); }
 function setHour(h){ state.hour=Math.max(0,Math.min(HOURS,Math.round(h))); $("hour").value=state.hour; renderTime(); }
@@ -334,7 +429,7 @@ function showTip(e,html){ tip.innerHTML=html; tip.style.display="block";
   tip.style.left=x+"px"; tip.style.top=Math.max(e.clientY-tip.offsetHeight-12,6)+"px"; }
 function hideTip(){ tip.style.display="none"; $("crosshair").style.display="none"; }
 
-$("site").innerHTML=SITES.map((s,k)=>`<option value="${k}">${s.name} — ${s.tag}</option>`).join("");
+fillSelect();
 $("site").onchange=e=>{ state.site=+e.target.value; renderAll(); };
 $("date").value=new Date(state.landing).toISOString().slice(0,10);
 $("date").onchange=e=>{ const t=Date.parse(e.target.value+"T00:00:00Z"); if(!isNaN(t)){ state.landing=t; recompute(); } };
@@ -343,7 +438,7 @@ $("hour").oninput=e=>setHour(+e.target.value);
 $("play").onclick=()=>{ if(state.timer){ clearInterval(state.timer); state.timer=null; $("play").textContent="▶ Play"; return; }
   $("play").textContent="❚❚ Pause"; if(state.hour>=HOURS) setHour(0);
   state.timer=setInterval(()=>{ if(state.hour>=HOURS){ $("play").click(); return; } setHour(state.hour+3); },50); };
-$("compare").onclick=e=>{ const b=e.target.closest(".row"); if(b){ state.site=+b.dataset.k; $("site").value=state.site; renderAll(); } };
+$("compare").onclick=e=>{ const b=e.target.closest(".row"); if(b) selectSite(+b.dataset.k); };
 
 $("pano").addEventListener("pointermove",e=>{ const p=layout.pano, b=$("pano").getBoundingClientRect(), x=e.clientX-b.left;
   if(x<p.L||x>p.L+p.pw) return hideTip();
@@ -368,6 +463,9 @@ $("slip").addEventListener("pointerleave",hideTip);
 let lastW=0;
 new ResizeObserver(()=>{ const w=$("pano").clientWidth; if(w!==lastW&&sims.length){ lastW=w; renderAll(); } }).observe($("pano"));
 recompute();
+mapPick("polar",PN,PN,polarXY,polarLL,s=>s.lat<-75);
+mapPick("globe",GW,GH,globeXY,(x,y)=>({lat:90-y/GH*180, lon:((x/GW*360-180)%360+360)%360}),()=>true);
+loadMaps();
 </script>
 </body>
 </html>
