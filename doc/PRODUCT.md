@@ -69,6 +69,8 @@ Tiers: **Must** = without it the entry does not answer the challenge. **Should**
 
 ### F1. Site selection — Must
 
+- The start page uses the supplied LunaLens logo and a single-probe carousel with local, rotatable 3D assets. Apollo and an Artemis concept use the supplied models; Nova-C and Vikram use an explicitly labelled representative asset. Probe choice prioritizes site groups without changing scientific calculations. Model materials and rotation are illustrative. English is the default, with French and Chinese available.
+- All views remain in dark mode regardless of the operating-system theme. Neutral charcoal surfaces, fine borders and clear button states take priority over decorative purple gradients.
 - A curated library of 10–15 sites in four groups: Apollo (historic), CLPS / commercial, other nations, Artemis
   south-pole candidates. Every entry carries a cited source for its coordinates.
 - Pick a site from a list **and** from a map (see F8).
