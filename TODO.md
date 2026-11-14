@@ -13,7 +13,7 @@ What is left to do on `site/`, the only build. The measure is the challenge text
 | Power and communication assessment | Done | Mast height is fixed at 2 m |
 | Multiple visualisation approaches | Partly | The 2D polar map and the terrain 3D in Explore work. The Mission 3D is weak. Two map overlays are placeholders |
 | Temporal dynamics | Done | Timeline and play work |
-| Accessibility across skill levels | Weak | Three languages. No plain-language explanations, no glossary |
+| Accessibility across skill levels | Partly | Three languages and a glossary; no guided, mobile-first learning path |
 
 The background section's own scenario is a mission that slips: "alternative sites in the same region, or
 alternative dates at the same site". The second half is what the product cannot do yet, so it comes first.
@@ -67,12 +67,21 @@ alternative dates at the same site". The second half is what the product cannot 
   the Data page.
 - The two map overlays (sunlit share, Earth-link share): build them, or remove the buttons.
 
-## F. For people who are not specialists
+## F. An educational mobile companion
 
-- One plain sentence next to each number, for example "the Sun is 1.6° above the horizon, about three Sun-widths".
-- One action that sets Apollo 11 beside a south-pole site on the same date, to show why the pole is hard.
-- A glossary: azimuth, elevation, lunar day, libration, direct-to-Earth.
-- Visuals for the demo video and the slides.
+- **In progress:** Ionic Vue + Capacitor scaffold and first accessible learning screen are in `mobile/`. The screen is a UI prototype; it does not yet display calculated site/date results.
+- Build a separate, mobile-first (PWA) or mobile app for educators, students and younger learners. Keep the full analysis tools on
+  the website; the app is a short, welcoming learning experience, not a smaller copy of every website view.
+- Let learners choose a curated site and date, then explain sunlight, direct-to-Earth visibility and their overlap
+  in plain language with a clear timeline and a small number of readable results.
+- Guide a simple comparison between a familiar landed site and a south-pole site, prompting learners to change
+  either the location or date and observe what changes.
+- Reuse the website's calculation engine and data. Keep sources and accuracy limits visible, and link to the full
+  website for custom coordinates, detailed maps and advanced 3D exploration.
+- Design for touch, keyboard and screen-reader use; do not rely on colour alone, and respect reduced-motion settings.
+- Accept: a learner can complete the site/date comparison on a phone and explain the difference between sunlight
+  and a direct line of sight to Earth without needing the advanced website.
+- Create the educational visuals needed for the demo and slides.
 
 ## G. Before submission
 

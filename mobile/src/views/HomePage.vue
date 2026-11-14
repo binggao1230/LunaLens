@@ -1,0 +1,576 @@
+<template>
+  <ion-page>
+    <ion-content :fullscreen="true" class="lesson-content">
+      <main class="shell" aria-labelledby="page-title">
+        <header class="topline">
+          <a class="brand" href="#home" aria-label="LunaLens learning app home">
+            <span class="brand-mark" aria-hidden="true">L</span>
+            <span>LunaLens <span class="brand-subtitle">LEARN</span></span>
+          </a>
+          <span class="offline-note"><span class="offline-dot" aria-hidden="true"></span>Works offline</span>
+        </header>
+
+        <section class="hero" aria-labelledby="page-title">
+          <p class="eyebrow">A little lunar field trip</p>
+          <h1 id="page-title">What can you see from the Moon?</h1>
+          <p class="intro">
+            Choose a place and a day. Then explore when sunlight reaches the ground, when Earth is in view, and when
+            both happen together.
+          </p>
+          <div class="moon-art" role="img" aria-label="Illustration of the Moon's horizon, with Earth above it">
+            <div class="moon-sky">
+              <span class="star star-one" aria-hidden="true"></span
+              ><span class="star star-two" aria-hidden="true"></span
+              ><span class="earth" aria-hidden="true"><span></span></span><span class="earth-label">Earth</span>
+            </div>
+            <div class="moon-ground"><span class="ridge ridge-back"></span><span class="ridge ridge-front"></span></div>
+            <span class="art-caption">A view from the lunar surface</span>
+          </div>
+        </section>
+
+        <section class="choice-card" aria-labelledby="choose-title">
+          <div class="section-heading">
+            <span class="step-number" aria-hidden="true">1</span>
+            <div>
+              <p class="eyebrow">Start exploring</p>
+              <h2 id="choose-title">Pick a place and a day</h2>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <ion-item class="field" lines="none">
+              <ion-label position="stacked" for="site-choice">Lunar place</ion-label>
+              <ion-select id="site-choice" v-model="selectedSite" interface="popover" aria-label="Choose a lunar place">
+                <ion-select-option value="apollo11">Tranquility Base · Apollo 11</ion-select-option>
+                <ion-select-option value="shackleton-rim">Shackleton rim · South Pole</ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <ion-item class="field" lines="none">
+              <ion-label position="stacked" for="landing-date">Day to explore (UTC)</ion-label>
+              <ion-input
+                id="landing-date"
+                v-model="selectedDate"
+                type="date"
+                min="2026-01-01"
+                max="2030-12-31"
+                aria-label="Choose a date between 2026 and 2030, UTC"
+              ></ion-input>
+            </ion-item>
+          </div>
+
+          <p class="field-hint" id="date-hint">
+            The current data covers 2026–2030. The selected date is interpreted at 00:00 UTC.
+          </p>
+          <ion-button expand="block" class="start-button" @click="openLesson">
+            Explore this place <span class="button-arrow" aria-hidden="true">→</span>
+          </ion-button>
+        </section>
+
+        <section v-if="lessonOpen" class="concept-card" aria-labelledby="lesson-title" aria-live="polite">
+          <div class="section-heading">
+            <span class="step-number step-number-complete" aria-hidden="true">✓</span>
+            <div>
+              <p class="eyebrow">Your first idea</p>
+              <h2 id="lesson-title">Two different views of the sky</h2>
+            </div>
+          </div>
+          <p class="lesson-intro">
+            At <strong>{{ siteName }}</strong> on <strong>{{ formattedDate }}</strong>, we will look at two separate
+            questions:
+          </p>
+          <ul class="concept-list">
+            <li>
+              <span class="concept-symbol sun-symbol" aria-hidden="true">☼</span
+              ><span
+                ><strong>Sunlight</strong><span class="concept-copy">Does sunlight reach the ground here?</span></span
+              >
+            </li>
+            <li>
+              <span class="concept-symbol earth-symbol" aria-hidden="true">◎</span
+              ><span
+                ><strong>Earth in view</strong
+                ><span class="concept-copy">Can you see Earth above the local horizon?</span></span
+              >
+            </li>
+            <li>
+              <span class="concept-symbol overlap-symbol" aria-hidden="true">↗</span
+              ><span
+                ><strong>Both at once</strong
+                ><span class="concept-copy">When do sunlight and a direct view of Earth overlap?</span></span
+              >
+            </li>
+          </ul>
+          <p class="next-step">
+            Next, we’ll connect these ideas to a timeline and compare this place with another lunar site.
+          </p>
+          <p class="science-note">
+            <strong>A note about the science:</strong> “Earth in view” means a direct geometric view of Earth above the
+            terrain horizon. It does not calculate a complete radio link or certify a landing site.
+          </p>
+        </section>
+
+        <footer class="page-footer">
+          <span>Built for curious minds, from classrooms to the Moon.</span>
+          <a href="https://luna-lens.gaobing1230.workers.dev" target="_blank" rel="noopener noreferrer"
+            >Open the full LunaLens website <span class="external-hint">(internet required)</span></a
+          >
+        </footer>
+      </main>
+    </ion-content>
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import { computed, ref } from 'vue';
+import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonPage, IonSelect, IonSelectOption } from '@ionic/vue';
+
+const selectedSite = ref('apollo11');
+const selectedDate = ref('2027-01-01');
+const lessonOpen = ref(false);
+
+const siteName = computed(() =>
+  selectedSite.value === 'shackleton-rim'
+    ? 'Shackleton rim near the lunar south pole'
+    : 'Tranquility Base, where Apollo 11 landed',
+);
+
+const formattedDate = computed(() => {
+  if (!selectedDate.value) return 'the selected day';
+  const [year, month, day] = selectedDate.value.split('-');
+  return `${year}-${month}-${day} at 00:00 UTC`;
+});
+
+function openLesson() {
+  if (!selectedDate.value) return;
+  lessonOpen.value = true;
+}
+</script>
+
+<style scoped>
+.lesson-content {
+  --background: #f4f1e9;
+  --color: #19202a;
+}
+
+.shell {
+  width: min(100% - 32px, 760px);
+  margin: 0 auto;
+  padding: max(16px, env(safe-area-inset-top)) 0 max(32px, env(safe-area-inset-bottom));
+}
+
+.topline,
+.brand,
+.offline-note,
+.section-heading,
+.concept-list li,
+.page-footer {
+  display: flex;
+  align-items: center;
+}
+
+.topline {
+  min-height: 48px;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  gap: 10px;
+  color: #19202a;
+  text-decoration: none;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.brand-mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: #172337;
+  color: #f4d78e;
+  font-family: Georgia, serif;
+  font-size: 21px;
+}
+
+.brand-subtitle {
+  margin-left: 5px;
+  color: #576171;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.offline-note {
+  gap: 7px;
+  color: #38465a;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.offline-dot {
+  width: 9px;
+  height: 9px;
+  border: 2px solid #16734c;
+  border-radius: 50%;
+  background: #58c693;
+}
+
+.hero {
+  padding-top: clamp(28px, 7vw, 54px);
+}
+
+.eyebrow {
+  margin: 0 0 7px;
+  color: #4c5a70;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  overflow-wrap: anywhere;
+}
+
+h1 {
+  max-width: 650px;
+  margin: 0;
+  color: #172337;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(38px, 9vw, 62px);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+}
+
+.intro {
+  max-width: 590px;
+  margin: 16px 0 22px;
+  color: #3a4657;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.moon-art {
+  position: relative;
+  height: clamp(160px, 44vw, 230px);
+  overflow: hidden;
+  border-radius: 18px;
+  background: #18243a;
+  isolation: isolate;
+}
+
+.moon-sky {
+  position: absolute;
+  inset: 0 0 26%;
+  background: radial-gradient(ellipse at 75% 110%, #31466a 0, #1e2a40 40%, #172236 75%);
+}
+
+.earth {
+  position: absolute;
+  top: 22%;
+  right: 20%;
+  width: clamp(45px, 12vw, 68px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 2px solid #c6e4f6;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #d9edf6 0 13%, #70b9d6 14% 47%, #33759b 48% 75%, #153755 76%);
+  box-shadow: 0 0 24px #8fc5e777;
+}
+
+.earth span {
+  position: absolute;
+  top: 23%;
+  left: 21%;
+  width: 42%;
+  height: 30%;
+  border-radius: 60% 40% 58% 35%;
+  background: #8aa984;
+  transform: rotate(-25deg);
+}
+
+.earth-label {
+  position: absolute;
+  top: calc(22% + clamp(50px, 12vw, 72px));
+  right: calc(20% - 5px);
+  color: #f3f6fa;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fff2cc;
+}
+
+.star-one {
+  top: 25%;
+  left: 22%;
+}
+.star-two {
+  top: 52%;
+  left: 54%;
+}
+
+.moon-ground {
+  position: absolute;
+  inset: auto -5% -17% -5%;
+  height: 58%;
+  overflow: hidden;
+  border-radius: 50% 48% 0 0 / 33% 30% 0 0;
+  background: linear-gradient(180deg, #afa995, #817d73 70%, #69665e);
+}
+
+.ridge {
+  position: absolute;
+  inset: auto -5% 40%;
+  height: 70%;
+  border-radius: 50% 48% 0 0 / 48% 48% 0 0;
+  transform: rotate(-3deg);
+}
+
+.ridge-back {
+  background: #c2bba8;
+}
+.ridge-front {
+  inset: auto -5% 20% 38%;
+  height: 65%;
+  background: #928e81;
+  transform: rotate(7deg);
+}
+
+.art-caption {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 2;
+  color: #fff;
+  font-size: 11px;
+  text-shadow: 0 1px 4px #000;
+}
+
+.choice-card,
+.concept-card {
+  margin-top: 20px;
+  padding: clamp(18px, 5vw, 28px);
+  border: 1px solid #d8d3c8;
+  border-radius: 18px;
+  background: #fffefa;
+  box-shadow: 0 8px 24px #2835480d;
+}
+
+.section-heading {
+  align-items: flex-start;
+  gap: 13px;
+  margin-bottom: 18px;
+}
+
+.step-number {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7edf5;
+  color: #213d63;
+  font-weight: 750;
+}
+
+.step-number-complete {
+  background: #e1f2e9;
+  color: #155f3d;
+}
+
+h2 {
+  margin: 0;
+  color: #172337;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(23px, 6vw, 30px);
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field {
+  min-height: 82px;
+  --background: #f7f6f1;
+  --border-radius: 11px;
+  --padding-start: 13px;
+  --inner-padding-end: 9px;
+  border: 1px solid #d4d6d7;
+  border-radius: 11px;
+}
+
+.field ion-label {
+  margin-top: 8px;
+  color: #39475a;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.field ion-select,
+.field ion-input {
+  min-height: 48px;
+  color: #172337;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.field-hint {
+  margin: 10px 2px 15px;
+  color: #4d5867;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.start-button {
+  min-height: 52px;
+  --background: #203b62;
+  --background-activated: #142b4d;
+  --border-radius: 12px;
+  --box-shadow: none;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.button-arrow {
+  margin-left: 10px;
+  font-size: 20px;
+}
+
+.lesson-intro,
+.next-step,
+.science-note {
+  color: #39475a;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.concept-list {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.concept-list li {
+  align-items: flex-start;
+  gap: 13px;
+  padding: 14px;
+  border: 1px solid #e0dfda;
+  border-radius: 12px;
+  background: #faf9f5;
+}
+
+.concept-symbol {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sun-symbol {
+  color: #815500;
+  background: #fff2ce;
+}
+.earth-symbol {
+  color: #145376;
+  background: #e1f2f8;
+}
+.overlap-symbol {
+  color: #365032;
+  background: #eaf1e1;
+}
+
+.concept-list strong,
+.concept-copy {
+  display: block;
+}
+.concept-list strong {
+  color: #1f2d40;
+}
+.concept-copy {
+  margin-top: 3px;
+  color: #465365;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.science-note {
+  margin: 18px 0 0;
+  padding: 13px 15px;
+  border-left: 4px solid #667e9d;
+  border-radius: 0 9px 9px 0;
+  background: #eef2f6;
+  font-size: 13px;
+}
+
+.page-footer {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin: 22px 3px 0;
+  color: #495463;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.page-footer a {
+  color: #173e6b;
+  font-weight: 650;
+}
+.external-hint {
+  color: #495463;
+  font-weight: 400;
+}
+
+:global(:focus-visible) {
+  outline: 3px solid #a04e00;
+  outline-offset: 3px;
+}
+
+@media (max-width: 560px) {
+  .shell {
+    width: min(100% - 24px, 760px);
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .page-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global(*),
+  :global(*::before),
+  :global(*::after) {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
