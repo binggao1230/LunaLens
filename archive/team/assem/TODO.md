@@ -5,9 +5,9 @@ the team sees your progress. How to work: `README.md` in this folder.
 
 ## Before the event
 
-- [ ] Read `AGENTS.md`, `doc/PRODUCT.md` §4 and `doc/WORKPLAN.md`; open `prototype/index.html`
+- [x] Read `AGENTS.md`, `doc/PRODUCT.md` §4 and `doc/WORKPLAN.md`; open `prototype/index.html`
 - [ ] Clone the repository and run Eya's scaffold
-- [ ] Agree with Eya how features read and change the shared state
+- [x] Agree with Eya how features read and change the shared state
 
 ## H0–4
 
@@ -35,10 +35,11 @@ the team sees your progress. How to work: `README.md` in this folder.
 
 ## Blocked / questions
 
-- Waiting for Eya's `web/` scaffold and shared-state/API interfaces before implementing the site picker and scenario settings. The required behavior is agreed: UTC date and time, one lunar day by default (29.53 days), and inline coordinate validation. Need the scaffold branch or merged commit from Eya.
+- Waiting for Eya's `web/` scaffold (Vite + React + TS) to land. Zustand shared state contract (`SHARED_STATE_CONTRACT.md`) and component specifications for `SitePicker` and `ScenarioSettings` (`COMPONENT_SPECS_H0_4.md`) are defined and ready for implementation.
 
 ## Progress log
 
 2026-11-14 11:27 — defined the site picker and scenario settings behavior contract — checked against PRODUCT.md, WORKPLAN.md, and the prototype — no PR yet
 2026-11-14 11:30 — prepared functional, API-state, UTC, validation, and mobile test cases — documentation-only check: git diff --check — no PR yet
 2026-11-14 11:33 — prepared the frontend integration checklist and south-pole projection contract — checked against WORKPLAN.md, README.md, and the prototype — no PR yet
+2026-11-14 12:25 — defined Zustand shared state contract and H0-4 component specs for SitePicker and ScenarioSettings — checked against schemas.py and prototype — no PR yet
