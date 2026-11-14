@@ -60,4 +60,5 @@ conflicts in your own files, and ask the other owner about conflicts in theirs. 
 - Do the next unticked item in `TODO.md` unless told otherwise. When an item is done, tick it and log it.
 - Do not invent coordinates, constants, URLs or citations. Mark anything unverified as "unverified".
 - Do not push to `main`, do not force-push, do not merge pull requests that need someone else's approval.
+- Do not add `Co-Authored-By` lines or "generated with" footers naming an AI tool to commits or pull requests.
 - When you cannot proceed, write the reason under "Blocked / questions" and tell your person; do not guess.
