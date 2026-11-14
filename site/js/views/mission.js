@@ -207,12 +207,14 @@ export function createMission(ctx) {
   /* ---------- start page ---------- */
 
   const probeMetaHtml = (p, edu) => escapeHtml(t(edu ? SIMPLE_META[p.id] ?? p.meta : p.meta));
+  const LEDE = 'See which lunar landing sites have sunlight and a direct line of sight to Earth, hour by hour. Pick a lander, choose a site, then send a probe.';
+  const LEDE_SIMPLE = 'Pick a lander, and your guide will take you to the Moon.';
   function renderStart() {
     disposePreview();
     const selected = probe(), edu = isEducation();
     startEl.innerHTML = `<div class="start">
       <h1 aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt=""><span>Lens</span></h1>
-      <p class="lede">${escapeHtml(t('See which lunar landing sites have sunlight and a direct line of sight to Earth, hour by hour. Pick a lander, choose a site, then send a probe.'))}</p>
+      <p class="lede">${escapeHtml(t(edu ? LEDE_SIMPLE : LEDE))}</p>
       <div class="pick">${escapeHtml(t('Choose your probe'))}</div>
       <div class="guide-row" id="guide"${edu ? '' : ' hidden'}><div class="edu-char mood-happy" aria-hidden="true">${CHARACTER_SVG}</div>
         <p class="guide-bubble" role="status">${escapeHtml(t('Hi! I\'ll be your mission guide. Pick a lander and press Validate.'))}</p></div>
@@ -239,11 +241,12 @@ export function createMission(ctx) {
     if (!startEl.querySelector('.start')) return;
     const edu = isEducation();
     startEl.querySelector('#guide').hidden = !edu;
+    startEl.querySelector('.lede').textContent = t(edu ? LEDE_SIMPLE : LEDE);
     for (const p of PROBES) { const meta = startEl.querySelector(`[data-probe="${p.id}"] .probe-meta`); if (meta) meta.innerHTML = probeMetaHtml(p, edu); }
     const validate = startEl.querySelector('#validate');
     if (validate) validate.firstChild.textContent = t(edu ? 'Start the mission' : 'Validate');
   }
-  onMode(() => { if (view() === 'start') applyStartMode(); });
+  onMode(() => { if (view() === 'start') applyStartMode(); else if (view() === 'mission') refresh(true); });
 
   /* ---------- mission page skeleton ---------- */
 
@@ -361,7 +364,9 @@ export function createMission(ctx) {
     $('m-prev').setAttribute('aria-label', t('Previous day'));
     $('m-next').setAttribute('aria-label', t('Next day'));
     $('m-title').textContent = t('Pick a landing site');
-    $('m-hint').textContent = t(local.mode === '3d' ? 'Drag to rotate, scroll to zoom. Not to scale. Cyan ring: the Moon’s orbit around Earth; amber: Earth’s orbit around the Sun. Cyan line: 75°S, where the terrain model ends.' : local.flat === 'pole' ? 'LOLA relief, 75°S to the pole. Drag to pan, scroll to zoom. Dark is night.' : 'Whole Moon, near side in the centre. Drag to pan, scroll to zoom. Dark is night.');
+    $('m-hint').textContent = t(isEducation()
+      ? (local.mode === '3d' ? 'Drag to turn the Moon. Tap a dot to pick a site.' : 'Tap a dot to pick a site. Dark is night.')
+      : local.mode === '3d' ? 'Drag to rotate, scroll to zoom. Not to scale. Cyan ring: the Moon’s orbit around Earth; amber: Earth’s orbit around the Sun. Cyan line: 75°S, where the terrain model ends.' : local.flat === 'pole' ? 'LOLA relief, 75°S to the pole. Drag to pan, scroll to zoom. Dark is night.' : 'Whole Moon, near side in the centre. Drag to pan, scroll to zoom. Dark is night.');
     const [fp, fm] = $('m-flat').children;
     fp.textContent = t('South pole'); fm.textContent = t('Whole Moon');
     fp.classList.toggle('on', local.flat === 'pole'); fm.classList.toggle('on', local.flat === 'moon');
@@ -421,9 +426,12 @@ export function createMission(ctx) {
     return rows.map(([k, v]) => `<span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b>`).join('');
   }
 
+  // Education mode: one plain phrase for the current sky, in place of hours, coordinates and terrain.
+  const plainStatus = (status) => t(status.sun && status.link ? 'Sun and Earth in view' : status.link ? 'Earth in view, no Sun' : status.sun ? 'Sunlit, no Earth link' : 'In shadow');
   function renderList(force) {
     const f = lastFrame ?? frame();
-    const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(',')].join('|');
+    const edu = isEducation();
+    const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(','), edu].join('|');
     const listEl = $('m-list');
     if (force || key !== local.listKey) {
       local.listKey = key;
@@ -448,7 +456,7 @@ export function createMission(ctx) {
                   <span class="nm">${escapeHtml(site.label)}</span>
                   ${badge}
                 </span>
-                <span class="sub2">${escapeHtml(t('{n} h lit and linked', { n: score.both }))} (${Math.round((score.both / score.hours) * 100)}%) · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}</span>
+                <span class="sub2">${edu ? escapeHtml(plainStatus(f.status.get(site.id))) : `${escapeHtml(t('{n} h lit and linked', { n: score.both }))} (${Math.round((score.both / score.hours) * 100)}%) · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}`}</span>
               </span>
               <span class="chev">⌄</span>
             </button>
@@ -460,6 +468,7 @@ export function createMission(ctx) {
     for (const row of listEl.querySelectorAll('[data-row]')) {
       const site = sites().find((s) => s.id === row.dataset.row); if (!site) continue;
       row.querySelector('.dotc').style.background = colorOf(f.status.get(site.id));
+      if (edu) row.querySelector('.sub2').textContent = plainStatus(f.status.get(site.id));
       if (row.classList.contains('open')) row.querySelector('.det').innerHTML = detailsHtml(site, f);
     }
   }

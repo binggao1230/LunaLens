@@ -7,6 +7,7 @@ import { escapeHtml, fmtLatLon, utcMidnight } from './format.js';
 import { createMission } from './views/mission.js';
 import { createEducation } from './edu/edu.js';
 import { getMode, setMode, onMode, initMode, parseHash, formatHash } from './mode.js';
+import { switchMode } from './mode-transition.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, DAY = 864e5, HOUR = 36e5;
 const SLIP_DAYS = 28, LOOKAHEAD_H = 60 * 24, SIM_H = SLIP_DAYS * 24 + LOOKAHEAD_H;
@@ -471,7 +472,7 @@ function bind() {
     setCustom(la, lon360(lo));
   };
   document.querySelectorAll('[data-nav] button').forEach((b) => { b.onclick = () => showView(b.dataset.view); });
-  $('mode-toggle').onclick = (e) => { const b = e.target.closest('button[data-mode]'); if (b) setMode(b.dataset.mode); };
+  $('mode-toggle').onclick = (e) => { const b = e.target.closest('button[data-mode]'); if (b) switchMode(b.dataset.mode, b); };
   onMode(() => { renderChrome(); history.replaceState(null, '', `${location.search}${formatHash(document.body.dataset.view)}`); });
   // A pasted or edited hash on the open page: apply its mode and view (showView uses replaceState, so no loop).
   window.addEventListener('hashchange', () => {

@@ -4,7 +4,8 @@
 // mode. It drives the existing views through the small API in views/mission.js and judges sites with edu/verdict.js.
 // All story text comes from i18n/story.<lang>.json so the team can edit it without touching code.
 import { escapeHtml } from '../format.js';
-import { isEducation, onMode, setMode } from '../mode.js';
+import { isEducation, onMode } from '../mode.js';
+import { switchMode } from '../mode-transition.js';
 import { CHARACTER_SVG } from './character.js';
 import { assess, isOk, findBreakingDelay, findGoDelay, bestNearby, BATTERY_H, BATTERY_BONUS_H } from './verdict.js';
 
@@ -59,6 +60,8 @@ export function createEducation(ctx) {
   function activate() {
     st.active = true;
     document.body.classList.add('edu-on');
+    // Education mode has only the start page and the Mission page; Explore, Compare and the rest are Expert tools.
+    if (!['start', 'mission'].includes(ctx.view())) { ctx.showView('mission'); return; }
     if (ctx.view() === 'mission') startTour(); else render();
   }
   function deactivate() {
@@ -235,7 +238,7 @@ export function createEducation(ctx) {
     else if (act === 'skip') { st.skipped = true; render(); }
     else if (act === 'replay') startTour();
     else if (act === 'again') { reset(); ctx.showView('start'); } // choose a lander again; the story restarts on the Mission page
-    else if (act === 'expert') setMode('expert');
+    else if (act === 'expert') switchMode('expert', event.target.closest('[data-act]'));
   });
   root.addEventListener('input', (event) => { if (event.target.id === 'edu-name') { st.name = event.target.value; st.key = ''; const el = root.querySelector('.edu-badge span'); if (el) el.textContent = ui('final.awarded', { name: st.name.trim() || ui('final.namePlaceholder') }); } });
 
