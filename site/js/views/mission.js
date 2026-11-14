@@ -17,6 +17,11 @@ const MESSAGES = {
   'Leave Earth': ['Quitter la Terre', '离开地球'],
   'Lunar transfer': ['Transit lunaire', '地月巡航'],
   'Moon approach': ['Approche lunaire', '接近月球'],
+  'Braking for landing': ['Freinage avant l’alunissage', '转身减速'],
+  'Final descent': ['Descente finale', '最后降落'],
+  'Touchdown': ['Alunissage', '已着陆'],
+  'Exit flight': ['Quitter le vol', '退出飞行'],
+  'Landed · exit when you are ready': ['Alunissage terminé · quittez quand vous le souhaitez', '着陆完成 · 可停留观看，点击退出离开'],
   'Skip flight': ['Passer le vol', '跳过飞行'],
   'Illustrative flight · not to scale': ['Vol illustratif · hors échelle', '飞行演示 · 非真实比例'],
   'Preparing spacecraft…': ['Préparation du vaisseau…', '正在准备探测器…'],
@@ -890,11 +895,11 @@ export function createMission(ctx) {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const selected = PROBES.find(probe => probe.id === local.probe);
     flightEl.innerHTML = `<canvas class="flight-scene" aria-label="${escapeHtml(t(selected.name))}"></canvas>
-      <div class="flight-top"><span>${escapeHtml(t(selected.name))}</span><button class="btn-ghost flight-skip">${escapeHtml(t('Skip flight'))}<span aria-hidden="true">↗</span></button></div>
+      <div class="flight-top"><span>${escapeHtml(t(selected.name))}</span><button class="btn-ghost flight-skip">${escapeHtml(t('Exit flight'))}<span aria-hidden="true">↗</span></button></div>
       <div class="flight-caption"><p class="flight-phase" role="status">${escapeHtml(t('Preparing spacecraft…'))}</p>
         <h2>${escapeHtml(site.short)}</h2>
         <div class="flight-track" aria-hidden="true"><span class="flight-track-fill"></span></div>
-        <div class="flight-route"><span>${escapeHtml(t('Leave Earth'))}</span><span>${escapeHtml(t('Moon approach'))}</span></div>
+        <div class="flight-route"><span>${escapeHtml(t('Leave Earth'))}</span><span>${escapeHtml(t('Touchdown'))}</span></div>
         <p class="flight-disclaimer">${escapeHtml(t('Illustrative flight · not to scale'))}</p></div>`;
     flightEl.classList.add('show');
     flightEl.setAttribute('role', 'dialog');
@@ -929,14 +934,16 @@ export function createMission(ctx) {
     skip.onclick = finish;
     skip.focus();
     disposeFlight = playProbeFlight(flightEl.querySelector('canvas'), {
-      probe: selected.id, reduced, onComplete: finish,
+      probe: selected.id, site: { lat: site.lat, lon: site.lon }, reduced,
+      onComplete: () => {
+        phase.textContent = t('Landed · exit when you are ready');
+      },
       onError: () => {
         phase.textContent = t('Model unavailable. Select another probe or continue.');
         disposeFlight?.();
       },
-      onProgress: progress => {
+      onProgress: (progress, key) => {
         fill.style.transform = `scaleX(${progress})`;
-        const key = progress < .25 ? 'Leave Earth' : progress < .74 ? 'Lunar transfer' : 'Moon approach';
         if (key !== lastPhase) { phase.textContent = t(key); lastPhase = key; }
       },
     });
