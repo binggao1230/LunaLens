@@ -68,6 +68,27 @@ def convert(source: Path, target: Path, width: int, height: int, quality: int) -
     print(f"  product {target.relative_to(ROOT)} ({target.stat().st_size / 1048576:.2f} MB)")
 
 
+def convert_sun(source: Path, target: Path) -> None:
+    """SDO/AIA 304 A frame -> a warm disk with a transparent surround.
+
+    The published 1024 px frame puts the disk inside a black field with a timestamp printed under it. Crop
+    above the caption, use luminance as the texture, and reuse it as an alpha mask so the sprite blends into
+    the sky instead of showing a black square. The 304 A colour is false colour, so it is desaturated and
+    tinted towards white rather than shown red.
+    """
+    target.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["magick", str(source), "-crop", "900x850+62+86", "+repage", "-resize", "512x512!",
+         "-colorspace", "Gray", "-normalize",
+         "(", "+clone", "-alpha", "off", "-level", "0%,30%", ")",
+         "-compose", "CopyOpacity", "-composite",
+         "-fill", "#ffcf87", "-colorize", "60", "-modulate", "108,125,100",
+         "-quality", "92", "-define", "webp:method=6", str(target)],
+        check=True,
+    )
+    print(f"  product {target.relative_to(ROOT)} ({target.stat().st_size / 1048576:.2f} MB)")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("what", choices=["moon", "earth", "sun", "all"], nargs="?", default="all")
@@ -82,7 +103,10 @@ def main() -> int:
         for url, raw_name, out_name, width, height, quality in entries:
             source = fetch(url, DATA / raw_name)
             if out_name:
-                convert(source, ASSETS / out_name, width, height, quality)
+                if step == "sun":
+                    convert_sun(source, ASSETS / out_name)
+                else:
+                    convert(source, ASSETS / out_name, width, height, quality)
     return 0
 
 
