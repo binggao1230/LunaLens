@@ -193,7 +193,8 @@ function renderTimeline() {
 
 function renderCompare() {
   const hours = stayH();
-  $('compare').innerHTML = state.scenarios.map((x, k) => {
+  const verdict = compareVerdict(hours);
+  $('compare').innerHTML = (verdict ? `<p class="verdict">${verdict}</p>` : '') + state.scenarios.map((x, k) => {
     const s = SITES[x.site];
     const r = simulate(s, x.landing);
     return `<button class="row${k === state.scenario ? ' sel' : ''}" data-scenario="${k}">
@@ -203,6 +204,25 @@ function renderCompare() {
       <div class="nums"><div><b>${r.litPct.toFixed(0)}%</b>${t('sunlit')}</div><div><b>${r.commPct.toFixed(0)}%</b>${t('Earth link')}</div><div><b>${fmtDur(r.longest)}</b>${t('longest sun')}</div></div>
     </button>`;
   }).join('');
+}
+
+/** One sentence comparing every scenario with the first one: the answer to "we slip, is it still viable?". */
+function compareVerdict(hours) {
+  if (state.scenarios.length < 2) return '';
+  const base = state.scenarios[0];
+  const a = simulate(SITES[base.site], base.landing);
+  const parts = [];
+  for (const x of state.scenarios.slice(1)) {
+    const b = simulate(SITES[x.site], x.landing);
+    const dSun = Math.round((b.litPct - a.litPct) / 100 * hours);
+    const dLink = Math.round((b.commPct - a.commPct) / 100 * hours);
+    const dLong = b.longest - a.longest;
+    const hh = (v) => `${v >= 0 ? '+' : '−'}${Math.abs(v)} h`;
+    const dd = (v) => `${v >= 0 ? '+' : '−'}${Math.abs(v / 24).toFixed(1)} d`;
+    const landsLit = b.frac[0] > 0;
+    parts.push(`${scenarioDate(x)}: ${t('sunlight')} ${hh(dSun)}, ${t('Earth link')} ${hh(dLink)}, ${t('longest sun')} ${dd(dLong)}, ${landsLit ? t('lands in sunlight') : t('lands in shadow')}`);
+  }
+  return `<b>${escapeHtml(t('Compared with {date}', { date: scenarioDate(base) }))} · ${escapeHtml(SITES[base.site].label)}:</b> ${parts.map(escapeHtml).join(' · ')}`;
 }
 
 /* ---------- date slip ---------- */
@@ -485,7 +505,8 @@ function renderSources() {
 
 function renderTime() { renderMaps(); renderTiles(); renderPano(); renderTimeline(); renderCompare(); render3d(); }
 function renderAll() { fillSelect(); renderSettings(); renderTime(); renderSlip(); mission?.render(); }
-function recompute() { sims = SITES.map(simulate); renderAll(); }
+// map() passes the index as the second argument, which simulate() would read as a landing date.
+function recompute() { sims = SITES.map((s) => simulate(s)); renderAll(); }
 
 /* ---------- scenarios ---------- */
 
@@ -589,6 +610,13 @@ function bind() {
     renderSettings();
   };
   $('compare').onclick = (e) => { const b = e.target.closest('.row'); if (b) activateScenario(+b.dataset.scenario); };
+  $('compare-actions').onclick = (e) => {
+    const b = e.target.closest('[data-action]');
+    if (!b) return;
+    const action = b.dataset.action;
+    if (action === 'remove') dropScenario(state.scenario);
+    else addScenario(action === 'add' ? 'current' : action);
+  };
   $('lang').onchange = (e) => {
     setLanguage(e.target.value); applyTranslations(); hideTip(); renderAll(); renderSources();
     if (scene3d) render3d();
