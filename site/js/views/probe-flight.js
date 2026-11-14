@@ -1,6 +1,6 @@
 import { prepareLanding } from './flight-terrain.js';
 import { buildFlightWorld, LOG_DEPTH } from './flight-world.js';
-import { FLIGHT_SECONDS, clampProgress, during, flightPose } from './flight-path.js';
+import { FLIGHT_SECONDS, clampProgress, during, flightPose, departureShot } from './flight-path.js';
 
 export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onComplete, onError }) {
   let stopped = false, frame = 0, renderer, scene, decoder, environment, resize, render;
@@ -47,7 +47,7 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
     const textureLoader = new T.TextureLoader();
     const assets = await Promise.allSettled([
       loader.loadAsync(`assets/models/${file}.glb`),
-      textureLoader.loadAsync('assets/earth_2048.jpg'),
+      textureLoader.loadAsync('assets/earth_day_4k.webp'),
       textureLoader.loadAsync('assets/moon_color_4k.webp'),
     ]);
     const model = assets[0].status === 'fulfilled' ? assets[0].value.scene : null;
@@ -233,7 +233,7 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
     }));
     shadow.renderOrder = 3;
     scene.add(shadow);
-    const camera = new T.PerspectiveCamera(48, 1, .001, 50000);
+    const camera = new T.PerspectiveCamera(48, 1, .001, 100000);
     resize = new ResizeObserver(() => {
       const { width, height } = canvas.getBoundingClientRect();
       if (!width || !height) return;
@@ -246,23 +246,23 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
     const direction = new T.Vector3(), nose = new T.Quaternion(), up = new T.Vector3(0, 1, 0);
     const target = new T.Vector3(), terrainOffset = new T.Vector3();
     const side = new T.Vector3(), behind = new T.Vector3(), offsetDir = new T.Vector3();
-    const farDir = new T.Vector3(), nearDir = new T.Vector3();
+    const nearDir = new T.Vector3(), cameraRight = new T.Vector3();
     const cameraTurn = new T.Quaternion(), cameraOrbit = new T.Quaternion();
     const earthMesh = world.earth;
     const earthAz = new T.Vector3(data.axes.earth[0], 0, data.axes.earth[2]);
     if (earthAz.lengthSq() < 1e-8) earthAz.set(1, 0, 0);
     earthAz.normalize();
-    const earthLand = new T.Vector3().copy(earthAz).multiplyScalar(Math.cos(.14)).addScaledVector(up, Math.sin(.14));
-    const shipStart = new T.Vector3().fromArray(flightPose(0).position);
-    const earthDepart = new T.Vector3().copy(shipStart).addScaledVector(shipStart.clone().normalize(), 1300);
+    const earthLand = earthAz.clone().multiplyScalar(Math.cos(.14)).addScaledVector(up, Math.sin(.14));
     const earthArrive = earthLand.clone().multiplyScalar(4600);
-    const earthPos = new T.Vector3();
+    const earthPos = new T.Vector3(), cameraEarthPos = new T.Vector3();
+    const shipStart = new T.Vector3().fromArray(flightPose(0).position).add(touchdown);
+    const moonCenter = new T.Vector3(0, -data.radiusKm - data.groundKm, 0);
+    let opening, openingAspect;
     let elapsed = reduced ? FLIGHT_SECONDS : 0, previous = 0, landed = false;
     render = () => {
       const progress = clampProgress(elapsed / FLIGHT_SECONDS);
       const pose = flightPose(progress);
       ship.position.fromArray(pose.position).add(touchdown);
-      ship.scale.setScalar(pose.size / 2.7);
       const after = flightPose(Math.min(1, progress + .0001)).position;
       const before = flightPose(Math.max(0, progress - .0001)).position;
       direction.fromArray(after).sub(terrainOffset.fromArray(before)).normalize();
@@ -275,33 +275,48 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
       glow.material.opacity = pose.throttle;
       shadow.material.uniforms.opacity.value = during(.85, 1, progress) * .5;
       const mobile = camera.aspect < .8;
-      const blend = during(.06, .48, progress);
-      const height = pose.size * modelHeight / 2.7;
+      const blend = during(.02, .52, progress);
+      if (openingAspect !== camera.aspect) {
+        opening = departureShot(T, camera.aspect, shipStart, moonCenter, data.radiusKm, camera.fov);
+        openingAspect = camera.aspect;
+      }
+      const baseHeight = pose.size * modelHeight / 2.7;
       const width = pose.size * Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2.7;
       const lens = 2 * Math.tan(T.MathUtils.degToRad(camera.fov / 2));
-      const framedDistance = Math.max(height / (lens * (mobile ? .32 : .36)), width / (lens * camera.aspect * .68));
-      const distance = T.MathUtils.lerp(pose.size * (mobile ? 11 : 8), framedDistance, blend);
-      earthPos.copy(earthDepart).lerp(earthArrive, during(.1, .58, progress));
+      const framedDistance = Math.max(baseHeight / (lens * (mobile ? .36 : .40)), width / (lens * camera.aspect * .76));
+      const distance = Math.exp(T.MathUtils.lerp(Math.log(opening.distance), Math.log(framedDistance), blend));
+      const departureSize = opening.distance * lens * .20 * 2.7 / modelHeight;
+      const craftSize = Math.exp(T.MathUtils.lerp(Math.log(departureSize), Math.log(pose.size), blend));
+      const height = craftSize * modelHeight / 2.7;
+      ship.scale.setScalar(craftSize / 2.7);
+      // Preserve the established camera and departure timing independently of the final Earth reveal.
+      cameraEarthPos.copy(opening.earthPosition).lerp(earthArrive, during(.28, .72, progress));
+      // Settle Earth while it is outside the camera, then let the original camera reveal it naturally.
+      earthPos.copy(opening.earthPosition).lerp(earthArrive, during(.23, .34, progress));
       earthMesh.position.copy(earthPos);
-      behind.copy(earthPos).sub(ship.position);
+      const originalScale = T.MathUtils.lerp(opening.earthRadius / 180, 1, during(.18, .6, progress));
+      earthMesh.scale.setScalar(T.MathUtils.lerp(originalScale, 1, during(.23, .34, progress)));
+      behind.copy(cameraEarthPos).sub(ship.position);
       if (behind.lengthSq() < 1e-6) behind.set(0, 0, -1);
       behind.normalize();
       side.crossVectors(up, behind);
       if (side.lengthSq() < 1e-8) side.set(1, 0, 0);
       side.normalize();
-      // Begin looking back at Earth, then swing around the lander to reveal the approaching Moon.
-      // At touchdown the camera is opposite Earth, so Earth remains beyond the lander in the sky.
-      farDir.copy(side).multiplyScalar(mobile ? .05 : .15).addScaledVector(up, .06).addScaledVector(behind, -1).normalize();
+      // The departure shot contains both planets. Follow the craft toward the growing Moon, then
+      // finish opposite Earth so it remains visible beyond the lander above the lunar horizon.
       nearDir.copy(earthAz).negate().addScaledVector(side, mobile ? .07 : .22).addScaledVector(up, .18).normalize();
-      const orbit = during(.13, .44, progress);
-      cameraTurn.setFromUnitVectors(farDir, nearDir);
-      cameraOrbit.identity().slerp(cameraTurn, orbit);
-      offsetDir.copy(farDir).applyQuaternion(cameraOrbit);
+      cameraTurn.setFromUnitVectors(opening.direction, nearDir);
+      cameraOrbit.identity().slerp(cameraTurn, blend);
+      offsetDir.copy(opening.direction).applyQuaternion(cameraOrbit);
       camera.position.copy(ship.position).addScaledVector(offsetDir, distance);
+      camera.up.copy(opening.up).lerp(up, blend).normalize();
       target.copy(ship.position).addScaledVector(up, height * .15 * blend);
       const floor = world.heightAt(camera.position.x, camera.position.z);
       if (floor != null) camera.position.y = Math.max(camera.position.y, floor + height * .25);
       camera.lookAt(target);
+      cameraRight.set(1, 0, 0).applyQuaternion(camera.quaternion);
+      earthMesh.material.uniforms.sun.value.copy(camera.position).sub(earthPos).normalize()
+        .addScaledVector(cameraRight, -.35).addScaledVector(camera.up, .20).normalize();
       camera.near = Math.max(.00002, distance / 1000);
       camera.updateProjectionMatrix();
       renderer.render(scene, camera);

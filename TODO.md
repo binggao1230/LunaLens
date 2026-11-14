@@ -37,6 +37,7 @@ alternative dates at the same site". The second half is what the product cannot 
 
 ## C. One product, not two
 
+- **Done:** show Earth, the lander and the distant Moon together at departure; reuse the existing 4K Earth texture, widen the regional terrain view, and enlarge the lander. Preserve the original departure camera and pacing; settle Earth outside the frame so the camera reveals a steady Earth during lunar approach.
 - **Done:** Earth is visible at departure and touchdown; the enlarged demonstration lander stays clear over measured regional terrain, retains its braking/descent attitude, and holds the landed shot until Exit/Esc. Desktop and 390 px framing checked.
 - Preview a tracking-camera Earth-to-Moon flight using the selected lander's GLB, with skip, reduced motion and local textures.
 - Remove the extra model-reference captions from the start-page cards at the owner's request; retain asset provenance in `site/assets/models/README.md`.

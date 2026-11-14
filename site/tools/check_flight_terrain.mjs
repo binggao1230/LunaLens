@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { gunzipSync, inflateSync } from 'node:zlib';
 import { Dem } from '../js/engine/dem.js';
 import { siteBasis } from '../js/engine/geometry.js';
-import { openSource, sampleGrid, shadeGrid, heightAt, WIDTH_KM } from '../js/views/flight-terrain.js';
+import { openSource, openFarSource, sampleGrid, shadeGrid, heightAt, WIDTH_KM } from '../js/views/flight-terrain.js';
 
 const site = new URL('../', import.meta.url), DEG = Math.PI / 180;
 const readJson = async (path) => JSON.parse(readFileSync(new URL(path, site)));
@@ -122,4 +122,22 @@ for (const entry of sites) {
   assert.ok(shaded.light.length === grid.samples ** 2 * 4 && shaded.vertical.every(Number.isFinite), `${entry.id}: shading left gaps`);
   console.log(`${entry.id.padEnd(18)} ${source.name.padEnd(17)} ${groundM.toFixed(0).padStart(7)} / ${String(entry.groundM ?? 'none').padEnd(18)} ${(usePolar ? 'LOLA 480 m' : 'global LOLA').padEnd(14)} ${r.toFixed(3)}  ${relief.toFixed(0).padStart(6)}`);
 }
-console.log('\nPASS: all curated sites land on measured terrain, oriented as the references are.');
+// Validate the wider polar source against the independent 480 m raster well beyond the near disc.
+const fallback = { constantM: 12345 };
+const far = await openFarSource({ lat: -90, lon: 0 }, fallback, read, readJson);
+const farOurs = [], farReference = [];
+for (let lat = -83; lat >= -89; lat -= .5) for (let lon = 0; lon < 360; lon += 20) {
+  const point = siteBasis(lat, lon).up;
+  const ours = heightAt(far, ...point), reference = polar.height(lat * DEG, lon * DEG);
+  if (Number.isFinite(reference) && ours !== fallback.constantM) { farOurs.push(ours); farReference.push(reference); }
+}
+const average = values => values.reduce((sum, value) => sum + value, 0) / values.length;
+const a = average(farOurs), b = average(farReference);
+let ab = 0, aa = 0, bb = 0;
+farOurs.forEach((value, index) => { const x = value - a, y = farReference[index] - b; ab += x * y; aa += x * x; bb += y * y; });
+const farCorrelation = ab / Math.sqrt(aa * bb);
+assert.ok(farOurs.length > 100 && farCorrelation > .985, `distant polar terrain disagrees with independent LOLA, r=${farCorrelation}`);
+assert.equal(heightAt(far, ...siteBasis(-60, 0).up), fallback.constantM, 'far terrain must cover gaps with the global map');
+assert.equal(await openFarSource({ lat: 10, lon: 0 }, fallback, read, readJson), fallback, 'non-polar sites must retain their global far field');
+console.log(`Distant polar ridges: ${farOurs.length} reference points, r=${farCorrelation.toFixed(4)}; global fallback passed.`);
+console.log('\nPASS: near and distant terrain agree with the reference rasters.');

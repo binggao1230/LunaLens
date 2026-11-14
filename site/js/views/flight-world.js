@@ -114,7 +114,7 @@ export function buildFlightWorld(T, renderer, data, colour, earthMap, compact) {
     return mesh;
   };
   const around = layer(data.far, 2, data.holeKm, true);
-  const near = layer(data.near, compact ? 4 : 2, 0, false);
+  const near = layer(data.near, 2, 0, false);
   const globeGeometry = new T.SphereGeometry(1, compact ? 384 : 768, compact ? 192 : 384);
   const vertices = globeGeometry.attributes.position;
   for (let index = 0; index < vertices.count; index++) {
@@ -177,7 +177,7 @@ export function buildFlightWorld(T, renderer, data, colour, earthMap, compact) {
   const stars = new T.BufferGeometry();
   stars.setAttribute('position', new T.BufferAttribute(starPositions, 3));
   scene.add(new T.Points(stars, new T.PointsMaterial({ color: 0xb9c9df, size: 1.2, transparent: true, opacity: .5 })));
-  const home = new T.Mesh(new T.SphereGeometry(180, 64, 40), new T.ShaderMaterial({
+  const home = new T.Mesh(new T.SphereGeometry(180, 128, 80), new T.ShaderMaterial({
     uniforms: { day: { value: earthMap }, sun: { value: new T.Vector3(...data.sun) } },
     vertexShader: `
       ${LOG_DEPTH.vertex}
@@ -202,10 +202,12 @@ export function buildFlightWorld(T, renderer, data, colour, earthMap, compact) {
       ${LOG_DEPTH.fragment}
       void main() {
         vec3 normal = normalize(outward);
-        float lit = smoothstep(-.08, .22, dot(normal, sun));
-        float rim = pow(1. - max(dot(normal, normalize(eye)), 0.), 2.5);
-        vec3 tone = (texture2D(day, place).rgb * 1.45 + vec3(.03, .06, .13)) * lit
-          + vec3(.35, .55, .95) * rim * lit * .7 + vec3(.02, .045, .1) * (1. - lit);
+        float diffuse = max(dot(normal, sun), 0.);
+        float rim = pow(1. - max(dot(normal, normalize(eye)), 0.), 4.);
+        vec3 albedo = texture2D(day, place).rgb;
+        // Keep the Blue Marble texture in the dim limb instead of painting an opaque blue night side.
+        vec3 tone = albedo * (.025 + diffuse * 1.25)
+          + vec3(.12, .32, .65) * rim * smoothstep(-.1, .2, dot(normal, sun)) * .22;
         ${LOG_DEPTH.fragmentMain}
         gl_FragColor = vec4(pow(tone, vec3(1. / 2.2)), 1.);
       }

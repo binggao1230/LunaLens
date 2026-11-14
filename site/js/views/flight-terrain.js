@@ -2,7 +2,8 @@
 // it: measured heights, lit by one Sun with cast shadows, tinted by the whole-Moon colour map.
 // Near the site the heights come from the rasters the Atlas already ships: the 80 m and 160 m site patches
 // (SLDEM2015) and the south-pole LOLA levels (LDEM_80S_80MPP). Beyond that disc, out past the horizon, they
-// come from the Atlas whole-Moon elevation map (LOLA, 16 px/deg). Extents, pixel sizes and height encodings
+// use the wider regional polar raster where covered, then the Atlas whole-Moon map (LOLA, 16 px/deg).
+// Extents, pixel sizes and height encodings
 // are read from atlas/data/patches/patches.json, atlas/data/terrain/sp_meta.json and atlas/data/globe/globe.json.
 // The heights are measured; the Sun direction is art-directed, like the rest of the flight.
 import { siteBasis } from '../engine/geometry.js';
@@ -48,7 +49,7 @@ export function heightAt(source, px, py, pz) {
     const value = (h[i] * (1 - fc) + h[i + 1] * fc) * (1 - fr) + (h[i + level.width] * (1 - fc) + h[i + level.width + 1] * fc) * fr;
     if (!Number.isNaN(value)) return value;
   }
-  return NaN;
+  return source.fallback ? heightAt(source.fallback, px, py, pz) : NaN;
 }
 
 /** Pick the rasters that cover the disc around a site. `read(url, crop, scaleM, offsetM)` returns { width, height, h }. */
@@ -109,6 +110,20 @@ export async function openGlobe(site, read, readJson, { full = false } = {}) {
   const band = await read(`${ATLAS}globe/${dem.file}`, { x: 0, y: top, width: dem.width, height: bottom - top }, scale, -offset);
   for (let i = 0; i < band.h.length; i++) if (Number.isNaN(band.h[i])) band.h[i] = 0;
   return { radiusM: dem.radius_m, name: 'whole Moon', equirect: { width: dem.width, rows: bottom - top, top, full: dem.height, h: band.h } };
+}
+
+/** Keep the distant polar ridges on the existing regional LOLA raster before using the global map. */
+export async function openFarSource(site, globe, read, readJson) {
+  if (site.lat > -75) return globe;
+  const meta = await readJson(`${ATLAS}terrain/sp_meta.json`);
+  const entry = [...meta.levels].sort((a, b) => b.pixel_m - a.pixel_m)[0];
+  const { scale_m: scale, offset_m: offset } = meta.height_encoding;
+  const raster = await read(`${ATLAS}terrain/${entry.file}`, null, scale, offset);
+  return {
+    radiusM: meta.radius_m, name: 'regional polar skyline', fallback: globe,
+    frame: { ax: [0, 1, 0], ay: [1, 0, 0], up: [0, 0, -1] },
+    levels: [{ ...raster, pixel: entry.pixel_m, xMin: entry.x_min_m, yMax: entry.y_max_m }],
+  };
 }
 
 /**
@@ -283,11 +298,13 @@ export async function prepareLanding(site, { compact = false, cancelled = () => 
   ]);
   if (cancelled()) return null;
   const source = measured ?? globe;
+  const farSource = await openFarSource(site, globe, readHeights, readJson).catch(() => globe);
+  if (cancelled()) return null;
   const axes = flightAxes(site, compact ? 0.09 : 0.24);
   const near = await sampleGrid(source, site, compact ? 1025 : 1537, { axes, ...pace });
   if (!near || cancelled()) return null;
-  const far = await sampleGrid(globe, site, compact ? 769 : 1025, { widthKm: FAR_WIDTH_KM, axes, groundKm: near.groundKm, ...pace });
-  const farLit = far && await shadeGrid(far, pace), nearLit = farLit && await shadeGrid(near, { base: far, soften: source.grainy ? 5 : 0, ...pace });
+  const far = await sampleGrid(farSource, site, compact ? 1025 : 1537, { widthKm: FAR_WIDTH_KM, axes, groundKm: near.groundKm, ...pace });
+  const farLit = far && await shadeGrid(far, pace), nearLit = farLit && await shadeGrid(near, { base: far, soften: source.grainy ? 2 : 0, ...pace });
   if (!nearLit) return null;
   const elevation = SUN_ELEVATION_DEG * DEG;
   return {
