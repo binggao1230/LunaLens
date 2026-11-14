@@ -61,7 +61,9 @@ The code comes from `noreply@notify.cloudflare.com`. Cloudflare says "a code has
 nothing: an address outside the app's policy, or a repeat request within a few minutes, is dropped silently. If no
 code arrives after one try, check the spam folder, wait five minutes, and request one more.
 
-Publishing is done by Bing from the repository root, with Wrangler logged in to the Cloudflare account:
+Publishing is automatic: every push to `main` deploys through `.github/workflows/deploy.yml` (Wrangler, using the
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets). The workflow can also be run by hand from
+the Actions tab. To deploy from a machine instead, from the repository root:
 
 ```
 npx wrangler deploy
