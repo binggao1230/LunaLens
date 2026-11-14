@@ -3,5 +3,7 @@
 {
   "name": "luna-lens",
   "compatibility_date": "2026-11-01",
+  // Versioned preview URLs are not covered by the Access rule on the main address, so keep them off.
+  "preview_urls": false,
   "assets": { "directory": "./prototype" }
 }

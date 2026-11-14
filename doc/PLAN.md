@@ -99,8 +99,9 @@ Two layers, so the public link never depends on anyone's laptop:
   115 MB elevation files), which is why the public layer is static.
 - Free-plan limits checked on 2026-11-14 `[VERIFIED]`: 20,000 files per Worker version, 25 MiB per file.
   Precomputed JSON and map images must stay under 25 MiB each; raw DEMs are never deployed.
-- The lead runs deployments from their own machine. Deploy commands go into the root `README.md` once the
-  frontend build exists.
+- The lead runs deployments from their own machine (`npx wrangler deploy`, config in `wrangler.jsonc`).
+- Live since 2026-11-14 at `https://luna-lens.gaobing1230.workers.dev`, serving the prototype behind a Cloudflare
+  Access email check (one-time code, team emails only). The check comes off before submission so judges can open it.
 
 ### 2.4 API contract (frozen in the first two hours; changes require notifying everyone)
 
