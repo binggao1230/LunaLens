@@ -26,8 +26,6 @@ const MESSAGES = {
   'The lander that carried six Apollo crews to the Moon, 1969–1972.': ['L’atterrisseur qui a déposé six équipages Apollo sur la Lune, 1969–1972.', '1969–1972 年间六次阿波罗登月任务的载人登月舱。'],
   'Intuitive Machines lander; flew IM-1 (2024) and IM-2 (2025).': ['Atterrisseur d’Intuitive Machines ; missions IM-1 (2024) et IM-2 (2025).', '直觉机器公司着陆器，执行 IM-1（2024）与 IM-2（2025）任务。'],
   'India’s lander; Chandrayaan-3 made the first soft landing in 2023.': ['Atterrisseur indien ; Chandrayaan-3 a réussi le premier alunissage en douceur en 2023.', '印度着陆器；月船三号于 2023 年实现首次软着陆。'],
-  '1 site': ['1 site', '1 个地点'],
-  '{count} sites': ['{count} sites', '{count} 个地点'],
   'Pick a landing site': ['Choisissez un site d’alunissage', '选择着陆点'],
   'Site locations': ['Sites d’alunissage', '着陆地点'],
   'Search sites': ['Rechercher un site', '搜索地点'],
@@ -192,7 +190,6 @@ export function createMission(ctx) {
 
   function renderStart() {
     disposePreview();
-    const list = sites();
     const selected = probe();
     startEl.innerHTML = `<div class="start">
       <h1 aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt=""><span>Lens</span></h1>
@@ -200,7 +197,6 @@ export function createMission(ctx) {
       <div class="pick">${escapeHtml(t('Choose your probe'))}</div>
       <div class="probe-grid" data-model-error="${escapeHtml(t('Model unavailable. Select another probe or continue.'))}">
         ${PROBES.map(p => {
-          const count = p.sites.filter(id => list.some(site => site.id === id)).length;
           return `<section class="probe-choice" data-probe-card="${p.id}" data-selected="${p.id === selected.id}">
             <div class="probe-viewport">
               <canvas data-model="${p.id}" aria-label="${escapeHtml(t(p.name))}" aria-description="${escapeHtml(t('Drag to rotate · scroll to zoom'))}"></canvas>
@@ -209,7 +205,6 @@ export function createMission(ctx) {
             <button class="probe-select" data-probe="${p.id}" aria-pressed="${p.id === selected.id}">
               <span class="probe-title">${escapeHtml(t(p.name))}</span><span class="probe-check" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m5 10 3 3 7-7"/></svg></span>
               <span class="probe-meta">${escapeHtml(t(p.meta))}</span>
-              <span class="probe-count">${escapeHtml(count === 1 ? t('1 site') : t('{count} sites', { count }))}</span>
             </button>
           </section>`;
         }).join('')}

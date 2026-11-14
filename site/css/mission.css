@@ -184,7 +184,6 @@ body[data-view=start] .start{min-height:calc(100svh - 76px);padding:26px 4vw 120
 .probe-select:hover{background:#1d2228}
 .probe-title{font-size:19px;font-weight:450;line-height:1.25}
 .probe-meta{grid-column:1/-1;font-size:12px;line-height:1.5;color:var(--text2);min-height:36px}
-.probe-count{grid-column:1/-1;font-size:12px;color:var(--muted)}
 .probe-check{display:flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid #717985;border-radius:50%}
 .probe-check svg{width:16px;height:16px;stroke:#151719;stroke-width:2;fill:none;visibility:hidden}
 .probe-choice[data-selected=true] .probe-check{border-color:#f5c542;background:#f5c542}
@@ -204,7 +203,6 @@ body[data-view=start] .start{min-height:calc(100svh - 76px);padding:26px 4vw 120
   .probe-select{padding:10px;gap:5px}
   .probe-title{font-size:14px;min-height:35px}
   .probe-meta{font-size:10px;min-height:30px}
-  .probe-count{font-size:10px}
   .start-actions{gap:12px;padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
   .start .btn-primary{min-width:136px;gap:16px;padding:10px 18px}
 }
