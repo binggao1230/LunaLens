@@ -13,11 +13,94 @@ export async function createPolar3d(env) {
       const scene = new T.Scene();
       const camera = new T.PerspectiveCamera(42, 1, 0.1, 200);
       const controls = new OrbitControls(camera, canvas);
-      controls.enablePan = false; controls.minDistance = 1.7; controls.maxDistance = 14; controls.rotateSpeed = 0.7;
+      controls.enablePan = false; controls.minDistance = 1.12; controls.maxDistance = 9; controls.rotateSpeed = 0.7;
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
-      scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
+      scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.02));
       const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: new T.TextureLoader().load('assets/moon_1024.jpg', () => request()), roughness: 1, metalness: 0 }));
       scene.add(moon);
+
+      // ---- South polar cap, real relief from the 480 m LOLA grid (M1 of doc/PLAN_3D.md) ----
+      // The DEM is polar stereographic; the mesh is built on the sphere so the pole has no hole and the
+      // terminator falls where the geometry says it does. Heights are R + h, never exaggerated.
+      const R_MOON_M = 1737400;
+      const capGroup = new T.Group();
+      scene.add(capGroup);
+      const capReady = (async () => {
+        const meta = await (await fetch('data/dem480.json')).json();
+        const compressed = await (await fetch(`data/${meta.file}`)).arrayBuffer();
+        const packed = await new Response(
+          new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip')),
+        ).arrayBuffer();
+        const dn = new Int16Array(packed);
+        const n = meta.n, c = (n - 1) / 2, resM = meta.resM, scaleM = meta.scaleM;
+        // A disc from the pole out to 75°S, sampled radially: the square raster would show corners and
+        // the plan asks for a cap. 480 m cells, nearest sample; the mesh is in scene units (R = 1).
+        const RINGS = 240, SPOKES = 512;
+        const rMax = 2 * R_MOON_M * Math.tan(Math.PI / 4 + (-75 * Math.PI / 180) / 2);
+        const positions = new Float32Array((RINGS + 1) * SPOKES * 3);
+        let k = 0;
+        for (let i = 0; i <= RINGS; i++) {
+          const rho = (rMax * i) / RINGS;
+          const lat = 2 * Math.atan(rho / (2 * R_MOON_M)) - Math.PI / 2;
+          for (let a = 0; a < SPOKES; a++) {
+            const lon = (a / SPOKES) * Math.PI * 2;
+            const col = Math.round(c + (rho * Math.sin(lon)) / resM);
+            const row = Math.round(c - (rho * Math.cos(lon)) / resM);
+            const inside = col >= 0 && row >= 0 && col < n && row < n;
+            const h = inside ? scaleM * dn[row * n + col] : 0;
+            const r = 1 + h / R_MOON_M;
+            const cl = Math.cos(lat);
+            positions[k++] = r * cl * Math.cos(lon);
+            positions[k++] = r * Math.sin(lat);
+            positions[k++] = -r * cl * Math.sin(lon);
+          }
+        }
+        const indices = new Uint32Array(RINGS * SPOKES * 6);
+        let q = 0;
+        for (let i = 0; i < RINGS; i++) {
+          for (let a = 0; a < SPOKES; a++) {
+            const a0 = i * SPOKES + a, a1 = i * SPOKES + ((a + 1) % SPOKES);
+            const b0 = (i + 1) * SPOKES + a, b1 = (i + 1) * SPOKES + ((a + 1) % SPOKES);
+            indices[q++] = a0; indices[q++] = b0; indices[q++] = a1;
+            indices[q++] = a1; indices[q++] = b0; indices[q++] = b1;
+          }
+        }
+        const geometry = new T.BufferGeometry();
+        geometry.setAttribute('position', new T.BufferAttribute(positions, 3));
+        geometry.setIndex(new T.BufferAttribute(indices, 1));
+        geometry.computeVertexNormals();
+        const mesh = new T.Mesh(geometry, new T.MeshStandardMaterial({ color: 0x9c99ab, roughness: 1, metalness: 0 }));
+        mesh.name = 'cap';
+        capGroup.add(mesh);
+        moon.scale.setScalar(0.999);   // the far sphere stays for the zoomed-out view, just under the cap
+        request();
+        return mesh;
+      })().catch((error) => { console.error('cap failed', error); return null; });
+
+      // Graticule: 80°S and 85°S circles, the four meridians, and the pole marker. Drawn 1.5% above the
+      // datum so it stays visible over the relief, which is at most 0.6% of the radius high.
+      {
+        const ring = (latDeg, color, opacity) => {
+          const pts = [];
+          for (let a = 0; a <= 360; a += 2) {
+            const rr = 1.004, la = latDeg * Math.PI / 180, lo = a * Math.PI / 180;
+            pts.push(new T.Vector3(rr * Math.cos(la) * Math.cos(lo), rr * Math.sin(la), -rr * Math.cos(la) * Math.sin(lo)));
+          }
+          return new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color, transparent: true, opacity }));
+        };
+        capGroup.add(ring(-85, 0xffffff, 0.35), ring(-80, 0xffffff, 0.2));
+        for (const lon of [0, 90, 180, 270]) {
+          const pts = [];
+          for (let la = -90; la <= -75; la += 1) {
+            const rr = 1.004, t = la * Math.PI / 180, o = lon * Math.PI / 180;
+            pts.push(new T.Vector3(rr * Math.cos(t) * Math.cos(o), rr * Math.sin(t), -rr * Math.cos(t) * Math.sin(o)));
+          }
+          capGroup.add(new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: lon === 0 ? 0.5 : 0.22 })));
+        }
+        const pole = new T.Mesh(new T.SphereGeometry(0.006, 12, 8), new T.MeshBasicMaterial({ color: 0xffffff }));
+        pole.position.set(0, 1.004, 0);
+        capGroup.add(pole);
+      }
 
       const glowTexture = (inner) => {
         const c = document.createElement('canvas'); c.width = c.height = 128;
@@ -83,15 +166,17 @@ export async function createPolar3d(env) {
         if (key === markerKey) return;
         markerKey = key;
         markerGroup.clear();
-        markers = list.map((site) => {
+        markers = list.filter((site) => site.lat <= -74.5).map((site) => {
           const normal = new T.Vector3(...unit(site.lat, site.lon));
+          // Sit on the relief, not on the datum: groundM comes from sites.json, from the same DEM.
+          const radius = 1 + (Number(site.groundM) || 0) / 1737400 + 0.0015;
           const dotMesh = new T.Mesh(sphereGeometry, new T.MeshBasicMaterial({ color: COLORS.dark }));
-          dotMesh.position.copy(normal).multiplyScalar(1.004);
+          dotMesh.position.copy(normal).multiplyScalar(radius);
           const ring = new T.Mesh(ringGeometry, new T.MeshBasicMaterial({ color: COLORS.sun, side: T.DoubleSide }));
-          ring.position.copy(normal).multiplyScalar(1.003);
+          ring.position.copy(normal).multiplyScalar(radius);
           ring.lookAt(normal.clone().multiplyScalar(2));
           markerGroup.add(dotMesh, ring);
-          return { site, normal, dotMesh, ring };
+          return { site, normal, radius, dotMesh, ring };
         });
       };
       const request = () => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); };
@@ -146,9 +231,12 @@ export async function createPolar3d(env) {
       };
       new ResizeObserver(resize).observe(stage);
       controls.addEventListener('change', request);
+      // M1: the home view is the south pole, 0° longitude towards the top, matching the 2D polar map.
       const setHome = () => {
-        const dir = new T.Vector3(...unit(getFrame().earthLat + 14, getFrame().earthLon - 24));
-        camera.position.copy(dir.multiplyScalar(6.4)); camera.lookAt(0, 0, 0); controls.update();
+        camera.up.set(1, 0, 0);
+        camera.position.set(0, 1.5, 0);
+        camera.lookAt(0, 0, 0);
+        controls.update();
       };
       const flyTo = (dir, distance) => {
         cancelAnimationFrame(tween);
@@ -177,7 +265,7 @@ export async function createPolar3d(env) {
       });
       view3d = {
         request: () => { if (!home) { setHome(); home = true; } request(); },
-        reset: () => { const f = getFrame(); if (f) flyTo(new T.Vector3(...unit(f.earthLat + 14, f.earthLon - 24)), 6.4); },
+        reset: () => setHome(),
         focus: (site) => flyTo(new T.Vector3(...unit(site.lat, site.lon))),
       };
       resize();
