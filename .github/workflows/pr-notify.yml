@@ -1,0 +1,31 @@
+# Every pull request comments once with an @mention of each team member, so all six
+# get a GitHub email notification when someone opens one. Mentions email by default;
+# each person can turn them off in GitHub → Settings → Notifications.
+# See CONTRIBUTING.md.
+name: Announce pull requests
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  announce:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+    steps:
+      - name: Comment mentioning everyone
+        run: |
+          body="New pull request by @${PR_AUTHOR}: **${PR_TITLE}**
+
+          @binggao1230 @Zeylal @Dev-code3D @eyaam @wangchenlin0501 @MaevaTonyaA — please look when you can. The lead merges after checking."
+          gh pr comment "$PR" --repo "$REPO" --body "$body"
