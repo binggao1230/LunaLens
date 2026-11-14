@@ -34,3 +34,7 @@ dist/
 
 # Cloudflare local state
 .wrangler/
+
+# Cloned reference apps used while porting; not part of the product.
+.vendor/
+!site/atlas/data/

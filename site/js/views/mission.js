@@ -1,6 +1,6 @@
 import { t, getLanguage, registerMessages, hasTranslation } from '../i18n.js';
 import { escapeHtml, fmtDeg, fmtLatLon, fmtDateTime, fmtDayMonth } from '../format.js';
-import { nextTransition } from '../engine/metrics.js';
+import { nextTransition, evaluateSiteMcda } from '../engine/metrics.js';
 import { createPolar3d } from './polar3d/index.js';
 import { mountProbePreviews } from './probe-gallery.js';
 import { playProbeFlight } from './probe-flight.js';
@@ -66,6 +66,12 @@ const MESSAGES = {
   '{v} M km': ['{v} M km', '{v} 百万公里'],
   '{pct}% lit': ['{pct} % éclairée', '{pct}% 受照'],
   'Recommended': ['Recommandé', '推荐'],
+  'Sunset in': ['Coucher du Soleil dans', '日落倒计时'],
+  'Earthset in': ['Coucher de la Terre dans', '地落倒计时'],
+  'Earthrise': ['Lever de la Terre', '地升'],
+  'Open in Plan': ['Ouvrir dans Plan', '在 Plan 中打开'],
+  'Stays in view': ['Reste visible', '全程可见'],
+  'None in this stay': ['Aucun pendant le séjour', '停留期内无'],
   '{n} h lit and linked': ['{n} h éclairé et relié', '{n} 小时同时可用'],
   'Both': ['Les deux', '同时可见'],
   'min': ['min', '分钟'],
@@ -106,6 +112,17 @@ const MESSAGES = {
   'Select all sites to compare': ['Sélectionner tous les sites à comparer', '全选地点进行对比'],
   'Clear comparison selection': ['Effacer la sélection de comparaison', '清空对比选择'],
   'No sites selected for comparison. Tick checkboxes in Site locations to compare.': ['Aucun site sélectionné pour la comparaison. Cochez des cases dans Sites d’alunissage pour comparer.', '未选择对比地点。请在着陆地点列表中勾选以展开对比。'],
+  'Reference (smooth sphere)': ['Référence (sphère lisse)', '参考点（光滑球面）'],
+  'MCDA score': ['Score MCDA', '多准则评分'],
+  '{score}/100 MCDA': ['{score}/100 MCDA', '{score}/100 综合分'],
+  'Longest sunlit run': ['Plus longue période éclairée', '最长连续日照'],
+  'Longest darkness': ['Plus longue nuit', '最长连续黑暗'],
+  'Max terrain horizon': ['Horizon max du relief', '最大地形遮挡角'],
+  'Earthrise': ['Lever de Terre', '地球升起'],
+  'Earthset': ['Coucher de Terre', '地球落下'],
+  'Link at touchdown': ['Liaison à l’alunissage', '着陆时地球直连'],
+  'Viable on this date': ['Viable à cette date', '该日期可行'],
+  'Blocked at touchdown': ['Bloquée à l’alunissage', '着陆时被遮挡'],
 };
 for (const [key, value] of Object.entries(MESSAGES)) if (!hasTranslation(key)) registerMessages({ [key]: value });
 
@@ -273,6 +290,7 @@ export function createMission(ctx) {
           </div>
         </div>
         <input type="search" id="m-search" autocomplete="off">
+        <div class="m-scenario" id="m-scenario"></div>
         <div class="sl" id="m-list"></div>
         <button class="btn-primary" id="m-send"></button>
       </aside>
@@ -393,17 +411,10 @@ export function createMission(ctx) {
 
   /* ---------- site list and lanes ---------- */
 
-  // Hours in the stay when the site is both sunlit and linked: the one number that answers "which site".
+  // Multi-criteria evaluation over the stay (simultaneous window, longest sun, eclipse survival, terrain horizon).
   function scoreOf(site) {
     const start = Math.round(ctx.eph().indexOf(ctx.landing())), margin = ctx.margin();
-    let both = 0, lit = 0, link = 0;
-    for (let h = 0; h <= SPAN; h++) {
-      const j = start + h, sun = site.series.sunVis[j] === 1, earth = site.series.earthClr[j] > margin;
-      if (sun) lit += 1;
-      if (earth) link += 1;
-      if (sun && earth) both += 1;
-    }
-    return { both, lit, link, hours: SPAN + 1 };
+    return evaluateSiteMcda(site, start, start + SPAN + 1, { marginDeg: margin, preset: 'balanced', minSunDays: 6.5 });
   }
 
   function detailsHtml(site, f) {
@@ -412,16 +423,25 @@ export function createMission(ctx) {
     let sunLine;
     if (sunNext.kind === 'none') sunLine = [t('Sun'), t(sunNext.state ? 'Stays in view' : 'Does not rise')];
     else sunLine = [t('{event} in', { event: t(sunNext.kind === 'set' ? 'Sunset' : 'Sunrise') }), dur(sunNext.timeMs - f.ms)];
-    const score = scoreOf(site), bothPct = Math.round((score.both / score.hours) * 100);
-    const litPct = Math.round((score.lit / score.hours) * 100), linkPct = Math.round((score.link / score.hours) * 100);
+    const earthNext = nextTransition(site, 'earth', f.index);
+    let earthLine;
+    if (earthNext.kind === 'none') earthLine = [t('Earth'), t(earthNext.state ? 'Stays in view' : 'Does not rise')];
+    else earthLine = [t('{event} in', { event: t(earthNext.kind === 'set' ? 'Earthset' : 'Earthrise') }), dur(earthNext.timeMs - f.ms)];
+    const score = scoreOf(site), bothPct = Math.round(score.bothPct);
+    const litPct = Math.round(score.litPct), linkPct = Math.round(score.linkPct);
     const rows = [
+      [t('MCDA score'), `${score.score} / 100`],
+      [t('Link at touchdown'), t(score.touchdownLink ? 'Available' : 'Blocked at touchdown')],
       [t('Simultaneous window'), `${score.both} h / ${score.hours} h (${bothPct}%)`],
       [t('Total sunlight'), `${score.lit} h (${litPct}%)`],
+      [t('Longest sunlit run'), `${score.longestSunH} h`],
+      [t('Longest darkness'), `${score.longestDarkH} h`],
       [t('Total Earth link'), `${score.link} h (${linkPct}%)`],
       [t('Sun elevation'), fmtDeg(series.sunEl[j])],
       sunLine,
       [t('Earth elevation'), fmtDeg(series.earthEl[j])],
       [t('Direct-to-Earth link'), t(status.link ? 'Available' : 'Blocked')],
+      earthLine,
     ];
     return rows.map(([k, v]) => `<span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b>`).join('');
   }
@@ -429,6 +449,9 @@ export function createMission(ctx) {
   // Education mode: one plain phrase for the current sky, in place of hours, coordinates and terrain.
   const plainStatus = (status) => t(status.sun && status.link ? 'Sun and Earth in view' : status.link ? 'Earth in view, no Sun' : status.sun ? 'Sunlit, no Earth link' : 'In shadow');
   function renderList(force) {
+  // A site has a terrain model when its horizon was computed from LOLA, not from a smooth sphere.
+  const hasModel = (site) => Boolean(site.terrain && site.terrain !== 'none');
+
     const f = lastFrame ?? frame();
     const edu = isEducation();
     const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(','), edu].join('|');
@@ -438,12 +461,19 @@ export function createMission(ctx) {
       const rows = orderedSites()
         .filter((site) => !local.query || `${site.label} ${site.short}`.toLowerCase().includes(local.query))
         .map((site) => ({ site, score: scoreOf(site) }))
-        .sort((a, b) => b.score.both - a.score.both);
-      listEl.innerHTML = rows.length ? rows.map(({ site, score }, rank) => {
+        .sort((a, b) =>
+          (Number(hasModel(b.site)) - Number(hasModel(a.site))) ||
+          (Number(b.score.viable) - Number(a.score.viable)) ||
+          (b.score.score - a.score.score) ||
+          (b.score.both - a.score.both));
+      let viableRank = 0;
+      listEl.innerHTML = rows.length ? rows.map(({ site, score }) => {
         const open = local.open === site.id;
         const isCompared = local.compared.has(site.id);
-        const terrain = !site.terrain || site.terrain === 'none' ? t('no terrain') : site.terrain;
-        const badge = rank < 3 && score.both > 0 ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
+        const hasTerr = hasModel(site);
+        if (hasTerr && score.viable) viableRank++;
+        const terrain = !hasTerr ? t('Reference (smooth sphere)') : site.terrain;
+        const badge = hasTerr && score.viable && viableRank <= 3 ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
         return `<div class="srow${site.id === local.picked ? ' on' : ''}${open ? ' open' : ''}" data-row="${escapeHtml(site.id)}">
           <div class="srow-top">
             <label class="srow-chk" title="${escapeHtml(t('Include in comparison'))}">
@@ -456,7 +486,7 @@ export function createMission(ctx) {
                   <span class="nm">${escapeHtml(site.label)}</span>
                   ${badge}
                 </span>
-                <span class="sub2">${edu ? escapeHtml(plainStatus(f.status.get(site.id))) : `${escapeHtml(t('{n} h lit and linked', { n: score.both }))} (${Math.round((score.both / score.hours) * 100)}%) · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}`}</span>
+                <span class="sub2">${edu ? escapeHtml(plainStatus(f.status.get(site.id))) : `${escapeHtml(t('{score}/100 MCDA', { score: score.score }))} · ${escapeHtml(t('{n} h lit and linked', { n: score.both }))} (${Math.round(score.bothPct)}%) · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}`}</span>
               </span>
               <span class="chev">⌄</span>
             </button>
@@ -832,8 +862,24 @@ export function createMission(ctx) {
     renderDate();
     renderList(full);
     renderLanes(full);
+    renderScenario();
     if (local.mode === '3d') { create3d(); view3d?.request(); } else draw2d();
     ctx.onMissionRefresh?.(chosenSite, lastFrame, local.hour);
+  }
+
+  // The two countdowns that decide a stay, for the picked site, and the way into the map page.
+  function renderScenario() {
+    const el = $('m-scenario'); const f = lastFrame;
+    const site = pickedSite();
+    if (!el || !site || !f) return;
+    const label = (next, setKey, riseWord) => next.kind === 'none'
+      ? escapeHtml(t(next.state ? 'Stays in view' : 'None in this stay'))
+      : next.kind === 'set' ? `${escapeHtml(t(setKey))} ${escapeHtml(dur(next.timeMs - f.ms))}`
+        : `${escapeHtml(t(riseWord))} ${escapeHtml(dur(next.timeMs - f.ms))}`;
+    const sunNext = nextTransition(site, 'sun', f.index);
+    const earthNext = nextTransition(site, 'earth', f.index);
+    el.innerHTML = `<span><i class="dot sun"></i>${label(sunNext, 'Sunset in', 'Sunrise')}</span>`
+      + `<span><i class="dot earth"></i>${label(earthNext, 'Earthset in', 'Earthrise')}</span>`;
   }
 
   function sendProbe() {
