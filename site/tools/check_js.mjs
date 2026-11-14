@@ -1,0 +1,58 @@
+// Cross-check the browser engine against the Python reference. Run: node check_js.mjs
+import { readFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
+import { gunzipSync } from 'node:zlib';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { Ephemeris } from '../js/engine/ephemeris.js';
+import { Site } from '../js/engine/site.js';
+import { windowMetrics, nextTransition } from '../js/engine/metrics.js';
+import { Dem, computeHorizon } from '../js/engine/dem.js';
+
+const dir = new URL('../data/', import.meta.url);
+const buf = readFileSync(new URL('ephemeris.f64', dir));
+const eph = new Ephemeris(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength), JSON.parse(readFileSync(new URL('ephemeris.json', dir))));
+const raw = JSON.parse(readFileSync(new URL('sites.json', dir)));
+const sites = raw.sites.map((s) => new Site({ ...s, mastM: 0.002 }, eph));
+const py = JSON.parse(execFileSync('python3', ['reference_metrics.py', '--json'], { cwd: fileURLToPath(new URL('.', import.meta.url)) }).toString());
+
+let worst = 0;
+const windows = { w30: [eph.indexOf(Date.parse('2026-11-14T00:00:00Z')), 30 * 24], y2027: [eph.indexOf(Date.parse('2027-01-01T00:00:00Z')), 365 * 24] };
+for (const [label, [i0, n]] of Object.entries(windows)) {
+  console.log(`\n${label}   site                 sun% JS/PY      earth% JS/PY     both% JS/PY   maxDark JS/PY`);
+  for (const s of sites) {
+    const m = windowMetrics(s.series, i0, i0 + n), p = py[label][s.id];
+    const d = Math.max(Math.abs(m.sunPct - p.sun_pct), Math.abs(m.earthPct - p.earth_pct), Math.abs(m.bothPct - p.both_pct), Math.abs(m.longestDarkH - p.longest_dark_h) / 10);
+    worst = Math.max(worst, d);
+    assert.ok(d < 1e-9, `${label}/${s.id}: browser/Python metrics differ by ${d}`);
+    assert.equal(m.longestNoCommH, p.longest_nocomm_h, `${label}/${s.id}: Earth gap differs`);
+    console.log(`        ${s.id.padEnd(18)} ${m.sunPct.toFixed(1).padStart(6)}/${p.sun_pct.toFixed(1).padEnd(6)}  ${m.earthPct.toFixed(1).padStart(6)}/${p.earth_pct.toFixed(1).padEnd(6)}  ${m.bothPct.toFixed(1).padStart(6)}/${p.both_pct.toFixed(1).padEnd(6)}  ${String(m.longestDarkH).padStart(4)}/${p.longest_dark_h}`);
+  }
+}
+console.log(`\nworst metric difference JS vs Python: ${worst.toFixed(3)} (pct points; hours/10)`);
+
+const demBuf = gunzipSync(readFileSync(new URL('dem240.i16.gz', dir)));
+const dem = new Dem(new Int16Array(demBuf.buffer, demBuf.byteOffset, demBuf.byteLength / 2), JSON.parse(readFileSync(new URL('dem240.json', dir))));
+console.log('\nBrowser-side skyline (240 m DEM only) vs precomputed skyline');
+for (const s of sites.filter((x) => x.hasTerrain)) {
+  const t0 = performance.now();
+  const r = computeHorizon(dem, s.lat, s.lon, { minRangeM: s.minRangeM });
+  const ms = performance.now() - t0;
+  let maxDiff = 0, sumSq = 0;
+  r.horizon.forEach((v, i) => { const d = Math.abs(v - s.horizonDeg[i]); maxDiff = Math.max(maxDiff, d); sumSq += d * d; });
+  const same = s.terrain === 'LOLA 240 m';
+  if (same) assert.ok(maxDiff < 0.02, `${s.id}: 240 m skyline differs by ${maxDiff}°`);
+  console.log(`  ${s.id.padEnd(17)} ${s.terrain.padEnd(18)} ground ${r.groundM.toFixed(1).padStart(7)} vs ${String(s.groundM).padEnd(7)}  max|diff| ${maxDiff.toFixed(3).padStart(6)}°  rms ${Math.sqrt(sumSq / r.horizon.length).toFixed(3)}°  ${same ? (maxDiff < 0.02 ? 'PASS (same data)' : 'FAIL') : 'info: 40 m near-field vs 240 m only'}  ${ms.toFixed(0)} ms`);
+}
+
+const s = sites.find((x) => x.id === 'shackleton-rim');
+const from = eph.indexOf(Date.parse('2026-11-14T12:00:00Z'));
+console.log('\nShackleton rim, 2026-11-14 12:00Z:');
+for (const w of ['sun', 'earth']) {
+  const nt = nextTransition(s, w, from);
+  console.log(' ', w, nt.kind, nt.timeMs ? new Date(nt.timeMs).toISOString() : '', 'currently visible:', nt.state);
+  assert.notEqual(nt.kind, 'none', `${w}: expected a transition in the data`);
+  const edge = eph.indexOf(nt.timeMs);
+  assert.equal(s.visibleAt(w, edge - 0.001), nt.state, `${w}: wrong state before transition`);
+  assert.notEqual(s.visibleAt(w, edge + 0.001), nt.state, `${w}: no state change at transition`);
+}
