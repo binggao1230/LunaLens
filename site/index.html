@@ -5,20 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0f1113">
+<link rel="stylesheet" href="css/tokens.css">
 <title>LunaLens · Lunar landing site navigator</title>
 <style>
-:root{
-  color-scheme:dark;
-  --page:#0f1113; --surface:#171a1e; --border:#353a42;
-  --text:#f0f1f3; --text2:#c3c7ce; --muted:#a0a7b2; --grid:#292e35;
-  --sun:#f5c542; --earth:#71a9ef;
-  --terrain:#3a3e44; --terrain-line:#a0a7b2;
-  --good:#43d98a; --critical:#ff7373;
-  --warn-bg:#352c17; --warn-text:#f3d58a;
-}
+/* Design tokens (fonts, colours, radii) live in css/tokens.css, linked above. */
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--text);
-  font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  font:15px/1.45 var(--font-sans)}
 main{max-width:1100px;margin:0 auto;padding:12px 12px 48px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:6px 0 10px}
 h1{font-size:22px;margin:0;letter-spacing:.2px}
@@ -32,11 +25,11 @@ h2{font-size:15px;margin:0 0 2px}
 .controls{display:grid;grid-template-columns:1.4fr 1fr;gap:10px 14px}
 .controls label{display:block;font-size:12px;color:var(--text2);margin-bottom:3px}
 select,input[type=date]{width:100%;font:inherit;color:var(--text);background:var(--page);
-  border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-height:40px}
+  border:1px solid var(--border);border-radius:var(--r-control);padding:8px 10px;min-height:40px}
 .timeRow{grid-column:1/-1;display:flex;align-items:center;gap:10px}
 .timeRow input[type=range]{flex:1;min-width:0;accent-color:var(--earth);height:32px}
 button{font:inherit;color:var(--text);background:var(--page);border:1px solid var(--border);
-  border-radius:8px;padding:8px 14px;min-height:40px;cursor:pointer}
+  border-radius:var(--r-control);padding:8px 14px;min-height:40px;cursor:pointer}
 #now{grid-column:1/-1;font-size:13px;color:var(--text2);font-variant-numeric:tabular-nums}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
 .tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px}
@@ -198,7 +191,7 @@ table.bm tr:first-child th{color:var(--text2);font-weight:500}
 .scene-status[hidden]{display:none}
 .scene-gesture{position:absolute;left:12px;bottom:10px;margin:0;font-size:11px;color:#cfcfc8}
 .scene-scale{position:absolute;right:12px;bottom:8px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.6);color:#fff;border-radius:8px;padding:4px 10px;font-size:12px}
-.scene-scale input{width:110px;accent-color:var(--sun)}
+.scene-scale input{width:110px;accent-color:var(--accent)}
 .scene-scale[hidden]{display:none}
 .scene-foot p{margin:8px 0 0;font-size:12px;color:var(--text2)}
 dl.kv{display:grid;grid-template-columns:minmax(120px,220px) 1fr;gap:6px 14px;margin:0;font-size:13px}
@@ -632,7 +625,7 @@ body[data-view=pole] main{max-width:none;padding:0}
       <ul>
         <li>LunaLens is an independent project, not affiliated with or endorsed by NASA. Naming NASA, JPL and mission data identifies sources only.</li>
         <li>Data and coordinate sources are linked above; their provider notices apply. Wikipedia source text is attributed under CC BY-SA 4.0.</li>
-        <li>Fonts: Geist, Geist Mono and Newsreader, SIL Open Font License 1.1.</li>
+        <li>Fonts: Geist and Geist Mono, SIL Open Font License 1.1.</li>
         <li>Three.js r170 and OrbitControls: MIT licence, hosted locally.</li>
         <li>A licence for the LunaLens code has not yet been selected by the team.</li>
       </ul>

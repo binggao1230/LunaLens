@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>LunaLens · UI kit</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/mission.css">
+<link rel="stylesheet" href="css/edu.css">
+<style>
+/* The kit renders the real components with the real stylesheets; only the page scaffold is defined here. */
+body{margin:0;background:var(--page);color:var(--text);font:15px/1.5 var(--font-sans)}
+body[data-view=mission]::before{display:none}
+.kit{max-width:1180px;margin:0 auto;padding:28px 24px 80px}
+.kit-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--hairline);margin-bottom:28px}
+.kit h1{font-weight:300;font-size:28px;letter-spacing:.02em;margin:0}
+.kit h2{font-weight:300;font-size:22px;margin:40px 0 6px;letter-spacing:.01em}
+.kit h2 small{font-size:11px;letter-spacing:var(--tracking);text-transform:uppercase;color:var(--muted);margin-left:12px;vertical-align:middle;font-weight:500}
+.kit .note{color:var(--text2);font-size:14px;margin:0 0 16px;max-width:760px}
+.kit .note code,.kit td code{font-family:var(--font-mono);font-size:12px;background:rgba(255,255,255,.06);padding:1px 6px;border-radius:5px}
+.sw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.sw{border:1px solid var(--hairline);border-radius:var(--r-card);overflow:hidden;background:var(--surface)}
+.sw i{display:block;height:56px}
+.sw b{display:block;font-weight:500;font-size:13px;padding:8px 10px 0}
+.sw span{display:block;font-family:var(--font-mono);font-size:11px;color:var(--muted);padding:2px 10px 9px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:10px 0}
+.type-sample{display:grid;grid-template-columns:180px 1fr;gap:6px 18px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--hairline)}
+.type-sample .label{align-self:center}
+.type-sample .mono-note{font-family:var(--font-mono);font-size:11px;color:var(--muted);grid-column:2}
+.demo{border:1px solid var(--hairline);border-radius:var(--r-card);padding:18px;background:rgba(255,255,255,.02)}
+.demo + .demo{margin-top:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kit table{border-collapse:collapse;width:100%;font-size:13px}
+.kit th,.kit td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--hairline);vertical-align:top}
+.kit th{font-size:11px;letter-spacing:var(--tracking);text-transform:uppercase;color:var(--muted);font-weight:500}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:-1px}
+.mascots{display:flex;flex-wrap:wrap;gap:18px;padding-top:28px}
+.mascots figure{margin:0;text-align:center;width:150px}
+.mascots .edu-char{width:120px;height:120px;margin:0 auto}
+.mascots figcaption{font-size:11px;letter-spacing:var(--tracking);text-transform:uppercase;color:var(--muted);margin-top:8px}
+.kit .srow{max-width:420px}
+.kit .seg-pill{margin:0}
+@media (max-width:760px){.two{grid-template-columns:1fr}.type-sample{grid-template-columns:1fr}.kit{padding:20px 16px 60px}}
+</style>
+</head>
+<body data-view="mission">
+<main class="kit">
+  <header class="kit-head">
+    <div>
+      <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span></b>
+      <h1 style="margin-top:10px">UI kit</h1>
+      <p class="note" style="margin:6px 0 0">Everything on this page is the live component with the live stylesheets. Tokens are defined once in <code>css/tokens.css</code>; if a component here looks wrong, fix the stylesheet, not this page.</p>
+    </div>
+    <div class="seg-pill" id="kit-mode" role="group" aria-label="Preview mode">
+      <button type="button" data-kit-mode="expert" aria-pressed="true">Expert mode</button>
+      <button type="button" data-kit-mode="education" aria-pressed="false">Education mode</button>
+    </div>
+  </header>
+
+  <h2>Type <small>one family</small></h2>
+  <p class="note">Geist for all text, Geist Mono for numbers, coordinates and timestamps. There is no serif face. Labels are small, uppercase and wide-tracked. The wordmark is LUNA · mark · LENS in Geist light.</p>
+  <div class="type-sample"><span class="label">Wordmark</span><b class="brand" style="font-size:28px" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="40" height="40"><span>Lens</span></b><span class="mono-note">Geist 300 · tracking .2em · uppercase</span></div>
+  <div class="type-sample"><span class="label">Display</span><span style="font-weight:300;font-size:30px;line-height:1.1">Pick a landing site</span><span class="mono-note">Geist 300 · 30px</span></div>
+  <div class="type-sample"><span class="label">Heading</span><span style="font-weight:600;font-size:16px">Site locations</span><span class="mono-note">Geist 600 · 16px</span></div>
+  <div class="type-sample"><span class="label">Body</span><span>See which lunar landing sites have sunlight and a direct line of sight to Earth, hour by hour.</span><span class="mono-note">Geist 400 · 15px / 1.5</span></div>
+  <div class="type-sample"><span class="label">Secondary</span><span style="color:var(--text2);font-size:13px">Drag to rotate, scroll to zoom. Not to scale.</span><span class="mono-note">Geist 400 · 13px · --text2</span></div>
+  <div class="type-sample"><span class="label">Label</span><span class="label" style="color:var(--muted)">Landing date (UTC)</span><span class="mono-note">Geist 500 · 11px · tracking .14em · uppercase · --muted</span></div>
+  <div class="type-sample"><span class="label">Numbers</span><span class="num" style="font-size:13px">89.78°S 155.22°W · 14 Nov 2026, 00:00 UTC · 446 h</span><span class="mono-note">Geist Mono · tabular figures</span></div>
+
+  <h2>Colours <small>tokens</small></h2>
+  <p class="note">Amber (<code>--primary</code>) is the one button colour, focus ring and selection colour in both modes. Blue (<code>--accent</code>) is the Education theme: the guide, its panel, the switch wipe. Amber, blue and green are also <em>data</em> colours, meaning Sun, Earth and link.</p>
+  <div class="sw-grid" id="swatches"></div>
+
+  <h2>Buttons <small>pills</small></h2>
+  <p class="note">Primary is the one amber action per screen (Validate, Send probe, Next), the same in Expert and Education mode. Ghost is every other button; small ones use <code>.btn-xs</code>. Both are pills. The mode, language and 3D/2D switches are quiet segmented controls.</p>
+  <div class="demo">
+    <div class="row"><button class="btn-primary">Send probe →</button><button class="btn-primary" disabled>Disabled</button><button class="btn-ghost">Reset view</button><button class="btn-ghost btn-xs">All</button><button class="btn-ghost btn-xs">Clear</button><button>Default control</button></div>
+    <div class="row">
+      <div class="seg-pill" role="group" aria-label="Mode sample"><button type="button" aria-pressed="true">Expert mode</button><button type="button" aria-pressed="false">Education mode</button></div>
+      <div class="seg-pill" role="group" aria-label="Language sample"><button type="button" aria-pressed="true">EN</button><button type="button" aria-pressed="false">FR</button><button type="button" aria-pressed="false">中文</button></div>
+      <div class="mseg"><button class="on">3D</button><button>2D</button></div>
+    </div>
+  </div>
+
+  <h2>Cards and rows <small>surfaces</small></h2>
+  <p class="note">Cards: <code>--surface</code> on <code>--page</code>, 1 px <code>--border</code>, 12 px corners. Selected state: amber border or left bar plus <code>--primary-soft</code> fill; Education mode uses its blue accent for the bar and drops the boxes for hairline dividers.</p>
+  <div class="two">
+    <div class="demo">
+      <div class="label" style="margin-bottom:10px">Site row</div>
+      <div class="srow on"><div class="srow-top"><button type="button" style="padding-left:12px"><span class="dotc" style="background:var(--good)"></span><span style="flex:1;min-width:0"><span class="srow-title"><span class="nm">Nobile rim crest</span><span class="badge">Recommended</span></span><span class="sub2">446 h lit and linked (63%) · 84.66°S 39.45°E</span></span></button></div></div>
+      <div class="srow" style="margin-top:6px"><div class="srow-top"><button type="button" style="padding-left:12px"><span class="dotc" style="background:var(--shadow)"></span><span style="flex:1;min-width:0"><span class="srow-title"><span class="nm">IM-2 Athena · Mons Mouton</span></span><span class="sub2">381 h lit and linked (54%) · 84.79°S 29.20°E</span></span></button></div></div>
+    </div>
+    <div class="demo">
+      <div class="label" style="margin-bottom:10px">Status and badges</div>
+      <table>
+        <tr><th>Meaning</th><th>Token</th><th>Where</th></tr>
+        <tr><td><i class="dot" style="background:var(--good)"></i>Earth link available</td><td><code>--good</code></td><td>site dots, lanes</td></tr>
+        <tr><td><i class="dot" style="background:var(--sun)"></i>Sunlit, no Earth link</td><td><code>--sun</code></td><td>site dots, Sun track</td></tr>
+        <tr><td><i class="dot" style="background:var(--earth)"></i>Earth</td><td><code>--earth</code></td><td>Earth track, link lanes</td></tr>
+        <tr><td><i class="dot" style="background:var(--both)"></i>Sun and Earth together</td><td><code>--both</code></td><td>lanes</td></tr>
+        <tr><td><i class="dot" style="background:var(--shadow)"></i>In shadow</td><td><code>--shadow</code></td><td>site dots</td></tr>
+        <tr><td><i class="dot" style="background:var(--critical)"></i>Blocked / not safe</td><td><code>--critical</code></td><td>tiles, verdict chip</td></tr>
+        <tr><td><span class="badge">Recommended</span></td><td><code>--sun</code> chip</td><td>site list</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h2>Form controls <small>inputs</small></h2>
+  <div class="demo">
+    <div class="row">
+      <label class="label" style="display:flex;flex-direction:column;gap:6px">Landing date (UTC)<input type="date" value="2026-11-14" style="font:inherit;color:var(--text);background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:var(--r-control);padding:8px 10px;min-height:40px;color-scheme:dark"></label>
+      <label class="label" style="display:flex;flex-direction:column;gap:6px">Stay length<select style="font:inherit;color:var(--text);background:var(--page);border:1px solid var(--border);border-radius:var(--r-control);padding:8px 10px;min-height:40px"><option>1 lunar day</option><option>14 Earth days</option></select></label>
+      <label class="label" style="display:flex;flex-direction:column;gap:6px;min-width:220px">Time<input type="range" min="0" max="709" value="200" style="accent-color:var(--accent)"></label>
+      <label class="srow-chk" style="padding:0"><input type="checkbox" class="site-chk" checked aria-label="Compare"></label>
+      <input type="search" placeholder="Search sites" style="font:inherit;color:var(--text);background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:var(--r-control);padding:9px 12px;min-height:40px">
+    </div>
+  </div>
+
+  <h2>Mascot <small>guide</small></h2>
+  <p class="note">The guide uses the team's three traced poses (<code>assets/mascot/</code>). Talking is the default, cheering is celebrating, alert is worried; sleeping dims the talking pose.</p>
+  <div class="mascots" id="mascots"></div>
+
+  <h2>Rules <small>keep it consistent</small></h2>
+  <table>
+    <tr><th>Do</th><th>Don't</th></tr>
+    <tr><td>Use <code>var(--primary)</code> for anything pressable or selected; <code>var(--accent)</code> only for the Education theme.</td><td>Give a button a colour of its own, or make Education's primary button differ from Expert's.</td></tr>
+    <tr><td>Use <code>var(--font-sans)</code> and <code>var(--font-mono)</code>; inherit from <code>body</code>.</td><td>Add a new font family or a serif title.</td></tr>
+    <tr><td>Write the name as LunaLens, and use the wordmark component for the logo.</td><td>Write "Luna Lens" or set the name in another style.</td></tr>
+    <tr><td>Pills for buttons and toggles; <code>--r-card</code> for cards; <code>--r-control</code> for inputs.</td><td>Mix 7, 8, 9 and 10 px corners on controls.</td></tr>
+    <tr><td>Keep Sun amber, Earth blue, link green, shadow grey as data colours.</td><td>Reuse a data colour to decorate.</td></tr>
+  </table>
+</main>
+<script type="module">
+  import { CHARACTER_MARKUP } from './js/edu/character.js';
+  const names = ['page','surface','surface-2','border','text','text2','muted','primary','primary-ink','accent','accent-ink','sun','earth','good','both','critical','shadow','warn-bg','warn-text'];
+  const css = getComputedStyle(document.documentElement);
+  document.getElementById('swatches').innerHTML = names.map((n) => {
+    const v = css.getPropertyValue(`--${n}`).trim();
+    return `<div class="sw"><i style="background:${v};border-bottom:1px solid var(--hairline)"></i><b>--${n}</b><span>${v}</span></div>`;
+  }).join('');
+  document.getElementById('mascots').innerHTML = ['happy','celebrating','worried','sleeping'].map((m) => `<figure><div class="edu-char mood-${m}">${CHARACTER_MARKUP}</div><figcaption>${m}</figcaption></figure>`).join('');
+  const toggle = document.getElementById('kit-mode');
+  toggle.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-kit-mode]'); if (!b) return;
+    document.body.classList.toggle('edu-on', b.dataset.kitMode === 'education');
+    for (const x of toggle.querySelectorAll('button')) x.setAttribute('aria-pressed', String(x === b));
+    document.getElementById('swatches').innerHTML = ''; // re-read the tokens the theme may override
+    const css2 = getComputedStyle(document.body);
+    document.getElementById('swatches').innerHTML = names.map((n) => { const v = css2.getPropertyValue(`--${n}`).trim(); return `<div class="sw"><i style="background:${v};border-bottom:1px solid var(--hairline)"></i><b>--${n}</b><span>${v}</span></div>`; }).join('');
+  });
+</script>
+</body>
+</html>
