@@ -49,6 +49,21 @@ What to look at:
 - Each block has a small label saying **who builds it**.
 - **Build map** (top right) shows who does what and when. It is a planning page and will be removed before the demo.
 
+## Online version
+
+https://luna-lens.gaobing1230.workers.dev
+
+Today this serves the layout prototype. It is behind an email check (Cloudflare Access): enter your email, receive
+a one-time code, and you are in for a week. Only emails on the team list are accepted; ask Bing to add yours.
+
+Publishing is done by Bing from the repository root, with Wrangler logged in to the Cloudflare account:
+
+```
+npx wrangler deploy
+```
+
+What gets published is set in `wrangler.jsonc` (the `prototype/` folder for now). Background: `doc/PLAN.md` §2.5.
+
 ## Find your work
 
 1. Open `team/<your-name>/README.md`: what you own, what you give to and need from others, how to work.

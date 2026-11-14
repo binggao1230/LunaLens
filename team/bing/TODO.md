@@ -43,6 +43,7 @@ the team sees your progress. How to work: `README.md` in this folder.
 - [ ] Project page text
 - [ ] Record the video with Zeynep
 - [ ] Remove the Build map page and owner labels from anything shown publicly
+- [ ] Open the site to judges: remove the Cloudflare Access email check on `luna-lens.gaobing1230.workers.dev`, only after the line above is done
 - [ ] Submit 2 hours before the deadline
 
 ## Blocked / questions
