@@ -2,6 +2,7 @@ import { loadEphemeris } from './engine/ephemeris.js';
 import { Site } from './engine/site.js';
 import { loadDem, computeHorizon } from './engine/dem.js';
 import { t, getLanguage, setLanguage, initTranslations, applyTranslations } from './i18n.js';
+import './team-messages.js';
 import { escapeHtml, fmtLatLon, utcMidnight } from './format.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, DAY = 864e5, HOUR = 36e5;
@@ -521,6 +522,10 @@ function bind() {
     renderSettings();
   };
   $('compare').onclick = (e) => { const b = e.target.closest('.row'); if (b) selectSite(+b.dataset.k); };
+  $('lang').onchange = (e) => {
+    setLanguage(e.target.value); applyTranslations(); hideTip(); renderAll(); renderSources();
+    if (scene3d) render3d();
+  };
 
   $('pano').addEventListener('pointermove', (e) => {
     const p = layout.pano, b = $('pano').getBoundingClientRect(), x = e.clientX - b.left;
@@ -581,6 +586,7 @@ async function start() {
   SITES = siteData.sites.map((raw) => makeSite(raw));
   const first = SITES.findIndex((s) => s.id === DEFAULT_SITE);
   state.site = first >= 0 ? first : 0;
+  $('lang').value = getLanguage();
   initTranslations();
   bind();
   setLanding(Date.now());
