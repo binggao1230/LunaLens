@@ -58,7 +58,7 @@ export function createPlan(env) {
   const state = { layer: 'sun_now', cx: 0, cy: 0, scale: 1, pins: [], sun: null, drag: null };
   const view = { w: 1, h: 1, dpr: 1 };
   const images = new Map(), tinted = new Map();
-  let canvas, g, frame = 0, heightData = null, sunCanvas = null, sunKey = '', drawing = false;
+  let canvas, g, frame = 0, sunCanvas = null, sunKey = '', drawing = false;
 
   root.innerHTML = `
     <div class="plan">
@@ -115,7 +115,7 @@ export function createPlan(env) {
   }
 
   async function ensure(layer) {
-    if (layer.id === 'sun_now') { buildSun(); return; }
+    if (layer.id === 'sun_now') { await ensureHeightGrid(); buildSun(); return; }
     const img = imageFor(layer);
     if (!img) return;
     if (!(img.complete && img.naturalWidth)) await new Promise((res) => { img.onload = res; img.onerror = res; });
@@ -134,7 +134,6 @@ export function createPlan(env) {
       // layer reads as relief rather than as a flat grey field.
       const h = new Float32Array(TINT * TINT);
       for (let i = 0, p = 0; i < px.length; i += 4, p++) h[p] = (px[i] * 256 + px[i + 1]) * 0.5 - 10000;
-      heightData = h;
       const scale = 0.4;
       for (let y = 0; y < TINT; y++) {
         for (let x = 0; x < TINT; x++) {
@@ -171,31 +170,77 @@ export function createPlan(env) {
     return c;
   }
 
+  // The surface height in metres, decoded once from the same 16-bit RGBA raster the Height layer uses.
+  let heightGrid = null;
+  async function ensureHeightGrid() {
+    if (heightGrid) return heightGrid;
+    const img = imageFor(LAYERS.find((l) => l.id === 'height'));
+    if (img && !(img.complete && img.naturalWidth)) await new Promise((res) => { img.onload = res; img.onerror = res; });
+    if (!img) return null;
+    const c = document.createElement('canvas');
+    c.width = c.height = TINT;
+    const cx = c.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(img, 0, 0, TINT, TINT);
+    const data = cx.getImageData(0, 0, TINT, TINT).data;
+    heightGrid = new Float32Array(TINT * TINT);
+    for (let i = 0, n = 0; i < data.length; i += 4, n++) {
+      heightGrid[n] = data[i + 3] === 0 ? NaN : (data[i] * 256 + data[i + 1]) * 0.5 - 10000;
+    }
+    return heightGrid;
+  }
+
+  // Sun now: Lambertian shading of the real relief against the Sun, so the terminator is a gradient
+  // rather than a mask, and slopes facing away go dark while slopes facing the Sun catch the light.
+  // A small ambient (about 9 %) keeps the night side readable instead of pure black.
   function buildSun() {
-    if (!state.sun) return;
+    if (!state.sun || !heightGrid) return;
     const key = state.sun.join(',');
     if (key === sunKey && sunCanvas) return;
     sunKey = key;
     const [slat, slon] = state.sun;
-    const la = (slat * Math.PI) / 180, lo = (slon * Math.PI) / 180;
-    const s = [Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la)];
+    const sla = (slat * Math.PI) / 180, slo = (slon * Math.PI) / 180;
+    const sx = Math.cos(sla) * Math.cos(slo), sy = Math.cos(sla) * Math.sin(slo), sz = Math.sin(sla);
+    const pixelM = (2 * HALF_KM * 1000) / TINT;
     const c = document.createElement('canvas');
     c.width = c.height = TINT;
     const cx = c.getContext('2d');
     const data = cx.createImageData(TINT, TINT);
     const px = data.data;
+    const H = (x, y) => {
+      const xc = Math.min(TINT - 1, Math.max(0, x)), yc = Math.min(TINT - 1, Math.max(0, y));
+      const v = heightGrid[yc * TINT + xc];
+      return Number.isFinite(v) ? v : 0;
+    };
     for (let y = 0; y < TINT; y++) {
       for (let x = 0; x < TINT; x++) {
+        const o = (y * TINT + x) * 4;
         const xKm = -HALF_KM + ((x + 0.5) / TINT) * 2 * HALF_KM;
         const yKm = HALF_KM - ((y + 0.5) / TINT) * 2 * HALF_KM;
-        const r = Math.hypot(xKm, yKm);
-        if (r > HALF_KM) continue;
-        const lat = (2 * Math.atan(r / (2 * R_KM)) * 180) / Math.PI - 90;
+        if (Math.hypot(xKm, yKm) > HALF_KM) continue;
+        const lat = (2 * Math.atan(Math.hypot(xKm, yKm) / (2 * R_KM)) * 180) / Math.PI - 90;
         const lon = (Math.atan2(xKm, yKm) * 180) / Math.PI;
-        const ca = Math.cos((lat * Math.PI) / 180);
-        const dot = ca * Math.cos((lon * Math.PI) / 180) * s[0] + ca * Math.sin((lon * Math.PI) / 180) * s[1] + Math.sin((lat * Math.PI) / 180) * s[2];
-        const o = (y * TINT + x) * 4;
-        if (dot < 0) { px[o] = 6; px[o + 1] = 8; px[o + 2] = 14; px[o + 3] = 125; }
+        const la = (lat * Math.PI) / 180, lo = (lon * Math.PI) / 180;
+        // Local east / north / up at this cell, and the Sun in that frame.
+        const ex = -Math.sin(lo), ey = Math.cos(lo), ez = 0;
+        const nx = -Math.sin(la) * Math.cos(lo), ny = -Math.sin(la) * Math.sin(lo), nz = Math.cos(la);
+        const ux = Math.cos(la) * Math.cos(lo), uy = Math.cos(la) * Math.sin(lo), uz = Math.sin(la);
+        const sE = sx * ex + sy * ey + sz * ez;
+        const sN = sx * nx + sy * ny + sz * nz;
+        const sU = sx * ux + sy * uy + sz * uz;
+        // Terrain normal: the raster's row 0 is maximum y, so the y gradient flips sign.
+        const dzdx = (H(x + 1, y) - H(x - 1, y)) / (2 * pixelM);
+        const dzdy = -(H(x, y + 1) - H(x, y - 1)) / (2 * pixelM);
+        const len = Math.hypot(dzdx, dzdy, 1);
+        const dot = (-dzdx * sE - dzdy * sN + sU) / len;
+        const lit = Math.max(0, dot);
+        // The pole never gets more than about 2° of Sun, so N·L sits near 0.03 and a linear ramp would
+        // be black. An exposure curve (1 - e^-14·N·L) lifts the grazing light without inventing any:
+        // it is a tone map, not extra illumination. 8 % ambient keeps the night side readable.
+        const shade = 255 * (0.08 + 0.92 * (1 - Math.exp(-14 * lit)));
+        px[o] = shade;
+        px[o + 1] = shade * 0.985;
+        px[o + 2] = shade * 0.95;
+        px[o + 3] = 255;
       }
     }
     cx.putImageData(data, 0, 0);
@@ -224,9 +269,11 @@ export function createPlan(env) {
     g.fillStyle = '#05070a';
     g.fillRect(0, 0, view.w, view.h);
     const layer = LAYERS.find((l) => l.id === state.layer) || LAYERS[0];
-    if (tinted.get('height')) drawRaster(tinted.get('height'), 1);
     if (layer.id === 'sun_now') { buildSun(); if (sunCanvas) drawRaster(sunCanvas, 1); }
-    else if (layer.id !== 'height' && tinted.get(layer.id)) drawRaster(tinted.get(layer.id), 0.94);
+    else {
+      if (tinted.get('height')) drawRaster(tinted.get('height'), 1);
+      if (layer.id !== 'height' && tinted.get(layer.id)) drawRaster(tinted.get(layer.id), 0.94);
+    }
     if (layer.id !== 'sun_now') graticule();
     markers();
     pins();
@@ -478,7 +525,7 @@ export function createPlan(env) {
 
   // One line under the map that says what the colours mean, including the night half of Sun now.
   const NOTES = {
-    sun_now: 'Dark is the night side at this hour. The edge is the terminator from the Sun\u2019s position; cast shadows are not drawn yet.',
+    sun_now: 'Bright ground faces the Sun; dark ground does not. At the pole the Sun sits only about two degrees above the horizon, so a slight slope decides. Cast shadows are not drawn yet.',
     sun_avg: 'Share of the time the Sun is visible, averaged over 18.6 years (NASA GSFC). Brighter is more often lit.',
     earth_avg: 'Share of the time Earth is visible, averaged over 18.6 years (NASA GSFC). Bright blue is a clear view.',
     psr: 'Blue ground never sees the Sun: cold enough for water ice to survive.',
