@@ -463,7 +463,18 @@ function bind() {
     setCustom(la, lon360(lo));
   };
   document.querySelectorAll('[data-nav] button').forEach((b) => { b.onclick = () => showView(b.dataset.view); });
-  document.querySelectorAll('[data-link]').forEach((b) => { b.onclick = () => { location.href = b.dataset.link; }; });
+  // The Atlas page is its own application; it reads a share hash holding the pinned site and the
+  // clock. Hand it what this page currently shows so the two do not open on different days.
+  const atlasUrl = () => {
+    const s = SITES[state.site];
+    if (!s) return 'atlas/index.html';
+    const lon = s.lon > 180 ? s.lon - 360 : s.lon;
+    const q = new URLSearchParams();
+    q.set('s', `${s.lat.toFixed(4)},${lon.toFixed(4)},${s.short || s.id || 'site'}`);
+    q.set('t', `${new Date(state.landing).toISOString().slice(0, 16)}Z`);
+    return `atlas/index.html#${q.toString()}`;
+  };
+  document.querySelectorAll('[data-link]').forEach((b) => { b.onclick = () => { location.href = b.dataset.link === 'atlas/index.html' ? atlasUrl() : b.dataset.link; }; });
   document.addEventListener('click', (e) => {
     const g = e.target.closest('[data-go]'); if (g) return showView(g.dataset.go);
     const f = e.target.closest('button[data-fake]'); if (f) toast(t('Not built yet. ') + t(f.dataset.fake), 4500);
