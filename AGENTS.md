@@ -12,50 +12,31 @@ The workspace rules in `../AGENTS.md` also apply; where they conflict, this file
 
 ## What this project is
 
-A NASA challenge entry: a tool for rapidly comparing Sun and Earth positions relative to the horizon at lunar landing sites, with the south pole as the focus.
-Team of 7, roughly 2 days. Current stage: **early planning, no code yet**.
+A NASA Space Apps entry: a tool for rapidly comparing Sun and Earth positions relative to the horizon at lunar landing sites and dates, with the south pole as the focus.
 
-- Challenge text: `doc/Background.md`, `doc/Resources.md` (official content; do not rewrite)
-- Product plan: `doc/PRODUCT.md` (what we build: features, tiers, acceptance checks, minimum bar, out of scope)
-- Build plan: `doc/PLAN.md` (technical approach, roadmap, pitfalls, resources)
-- 3D plan: `doc/PLAN_3D.md` (the south-pole 3D navigator: decisions, data, milestones, acceptance checks)
-- Work plan: `doc/WORKPLAN.md` (layout, code structure, interfaces, the seven work packages and their task lists)
-- On features and tiers `PRODUCT.md` wins; on everything else `PLAN.md` is the source of truth. On who owns what and on interfaces `WORKPLAN.md` wins. Change the document first, then the code.
-
-## Read before starting work
-
-**The per-person work plans are retired.** `archive/team/` keeps them for history only; do not follow them or add to them. Work is tracked in pull requests, and the plan documents below say what to build.
-
-1. Read `doc/PRODUCT.md` §4–§6 (features, minimum bar, out of scope) and `doc/PLAN.md` §0, §2.4 (API contract), §4 (pitfalls). Then find your role in `doc/WORKPLAN.md` §5.
-2. If the work is not a feature in `PRODUCT.md`, add it there before starting. Do not expand scope silently.
-3. After the H36 feature freeze, fix bugs only; add no features.
+- **The challenge text is the measure**: `doc/Background.md` and `doc/Resources.md` (official content; do not rewrite). When a plan, a habit or an idea disagrees with them, they win.
+- **`site/` is the product**, the only build: a static site with the engine in the browser. `backend/` is a Python reference for the window rules, used by `site/tools/check_team.mjs`; `web/` holds only mock files. Neither is deployed.
+- **`TODO.md` says what to do next.** If the work is not there, add it there before starting. Do not expand scope silently.
+- `archive/` is history: the early plan documents (`archive/doc/`) and the per-person folders (`archive/team/`). Do not follow them or add to them.
 
 ## Directory layout
 
 ```
-doc/                  PRODUCT.md, PLAN.md, WORKPLAN.md, challenge text
-backend/lunalens/     Python package: ephem/, terrain/, windows/, api/
-backend/scripts/      data download, map assets, precompute, validation
-backend/tests/        includes the Horizons regression fixture and the DEM projection check
-web/                  frontend (Vite + React + TS): app/, state/, api/, ui/, lib/, features/*
-data/                 DEMs, SPICE kernels, intermediates — not in Git
-archive/team/         retired per-person plans, history only
-design/               exported screens, logo, slides
-site/                 the published static site (real engine); site/data/ is not in git
+doc/                  the challenge text, nothing else
+site/                 the published static site; site/data/ is not in git
+site/js/engine/       ephemeris, DEM, site skyline, geometry, metrics
+site/js/views/        the pages and the 3D scenes
+site/tools/           local server, checks, data scripts
+backend/              Python reference for the window rules, with tests
+archive/              retired plans, history only
+design/               exported screens and check screenshots
 ```
-
-File-level structure and the owner of each directory are in `doc/WORKPLAN.md` §3. Follow it:
-
-- One owner per directory. Change another owner's directory through them or a reviewed pull request.
-- `web/src/features/*` do not import each other; they share through `state/`, `api/`, `ui/`, `lib/`.
-- Backend layers go one way: `api → windows → (ephem, terrain)`.
-- `backend/lunalens/api/schemas.py` is the API contract; `web/src/api/types.ts` is generated from it and never edited by hand.
 
 The frontend must be responsive and usable in a phone browser; check every UI change at a narrow width (about 390 px) as well as on desktop.
 
 ## Hard data conventions
 
-Changing any of these requires updating `doc/PLAN.md` §2.4 and `doc/WORKPLAN.md` §4 and notifying everyone.
+Changing any of these means telling everyone first.
 
 - Longitude: east-positive, range 0–360. Latitude: south is negative. Angles in degrees.
 - Azimuth: clockwise from north (north 0 → east 90).
@@ -66,7 +47,7 @@ Changing any of these requires updating `doc/PLAN.md` §2.4 and `doc/WORKPLAN.md
 
 ## Correctness rules
 
-- After any change to ephemeris code, run the Horizons regression test (fixture in `doc/PLAN.md` §2.2).
+- After any change to ephemeris code, run `node site/tools/check_js.mjs` and `python3 site/tools/check_ephemeris_svs.py`. The Horizons fixture is: lunar surface observer at 222.69°E, 89.45°S, 0 km, target Earth, 2027-01-01 00:00 UT → Az 144.4607°, El −6.6957°.
 - "Wrong result, no error" is the most dangerous failure in this project. Any change touching projection, coordinate frames, or units must come with a check that can be verified by eye (a known feature, a known value).
 - Factual content such as site coordinates, physical constants, and dataset descriptions must carry a source. Anything from memory and not checked must be marked "unverified". Do not invent citations, URLs, or values.
 - If something cannot be verified, say you do not know rather than giving a specific-looking guess.
@@ -85,7 +66,6 @@ Changing any of these requires updating `doc/PLAN.md` §2.4 and `doc/WORKPLAN.md
 - Do not commit: large files under `data/`, secrets, `.env`, build output, `node_modules`.
 - Data is reproduced through download scripts in `scripts/`, each stating its source URL.
 - Remote: `git@github.com:binggao1230/LunaLens.git`. Nobody commits to `main` directly; work on a branch and open a pull request as described in `CONTRIBUTING.md`. Do not force-push `main`.
-- When changing the API contract or scope in `doc/PLAN.md`, start the commit message with `plan:` so others can find it.
 
 ## Actions that need human confirmation
 

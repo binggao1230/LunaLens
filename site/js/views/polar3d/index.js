@@ -1,4 +1,4 @@
-// The Mission page's 3D scene. Moved out of mission.js in milestone M0 of doc/PLAN_3D.md with behaviour
+// The Mission page's 3D scene. Moved out of mission.js in milestone M0 of archive/doc/PLAN_3D.md with behaviour
 // unchanged; M1 replaces the sphere with the polar cap. Deps come from the caller so this module owns no
 // state that the list, the 2D map or the probe flight also need.
 export async function createPolar3d(env) {

@@ -27,9 +27,4 @@ node tools/check_team.mjs    # browser rules vs. backend/lunalens/windows on the
 
 ## Not done
 
-- Map overlays and the scenario tray (add, duplicate, remove) are placeholders with dashed borders.
-- Mast height is fixed at 2 m; preset horizons are precomputed for that height.
-- No comparison with the PGDA illumination map.
-- Points north of 75°S have no terrain and use a smooth sphere.
-- Site groups use the `group` field of `sites.json`, not the API `category` that the site picker contract expects.
-- `js/app.js` still contains the unused planning-page tables (`renderBuild`).
+See the root `TODO.md`.

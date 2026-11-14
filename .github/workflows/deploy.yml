@@ -1,5 +1,5 @@
 # Deploy the static site to Cloudflare Workers on every push to main.
-# See doc/PLAN.md §2.5. site/ carries the code; its data/ folder is 34 MB and stays out of git,
+# See archive/doc/PLAN.md §2.5. site/ carries the code; its data/ folder is 34 MB and stays out of git,
 # so the release holding it is downloaded and unpacked here before Wrangler runs.
 name: Deploy to Cloudflare
 

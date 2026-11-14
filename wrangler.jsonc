@@ -1,4 +1,4 @@
-// Cloudflare deployment of the static site (free plan). See doc/PLAN.md §2.5.
+// Cloudflare deployment of the static site (free plan). See archive/doc/PLAN.md §2.5.
 // Publishes site/, the real-engine build. Its data/ folder is not in git: the deploy workflow
 // downloads it from the lunalens-snapshot-2026-11-14 release before running Wrangler.
 {
