@@ -41,9 +41,11 @@ A pull request is how the rest of the team hears about a change.
 
 **`main` needs one approving review from a lead.** `.github/CODEOWNERS` names `binggao1230` and
 `wangchenlin0501`, and `main` requires a code-owner review, so nothing lands without one of them
-reading it. GitHub does not let anyone approve their own pull request: a lead's own pull request waits for
-the other lead, or goes in through the admin override (`gh pr merge <n> --squash --admin`), which is how
-the two leads merge. Approvals are dismissed when new commits are pushed, so approve last.
+reading it. GitHub does not let anyone approve their own pull request, so a lead's own pull request waits
+for the other lead — except for `binggao1230`, the repository owner, who can force it with
+`gh pr merge <n> --squash --admin`. GitHub only gives that escape to the owner of a personal repository;
+`wangchenlin0501` has no equivalent until the repository moves to an organisation. Approvals are dismissed
+when new commits are pushed, so approve last.
 
 A change to files someone else is working in waits for their word in the thread.
 
