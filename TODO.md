@@ -94,4 +94,8 @@ alternative dates at the same site". The second half is what the product cannot 
   keep. The Atlas page already carries 41 past, failed and planned missions with their own terrain patches, so a
   judge comparing the two entries sees the full field; the Data page states that those coordinates have not been
   re-sourced. Adding them to our list stays worth doing once each pair is checked against a primary source.
-- Test on real phones: iOS Safari and one Android.
+- **Phone pass: engine-level done, hardware outstanding.** Plan, Compare and the framed Atlas were driven at
+  390 x 844 with touch in Chrome and again in WebKit (the engine behind iOS Safari): no horizontal overflow, WebGL 2
+  present, the Atlas frame renders its canvas, and neither run logged a console error. What is left needs a person:
+  open the three pages on one iOS and one Android device and check the address bar, the back gesture and the map's
+  pinch zoom.
