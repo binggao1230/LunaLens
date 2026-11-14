@@ -217,16 +217,16 @@ export function createMission(ctx) {
 
   function buildMission() {
     missionEl.innerHTML = `<div class="mission">
+      <section class="glass datebar"><label for="m-date" id="m-datelabel"></label>
+        <button class="btn-ghost" id="m-prev">‹</button><input type="date" id="m-date"><button class="btn-ghost" id="m-next">›</button><button class="btn-ghost" id="m-today"></button>
+        <button id="m-play"></button><input type="range" id="m-time" min="0" max="${SPAN}" step="1" value="0"><span class="when" id="m-when"></span></section>
       <div>
-        <section class="glass datebar"><label for="m-date" id="m-datelabel"></label>
-          <button class="btn-ghost" id="m-prev">‹</button><input type="date" id="m-date"><button class="btn-ghost" id="m-next">›</button><button class="btn-ghost" id="m-today"></button></section>
         <section class="glass stage" id="m-stage">
           <canvas id="m-3d" aria-label="3D Moon"></canvas><canvas id="m-2d" aria-label="2D Moon" hidden></canvas>
           <div class="overlay-tl"><div><h2 id="m-title"></h2><div class="hint" id="m-hint"></div><div class="mseg" id="m-flat" style="margin-top:10px"><button data-flat="pole"></button><button data-flat="moon"></button></div></div>
             <div style="display:flex;gap:8px;align-items:center"><button class="btn-ghost" id="m-reset"></button><div class="mseg" id="m-seg"><button data-mode="3d"></button><button data-mode="2d"></button></div></div></div>
           <div class="legend2" id="m-legend"></div><div class="m-readout" id="m-readout"></div><div class="note2" id="m-note" hidden></div><div class="zoom2" id="m-zoom"><button id="m-zout" aria-label="−">−</button><button id="m-zin" aria-label="+">+</button></div><div class="site-label" id="m-label"></div>
         </section>
-        <section class="glass timebar"><button id="m-play"></button><input type="range" id="m-time" min="0" max="${SPAN}" step="1" value="0"><span class="when" id="m-when"></span></section>
         <section class="glass lanes" id="m-lanes"></section>
       </div>
       <aside class="glass side-panel">
