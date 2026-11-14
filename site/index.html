@@ -97,6 +97,11 @@ main{max-width:1280px;padding:12px}
 .chip{white-space:nowrap;border-radius:99px;padding:6px 12px;min-height:34px;font-size:13px}
 .chip.on{border-color:var(--earth);font-weight:650}
 .chip.ghost{border-style:dashed;color:var(--text2)}
+.chip-wrap{display:inline-flex;align-items:stretch}
+.chip-wrap .chip{border-top-right-radius:0;border-bottom-right-radius:0}
+.chip-x{min-height:34px;padding:0 9px;border:1px solid var(--border);border-left:0;border-radius:0 99px 99px 0;
+  background:var(--surface);color:var(--muted);font-size:14px;line-height:1}
+.chip-x:hover{color:var(--critical);border-color:var(--critical)}
 .view{display:none}
 body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=data] #v-data,body[data-view=build] #v-build,body[data-view=atlas] #v-atlas,body[data-view=plan] #v-plan{display:block}
 #v-atlas{height:calc(100svh - 57px)}

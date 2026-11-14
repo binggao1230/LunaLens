@@ -32,6 +32,9 @@ const $ = (id) => document.getElementById(id);
 const state = {
   site: 0, landing: 0, hour: 0, timer: null, stayKey: 'lunar1', margin: 2,
   slipMinDays: 5, slipNeedLink: true, slipMetric: 'sun', version: 0,
+  // A scenario is one site on one landing date. Compare rows and the header tray both read this
+  // list, so "the same site nine days later" is a row like any other.
+  scenarios: [], scenario: 0,
 };
 const layout = { pano: null, tl: null, slip: null };
 let eph, SITES = [], sims = [], mission = null;
@@ -71,8 +74,8 @@ function diskFrac(h) {
   return 1 - (Math.acos(x) - x * Math.sqrt(1 - x * x)) / Math.PI;
 }
 
-function simulate(site) {
-  const series = site.series, base = Math.round(eph.indexOf(state.landing)), n = SIM_H + 1;
+function simulate(site, landingMs = state.landing) {
+  const series = site.series, base = Math.round(eph.indexOf(landingMs)), n = SIM_H + 1;
   const r = {
     sAz: new Float32Array(n), sEl: new Float32Array(n), frac: new Float32Array(n),
     eAz: new Float32Array(n), eEl: new Float32Array(n), comm: new Uint8Array(n),
@@ -190,10 +193,11 @@ function renderTimeline() {
 
 function renderCompare() {
   const hours = stayH();
-  $('compare').innerHTML = SITES.map((s, k) => {
-    const r = sims[k];
-    return `<button class="row${k === state.site ? ' sel' : ''}" data-k="${k}">
-      <div><div class="nm">${escapeHtml(s.label)}</div><div class="co">${escapeHtml(s.tagText)} · ${coordText(s)}</div></div>
+  $('compare').innerHTML = state.scenarios.map((x, k) => {
+    const s = SITES[x.site];
+    const r = simulate(s, x.landing);
+    return `<button class="row${k === state.scenario ? ' sel' : ''}" data-scenario="${k}">
+      <div><div class="nm">${escapeHtml(s.label)} · ${scenarioDate(x)}</div><div class="co">${escapeHtml(s.tagText)} · ${coordText(s)}</div></div>
       <svg viewBox="0 0 ${hours} 30" preserveAspectRatio="none" aria-hidden="true">${strip(r, 0, 1, 0, 13)}${stripComm(r, 0, 1, 17, 13)}
         <rect x="${state.hour - 1}" y="0" width="2.5" height="30" fill="var(--text)"/></svg>
       <div class="nums"><div><b>${r.litPct.toFixed(0)}%</b>${t('sunlit')}</div><div><b>${r.commPct.toFixed(0)}%</b>${t('Earth link')}</div><div><b>${fmtDur(r.longest)}</b>${t('longest sun')}</div></div>
@@ -304,8 +308,12 @@ function fillSelect() {
   $('sitelist').innerHTML = orderedSites().map(([s, k]) => `<button class="site${k === state.site ? ' sel' : ''}" data-k="${k}"><b>${escapeHtml(s.label)}</b><span>${escapeHtml(s.tagText)} · ${coordText(s)}</span></button>`).join('');
   const s = SITES[state.site];
   $('clat').value = s.lat.toFixed(2); $('clon').value = lon360(s.lon).toFixed(2);
-  $('tray').innerHTML = `<button class="chip on">${escapeHtml(s.short)} · ${new Date(state.landing).toISOString().slice(0, 10)}</button>` +
-    `<button class="chip ghost" data-fake="Adds another site + date to compare, up to four. Tapping a chip makes that scenario the active one in every view.">${t('+ Add scenario')}</button>`;
+  $('tray').innerHTML = state.scenarios.map((x, i) =>
+    `<span class="chip-wrap"><button class="chip${i === state.scenario ? ' on' : ''}" data-scenario="${i}">${escapeHtml(scenarioLabel(x))}</button>`
+    + `<button class="chip-x" data-drop="${i}" aria-label="${escapeHtml(t('Remove scenario'))}">×</button></span>`).join('')
+    + `<button class="chip ghost" data-add="current">${escapeHtml(t('+ Add scenario'))}</button>`
+    + `<button class="chip ghost" data-add="date">${escapeHtml(t('+14 d'))}</button>`
+    + `<button class="chip ghost" data-add="site">${escapeHtml(t('Another site'))}</button>`;
 }
 function option(value, label, selected) { return `<option value="${value}"${selected ? ' selected' : ''}>${escapeHtml(label)}</option>`; }
 function renderSettings() {
@@ -478,6 +486,46 @@ function renderSources() {
 function renderTime() { renderMaps(); renderTiles(); renderPano(); renderTimeline(); renderCompare(); render3d(); }
 function renderAll() { fillSelect(); renderSettings(); renderTime(); renderSlip(); mission?.render(); }
 function recompute() { sims = SITES.map(simulate); renderAll(); }
+
+/* ---------- scenarios ---------- */
+
+const AZ = { max: 4 };
+function scenarioDate(x) { return new Date(x.landing).toISOString().slice(0, 10); }
+function scenarioLabel(x) { const s = SITES[x.site]; return `${s.short} · ${scenarioDate(x)}`; }
+function seedScenario() {
+  state.scenarios = [{ site: state.site, landing: state.landing }];
+  state.scenario = 0;
+}
+function activateScenario(i) {
+  const x = state.scenarios[i];
+  if (!x) return;
+  state.scenario = i;
+  state.site = x.site;
+  setLanding(x.landing);
+  recompute();
+}
+function addScenario(mode) {
+  const cur = state.scenarios[state.scenario] ?? { site: state.site, landing: state.landing };
+  const next = { site: cur.site, landing: cur.landing };
+  if (mode === 'date') next.landing = cur.landing + 14 * DAY;
+  if (mode === 'site') {
+    const used = new Set(state.scenarios.map((x) => x.site));
+    const k = SITES.findIndex((s, i) => !used.has(i) && s.lat < -75);
+    next.site = k >= 0 ? k : (cur.site + 1) % SITES.length;
+  }
+  if (state.scenarios.length >= AZ.max) state.scenarios.shift();
+  state.scenarios.push(next);
+  activateScenario(state.scenarios.length - 1);
+}
+function dropScenario(i) {
+  state.scenarios.splice(i, 1);
+  if (!state.scenarios.length) seedScenario();
+  state.scenario = Math.min(state.scenario, state.scenarios.length - 1);
+  const x = state.scenarios[state.scenario];
+  state.site = x.site;
+  setLanding(x.landing);
+  recompute();
+}
 function setHour(h) { state.hour = Math.max(0, Math.min(stayH(), Math.round(h))); renderTime(); }
 
 const tip = $('tip');
@@ -500,6 +548,14 @@ function setLanding(ms) {
 
 function bind() {
   $('sitelist').onclick = (e) => { const b = e.target.closest('.site'); if (b) selectSite(+b.dataset.k); };
+  $('tray').onclick = (e) => {
+    const drop = e.target.closest('[data-drop]');
+    if (drop) return dropScenario(Number(drop.dataset.drop));
+    const add = e.target.closest('[data-add]');
+    if (add) return addScenario(add.dataset.add);
+    const chip = e.target.closest('[data-scenario]');
+    if (chip) return activateScenario(Number(chip.dataset.scenario));
+  };
   $('cgo').onclick = () => {
     const la = parseFloat($('clat').value), lo = parseFloat($('clon').value);
     if (Number.isNaN(la) || Number.isNaN(lo) || la < -90 || la > 90) return toast(t('Enter a latitude between −90 and 90 and a longitude in °E'));
@@ -532,7 +588,7 @@ function bind() {
     state.timer = setInterval(() => { if (state.hour >= stayH()) { $('play').click(); return; } setHour(state.hour + 3); }, 50);
     renderSettings();
   };
-  $('compare').onclick = (e) => { const b = e.target.closest('.row'); if (b) selectSite(+b.dataset.k); };
+  $('compare').onclick = (e) => { const b = e.target.closest('.row'); if (b) activateScenario(+b.dataset.scenario); };
   $('lang').onchange = (e) => {
     setLanguage(e.target.value); applyTranslations(); hideTip(); renderAll(); renderSources();
     if (scene3d) render3d();
@@ -607,6 +663,7 @@ async function start() {
   initTranslations();
   bind();
   setLanding(Date.now());
+  seedScenario();
   renderSources();
   showView(location.hash.slice(2));
   addEventListener('hashchange', () => showView(location.hash.slice(2)));
