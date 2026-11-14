@@ -130,6 +130,9 @@ body[data-view=start] #v-start,body[data-view=mission] #v-mission{display:block}
 .lane-site svg{width:100%;height:54px;display:block;cursor:pointer}
 .lane-axis{display:grid;grid-template-columns:160px minmax(0,1fr);gap:12px;font-size:11px;color:var(--muted);font-family:var(--mono)}
 .lane-axis div{display:flex;justify-content:space-between}
+.lane-axis .lane-legend{justify-content:flex-start;align-items:center;gap:8px 16px;flex-wrap:wrap;font-family:inherit}
+.lane-export{flex:none}
+.lane-export:disabled{opacity:.45;cursor:not-allowed}
 
 #flight{position:fixed;inset:0;z-index:50;display:none;background:radial-gradient(90% 70% at 50% 40%,#150f2a,#05040a);opacity:0;transition:opacity .35s ease}
 #flight.show{display:block}

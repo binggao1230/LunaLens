@@ -69,6 +69,7 @@ const MESSAGES = {
   'Play': ['Lecture', '播放'],
   'Pause': ['Pause', '暂停'],
   'Sun and Earth over the next {days} days': ['Soleil et Terre sur les {days} prochains jours', '未来 {days} 天的太阳与地球可见情况'],
+  'Export CSV': ['Exporter en CSV', '导出 CSV'],
   'Probe on its way to {site}': ['Sonde en route vers {site}', '探测器正飞往 {site}'],
   'Click to skip': ['Cliquez pour passer', '点击跳过'],
   '3D is not available on this device. Showing the 2D view.': ['La 3D n’est pas disponible sur cet appareil. Affichage en 2D.', '此设备不支持 3D，已切换为 2D 视图。'],
@@ -398,6 +399,7 @@ export function createMission(ctx) {
       updateHeaderCount();
     };
     $('m-lanes').onclick = (event) => {
+      if (event.target.closest('#m-export')) { exportComparedCsv(); return; }
       const svg = event.target.closest('svg'); if (!svg) return;
       const box = svg.getBoundingClientRect();
       local.hour = clamp(Math.round(((event.clientX - box.left) / box.width) * SPAN), 0, SPAN);
@@ -549,6 +551,57 @@ export function createMission(ctx) {
     }
     return out;
   }
+  function csvCell(value) {
+    return `"${String(value ?? '').replaceAll('"', '""')}"`;
+  }
+  function exportComparedCsv() {
+    const activeSites = laneSites();
+    if (!activeSites.length) return;
+
+    const startMs = ctx.landing();
+    const startIndex = Math.round(ctx.eph().indexOf(startMs));
+    const margin = ctx.margin();
+    const headers = [
+      'site_id', 'site_name', 'site_group', 'latitude_deg', 'longitude_deg_east', 'terrain', 'ground_elevation_m',
+      'landing_start_utc', 'sample_time_utc', 'hours_since_landing',
+      'sun_visible', 'earth_link_available', 'sun_and_earth_available',
+      'sun_elevation_deg', 'sun_clearance_above_terrain_deg', 'earth_elevation_deg', 'earth_clearance_above_terrain_deg',
+      'sunlight_hours_over_stay', 'sunlight_percent_over_stay',
+      'earth_link_hours_over_stay', 'earth_link_percent_over_stay',
+      'simultaneous_hours_over_stay', 'simultaneous_percent_over_stay', 'earth_link_margin_deg',
+    ];
+    const lines = [`${headers.map(csvCell).join(',')}\r\n`];
+    for (const site of activeSites) {
+      const score = scoreOf(site);
+      const series = site.series;
+      const summary = [score.lit, Math.round(score.lit / score.hours * 100), score.link,
+        Math.round(score.link / score.hours * 100), score.both, Math.round(score.both / score.hours * 100)];
+      for (let h = 0; h <= SPAN; h++) {
+        const index = startIndex + h;
+        const sunVisible = series.sunVis[index] === 1;
+        const earthLink = series.earthClr[index] > margin;
+        lines.push(`${[
+          site.id, site.label ?? site.name ?? site.id, site.group ?? '', site.lat, site.lon,
+          site.terrain === 'none' ? '' : site.terrain, site.groundM,
+          new Date(startMs).toISOString(), new Date(startMs + h * HOUR).toISOString(), h,
+          sunVisible, earthLink, sunVisible && earthLink,
+          Number(series.sunEl[index].toFixed(4)), Number(series.sunClr[index].toFixed(4)),
+          Number(series.earthEl[index].toFixed(4)), Number(series.earthClr[index].toFixed(4)),
+          ...summary, margin,
+        ].map(csvCell).join(',')}\r\n`);
+      }
+    }
+
+    const csv = new Blob(['\uFEFF', ...lines], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(csv);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lunalens-comparison-${new Date(startMs).toISOString().slice(0, 10)}-${activeSites.length}-sites.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
   function renderLanes(force) {
     const key = [local.probe, local.picked, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(',')].join('|');
     const el = $('m-lanes');
@@ -579,7 +632,8 @@ export function createMission(ctx) {
 
       el.innerHTML = `<div class="lane-axis">
         <span></span>
-        <div style="justify-content:flex-start;gap:16px;font-family:inherit;flex-wrap:wrap">
+        <div class="lane-legend">
+          <button type="button" class="btn-ghost btn-xs lane-export" id="m-export" ${activeSites.length ? '' : 'disabled'}>${escapeHtml(t('Export CSV'))}</button>
           <span style="color:${COLORS.sun}">■ ${escapeHtml(t('Sun'))}</span>
           <span style="color:${COLORS.link}">■ ${escapeHtml(t('Earth link'))}</span>
           <span style="color:${COLORS.both}">■ ${escapeHtml(t('Both'))}</span>
