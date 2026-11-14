@@ -48,19 +48,12 @@
     }
   },
   "steps": {
-    "mission": {
+    "objective": {
       "intro": [
-        "Bonjour, explorateur. Je suis {name}, et nous partons vers le pôle Sud de la Lune, où la glace se cache dans le froid.",
-        "Deux règles d'or gardent un atterrisseur en vie. Il lui faut du soleil pour l'énergie, et il doit voir la Terre pour nous parler.",
-        "Choisis un atterrisseur ci-dessous. Chacun porte une batterie différente pour les longues nuits."
-      ],
-      "battery": {
-        "artemis": "Une grande batterie, patiente dans les longues nuits. Lourde, mais courageuse.",
-        "apollo": "Une batterie solide, faite pour de courtes visites. Elle aime les jours clairs.",
-        "novac": "Une petite batterie, légère comme une plume. La nuit la fait frissonner.",
-        "vikram": "Une toute petite batterie, vite endormie. Il lui faut le Soleil tout près.",
-        "polar": "Une batterie prudente, conçue pour le pôle. Elle espère des sommets ensoleillés."
-      }
+        "Bonjour, explorateur ! Je suis {name}. Notre mission : nous poser au pôle Sud de la Lune, où la glace se cache dans le froid.",
+        "Deux règles d'or gardent un atterrisseur en vie. Il lui faut le Soleil pour l'énergie, et il doit voir la Terre pour nous parler.",
+        "Choisis maintenant un site dans la liste ou sur la carte. Les points verts voient la Terre, les ambrés ne voient que le Soleil, les gris sont dans l'ombre."
+      ]
     },
     "site": {
       "intro": "Ici, le Soleil ne monte jamais haut. Il roule le long de l'horizon comme une lente boule dorée.",

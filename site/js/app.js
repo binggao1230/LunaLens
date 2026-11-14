@@ -6,6 +6,7 @@ import './team-messages.js';
 import { escapeHtml, fmtLatLon, utcMidnight } from './format.js';
 import { createMission } from './views/mission.js';
 import { createEducation } from './edu/edu.js';
+import { getMode, setMode, onMode, initMode, parseHash, formatHash } from './mode.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, DAY = 864e5, HOUR = 36e5;
 const SLIP_DAYS = 28, LOOKAHEAD_H = 60 * 24, SIM_H = SLIP_DAYS * 24 + LOOKAHEAD_H;
@@ -320,11 +321,16 @@ function renderSettings() {
   $('jearth').textContent = `${t('Earth')} ⏭`;
 }
 
+/** The top bar's two pill groups reflect the global mode and the language. */
+function renderChrome() {
+  for (const b of $('mode-toggle').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.mode === getMode()));
+  for (const b of $('lang').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.lang === getLanguage()));
+}
 function toast(msg, ms) { const el = $('toast'); el.textContent = msg; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => { el.style.display = 'none'; }, ms || 1800); }
 function showView(v) {
   if (!['start', 'mission', 'explore', 'compare', 'slip', 'data', 'build'].includes(v)) v = 'start';
   document.body.dataset.view = v;
-  history.replaceState(null, '', `${location.search}#/${v}`);
+  history.replaceState(null, '', `${location.search}${formatHash(v)}`);
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
   window.scrollTo(0, 0);
   renderAll();
@@ -465,7 +471,14 @@ function bind() {
     setCustom(la, lon360(lo));
   };
   document.querySelectorAll('[data-nav] button').forEach((b) => { b.onclick = () => showView(b.dataset.view); });
-  $('edu-toggle').onclick = () => edu?.toggle();
+  $('mode-toggle').onclick = (e) => { const b = e.target.closest('button[data-mode]'); if (b) setMode(b.dataset.mode); };
+  onMode(() => { renderChrome(); history.replaceState(null, '', `${location.search}${formatHash(document.body.dataset.view)}`); });
+  // A pasted or edited hash on the open page: apply its mode and view (showView uses replaceState, so no loop).
+  window.addEventListener('hashchange', () => {
+    const { view, mode } = parseHash(location.hash);
+    if (mode) setMode(mode);
+    if (view && view !== document.body.dataset.view) showView(view); else if (mode) history.replaceState(null, '', `${location.search}${formatHash(document.body.dataset.view)}`);
+  });
   document.addEventListener('click', (e) => {
     const g = e.target.closest('[data-go]'); if (g) return showView(g.dataset.go);
     const f = e.target.closest('button[data-fake]'); if (f) toast(t('Not built yet. ') + t(f.dataset.fake), 4500);
@@ -493,8 +506,9 @@ function bind() {
     renderSettings();
   };
   $('compare').onclick = (e) => { const b = e.target.closest('.row'); if (b) selectSite(+b.dataset.k); };
-  $('lang').onchange = (e) => {
-    setLanguage(e.target.value); applyTranslations(); hideTip(); renderAll(); renderSources();
+  $('lang').onclick = (e) => {
+    const b = e.target.closest('button[data-lang]'); if (!b || b.dataset.lang === getLanguage()) return;
+    setLanguage(b.dataset.lang); applyTranslations(); hideTip(); renderChrome(); renderAll(); renderSources();
     edu?.setLanguage(getLanguage());
     if (scene3d) render3d();
   };
@@ -555,6 +569,7 @@ async function start() {
     fetch('data/sites.json').then((r) => { if (!r.ok) throw new Error('Could not load the site list'); return r.json(); }),
   ]);
   eph = ephemeris;
+  initMode();
   SITES = siteData.sites.map((raw) => makeSite(raw));
   const first = SITES.findIndex((s) => s.id === DEFAULT_SITE);
   state.site = first >= 0 ? first : 0;
@@ -565,6 +580,7 @@ async function start() {
     // In Education mode the story continues on the Mission page after the flight; Expert mode opens Explore.
     arrive: (k) => { state.site = k; if (edu?.active) { showView('mission'); edu.onArrived(); } else showView('explore'); },
     onProbePick: (id) => edu?.onProbePick(id),
+    onValidate: () => edu?.onValidate(),
     onMissionRefresh: (site, frame, hour) => edu?.onMissionRefresh(site, frame, hour),
     eduHighlight: () => edu?.highlight() ?? null,
   });
@@ -572,12 +588,12 @@ async function start() {
     mission, sites: () => SITES, eph: () => eph, landing: () => state.landing, margin: () => state.margin,
     setLanding, showView, view: () => document.body.dataset.view, language: getLanguage, toast,
   });
-  $('lang').value = getLanguage();
   initTranslations();
   bind();
+  renderChrome();
   setLanding(Date.now());
   renderSources();
-  showView(location.hash.slice(2));
+  showView(parseHash(location.hash).view);
   loadMaps();
   $('loading').hidden = true;
 }

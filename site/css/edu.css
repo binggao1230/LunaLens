@@ -1,7 +1,41 @@
 /* Education mode: the guide panel, the character, the levers and the final card. */
-.edu-toggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:transparent;color:var(--text2);border-radius:99px;padding:6px 12px;min-height:34px;font-size:13px;white-space:nowrap;cursor:pointer}
-.edu-toggle.on{border-color:var(--sun);color:var(--sun);font-weight:600}
-.edu-toggle .short{display:none}
+/* ---- top bar: mode and language pills, shared by the start page and the mission view ---- */
+.seg-pill{display:inline-flex;align-items:center;flex:none;padding:3px;border-radius:99px;border:1px solid rgba(200,220,240,.13);background:rgba(255,255,255,.04)}
+.seg-pill button{border:0;background:none;color:var(--muted);border-radius:99px;min-height:28px;padding:4px 12px;font:inherit;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;white-space:nowrap;cursor:pointer;transition:color .15s ease,background-color .15s ease,box-shadow .15s ease}
+.seg-pill button:hover{color:var(--text)}
+.seg-pill button[aria-pressed=true]{color:#5aa7f0;background:rgba(90,167,240,.14);box-shadow:0 0 16px rgba(90,167,240,.25)}
+.seg-pill button:focus-visible{outline:2px solid #5aa7f0;outline-offset:2px}
+.seg-pill .short{display:none}
+#lang button{letter-spacing:.08em;padding:4px 10px}
+.appbar #mode-toggle{margin-left:auto}
+body[data-view=start] .appbar .side{margin-left:auto}
+body[data-view=start] .appbar #mode-toggle,body[data-view=mission] .appbar #mode-toggle{margin-left:0}
+
+/* ---- start page: the mode chooser and the guide ---- */
+.start [hidden]{display:none!important}
+.mode-choice{position:relative;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;width:min(760px,100%);margin:clamp(18px,3vh,30px) 0 0}
+.mode-card{position:relative;overflow:hidden;text-align:left;display:grid;grid-template-columns:40px minmax(0,1fr) 20px;grid-template-rows:auto auto;column-gap:14px;row-gap:3px;align-items:center;padding:16px 18px;min-height:84px;border-radius:16px;border:1px solid rgba(200,220,240,.13);background:rgba(15,17,20,.58);color:var(--text);cursor:pointer;font:inherit;transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.mode-card:hover{border-color:rgba(200,220,240,.34)}
+.mode-card[aria-checked=true]{border-color:#5aa7f0;box-shadow:0 0 24px rgba(90,167,240,.25)}
+.mode-card:focus-visible{outline:2px solid #5aa7f0;outline-offset:3px}
+.mode-icon{grid-row:1/3;width:40px;height:40px;color:#5aa7f0;display:flex;align-items:center;justify-content:center}
+.mode-icon svg{width:30px;height:30px;display:block}
+.mode-name{grid-column:2;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--text)}
+.mode-sub{grid-column:2;font-size:13px;line-height:1.4;color:var(--text2)}
+.mode-dot{grid-column:3;grid-row:1/3;width:18px;height:18px;border-radius:50%;border:1px solid rgba(200,220,240,.3);display:flex;align-items:center;justify-content:center;flex:none;transition:background-color .18s ease,border-color .18s ease}
+.mode-card[aria-checked=true] .mode-dot{border-color:#5aa7f0;background:#5aa7f0;box-shadow:0 0 12px rgba(90,167,240,.6)}
+.mode-card[aria-checked=true] .mode-dot::after{content:"";width:6px;height:6px;border-radius:50%;background:#0f1113}
+.mode-card-edu .mode-sub{padding-right:52px}
+.mode-avatar{position:absolute;right:30px;bottom:-16px;width:62px;height:62px;transform:rotate(-8deg);pointer-events:none}
+.mode-avatar svg{width:100%;height:100%;display:block}
+.guide-row{position:relative;z-index:1;display:flex;align-items:flex-end;gap:10px;width:min(1280px,100%);margin:0 0 14px}
+.guide-row .edu-char{width:72px;height:72px}
+.guide-bubble{position:relative;margin:0 0 6px;max-width:560px;background:rgba(23,26,30,.94);border:1px solid rgba(90,167,240,.45);box-shadow:0 0 24px rgba(90,167,240,.18);border-radius:16px 16px 16px 4px;padding:12px 16px;font-size:15px;line-height:1.5;color:var(--text)}
+.guide-bubble::before{content:"";position:absolute;left:-7px;bottom:12px;width:12px;height:12px;background:rgba(23,26,30,.94);border-left:1px solid rgba(90,167,240,.45);border-bottom:1px solid rgba(90,167,240,.45);transform:rotate(45deg)}
+.probe-meta .battery{display:block;margin-top:6px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#5aa7f0}
+.start .illus{position:relative;z-index:1;width:min(1280px,100%);margin:10px 0 0;font-size:11px;color:var(--muted)}
+body.edu-on .start .btn-primary{background:#5aa7f0;color:#07111c;box-shadow:0 0 24px rgba(90,167,240,.35)}
+body.edu-on .start button:focus-visible,body.edu-on .start canvas:focus-visible{outline-color:#5aa7f0}
 body.edu-on[data-view=mission] main{padding-bottom:260px}
 
 .edu-panel{position:fixed;left:16px;bottom:16px;z-index:55;width:min(420px,calc(100vw - 32px));display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;align-items:end;pointer-events:none}
@@ -88,12 +122,22 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
 }
 
 @media (max-width:760px){
-  .edu-toggle .long{display:none}
-  .edu-toggle .short{display:inline}
-  .edu-toggle{padding:6px 10px}
+  .seg-pill .long{display:none}
+  .seg-pill .short{display:inline}
+  .seg-pill button{padding:4px 10px}
+  .appbar{flex-wrap:wrap;row-gap:8px}
+  body[data-view=start] .appbar,body[data-view=mission] .appbar{padding-top:10px;padding-bottom:10px;min-height:0}
+  body[data-view=start] .appbar .brand,body[data-view=mission] .appbar .brand{flex:1 1 100%}
+  body[data-view=mission] .appbar #lang{margin-left:0}
+  .mode-choice{grid-template-columns:1fr;gap:10px;margin-top:16px}
+  .mode-card{padding:12px 14px;min-height:0}
+  .mode-avatar{width:54px;height:54px;right:26px;bottom:-14px}
+  .guide-row{gap:8px;margin-bottom:10px}
+  .guide-row .edu-char{width:56px;height:56px}
+  .guide-bubble{font-size:13px;padding:10px 12px}
   body.edu-on[data-view=mission] main{padding-bottom:52vh}
   .edu-panel{left:0;right:0;bottom:54px;width:auto;grid-template-columns:1fr;gap:0;max-height:50vh}
-  .edu-char{position:absolute;left:12px;bottom:calc(100% - 14px);width:64px;height:64px;z-index:1}
+  .edu-panel .edu-char{position:absolute;left:12px;bottom:calc(100% - 14px);width:64px;height:64px;z-index:1}
   .edu-panel{padding-top:0}
   .edu-bubble{border-radius:18px 18px 0 0;padding:14px 16px 14px;max-height:50vh;overflow:auto;position:relative;padding-top:18px}
   .edu-top{padding-left:68px;min-height:28px}

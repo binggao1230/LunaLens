@@ -73,12 +73,15 @@ alternative dates at the same site". The second half is what the product cannot 
 - One action that sets Apollo 11 beside a south-pole site on the same date, to show why the pole is hard.
 - A glossary: azimuth, elevation, lunar day, libration, direct-to-Earth.
 - Visuals for the demo video and the slides.
-- Education mode (in progress): a guided six-step story on top of the Mission pages, with a guide character.
-  Pick a lander, pick a site, launch, a delayed launch breaks the plan, fix it with four levers, mission-complete
-  card. It reuses the Mission map, site list, timeline and flight. A simplified teaching verdict (battery against
-  the longest night, Earth-contact share, relay satellite) lives in `site/js/edu/verdict.js`, is labelled as
-  illustrative, and is used only there; Expert mode is unchanged. Story text is in `site/i18n/story.*.json` so
-  it can be edited without code.
+- Education mode (in progress): a guided six-step story on the Mission page, with a guide character.
+  Entry point on the start page: a Mission planner / Education mode chooser synced with an Expert / Education pill
+  in the top bar (global state in `site/js/mode.js`, kept in the URL hash and localStorage). In Education mode the
+  guide greets on the start page, the probe cards use plain wording, and "Start the mission" opens the Mission page
+  at step 1 (objective). Then: pick a site, launch, a delayed launch breaks the plan, fix it with four levers,
+  mission-complete card. A simplified teaching verdict (battery against the longest night, Earth-contact share,
+  relay satellite) lives in `site/js/edu/verdict.js`, is labelled as illustrative, and is used only there; Expert
+  mode is unchanged. Story text is in `site/i18n/story.*.json` so it can be edited without code.
+  Still to do: the probe-card battery lines are story values, not mission data; say so on the Data page too.
 
 ## G. Before submission
 

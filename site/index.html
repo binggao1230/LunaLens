@@ -167,7 +167,6 @@ table.bm tr:first-child th{color:var(--text2);font-weight:500}
 }
 
 /* ---- merged build: language, loading, 3D, data page ---- */
-#lang{width:auto;min-height:32px;padding:4px 8px;font-size:13px;background:none}
 #loading{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:var(--page);color:var(--text2)}
 #loading[hidden]{display:none}
 .view-hidden{display:none!important}
@@ -197,7 +196,6 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   .scene-viewport{aspect-ratio:4/3}
   .scene-gesture{display:none}
   dl.kv{grid-template-columns:1fr}
-  #lang{max-width:110px}
 }
 /* Keep the full navigation usable on narrow tablet widths. */
 @media (min-width:761px) and (max-width:900px){
@@ -218,8 +216,13 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   </nav>
   <div class="tray" id="tray"></div>
   <nav class="side" data-nav><button data-view="data">Data</button></nav>
-  <select id="lang" aria-label="Language"><option value="en">English</option><option value="fr">Français</option><option value="zh">中文</option></select>
-  <button type="button" id="edu-toggle" class="edu-toggle" aria-pressed="false"><span class="long">Education mode</span><span class="short">Learn</span></button>
+  <div class="seg-pill" id="mode-toggle" role="group" aria-label="Mode">
+    <button type="button" data-mode="expert" aria-pressed="true"><span class="long">Expert mode</span><span class="short">Expert</span></button>
+    <button type="button" data-mode="education" aria-pressed="false"><span class="long">Education mode</span><span class="short">Learn</span></button>
+  </div>
+  <div class="seg-pill" id="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button><button type="button" data-lang="fr" lang="fr" aria-pressed="false">FR</button><button type="button" data-lang="zh" lang="zh" aria-pressed="false">中文</button>
+  </div>
 </header>
 
 <main>

@@ -48,19 +48,12 @@
     }
   },
   "steps": {
-    "mission": {
+    "objective": {
       "intro": [
-        "Hello, explorer. I'm {name}, and we are going to the Moon's south pole, where ice hides in the cold.",
+        "Hello, explorer! I'm {name}. Our mission: land at the Moon's south pole, where ice hides in the cold.",
         "Two golden rules keep a lander alive. It needs sunlight for power, and it must see Earth to talk to us.",
-        "Choose a lander below. Each one carries a different battery for the long nights."
-      ],
-      "battery": {
-        "artemis": "A big battery, patient through long nights. Heavy, but brave.",
-        "apollo": "A steady battery, made for short visits. It likes bright days.",
-        "novac": "A small battery, light as a feather. Night makes it shiver.",
-        "vikram": "A tiny battery, quick to sleep. It needs the Sun close by.",
-        "polar": "A careful battery, built for the pole. It hopes for sunny hilltops."
-      }
+        "Now pick a landing site in the list or on the map. Green dots see Earth, amber dots see only the Sun, grey dots sit in shadow."
+      ]
     },
     "site": {
       "intro": "Here the Sun never climbs high. It rolls along the horizon like a slow golden ball.",

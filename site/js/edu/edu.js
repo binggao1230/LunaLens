@@ -1,7 +1,10 @@
-// Education mode: a six-step guided story laid over the Mission pages (start → site → launch → anomaly → fix → done).
-// It drives the existing views through the small API in views/mission.js and judges sites with edu/verdict.js.
+// Education mode: a six-step guided story on the Mission page (objective → site → launch → anomaly → fix → done).
+// The mode itself lives in ../mode.js and is chosen in the top bar or on the start page. The start page shows the
+// guide's greeting itself (views/mission.js); this controller takes over when the Mission page opens in Education
+// mode. It drives the existing views through the small API in views/mission.js and judges sites with edu/verdict.js.
 // All story text comes from i18n/story.<lang>.json so the team can edit it without touching code.
 import { escapeHtml } from '../format.js';
+import { isEducation, onMode, setMode } from '../mode.js';
 import { CHARACTER_SVG } from './character.js';
 import { assess, isOk, findBreakingDelay, findGoDelay, bestNearby, BATTERY_H, BATTERY_BONUS_H } from './verdict.js';
 
@@ -11,10 +14,9 @@ const fmt = (s, v = {}) => String(s ?? '').replace(/\{(\w+)\}/g, (m, k) => (v[k]
 /** ctx: { mission, sites, eph, landing, setLanding, margin, showView, view, language, toast } */
 export function createEducation(ctx) {
   const root = document.getElementById('edu');
-  const toggle = document.getElementById('edu-toggle');
   const stories = new Map();
   const st = {
-    active: false, skipped: false, story: null, step: 0, sub: 0, hold: false, focus: false, key: '',
+    active: isEducation(), skipped: false, story: null, step: 0, sub: 0, hold: false, focus: false, key: '',
     probe: 'apollo', picked: null, status: null, say: null, mood: 'happy',
     base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, name: '',
   };
@@ -40,30 +42,36 @@ export function createEducation(ctx) {
   const say = (path, values = {}, mood) => { st.say = { path, values }; if (mood) st.mood = mood; };
   const setStep = (n, sub = 0) => { st.step = n; st.sub = sub; st.focus = true; };
   const moodFor = () => (st.status ? (st.status.sun && st.status.link ? 'happy' : st.status.sun || st.status.link ? 'worried' : 'sleeping') : 'happy');
+  const introLines = () => get('steps.objective.intro') ?? [];
+
+  /* ---------- mode and story lifecycle ---------- */
+
+  function reset() {
+    Object.assign(st, { skipped: false, step: 0, sub: 0, base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, hold: false, say: null, mood: 'happy' });
+  }
+  /** Step 1, the objective: starts whenever the Mission page opens in Education mode with no story running. */
+  function startTour() {
+    reset();
+    st.probe = ctx.mission.probe();
+    setStep(1); say('objective.intro.0', {}, 'happy');
+    render();
+  }
+  function activate() {
+    st.active = true;
+    document.body.classList.add('edu-on');
+    if (ctx.view() === 'mission') startTour(); else render();
+  }
+  function deactivate() {
+    st.active = false; reset();
+    document.body.classList.remove('edu-on');
+    root.innerHTML = ''; st.key = '';
+  }
+  onMode((mode) => { if (mode === 'education') activate(); else deactivate(); });
+  if (st.active) document.body.classList.add('edu-on');
 
   /* ---------- story steps ---------- */
 
-  function reset() {
-    Object.assign(st, { skipped: false, step: 0, sub: 0, base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, hold: false });
-  }
-  function begin() {
-    st.active = true; reset();
-    document.body.classList.add('edu-on');
-    toggle?.setAttribute('aria-pressed', 'true'); toggle?.classList.add('on');
-    st.probe = ctx.mission.probe();
-    setStep(1); say('mission.intro.0', {}, 'happy');
-    if (ctx.view() !== 'start') ctx.showView('start'); else render();
-  }
-  function exit() {
-    st.active = false; reset();
-    document.body.classList.remove('edu-on');
-    toggle?.setAttribute('aria-pressed', 'false'); toggle?.classList.remove('on');
-    root.innerHTML = '';
-  }
-
   function enterSite() {
-    st.hold = true; // keep the intro line through the first refresh the view switch triggers
-    ctx.mission.validate();
     setStep(2);
     const o = opts(), list = ctx.sites(), ok = (ms) => list.some((s) => isOk(assess(s, idx(ms), o).verdict));
     if (!ok(ctx.landing())) {
@@ -97,8 +105,7 @@ export function createEducation(ctx) {
 
   function next() {
     if (st.step === 1) {
-      const intro = get('steps.mission.intro') ?? [];
-      if (st.sub < intro.length - 1) { st.sub++; st.focus = true; say(`mission.intro.${st.sub}`, {}, 'happy'); render(); } else enterSite();
+      if (st.sub < introLines().length - 1) { st.sub++; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); } else enterSite();
     } else if (st.step === 2) { if (isOk(current()?.verdict)) enterLaunch(); }
     else if (st.step === 4) {
       if (st.anomaly.kind !== 'contact' && st.sub === 0) { st.sub = 1; st.focus = true; say(`anomaly.${st.anomaly.kind}`, { site: st.picked.short }, 'worried'); render(); }
@@ -106,8 +113,8 @@ export function createEducation(ctx) {
     } else if (st.step === 5) { if (canComplete()) enterDone(); }
   }
   function back() {
-    if (st.step === 1 && st.sub > 0) { st.sub--; st.focus = true; say(`mission.intro.${st.sub}`, {}, 'happy'); render(); }
-    else if (st.step === 2) { setStep(1, 2); say('mission.intro.2', {}, 'happy'); ctx.showView('start'); }
+    if (st.step === 1 && st.sub > 0) { st.sub--; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); }
+    else if (st.step === 2) { const last = Math.max(0, introLines().length - 1); setStep(1, last); say(`objective.intro.${last}`, {}, 'happy'); render(); }
   }
   const canComplete = () => current()?.verdict === 'go' && (st.anomaly?.kind !== 'contact' || st.tried);
 
@@ -138,7 +145,7 @@ export function createEducation(ctx) {
 
   /* ---------- rendering ---------- */
 
-  const visible = () => st.active && st.story && ['start', 'mission'].includes(ctx.view());
+  const visible = () => st.active && st.story && st.step > 0 && ctx.view() === 'mission';
   const verdictChip = (r) => (r ? `<span class="edu-verdict v-${r.verdict}" role="status">${escapeHtml(ui(`verdict.${r.verdict}`))}</span>` : '');
 
   function leversHtml(r) {
@@ -226,21 +233,23 @@ export function createEducation(ctx) {
     if (act === 'next') next();
     else if (act === 'back') back();
     else if (act === 'skip') { st.skipped = true; render(); }
-    else if (act === 'replay' || act === 'again') begin();
-    else if (act === 'expert') exit();
+    else if (act === 'replay') startTour();
+    else if (act === 'again') { reset(); ctx.showView('start'); } // choose a lander again; the story restarts on the Mission page
+    else if (act === 'expert') setMode('expert');
   });
   root.addEventListener('input', (event) => { if (event.target.id === 'edu-name') { st.name = event.target.value; st.key = ''; const el = root.querySelector('.edu-badge span'); if (el) el.textContent = ui('final.awarded', { name: st.name.trim() || ui('final.namePlaceholder') }); } });
 
-  load(ctx.language()).then((story) => { st.story = story; render(); });
+  load(ctx.language()).then((story) => { st.story = story; if (st.active && st.step === 0 && ctx.view() === 'mission') startTour(); else render(); });
 
   return {
     get active() { return st.active; },
-    toggle() { if (st.active) exit(); else begin(); },
-    onView() { render(); },
-    onProbePick(id) {
-      st.probe = id;
-      if (st.active && !st.skipped && st.step === 1) { st.sub = Math.max(st.sub, 2); say(`mission.battery.${id}`, {}, 'happy'); render(); }
+    /** The Mission page opened: begin the story if none is running, otherwise keep showing the current step. */
+    onView(v) {
+      if (st.active && v === 'mission' && st.step === 0) startTour(); else render();
     },
+    /** Validate / "Start the mission" on the start page: the story always restarts at step 1. */
+    onValidate() { if (st.active) reset(); },
+    onProbePick(id) { st.probe = id; },
     onMissionRefresh(site, frame) {
       st.picked = site; st.status = site ? frame.status.get(site.id) ?? null : null;
       if (!st.active || st.skipped || !st.story) return;
