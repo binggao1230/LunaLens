@@ -5,6 +5,7 @@ import { t, getLanguage, setLanguage, initTranslations, applyTranslations } from
 import './team-messages.js';
 import { escapeHtml, fmtLatLon, utcMidnight } from './format.js';
 import { createMission } from './views/mission.js';
+import { createEducation } from './edu/edu.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, DAY = 864e5, HOUR = 36e5;
 const SLIP_DAYS = 28, LOOKAHEAD_H = 60 * 24, SIM_H = SLIP_DAYS * 24 + LOOKAHEAD_H;
@@ -33,7 +34,7 @@ const state = {
   slipMinDays: 5, slipNeedLink: true, slipMetric: 'sun', version: 0,
 };
 const layout = { pano: null, tl: null, slip: null };
-let eph, SITES = [], sims = [], mission = null;
+let eph, SITES = [], sims = [], mission = null, edu = null;
 const stayH = () => STAYS[state.stayKey];
 
 /* ---------- sites and the real engine ---------- */
@@ -327,6 +328,7 @@ function showView(v) {
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
   window.scrollTo(0, 0);
   renderAll();
+  edu?.onView(v);
 }
 function jump(test, what) {
   const n = nextChange(test, state.hour);
@@ -463,6 +465,7 @@ function bind() {
     setCustom(la, lon360(lo));
   };
   document.querySelectorAll('[data-nav] button').forEach((b) => { b.onclick = () => showView(b.dataset.view); });
+  $('edu-toggle').onclick = () => edu?.toggle();
   document.addEventListener('click', (e) => {
     const g = e.target.closest('[data-go]'); if (g) return showView(g.dataset.go);
     const f = e.target.closest('button[data-fake]'); if (f) toast(t('Not built yet. ') + t(f.dataset.fake), 4500);
@@ -492,6 +495,7 @@ function bind() {
   $('compare').onclick = (e) => { const b = e.target.closest('.row'); if (b) selectSite(+b.dataset.k); };
   $('lang').onchange = (e) => {
     setLanguage(e.target.value); applyTranslations(); hideTip(); renderAll(); renderSources();
+    edu?.setLanguage(getLanguage());
     if (scene3d) render3d();
   };
 
@@ -558,7 +562,15 @@ async function start() {
     sites: () => SITES, eph: () => eph, landing: () => state.landing, margin: () => state.margin,
     go: (view) => showView(view), toast, setLanding,
     range: () => ({ min: utcMidnight(eph.t0), max: utcMidnight(eph.tEnd - SIM_H * HOUR) }),
-    arrive: (k) => { state.site = k; showView('explore'); },
+    // In Education mode the story continues on the Mission page after the flight; Expert mode opens Explore.
+    arrive: (k) => { state.site = k; if (edu?.active) { showView('mission'); edu.onArrived(); } else showView('explore'); },
+    onProbePick: (id) => edu?.onProbePick(id),
+    onMissionRefresh: (site, frame, hour) => edu?.onMissionRefresh(site, frame, hour),
+    eduHighlight: () => edu?.highlight() ?? null,
+  });
+  edu = createEducation({
+    mission, sites: () => SITES, eph: () => eph, landing: () => state.landing, margin: () => state.margin,
+    setLanding, showView, view: () => document.body.dataset.view, language: getLanguage, toast,
   });
   $('lang').value = getLanguage();
   initTranslations();

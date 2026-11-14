@@ -11,6 +11,8 @@ const messages = {
   'Copy link': ['Copier le lien', '复制链接'],
   'Methods and sources': ['Méthodes et sources', '方法与来源'],
   'Language': ['Langue', '语言'],
+  'Education mode': ['Mode éducation', '教育模式'],
+  'Learn': ['Apprendre', '学习'],
   'Sites': ['Sites', '地点'],
   'Tick up to four to compare. Select a name to stand there.': ['Cochez jusqu’à quatre sites à comparer. Sélectionnez un nom pour y observer le ciel.', '最多勾选四个地点进行对比。点击名称，查看当地天空。'],
   'Search sites': ['Rechercher un site', '搜索地点'],

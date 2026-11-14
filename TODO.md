@@ -73,6 +73,12 @@ alternative dates at the same site". The second half is what the product cannot 
 - One action that sets Apollo 11 beside a south-pole site on the same date, to show why the pole is hard.
 - A glossary: azimuth, elevation, lunar day, libration, direct-to-Earth.
 - Visuals for the demo video and the slides.
+- Education mode (in progress): a guided six-step story on top of the Mission pages, with a guide character.
+  Pick a lander, pick a site, launch, a delayed launch breaks the plan, fix it with four levers, mission-complete
+  card. It reuses the Mission map, site list, timeline and flight. A simplified teaching verdict (battery against
+  the longest night, Earth-contact share, relay satellite) lives in `site/js/edu/verdict.js`, is labelled as
+  illustrative, and is used only there; Expert mode is unchanged. Story text is in `site/i18n/story.*.json` so
+  it can be edited without code.
 
 ## G. Before submission
 

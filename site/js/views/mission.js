@@ -441,10 +441,8 @@ export function createMission(ctx) {
   }
 
   function laneSites() {
-    if (local.compared && local.compared.size > 0) {
-      return orderedSites().filter((s) => local.compared.has(s.id));
-    }
-    return [];
+    const highlighted = ctx.eduHighlight?.()?.id ?? null; // Education mode always shows the site it is talking about
+    return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === highlighted);
   }
   function runsOf(test, site) {
     const start = Math.round(ctx.eph().indexOf(ctx.landing()));
@@ -509,7 +507,8 @@ export function createMission(ctx) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function renderLanes(force) {
-    const key = [local.probe, local.picked, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(',')].join('|');
+    const hl = ctx.eduHighlight?.() ?? null;
+    const key = [local.probe, local.picked, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(','), JSON.stringify(hl)].join('|');
     const el = $('m-lanes');
     if (force || key !== local.laneKey) {
       local.laneKey = key;
@@ -531,6 +530,7 @@ export function createMission(ctx) {
           <svg viewBox="0 0 ${SPAN} 54" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(site.label)}">
             <rect x="0" y="0" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="20" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="40" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/>
             ${rect(sun, 0, COLORS.sun)}${rect(link, 20, COLORS.link)}${rect(both, 40, COLORS.both)}
+            ${hl && hl.id === site.id ? `<rect class="edu-hl" x="${hl.from}" y="-1" width="${Math.max(1, hl.to - hl.from)}" height="56" rx="3" fill="rgba(255,107,107,.18)" stroke="#ff6b6b" stroke-width="1.5" vector-effect="non-scaling-stroke"/>` : ''}
             <line class="cur" x1="0" x2="0" y1="0" y2="54" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
           </svg>
         </div>`;
@@ -800,6 +800,7 @@ export function createMission(ctx) {
     renderList(full);
     renderLanes(full);
     if (local.mode === '3d') { create3d(); view3d?.request(); } else draw2d();
+    ctx.onMissionRefresh?.(chosenSite, lastFrame, local.hour);
   }
 
   function sendProbe() {
@@ -869,17 +870,19 @@ export function createMission(ctx) {
       local.compared = defaultCompared();
       for (const item of startEl.querySelectorAll('[data-probe-card]')) item.dataset.selected = String(item.dataset.probeCard === local.probe);
       for (const button of startEl.querySelectorAll('[data-probe]')) button.setAttribute('aria-pressed', String(button.dataset.probe === local.probe));
+      ctx.onProbePick?.(local.probe);
       return;
     }
-    if (event.target.closest('#validate')) {
-      local.picked = orderedSites()[0]?.id ?? null;
-      local.open = null;
-      local.hour = 0;
-      if (!local.compared || local.compared.size === 0) local.compared = defaultCompared();
-      local.flat = (pickedSite()?.lat ?? 0) < -75 ? 'pole' : 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0;
-      ctx.go('mission');
-    }
+    if (event.target.closest('#validate')) goMission();
   });
+  function goMission() {
+    local.picked = orderedSites()[0]?.id ?? null;
+    local.open = null;
+    local.hour = 0;
+    if (!local.compared || local.compared.size === 0) local.compared = defaultCompared();
+    local.flat = (pickedSite()?.lat ?? 0) < -75 ? 'pole' : 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0;
+    ctx.go('mission');
+  }
   document.querySelector('.brand')?.addEventListener('click', () => ctx.go('start'));
   buildMission();
   $('m-3d').hidden = local.mode !== '3d'; $('m-2d').hidden = local.mode !== '2d';
@@ -894,5 +897,12 @@ export function createMission(ctx) {
         refresh(true);
       }
     },
+    // Small API for Education mode (views/edu): drive the same screens the buttons drive.
+    validate: goMission,
+    send: sendProbe,
+    probe: () => local.probe,
+    pick(id) { if (!sites().some((s) => s.id === id)) return; local.picked = id; local.open = null; refresh(true); focusSite(); },
+    setHour(h) { local.hour = clamp(Math.round(h), 0, SPAN); refresh(); },
+    redraw: () => refresh(true),
   };
 }

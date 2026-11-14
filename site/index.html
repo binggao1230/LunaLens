@@ -207,6 +207,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 }
 </style>
 <link rel="stylesheet" href="css/mission.css">
+<link rel="stylesheet" href="css/edu.css">
 </head>
 <body data-view="start">
 <div id="loading" role="status">Loading…</div>
@@ -218,6 +219,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   <div class="tray" id="tray"></div>
   <nav class="side" data-nav><button data-view="data">Data</button></nav>
   <select id="lang" aria-label="Language"><option value="en">English</option><option value="fr">Français</option><option value="zh">中文</option></select>
+  <button type="button" id="edu-toggle" class="edu-toggle" aria-pressed="false"><span class="long">Education mode</span><span class="short">Learn</span></button>
 </header>
 
 <main>
@@ -400,6 +402,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   <button data-view="mission">Mission</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Slip</button>
   <button data-view="data">Data</button>
 </nav>
+<div id="edu"></div>
 <div id="flight" role="dialog" aria-modal="true"></div>
 <div id="tip"></div><div id="toast"></div>
 

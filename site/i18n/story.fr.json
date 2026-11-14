@@ -1,0 +1,93 @@
+{
+  "character": { "name": "Pico" },
+  "ui": {
+    "panel": "Guide de l'histoire",
+    "step": "Étape {n} sur {total}",
+    "next": "Suivant",
+    "back": "Retour",
+    "skip": "Passer l'histoire",
+    "replay": "Rejouer l'histoire",
+    "continue": "Continuer",
+    "whatHappened": "Que s'est-il passé ?",
+    "fixIt": "Réparons ça",
+    "complete": "Terminer la mission",
+    "playAgain": "Rejouer",
+    "expert": "Passer en mode expert",
+    "verdict": { "go": "Prêt à partir", "risky": "Risqué", "nogo": "Pas sûr" },
+    "levers": {
+      "move": "Monter sur les hauteurs",
+      "moveTo": "Essayer {site}",
+      "moveNone": "Pas de meilleur endroit pour l'instant",
+      "wait": "Attendre quelques jours",
+      "waitHint": "Décoller quand le Soleil revient",
+      "relay": "Appeler un satellite relais",
+      "relayHint": "Un ami en orbite transmet nos messages",
+      "battery": "Plus grosse batterie",
+      "batteryHint": "Plus d'énergie pour la longue nuit",
+      "undo": "Annuler"
+    },
+    "final": {
+      "title": "Mission accomplie !",
+      "site": "Posé à {site}",
+      "sun": "Ensoleillement",
+      "earth": "Contact avec la Terre",
+      "night": "Nuit la plus longue",
+      "days": "{n} jours",
+      "underDay": "moins d'un jour",
+      "learnedTitle": "Ce que tu as appris",
+      "learned": [
+        "Un atterrisseur a besoin du Soleil et de voir la Terre.",
+        "Les collines et les cratères peuvent cacher le Soleil.",
+        "Le moment du départ change tout."
+      ],
+      "badge": "Planificateur spatial",
+      "namePrompt": "Ton prénom (facultatif)",
+      "namePlaceholder": "Explorateur",
+      "awarded": "Décerné à {name}",
+      "note": "Simplifié pour apprendre : les batteries et le relais sont illustratifs."
+    }
+  },
+  "steps": {
+    "mission": {
+      "intro": [
+        "Bonjour, explorateur. Je suis {name}, et nous partons vers le pôle Sud de la Lune, où la glace se cache dans le froid.",
+        "Deux règles d'or gardent un atterrisseur en vie. Il lui faut du soleil pour l'énergie, et il doit voir la Terre pour nous parler.",
+        "Choisis un atterrisseur ci-dessous. Chacun porte une batterie différente pour les longues nuits."
+      ],
+      "battery": {
+        "artemis": "Une grande batterie, patiente dans les longues nuits. Lourde, mais courageuse.",
+        "apollo": "Une batterie solide, faite pour de courtes visites. Elle aime les jours clairs.",
+        "novac": "Une petite batterie, légère comme une plume. La nuit la fait frissonner.",
+        "vikram": "Une toute petite batterie, vite endormie. Il lui faut le Soleil tout près.",
+        "polar": "Une batterie prudente, conçue pour le pôle. Elle espère des sommets ensoleillés."
+      }
+    },
+    "site": {
+      "intro": "Ici, le Soleil ne monte jamais haut. Il roule le long de l'horizon comme une lente boule dorée.",
+      "happy": "Du soleil sur les panneaux et la Terre dans le ciel. Cet endroit semble parfait.",
+      "worried": "Une seule de nos deux règles est vraie ici. Regardons encore un peu.",
+      "sleeping": "Sombre et silencieux. L'atterrisseur dormirait ici, peut-être pour toujours.",
+      "shadow": "Ce fond de cratère n'a pas vu le Soleil depuis des âges. Essaie les hauteurs d'un rebord.",
+      "ready": "{site} pourrait convenir. Appuie sur Continuer quand tu es sûr.",
+      "darkWeek": "Tout est sombre cette semaine. Sautons vers une semaine plus claire."
+    },
+    "launch": { "cheer": "C'est parti ! Accroche-toi, la Lune nous attend." },
+    "anomaly": {
+      "delay": "Oh non, une tempête sur Terre nous a retenus. Nous avons décollé avec quelques jours de retard.",
+      "night": "Le Soleil a déjà quitté {site}. La nuit qui vient est plus longue que notre batterie.",
+      "earth": "D'ici, la Terre se cache derrière les collines. Nos messages ne peuvent pas rentrer.",
+      "contact": "Silence. La Terre a glissé derrière les collines, et nos mots restent sans écho."
+    },
+    "fix": {
+      "intro": "Chaque mission a son imprévu. Choisis un levier et regarde le verdict changer.",
+      "move": "Les hauteurs voient le Soleil plus tôt. Faisons nos bagages.",
+      "wait": "La patience est un outil aussi. Nous attendrons le retour du Soleil.",
+      "relay": "Un satellite relais portera nos mots. Ça coûte cher, mais il nous entend.",
+      "battery": "Une plus grosse batterie pour le noir. L'atterrisseur devient plus lourd, pourtant.",
+      "noWait": "Aucun jour ensoleillé n'arrive assez tôt. Essaie un autre levier.",
+      "go": "Enfin vert ! Tu as changé une mauvaise journée en bon plan.",
+      "notyet": "Pas encore. Essaie un autre levier, ou combine-en deux."
+    },
+    "done": { "cheer": "Tu as réussi, planificateur spatial. La Lune se souvient des choix courageux." }
+  }
+}

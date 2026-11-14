@@ -1,0 +1,93 @@
+{
+  "character": { "name": "Pico" },
+  "ui": {
+    "panel": "Story guide",
+    "step": "Step {n} of {total}",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip story",
+    "replay": "Replay story",
+    "continue": "Continue",
+    "whatHappened": "What happened?",
+    "fixIt": "Let's fix it",
+    "complete": "Complete mission",
+    "playAgain": "Play again",
+    "expert": "Switch to expert mode",
+    "verdict": { "go": "Ready to go", "risky": "Risky", "nogo": "Not safe" },
+    "levers": {
+      "move": "Move to higher ground",
+      "moveTo": "Try {site}",
+      "moveNone": "No better spot right now",
+      "wait": "Wait a few days",
+      "waitHint": "Launch when the Sun is back",
+      "relay": "Call a relay satellite",
+      "relayHint": "A helper in orbit passes our messages on",
+      "battery": "Bigger battery",
+      "batteryHint": "More power for the long dark",
+      "undo": "Undo"
+    },
+    "final": {
+      "title": "Mission complete!",
+      "site": "Landed at {site}",
+      "sun": "Sunlight",
+      "earth": "Earth contact",
+      "night": "Longest night",
+      "days": "{n} days",
+      "underDay": "under a day",
+      "learnedTitle": "What you learned",
+      "learned": [
+        "Landers need sunlight and a view of Earth.",
+        "Hills and craters can hide the Sun.",
+        "Timing changes everything."
+      ],
+      "badge": "Space Planner",
+      "namePrompt": "Your name (optional)",
+      "namePlaceholder": "Explorer",
+      "awarded": "Awarded to {name}",
+      "note": "Simplified for learning: the batteries and the relay are illustrative."
+    }
+  },
+  "steps": {
+    "mission": {
+      "intro": [
+        "Hello, explorer. I'm {name}, and we are going to the Moon's south pole, where ice hides in the cold.",
+        "Two golden rules keep a lander alive. It needs sunlight for power, and it must see Earth to talk to us.",
+        "Choose a lander below. Each one carries a different battery for the long nights."
+      ],
+      "battery": {
+        "artemis": "A big battery, patient through long nights. Heavy, but brave.",
+        "apollo": "A steady battery, made for short visits. It likes bright days.",
+        "novac": "A small battery, light as a feather. Night makes it shiver.",
+        "vikram": "A tiny battery, quick to sleep. It needs the Sun close by.",
+        "polar": "A careful battery, built for the pole. It hopes for sunny hilltops."
+      }
+    },
+    "site": {
+      "intro": "Here the Sun never climbs high. It rolls along the horizon like a slow golden ball.",
+      "happy": "Sun on the panels and Earth in the sky. This spot feels right.",
+      "worried": "Only one of our two rules is true here. Let's look a little longer.",
+      "sleeping": "Dark and quiet. The lander would sleep here, perhaps forever.",
+      "shadow": "This crater floor has not seen the Sun for ages. Try the high ground on a rim.",
+      "ready": "{site} could work. Press Continue when you are sure.",
+      "darkWeek": "Every spot is dark this week. Let's jump to a brighter one."
+    },
+    "launch": { "cheer": "Up we go! Hold on tight, the Moon is waiting." },
+    "anomaly": {
+      "delay": "Oh no, a storm on Earth held us back. We lifted off some days late.",
+      "night": "The Sun has already left {site}. The night ahead is longer than our battery.",
+      "earth": "From here, Earth hides behind the hills. Our messages cannot get home.",
+      "contact": "Silence. Earth has slipped behind the hills, and our words go unheard."
+    },
+    "fix": {
+      "intro": "Every mission has a bump. Pick a lever and watch the verdict change.",
+      "move": "Higher ground sees the Sun sooner. Let's pack up and move.",
+      "wait": "Patience is a tool too. We will wait for the Sun to return.",
+      "relay": "A relay satellite will carry our words. It costs a lot, but it hears us.",
+      "battery": "A bigger battery for the dark. The lander grows heavier, though.",
+      "noWait": "No sunny day comes soon enough. Try another lever.",
+      "go": "Green at last! You turned a bad day into a good plan.",
+      "notyet": "Not yet. Try another lever, or combine two."
+    },
+    "done": { "cheer": "You did it, Space Planner. The Moon remembers brave choices." }
+  }
+}
