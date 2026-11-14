@@ -331,6 +331,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
       <ul>
         <li>Sun and Earth positions: <a href="https://ssd.jpl.nasa.gov/horizons/manual.html" target="_blank" rel="noopener noreferrer">NASA/JPL Horizons</a>, DE441, fetched 13 November 2026. Moon mean-Earth/polar-axis frame, corrected for the Moon's rotation during light travel time.</li>
         <li>Terrain: <a href="https://pds-geosciences.wustl.edu/missions/lro/lola.htm" target="_blank" rel="noopener noreferrer">LRO LOLA gridded elevation</a>, LDEM_75S_240M (240 m) and LDEM_85S_40M (40 m), NASA Planetary Data System.</li>
+        <li>Use in calculations: custom coordinates use the 240 m grid. Polar presets combine 40 m near-field terrain with the 240 m grid farther out. The 480 m grid is a downsampled display layer and is not used for visibility calculations.</li>
         <li>Map relief: hillshade rendered by the team from LDEM_75S_240M.</li>
         <li>Site coordinates: listed below with their sources.</li>
       </ul>
@@ -339,8 +340,8 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
       <h2>Checks we ran</h2>
       <ul>
         <li>The browser engine and a Python implementation give identical hourly sunlight, Earth-visibility and simultaneous-visibility totals for all twelve preset sites over 14 November–14 December 2026 and calendar year 2027.</li>
-        <li>The browser's 240 m skyline calculation agrees with the precomputed 240 m profile at IM-1 to within 0.01°. Finer-resolution presets use additional terrain and are expected to differ.</li>
-        <li>These are consistency checks. They do not establish the accuracy of the terrain or certify a landing site. Scripts for additional Horizons and ray-tracing comparisons are included with the project.</li>
+        <li>A direct 240 m skyline recomputation at IM-1 differed from its stored profile by at most 0.005° on the current data. The check's pass threshold is 0.02°. Finer-resolution presets use additional terrain and are expected to differ.</li>
+        <li>These are consistency checks, not a measure of absolute terrain accuracy or landing-site certification. The repository includes an independent Horizons fixture check; an independent terrain ray-tracing comparison has not yet been added.</li>
       </ul>
     </section>
     <section class="card">
@@ -360,7 +361,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
     <section class="card"><h2>Glossary</h2><dl class="kv">
       <dt>Azimuth</dt><dd>Angle clockwise from north: north 0°, east 90°.</dd>
       <dt>Elevation</dt><dd>Angle above the local horizon. Negative means below it.</dd>
-      <dt>Lunar day</dt><dd>About 29.5 Earth days, the time from one new Moon to the next.</dd>
+      <dt>Lunar day</dt><dd>Mean interval between successive passages of the Sun across the same lunar longitude: about 29.53 Earth days.</dd>
       <dt>Libration</dt><dd>The slow rocking of the Moon that moves Earth in the lunar sky.</dd>
       <dt>Direct-to-Earth link</dt><dd>Earth’s centre is above the terrain skyline plus the link margin.</dd>
       <dt>Sun disk fraction</dt><dd>The part of the Sun’s disk above the skyline. The Sun counts as up when any part is visible.</dd>
@@ -372,6 +373,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
     <section class="card">
       <h2>Licences</h2>
       <ul>
+        <li>LunaLens is an independent project, not affiliated with or endorsed by NASA. Naming NASA, JPL and mission data identifies sources only.</li>
         <li>Data and coordinate sources are linked above; their provider notices apply. Wikipedia source text is attributed under CC BY-SA 4.0.</li>
         <li>Fonts: Geist, Geist Mono and Newsreader, SIL Open Font License 1.1.</li>
         <li>Three.js r170 and OrbitControls: MIT licence, hosted locally.</li>
