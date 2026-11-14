@@ -361,6 +361,9 @@ function atlasUrl() {
   return `atlas/index.html#${q.toString()}`;
 }
 
+// The frame is same-origin, so its share hash can be read directly: when the user changes the site,
+// the date or the pinned point inside the Atlas, the rest of the app follows without a reload.
+let atlasHash = '', atlasPoll = null;
 function showAtlas() {
   const host = $('v-atlas');
   let frame = host.querySelector('iframe');
@@ -368,10 +371,36 @@ function showAtlas() {
     frame = document.createElement('iframe');
     frame.title = 'Atlas';
     frame.src = atlasUrl();
+    frame.addEventListener('load', () => { try { atlasHash = frame.contentWindow.location.hash; } catch { /* ignore */ } });
     host.append(frame);
   } else {
     frame.src = atlasUrl();
   }
+  if (!atlasPoll) atlasPoll = setInterval(syncFromAtlas, 900);
+}
+
+function syncFromAtlas() {
+  const frame = $('v-atlas')?.querySelector('iframe');
+  if (!frame || document.body.dataset.view !== 'atlas') return;
+  let hash;
+  try { hash = frame.contentWindow.location.hash; } catch { return; }
+  if (!hash || hash === atlasHash) return;
+  atlasHash = hash;
+  const q = new URLSearchParams(hash.replace(/^#/, ''));
+  let changed = false;
+  const time = q.get('t');
+  if (time && /^\d{4}-\d\d-\d\dT\d\d:\d\dZ$/.test(time)) {
+    const ms = Date.parse(time);
+    if (Number.isFinite(ms) && Math.abs(utcMidnight(ms) - state.landing) > 60e3) { state.landing = utcMidnight(ms); changed = true; }
+  }
+  const first = q.getAll('s')[0];
+  if (first) {
+    const [lat, lon] = first.split(',').map(Number);
+    const norm = (v) => ((v % 360) + 360) % 360;
+    const k = SITES.findIndex((s) => Math.abs(s.lat - lat) < 0.03 && Math.abs(norm(s.lon) - norm(lon)) < 0.03);
+    if (k >= 0 && k !== state.site) { state.site = k; changed = true; }
+  }
+  if (changed) { $('date').value = new Date(state.landing).toISOString().slice(0, 10); recompute(); }
 }
 
 function showView(v) {
