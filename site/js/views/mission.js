@@ -64,6 +64,12 @@ const MESSAGES = {
   '{v} M km': ['{v} M km', '{v} 百万公里'],
   '{pct}% lit': ['{pct} % éclairée', '{pct}% 受照'],
   'Recommended': ['Recommandé', '推荐'],
+  'Sunset in': ['Coucher du Soleil dans', '日落倒计时'],
+  'Earthset in': ['Coucher de la Terre dans', '地落倒计时'],
+  'Earthrise': ['Lever de la Terre', '地升'],
+  'Open in Plan': ['Ouvrir dans Plan', '在 Plan 中打开'],
+  'Stays in view': ['Reste visible', '全程可见'],
+  'None in this stay': ['Aucun pendant le séjour', '停留期内无'],
   '{n} h lit and linked': ['{n} h éclairé et relié', '{n} 小时同时可用'],
   'Both': ['Les deux', '同时可见'],
   'min': ['min', '分钟'],
@@ -246,6 +252,7 @@ export function createMission(ctx) {
           </div>
         </div>
         <input type="search" id="m-search" autocomplete="off">
+        <div class="m-scenario" id="m-scenario"></div>
         <div class="sl" id="m-list"></div>
         <button class="btn-primary" id="m-send"></button>
       </aside>
@@ -804,7 +811,25 @@ export function createMission(ctx) {
     renderDate();
     renderList(full);
     renderLanes(full);
+    renderScenario();
     if (local.mode === '3d') { create3d(); view3d?.request(); } else draw2d();
+  }
+
+  // The two countdowns that decide a stay, for the picked site, and the way into the map page.
+  function renderScenario() {
+    const el = $('m-scenario'); const f = lastFrame;
+    const site = pickedSite();
+    if (!el || !site || !f) return;
+    const label = (next, setKey, riseWord) => next.kind === 'none'
+      ? escapeHtml(t(next.state ? 'Stays in view' : 'None in this stay'))
+      : next.kind === 'set' ? `${escapeHtml(t(setKey))} ${escapeHtml(dur(next.timeMs - f.ms))}`
+        : `${escapeHtml(t(riseWord))} ${escapeHtml(dur(next.timeMs - f.ms))}`;
+    const sunNext = nextTransition(site, 'sun', f.index);
+    const earthNext = nextTransition(site, 'earth', f.index);
+    el.innerHTML = `<button type="button" id="m-open-plan" class="btn-ghost btn-xs">${escapeHtml(t('Open in Plan'))}</button>`
+      + `<span><i class="dot sun"></i>${label(sunNext, 'Sunset in', 'Sunrise')}</span>`
+      + `<span><i class="dot earth"></i>${label(earthNext, 'Earthset in', 'Earthrise')}</span>`;
+    el.querySelector('#m-open-plan').onclick = () => ctx.go('plan');
   }
 
   function sendProbe() {

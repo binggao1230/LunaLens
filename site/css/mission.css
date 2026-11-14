@@ -246,3 +246,11 @@ body[data-view=mission] .datebar{grid-column:1/-1}
 .btn-ghost:hover{background:#30363e}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #f5c542;outline-offset:3px}
 ::selection{background:#f5c542;color:#111315}
+
+/* Mission side panel: the two countdowns for the picked site, and the way into Plan. */
+.m-scenario{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 8px;font-size:11px;color:var(--text2)}
+.m-scenario span{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono)}
+.m-scenario .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.m-scenario .dot.sun{background:var(--sun)}
+.m-scenario .dot.earth{background:var(--earth)}
+.m-scenario button{margin-right:auto}
