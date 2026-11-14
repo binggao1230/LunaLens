@@ -13,6 +13,14 @@ const MESSAGES = {
   'See which lunar landing sites have sunlight and a direct line of sight to Earth, hour by hour. Pick a lander, choose a site, then send a probe.': ['Voyez quels sites d’alunissage reçoivent la lumière du Soleil et voient la Terre en direct, heure par heure. Choisissez un atterrisseur, un site, puis envoyez une sonde.', '逐小时查看哪些月面着陆点有阳光、又能直视地球。选择着陆器与地点，然后发射探测器。'],
   'Choose your probe': ['Choisissez votre sonde', '选择你的探测器'],
   'Validate': ['Valider', '确认'],
+  'Previous probe': ['Sonde précédente', '上一个探测器'],
+  'Next probe': ['Sonde suivante', '下一个探测器'],
+  'Drag to rotate · scroll to zoom': ['Glissez pour tourner · défilez pour zoomer', '拖动旋转 · 滚轮缩放'],
+  'Loading model…': ['Chargement du modèle…', '正在加载模型…'],
+  'Model unavailable. Select another probe or continue.': ['Modèle indisponible. Choisissez une autre sonde ou continuez.', '模型不可用。可选择其他探测器或继续。'],
+  'Representative lander · not mission-specific': ['Atterrisseur illustratif · non spécifique à la mission', '通用着陆器展示 · 非该任务精确模型'],
+  'Artemis lander concept': ['Concept d’atterrisseur Artemis', 'Artemis 着陆器概念'],
+  'South-pole exploration · illustrative finish': ['Exploration du pôle Sud · couleurs illustratives', '南极探索 · 示意配色'],
   'Apollo Lunar Module': ['Module lunaire Apollo', '阿波罗登月舱'],
   'Crewed landers, 1969–1972': ['Atterrisseurs habités, 1969–1972', '载人着陆器，1969–1972'],
   'Intuitive Machines IM-1 (2024) and IM-2 (2025)': ['Intuitive Machines IM-1 (2024) et IM-2 (2025)', 'Intuitive Machines IM-1（2024）与 IM-2（2025）'],
@@ -108,6 +116,7 @@ const ART = {
     <circle cx="136" cy="22" r="6" fill="#5aa2ff"/><circle cx="134" cy="20" r="2.4" fill="#8fd0a0" opacity=".8"/></svg>`,
 };
 const PROBES = [
+  { id: 'artemis', name: 'Artemis lander concept', meta: 'South-pole exploration · illustrative finish', sites: ['shackleton-rim', 'degerlache-rim', 'nobile-rim', 'shackleton-floor'] },
   { id: 'apollo', name: 'Apollo Lunar Module', meta: 'Crewed landers, 1969–1972', sites: ['apollo11', 'apollo12', 'apollo15', 'apollo16', 'apollo17'] },
   { id: 'novac', name: 'Nova-C', meta: 'Intuitive Machines IM-1 (2024) and IM-2 (2025)', sites: ['im1', 'im2'] },
   { id: 'vikram', name: 'Vikram', meta: 'Chandrayaan-3 (2023)', sites: ['ch3'] },
@@ -117,8 +126,9 @@ const PROBES = [
 export function createMission(ctx) {
   const $ = (id) => document.getElementById(id);
   const startEl = $('v-start'), missionEl = $('v-mission'), flightEl = $('flight');
-  const local = { flat: 'pole', probe: 'novac', picked: null, mode: '3d', hour: 0, timer: null, open: null, query: '', listKey: '', laneKey: '' };
+  const local = { flat: 'pole', probe: 'apollo', picked: null, mode: '3d', hour: 0, timer: null, open: null, query: '', listKey: '', laneKey: '' };
   let view3d = null, view3dLoading = false, view3dFailed = false, lastFrame = null, flying = false;
+  let disposePreview = () => {};
 
   const probe = () => PROBES.find((p) => p.id === local.probe);
   const sites = () => ctx.sites();
@@ -158,21 +168,129 @@ export function createMission(ctx) {
   /* ---------- start page ---------- */
 
   function renderStart() {
+    disposePreview();
     const list = sites();
+    const selected = probe(), index = PROBES.indexOf(selected);
+    const count = selected.sites.filter((id) => list.some((s) => s.id === id)).length;
     startEl.innerHTML = `<div class="start"><div class="start-moon"></div>
-      <h1>LunaLens</h1>
+      <h1 aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt=""><span>Lens</span></h1>
       <p class="lede">${escapeHtml(t('See which lunar landing sites have sunlight and a direct line of sight to Earth, hour by hour. Pick a lander, choose a site, then send a probe.'))}</p>
       <div class="pick">${escapeHtml(t('Choose your probe'))}</div>
-      <div class="cards" role="radiogroup" aria-label="${escapeHtml(t('Choose your probe'))}">
-        ${PROBES.map((p) => {
-          const count = p.sites.filter((id) => list.some((s) => s.id === id)).length;
-          return `<button class="pcard${p.id === local.probe ? ' on' : ''}" role="radio" aria-checked="${p.id === local.probe}" data-probe="${p.id}">
-            <span class="tick">✓</span><span class="art">${ART[p.id]}</span>
-            <b>${escapeHtml(t(p.name))}</b><span class="meta">${escapeHtml(t(p.meta))}</span>
-            <span class="count">${escapeHtml(count === 1 ? t('1 site') : t('{count} sites', { count }))}</span></button>`;
-        }).join('')}
+      <div class="probe-carousel">
+        <button class="probe-arrow" data-probe="${PROBES[(index + PROBES.length - 1) % PROBES.length].id}" aria-label="${escapeHtml(t('Previous probe'))}">←</button>
+        <section class="probe-display" aria-label="${escapeHtml(t(selected.name))}">
+          <div class="probe-viewport">
+            <span class="probe-number">${String(index + 1).padStart(2, '0')} / ${String(PROBES.length).padStart(2, '0')}</span>
+            <span class="probe-instruction">${escapeHtml(t('Drag to rotate · scroll to zoom'))}</span>
+            ${selected.id === 'polar' ? '<img class="polar-preview" src="data/polar-hillshade.webp" alt="">' : '<canvas id="probe-model" tabindex="0" aria-label="' + escapeHtml(t(selected.name)) + '"></canvas>'}
+            <span id="probe-load" role="status">${selected.id === 'polar' ? '' : escapeHtml(t('Loading model…'))}</span>
+          </div>
+          <div class="probe-details" aria-live="polite"><div><h2>${escapeHtml(t(selected.name))}</h2><p>${escapeHtml(t(selected.meta))}</p></div><span class="probe-count">${escapeHtml(count === 1 ? t('1 site') : t('{count} sites', { count }))}</span></div>
+          ${['novac', 'vikram'].includes(selected.id) ? `<p class="model-caption">${escapeHtml(t('Representative lander · not mission-specific'))}</p>` : ''}
+        </section>
+        <button class="probe-arrow" data-probe="${PROBES[(index + 1) % PROBES.length].id}" aria-label="${escapeHtml(t('Next probe'))}">→</button>
       </div>
-      <div class="go"><button class="btn-primary" id="validate">${escapeHtml(t('Validate'))}</button></div></div>`;
+      <div class="probe-dots" role="radiogroup" aria-label="${escapeHtml(t('Choose your probe'))}">${PROBES.map(p => `<button role="radio" aria-checked="${p.id === selected.id}" aria-label="${escapeHtml(t(p.name))}" data-probe="${p.id}"></button>`).join('')}</div>
+      <div class="go"><button class="btn-primary" id="validate">${escapeHtml(t('Validate'))}<span aria-hidden="true">→</span></button></div></div>`;
+    if (selected.id !== 'polar') mountProbeModel(selected.id);
+  }
+
+  async function mountProbeModel(id) {
+    const canvas = $('probe-model');
+    let cancelled = false, renderer, controls, observer, model;
+    disposePreview = () => {
+      cancelled = true;
+      observer?.disconnect();
+      controls?.dispose();
+      renderer?.setAnimationLoop(null);
+      renderer?.dispose();
+      model?.traverse(part => {
+        part.geometry?.dispose();
+        for (const material of (Array.isArray(part.material) ? part.material : [part.material])) {
+          if (!material) continue;
+          for (const value of Object.values(material)) if (value?.isTexture) value.dispose();
+          material.dispose();
+        }
+      });
+    };
+    try {
+      const [T, { OrbitControls }, { GLTFLoader }, { DRACOLoader }, { OBJLoader }] = await Promise.all([
+        import('../vendor/three/three.module.js'), import('../vendor/three/OrbitControls.js'),
+        import('../vendor/three/GLTFLoader.js'), import('../vendor/three/DRACOLoader.js'),
+        import('../vendor/three/OBJLoader.js'),
+      ]);
+      if (cancelled) return;
+      const decoder = new DRACOLoader().setDecoderPath('js/vendor/three/draco/');
+      const loader = new GLTFLoader().setDRACOLoader(decoder);
+      let gltf;
+      try {
+        gltf = id === 'artemis'
+          ? { scene: await new OBJLoader().loadAsync('assets/models/Artemis-Lander.obj') }
+          : await loader.loadAsync(`assets/models/${id === 'apollo' ? 'apollo-lm' : 'lunar-lander'}.glb`);
+      }
+      finally { decoder.dispose(); }
+      model = gltf.scene;
+      if (cancelled) { disposeModel(model); return; }
+      if (id === 'artemis') model.traverse(part => {
+        if (!part.isMesh) return;
+        const originals = Array.isArray(part.material) ? part.material : [part.material];
+        const materials = originals.map(original => {
+          const name = original.name || '';
+          const gold = /Gold/i.test(name), chrome = /Chrome/i.test(name);
+          original.dispose();
+          return new T.MeshStandardMaterial({
+            color: gold ? 0xcda756 : chrome ? 0x3d4956 : 0xdce2e8,
+            metalness: gold ? .65 : chrome ? .75 : .35,
+            roughness: gold ? .36 : .42,
+          });
+        });
+        part.material = Array.isArray(part.material) ? materials : materials[0];
+      });
+      renderer = new T.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.toneMapping = T.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.5;
+      const scene = new T.Scene(), camera = new T.PerspectiveCamera(34, 1, .01, 100);
+      const box = new T.Box3().setFromObject(model), size = box.getSize(new T.Vector3());
+      const scale = 3.5 / Math.max(size.x, size.y, size.z);
+      model.scale.setScalar(scale);
+      box.setFromObject(model);
+      model.position.sub(box.getCenter(new T.Vector3()));
+      scene.add(model, new T.HemisphereLight(0xd9eaff, 0x4e4540, 3));
+      const light = new T.DirectionalLight(0xfff0d5, 4);
+      light.position.set(4, 6, 5); scene.add(light);
+      const rim = new T.DirectionalLight(0xaacbff, 3);
+      rim.position.set(-4, 2, -3); scene.add(rim);
+      camera.position.set(5.5, 3, 7.5);
+      controls = new OrbitControls(camera, canvas);
+      controls.enableDamping = true; controls.enablePan = false;
+      controls.autoRotate = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+      controls.autoRotateSpeed = .65;
+      controls.minDistance = 4; controls.maxDistance = 14;
+      observer = new ResizeObserver(() => {
+        const { width, height } = canvas.getBoundingClientRect();
+        if (!width || !height) return;
+        renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix();
+      });
+      observer.observe(canvas);
+      $('probe-load').textContent = '';
+      renderer.setAnimationLoop(() => {
+        if (document.body.dataset.view !== 'start') return;
+        controls.update(); renderer.render(scene, camera);
+      });
+      function disposeModel(object) {
+        object.traverse(part => {
+          part.geometry?.dispose();
+          for (const material of (Array.isArray(part.material) ? part.material : [part.material])) {
+            if (!material) continue;
+            for (const value of Object.values(material)) if (value?.isTexture) value.dispose();
+            material.dispose();
+          }
+        });
+      }
+    } catch (error) {
+      if (!cancelled) $('probe-load').textContent = t('Model unavailable. Select another probe or continue.');
+    }
   }
 
   /* ---------- mission page skeleton ---------- */
