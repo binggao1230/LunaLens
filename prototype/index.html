@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luna Lens — prototype (synthetic data)</title>
+<style>
+:root{
+  color-scheme: light;
+  --page:#f3f2ee; --surface:#fcfcfb; --border:#dddcd6;
+  --text:#0b0b0b; --text2:#52514e; --muted:#85847e; --grid:#e6e5df;
+  --sun:#eda100; --earth:#2a78d6;
+  --terrain:#c9c8c1; --terrain-line:#6f6e69;
+  --good:#0ca30c; --critical:#d03b3b;
+  --warn-bg:#fff4d6; --warn-text:#5c4300;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme: dark;
+    --page:#111110; --surface:#1a1a19; --border:#33332f;
+    --text:#f0efec; --text2:#c3c2b7; --muted:#8d8c84; --grid:#2a2a27;
+    --sun:#c98500; --earth:#3987e5;
+    --terrain:#3a3a36; --terrain-line:#8d8c84;
+    --warn-bg:#3a2f10; --warn-text:#f3d58a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--text);
+  font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:12px 12px 48px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:6px 0 10px}
+h1{font-size:22px;margin:0;letter-spacing:.2px}
+header p{margin:0;color:var(--text2)}
+.banner{background:var(--warn-bg);color:var(--warn-text);border-radius:8px;
+  padding:8px 12px;font-size:13px;margin-bottom:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:14px;margin-bottom:12px}
+h2{font-size:15px;margin:0 0 2px}
+.sub{color:var(--text2);font-size:13px;margin:0 0 10px}
+.controls{display:grid;grid-template-columns:1.4fr 1fr;gap:10px 14px}
+.controls label{display:block;font-size:12px;color:var(--text2);margin-bottom:3px}
+select,input[type=date]{width:100%;font:inherit;color:var(--text);background:var(--page);
+  border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-height:40px}
+.timeRow{grid-column:1/-1;display:flex;align-items:center;gap:10px}
+.timeRow input[type=range]{flex:1;min-width:0;accent-color:var(--earth);height:32px}
+button{font:inherit;color:var(--text);background:var(--page);border:1px solid var(--border);
+  border-radius:8px;padding:8px 14px;min-height:40px;cursor:pointer}
+#now{grid-column:1/-1;font-size:13px;color:var(--text2);font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px}
+.tile .k{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.tile .v{font-size:24px;font-weight:650;font-variant-numeric:tabular-nums;margin-top:2px}
+.tile .d{font-size:12px;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--text2);margin-bottom:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:8px;border-radius:2px;display:inline-block}
+.chart{position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.chart svg{display:block;width:100%}
+svg text{fill:var(--text2);font-size:11px;font-family:inherit}
+#crosshair{position:absolute;top:0;width:1px;background:var(--muted);pointer-events:none;display:none}
+#tip{position:fixed;z-index:10;pointer-events:none;display:none;background:var(--surface);
+  color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 9px;
+  font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.18);max-width:240px;font-variant-numeric:tabular-nums}
+.row{display:grid;grid-template-columns:230px 1fr 250px;gap:6px 14px;
+  align-items:center;padding:10px;border:1px solid transparent;border-radius:10px;cursor:pointer;
+  width:100%;text-align:left;background:none;min-height:0}
+.row + .row{border-top-color:var(--border);border-radius:0}
+.row.sel{border-color:var(--earth);border-radius:10px;background:var(--page)}
+.row.sel + .row{border-top-color:transparent}
+.row .nm{font-weight:600}
+.row .co{font-size:12px;color:var(--muted)}
+.row .nums{display:flex;gap:14px;font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
+.row .nums b{display:block;font-size:15px;color:var(--text)}
+.row svg{width:100%;height:30px;display:block}
+footer{color:var(--muted);font-size:12px;margin-top:16px}
+@media (max-width:640px){
+  .controls{grid-template-columns:1fr}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .tile .v{font-size:20px}
+  .row{grid-template-columns:1fr}
+  .card{padding:12px}
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Luna Lens</h1>
+    <p>Sun and Earth above the real horizon, site by site, date by date.</p>
+  </header>
+  <div class="banner"><b>Prototype — synthetic data.</b> Terrain horizons are randomly generated and the
+    Sun/Earth motion is a simplified model. Nothing on this page is a real mission value. It exists to agree
+    on layout and interactions.</div>
+
+  <section class="card">
+    <div class="controls">
+      <div><label for="site">Landing site</label><select id="site"></select></div>
+      <div><label for="date">Landing date (UTC)</label><input id="date" type="date"></div>
+      <div class="timeRow">
+        <button id="play" aria-label="Play one lunar day">▶ Play</button>
+        <input id="hour" type="range" min="0" step="1" value="0" aria-label="Time since landing">
+      </div>
+      <div id="now"></div>
+    </div>
+  </section>
+
+  <section class="tiles" id="tiles"></section>
+
+  <section class="card">
+    <h2>Horizon panorama</h2>
+    <p class="sub">Looking out from the site across all compass directions. Vertical scale is exaggerated.
+      Tracks cover one lunar day from landing.</p>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--sun)"></i>Sun</span>
+      <span><i class="sw" style="background:var(--earth)"></i>Earth</span>
+      <span><i class="sw" style="background:var(--terrain)"></i>Terrain</span>
+      <span><i class="sw" style="height:0;border-top:1px dashed var(--muted)"></i>Horizon with no terrain</span>
+    </div>
+    <div class="chart" id="pano"><div id="crosshair"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>One lunar day at this site</h2>
+    <p class="sub">Tap or drag to move through time.</p>
+    <div class="chart" id="timeline"></div>
+  </section>
+
+  <section class="card">
+    <h2>Compare sites</h2>
+    <p class="sub">Same landing date, one lunar day. Upper strip: sunlight. Lower strip: direct-to-Earth link.
+      Tap a row to select it.</p>
+    <div id="compare"></div>
+  </section>
+
+  <section class="card">
+    <h2>If the landing date slips</h2>
+    <p class="sub">Continuous sunlight available from touchdown, for each day of delay at the selected site.</p>
+    <div class="chart" id="slip"></div>
+  </section>
+
+  <footer>Throwaway prototype. See <code>prototype/NOTES.md</code>. Site coordinates are unverified seed values.</footer>
+</main>
+<div id="tip"></div>
+
+<script>
+"use strict";
+// ---------- constants ----------
+const D2R = Math.PI/180, R2D = 180/Math.PI, DAY = 864e5, HOUR = 36e5;
+const SYNODIC = 29.530589;
+const NEW_MOON_REF = Date.UTC(2000,0,6,18,14);
+const HOURS = Math.round(SYNODIC*24);          // one lunar day, hourly steps
+const SLIP_DAYS = 28, LOOKAHEAD_H = 60*24;
+const SIM_H = SLIP_DAYS*24 + LOOKAHEAD_H;
+const SUN_R = 0.265, MARGIN = 2;               // degrees
+
+const SITES = [
+  {name:"Shackleton connecting ridge", tag:"Artemis candidate", lat:-89.45, lon:222.69, seed:11, base:0.7,  amp:1.5},
+  {name:"Mons Mouton (IM-2 area)",     tag:"CLPS",              lat:-84.8,  lon:29.2,   seed:23, base:0.8,  amp:1.6},
+  {name:"Malapert A (IM-1 area)",      tag:"CLPS",              lat:-80.1,  lon:1.4,    seed:37, base:0.8,  amp:1.4},
+  {name:"Chandrayaan-3",               tag:"ISRO",              lat:-69.37, lon:32.32,  seed:41, base:0.4,  amp:0.6},
+  {name:"Apollo 11",                   tag:"Historic",          lat:0.674,  lon:23.473, seed:53, base:0.2,  amp:0.3},
+  {name:"Chang'e-4",                   tag:"Far side",          lat:-45.44, lon:177.60, seed:67, base:0.5,  amp:0.7},
+];
+
+// ---------- synthetic model ----------
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+function makeHorizon(s){
+  const rnd = mulberry32(s.seed), terms = [];
+  for(let k=1;k<=9;k++) terms.push([k, s.amp*rnd()/Math.sqrt(k), rnd()*2*Math.PI]);
+  const out = new Float64Array(360);
+  for(let a=0;a<360;a++){ let v=s.base; for(const [k,A,p] of terms) v+=A*Math.sin(k*a*D2R+p); out[a]=Math.max(v,-2); }
+  return out;
+}
+SITES.forEach(s=>s.hz=makeHorizon(s));
+function hzAt(s,az){ const a=((az%360)+360)%360, i=Math.floor(a), f=a-i; return s.hz[i%360]*(1-f)+s.hz[(i+1)%360]*f; }
+
+function subSun(ms){
+  const d=(ms-NEW_MOON_REF)/DAY, age=((d%SYNODIC)+SYNODIC)%SYNODIC;
+  return {lat:-1.54*Math.cos(2*Math.PI*(ms-Date.UTC(2027,0,20))/DAY/346.62), lon:180-360*age/SYNODIC};
+}
+function subEarth(ms){
+  const d=(ms-NEW_MOON_REF)/DAY;
+  return {lat:6.7*Math.sin(2*Math.PI*d/27.2122+1.9), lon:7.0*Math.sin(2*Math.PI*d/27.5546+0.6)};
+}
+function azel(lat,lon,p){
+  const f=lat*D2R,l=lon*D2R,fs=p.lat*D2R,ls=p.lon*D2R;
+  const s=[Math.cos(fs)*Math.cos(ls),Math.cos(fs)*Math.sin(ls),Math.sin(fs)];
+  const up=s[0]*Math.cos(f)*Math.cos(l)+s[1]*Math.cos(f)*Math.sin(l)+s[2]*Math.sin(f);
+  const e=-s[0]*Math.sin(l)+s[1]*Math.cos(l);
+  const n=-s[0]*Math.sin(f)*Math.cos(l)-s[1]*Math.sin(f)*Math.sin(l)+s[2]*Math.cos(f);
+  return {el:Math.asin(Math.max(-1,Math.min(1,up)))*R2D, az:(Math.atan2(e,n)*R2D+360)%360};
+}
+function diskFrac(h){ // h = Sun-centre elevation above local horizon, degrees
+  const x=h/SUN_R; if(x>=1) return 1; if(x<=-1) return 0;
+  return 1-(Math.acos(x)-x*Math.sqrt(1-x*x))/Math.PI;
+}
+function simulate(site, start){
+  const n=SIM_H+1, r={sAz:new Float32Array(n),sEl:new Float32Array(n),frac:new Float32Array(n),
+    eAz:new Float32Array(n),eEl:new Float32Array(n),comm:new Uint8Array(n)};
+  for(let i=0;i<n;i++){
+    const t=start+i*HOUR, s=azel(site.lat,site.lon,subSun(t)), e=azel(site.lat,site.lon,subEarth(t));
+    r.sAz[i]=s.az; r.sEl[i]=s.el; r.frac[i]=diskFrac(s.el-hzAt(site,s.az));
+    r.eAz[i]=e.az; r.eEl[i]=e.el; r.comm[i]=e.el>hzAt(site,e.az)+MARGIN?1:0;
+  }
+  let lit=0,comm=0,run=0,best=0;
+  for(let i=0;i<HOURS;i++){ if(r.frac[i]>=0.5){lit++;run++;best=Math.max(best,run)}else run=0; comm+=r.comm[i]; }
+  r.litPct=100*lit/HOURS; r.commPct=100*comm/HOURS; r.longest=best;
+  return r;
+}
+
+// ---------- state ----------
+const $=id=>document.getElementById(id);
+const state={site:0, landing:Date.UTC(2027,0,1), hour:0, timer:null};
+let sims=[];
+const layout={pano:null, tl:null, slip:null};
+
+function fmtDur(h){ return h<48 ? h+" h" : Math.floor(h/24)+" d "+(h%24)+" h"; }
+function fmtDeg(v){ return (v<0?"−":"")+Math.abs(v).toFixed(1)+"°"; }
+function fmtUTC(ms){ return new Date(ms).toISOString().slice(0,16).replace("T"," ")+" UTC"; }
+function fmtCoord(s){ return Math.abs(s.lat).toFixed(2)+"°"+(s.lat<0?"S":"N")+", "+s.lon.toFixed(2)+"°E"; }
+function nextChange(test, from){ const v=test(from); for(let i=from+1;i<=SIM_H;i++) if(test(i)!==v) return i-from; return null; }
+function runs(n, cat){ const out=[]; let s=0,c=cat(0); for(let i=1;i<=n;i++){ const k=i<n?cat(i):-1; if(k!==c){out.push([s,i,c]);s=i;c=k;} } return out; }
+const sunCat = r => i => r.frac[i]>=0.5?2:(r.frac[i]>0?1:0);
+
+// ---------- tiles ----------
+function renderTiles(){
+  const r=sims[state.site], s=SITES[state.site], i=state.hour;
+  const above=r.sEl[i]-hzAt(s,r.sAz[i]), lit=r.frac[i]>0, link=!!r.comm[i];
+  const ns=nextChange(k=>r.frac[k]>0,i), ne=nextChange(k=>r.comm[k]===1,i);
+  const dur=h=>h==null?"> "+Math.floor((SIM_H-i)/24)+" d":fmtDur(h);
+  const T=(k,v,d,c)=>`<div class="tile"><div class="k">${c?`<i class="dot" style="background:var(--${c})"></i>`:""}${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`;
+  $("tiles").innerHTML =
+    T("Sun elevation", fmtDeg(r.sEl[i]), (above>=0?"+":"−")+Math.abs(above).toFixed(1)+"° vs. terrain", "sun") +
+    T("Solar disk visible", Math.round(r.frac[i]*100)+"%", lit?"Power available":"In shadow", "sun") +
+    T(lit?"Sunset in":"Sunrise in", dur(ns), lit?"Until the disk is fully hidden":"Until first light", "sun") +
+    T("Earth elevation", fmtDeg(r.eEl[i]), "Link needs terrain + "+MARGIN+"° margin", "earth") +
+    T("Direct-to-Earth link", `<span style="color:var(--${link?"good":"critical"})">${link?"✓":"✕"}</span> ${link?"Available":"Blocked"}`, link?"Earth clears the margin":"Earth below the margin", "earth") +
+    T(link?"Earthset in":"Link returns in", dur(ne), "From the current time", "earth");
+  $("now").textContent = "Landing + "+fmtDur(i)+"  ·  "+fmtUTC(state.landing+i*HOUR);
+}
+
+// ---------- panorama ----------
+function renderPano(){
+  const el=$("pano"), W=el.clientWidth, H=W<520?250:330, L=36, R=10, T=12, B=26;
+  const r=sims[state.site], s=SITES[state.site], i=state.hour;
+  let mx=-90; for(let k=0;k<=HOURS;k++) mx=Math.max(mx,r.sEl[k],r.eEl[k]);
+  const yMax=mx<=15?15:(mx<=45?45:90), step=yMax===15?5:(yMax===45?15:30), yMin=yMax===15?-10:-step;
+  const pw=W-L-R, ph=H-T-B, X=a=>L+a/360*pw, Y=v=>T+(yMax-v)/(yMax-yMin)*ph;
+  layout.pano={L,pw,H,T,ph};
+  let g="";
+  for(let v=yMin;v<=yMax;v+=step) g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${v}°</text>`;
+  [["N",0],["E",90],["S",180],["W",270],["N",360]].forEach(([n,a])=>{
+    g+=`<line x1="${X(a)}" x2="${X(a)}" y1="${T}" y2="${T+ph}" stroke="var(--grid)"/><text x="${X(a)}" y="${H-8}" text-anchor="${a===0?"start":a===360?"end":"middle"}">${n}${W>=520?" "+a+"°":""}</text>`;});
+  let terr=`M${X(0)},${Y(hzAt(s,0))}`; for(let a=1;a<=360;a++) terr+=`L${X(a).toFixed(1)},${Y(hzAt(s,a)).toFixed(1)}`;
+  const track=(az,elv)=>{ let d="",pen=false; for(let k=0;k<=HOURS;k++){ if(k>0&&Math.abs(az[k]-az[k-1])>180) pen=false;
+    d+=(pen?"L":"M")+X(az[k]).toFixed(1)+","+Y(elv[k]).toFixed(1); pen=true; } return d; };
+  const mark=(az,elv,r0,col,name)=>{ const cy=Math.min(Math.max(Y(elv),T),T+ph), cx=X(az), left=cx>W-R-96;
+    return `<circle cx="${cx}" cy="${cy}" r="${r0}" fill="var(--${col})" stroke="var(--surface)" stroke-width="2"/>`+
+      `<text x="${cx+(left?-r0-5:r0+5)}" y="${cy-r0-2<T+10?cy+r0+12:cy-r0-2}" text-anchor="${left?"end":"start"}" style="fill:var(--text);font-weight:600;paint-order:stroke;stroke:var(--surface);stroke-width:3px">${name} ${fmtDeg(elv)}</text>`; };
+  const svg=`<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Horizon panorama for ${s.name}">
+    <defs><clipPath id="pc"><rect x="${L}" y="${T}" width="${pw}" height="${ph}"/></clipPath></defs>${g}
+    <g clip-path="url(#pc)">
+      <path d="${track(r.sAz,r.sEl)}" fill="none" stroke="var(--sun)" stroke-width="2" opacity=".75"/>
+      <path d="${track(r.eAz,r.eEl)}" fill="none" stroke="var(--earth)" stroke-width="2" opacity=".75"/>
+      <path d="${terr}L${X(360)},${T+ph}L${X(0)},${T+ph}Z" fill="var(--terrain)" fill-opacity=".88" stroke="var(--terrain-line)" stroke-width="1"/>
+      <line x1="${L}" x2="${W-R}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)" stroke-dasharray="4 4"/>
+    </g>
+    ${mark(r.eAz[i],r.eEl[i],6,"earth","Earth")}${mark(r.sAz[i],r.sEl[i],7,"sun","Sun")}
+  </svg>`;
+  const ch=$("crosshair"); el.innerHTML=svg; el.appendChild(ch); ch.style.height=(T+ph)+"px";
+}
+
+// ---------- timeline ----------
+function strip(r, x0, wPerH, y, h){
+  let o=`<rect x="${x0}" y="${y}" width="${HOURS*wPerH}" height="${h}" fill="var(--grid)" rx="3"/>`;
+  return o+runs(HOURS,sunCat(r)).filter(q=>q[2]).map(q=>`<rect x="${x0+q[0]*wPerH}" y="${y}" width="${(q[1]-q[0])*wPerH}" height="${h}" fill="var(--sun)" opacity="${q[2]===2?1:.45}"/>`).join("");
+}
+function stripComm(r, x0, wPerH, y, h){
+  let o=`<rect x="${x0}" y="${y}" width="${HOURS*wPerH}" height="${h}" fill="var(--grid)" rx="3"/>`;
+  return o+runs(HOURS,i=>r.comm[i]).filter(q=>q[2]).map(q=>`<rect x="${x0+q[0]*wPerH}" y="${y}" width="${(q[1]-q[0])*wPerH}" height="${h}" fill="var(--earth)"/>`).join("");
+}
+function renderTimeline(){
+  const el=$("timeline"), W=el.clientWidth, L=W<520?4:76, R=8, pw=W-L-R, w=pw/HOURS, r=sims[state.site];
+  const top=W<520?14:4, H=top+22+6+22+24;
+  layout.tl={L,pw};
+  let ax=""; for(let d=0;d<=25;d+=5) ax+=`<text x="${L+d*24*w}" y="${H-6}" text-anchor="${d?"middle":"start"}">${d?d+" d":(W<520?"0":"Landing")}</text>`;
+  const lab=W<520?`<text x="${L}" y="10">Sunlight (top) · Earth link (bottom)</text>`
+    :`<text x="${L-8}" y="${top+15}" text-anchor="end">Sunlight</text><text x="${L-8}" y="${top+43}" text-anchor="end">Earth link</text>`;
+  const cx=L+state.hour*w;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Sunlight and Earth link windows">${lab}
+    ${strip(r,L,w,top,22)}${stripComm(r,L,w,top+28,22)}${ax}
+    <line x1="${cx}" x2="${cx}" y1="${top-3}" y2="${top+53}" stroke="var(--text)" stroke-width="2"/></svg>`;
+}
+
+// ---------- compare ----------
+function renderCompare(){
+  $("compare").innerHTML=SITES.map((s,k)=>{ const r=sims[k];
+    return `<button class="row${k===state.site?" sel":""}" data-k="${k}">
+      <div><div class="nm">${s.name}</div><div class="co">${s.tag} · ${fmtCoord(s)}</div></div>
+      <svg viewBox="0 0 ${HOURS} 30" preserveAspectRatio="none" aria-hidden="true">${strip(r,0,1,0,13)}${stripComm(r,0,1,17,13)}
+        <rect x="${state.hour-1}" y="0" width="2.5" height="30" fill="var(--text)"/></svg>
+      <div class="nums"><div><b>${r.litPct.toFixed(0)}%</b>sunlit</div><div><b>${r.commPct.toFixed(0)}%</b>Earth link</div><div><b>${fmtDur(r.longest)}</b>longest sun</div></div>
+    </button>`; }).join("");
+}
+
+// ---------- date slip ----------
+function slipData(){ const r=sims[state.site], out=[];
+  for(let d=0;d<=SLIP_DAYS;d++){ let i=d*24,n=0; while(i+n<=SIM_H && n<LOOKAHEAD_H && r.frac[i+n]>=0.5) n++; out.push(n); }
+  return out; }
+function renderSlip(){
+  const el=$("slip"), W=el.clientWidth, H=190, L=36, R=8, T=10, B=26, pw=W-L-R, ph=H-T-B, data=slipData();
+  const mxD=Math.max(5,Math.ceil(Math.max(...data)/24/5)*5), bw=pw/data.length, Y=v=>T+ph-(v/24/mxD)*ph;
+  layout.slip={L,bw,data};
+  let g=""; for(let v=0;v<=mxD;v+=mxD/5) g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v*24)}" y2="${Y(v*24)}" stroke="var(--grid)"/><text x="${L-6}" y="${Y(v*24)+4}" text-anchor="end">${v} d</text>`;
+  let bars=""; data.forEach((v,d)=>{ const x=L+d*bw+1, w=Math.max(bw-2,1), y=Y(v), h=T+ph-y;
+    if(h>0) bars+=`<path d="M${x},${T+ph}V${y+Math.min(3,h)}q0,-${Math.min(3,h)} ${Math.min(3,w/2)},-${Math.min(3,h)}H${x+w-Math.min(3,w/2)}q${Math.min(3,w/2)},0 ${Math.min(3,w/2)},${Math.min(3,h)}V${T+ph}Z" fill="var(--sun)"/>`;
+    else bars+=`<rect x="${x}" y="${T+ph-2}" width="${w}" height="2" fill="var(--muted)"/>`;
+    if(d%7===0) bars+=`<text x="${x+w/2}" y="${H-8}" text-anchor="${d===0?"start":d===SLIP_DAYS?"end":"middle"}">${d?"+"+d+" d":"On time"}</text>`; });
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="Continuous sunlight by landing delay">${g}${bars}</svg>`;
+}
+
+// ---------- wiring ----------
+function renderTime(){ renderTiles(); renderPano(); renderTimeline(); renderCompare(); }
+function renderAll(){ renderTime(); renderSlip(); }
+function recompute(){ sims=SITES.map(s=>simulate(s,state.landing)); renderAll(); }
+function setHour(h){ state.hour=Math.max(0,Math.min(HOURS,Math.round(h))); $("hour").value=state.hour; renderTime(); }
+
+const tip=$("tip");
+function showTip(e,html){ tip.innerHTML=html; tip.style.display="block";
+  const w=tip.offsetWidth, x=Math.min(Math.max(e.clientX+12,6),window.innerWidth-w-6);
+  tip.style.left=x+"px"; tip.style.top=Math.max(e.clientY-tip.offsetHeight-12,6)+"px"; }
+function hideTip(){ tip.style.display="none"; $("crosshair").style.display="none"; }
+
+$("site").innerHTML=SITES.map((s,k)=>`<option value="${k}">${s.name} — ${s.tag}</option>`).join("");
+$("site").onchange=e=>{ state.site=+e.target.value; renderAll(); };
+$("date").value=new Date(state.landing).toISOString().slice(0,10);
+$("date").onchange=e=>{ const t=Date.parse(e.target.value+"T00:00:00Z"); if(!isNaN(t)){ state.landing=t; recompute(); } };
+$("hour").max=HOURS;
+$("hour").oninput=e=>setHour(+e.target.value);
+$("play").onclick=()=>{ if(state.timer){ clearInterval(state.timer); state.timer=null; $("play").textContent="▶ Play"; return; }
+  $("play").textContent="❚❚ Pause"; if(state.hour>=HOURS) setHour(0);
+  state.timer=setInterval(()=>{ if(state.hour>=HOURS){ $("play").click(); return; } setHour(state.hour+3); },50); };
+$("compare").onclick=e=>{ const b=e.target.closest(".row"); if(b){ state.site=+b.dataset.k; $("site").value=state.site; renderAll(); } };
+
+$("pano").addEventListener("pointermove",e=>{ const p=layout.pano, b=$("pano").getBoundingClientRect(), x=e.clientX-b.left;
+  if(x<p.L||x>p.L+p.pw) return hideTip();
+  const az=(x-p.L)/p.pw*360, s=SITES[state.site], ch=$("crosshair");
+  ch.style.display="block"; ch.style.left=x+"px";
+  showTip(e,`<b>Azimuth ${az.toFixed(0)}°</b><br>Terrain horizon ${fmtDeg(hzAt(s,az))}`); });
+$("pano").addEventListener("pointerleave",hideTip);
+
+let dragging=false;
+function tlHour(e){ const p=layout.tl, b=$("timeline").getBoundingClientRect(); return Math.max(0,Math.min(HOURS,Math.round((e.clientX-b.left-p.L)/p.pw*HOURS))); }
+$("timeline").addEventListener("pointerdown",e=>{ dragging=true; $("timeline").setPointerCapture(e.pointerId); setHour(tlHour(e)); });
+$("timeline").addEventListener("pointermove",e=>{ const h=tlHour(e), r=sims[state.site]; if(dragging) setHour(h);
+  showTip(e,`<b>Landing + ${fmtDur(h)}</b><br>${fmtUTC(state.landing+h*HOUR)}<br>Solar disk ${Math.round(r.frac[h]*100)}% · Earth link ${r.comm[h]?"available":"blocked"}`); });
+["pointerup","pointercancel"].forEach(n=>$("timeline").addEventListener(n,()=>{dragging=false;}));
+$("timeline").addEventListener("pointerleave",()=>{ if(!dragging) hideTip(); });
+
+$("slip").addEventListener("pointermove",e=>{ const p=layout.slip, b=$("slip").getBoundingClientRect(), d=Math.floor((e.clientX-b.left-p.L)/p.bw);
+  if(d<0||d>=p.data.length) return hideTip(); const v=p.data[d];
+  showTip(e,`<b>${d?"Landing slips "+d+" d":"Landing on time"}</b><br>${v===0?"Lands in shadow":(v>=LOOKAHEAD_H?"≥ 60 d":fmtDur(v))+" of continuous sunlight"}`); });
+$("slip").addEventListener("pointerleave",hideTip);
+
+let lastW=0;
+new ResizeObserver(()=>{ const w=$("pano").clientWidth; if(w!==lastW&&sims.length){ lastW=w; renderAll(); } }).observe($("pano"));
+recompute();
+</script>
+</body>
+</html>

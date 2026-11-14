@@ -35,7 +35,10 @@ web/        frontend (Vite + React + TS)
 scripts/    data download and precomputation scripts
 data/       DEMs, SPICE kernels, precomputed intermediates — not in Git
 tests/      includes the Horizons regression fixture
+prototype/  throwaway fake-data UI demo — never import from it or build on it
 ```
+
+The frontend must be responsive and usable in a phone browser; check every UI change at a narrow width (about 390 px) as well as on desktop.
 
 ## Hard data conventions
 

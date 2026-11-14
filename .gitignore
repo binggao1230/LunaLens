@@ -28,3 +28,6 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Browser automation output
+.playwright-mcp/

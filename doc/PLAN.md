@@ -35,13 +35,16 @@
   - Timeline: illumination and direct-to-Earth communication windows across one lunar day (29.53 days `[KNOWN, HIGH]`), with "time to sunset / time to Earthset" countdowns
   - Metric cards: solar elevation, visible fraction of the solar disk, continuous illumination duration, communication window duration and share
   - Side-by-side comparison of 2–4 site × date combinations
+  - Responsive web layout that works in a phone browser from day one. No native app and no phone-specific interaction design; judges and teammates are likely to open the link on a phone `[INFERRED, MED]`
 - **P1 (differentiators)**
   - Date-slip view: effect of moving the landing date ±N days on each metric (the core pain point in paragraph 3 of the challenge background)
   - Mast height parameter (antenna or solar array 2 m / 10 m above ground), which strongly affects windows near the pole `[KNOWN, MED]`
   - South pole 2D map for site picking (polar stereographic with hillshade basemap)
   - 3D terrain with live shadows
   - Validation page against Horizons and the PGDA illumination maps (directly serves the judges' validity criterion)
-- **P2 (if time allows)**: year-scale seasonal view, education-mode narration, report export, mobile layout
+- **P2 (if time allows)**: year-scale seasonal view, education-mode narration, report export
+
+**Look-and-feel prototype**: `prototype/index.html` is a throwaway, fake-data demo of the P0 views plus the date-slip chart, used to agree on layout before the event. Its data is synthetic and its code does not seed `web/`. See `prototype/NOTES.md`.
 
 ---
 
