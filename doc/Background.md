@@ -37,7 +37,7 @@ Your challenge is to create a tool or application that enables rapid evaluation 
 > **LunaLens (C1):** Explore supports named sites and latitude/longitude. Mission compares several sites on one date. Add the Expert comparison of different sites at the same UTC time or over the same period, and of different windows at one site.
 
 - **Date and time flexibility:** You may consider allowing users to select landing dates and times, and providing tools to explore how conditions change across different lunar days or seasons. This enables users to understand how mission schedule adjustments affect feasibility.
-> **LunaLens (C2):** Users can choose a landing date and preview later hours. The stored landing is still UTC midnight. Add a UTC hour and period presets such as “First half of 2030”, show the date range the selected stay can actually use, and test across seasons.
+> **LunaLens (C2):** Users can choose a landing date and preview later hours. The stored landing is still UTC midnight. Add an exact UTC hour, a year selector with full-year and half-year options, and arbitrary start and end dates. Show which part of any requested range supports the selected stay.
 
 - **Sun and Earth position visualization:** Display the positions of the Sun and Earth relative to the horizon at a selected landing site on a chosen date. You may consider showing how much time remains before sunset or Earthset, as this directly impacts mission operations and power generation windows.
   > **LunaLens (C3):** The Explore panorama shows both bodies against the site skyline. Countdown labels still need to distinguish Earth crossing the geometric horizon from Earth crossing the selected link margin.
@@ -140,14 +140,16 @@ and Earth view during the stay. The two preferences may recommend different site
 show the required thresholds, terrain source, earliest and latest eligible sampled starts,
 and the representative touchdown. If there are no matches, show which conditions rule
 options out. If the data end early, show the covered period separately from failed starts.
+All searches use the dates the user supplies and coverage from the loaded dataset.
 
 ### Release checks for the planning workflow
 
 These checks clarify the open items in the scorecard; they do not add points or change the
 baseline. The [construction map](../TODO.md) gives the implementation and verification order.
 
-- [ ] **R1 (C2.3, C2.4):** Search a day, first/second half-year, year or custom UTC range,
-  with hourly touchdown samples and a complete stay. Report partial or absent coverage.
+- [ ] **R1 (C2.3, C2.4):** Search any supported UTC hour or day, the full or half of any
+  selected year, or an arbitrary UTC range that may cross calendar years. Use hourly
+  touchdown samples and require a complete stay. Report partial or absent coverage.
 - [ ] **R2 (C1.4, C4.3):** Return a native shortlist of terrain-backed sites and eligible
   windows. Explain the ranking and show the no-match state; exclude smooth-sphere references
   from recommendations.

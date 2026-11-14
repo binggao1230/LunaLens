@@ -1,10 +1,12 @@
 # LunaLens construction map
 
 Implement the Expert planning workflow described in [Background](doc/Background.md#expert-planning-scenarios).
-The finish line is a runnable Explore screen where a newcomer can choose the first half of
-2030, see why sites qualify, and compare two results without leaving the workspace. This
-is a **lunar touchdown search**. Earth launch dates, lunar ascent, transfers, landing
-safety, power output and radio performance are outside this run.
+The finish line is a runnable Explore screen where a newcomer can choose any supported
+UTC date or range, see why sites qualify, and compare two results without leaving the
+workspace. The first half of 2030 is a regression fixture only; it does not define the
+product's search range, default dates or available presets. This is a **lunar touchdown
+search**. Earth launch dates, lunar ascent, transfers, landing safety, power output and
+radio performance are outside this run.
 
 Use one feature branch based on this plan. Keep the existing navigation: Mission for 3D
 and Education, full-width Atlas for regional reference, Explore for native Expert work,
@@ -17,7 +19,7 @@ animation or a live third-party API for the new workflow.
 | Input or result | Contract |
 |---|---|
 | Candidate sites | Start with the six native presets that have stored LOLA skylines. Keep the six other presets as smooth-sphere references. Do not use Atlas results in native rankings. Reserve arbitrary map-wide search for later. Continue to inspect individual custom points in Explore and show their terrain status. |
-| Time | Use UTC, with start-inclusive/end-exclusive search ranges and one-hour touchdown samples. Day, first/second half-year, year and custom controls all produce the same range type. A date-only end presented as inclusive in the UI maps to the following midnight. Landing time is independent of the preview cursor. |
+| Time | Use UTC, with start-inclusive/end-exclusive search ranges and one-hour touchdown samples. Exact hour, day, any selected year's first/second half or full year, and custom ranges that can cross years all use the same evaluator. Derive coverage and available years from the loaded data; select no hard-coded search dates. A date-only end presented as inclusive in the UI maps to the following midnight. Landing time is independent of the preview cursor. |
 | Complete stay | An evaluated candidate must have its entire stay covered. Use the conservative bound `touchdown + stay <= last sample`. For incomplete searches show the requested range, evaluated range, and the count omitted for missing data. “Out of coverage” and “evaluated, no match” are different states. Never pad, silently clamp, or shorten a stay. |
 | Conditions | One Expert evaluation uses the same stay, Earth margin, required continuous sunlight from touchdown and optional Earth visibility at touchdown. Use `Site.series.sunVis` (apparent solar limb) for the Sun and `earthClr > margin` for Earth visibility. Validate inconsistent settings, including a continuous-sun requirement longer than the stay. Treat the existing 2°/156 h defaults as editable screening assumptions. |
 | Window and site ranking | Apply hard conditions before ranking. Group adjacent passing touchdown hours; a gap splits the group. Default site order is most eligible starts, then widest group, then most simultaneous Sun/Earth hours in a qualifying stay, then stable site ID. An alternate “Maximize overlap” order starts with the overlap metric and then uses the default tie-breaks. No failed candidate is recommended. |
@@ -54,6 +56,7 @@ the selected duration in the implementation.
 | H1 2030 with six terrain presets | Scan `[2030-01-01T00:00Z, 2030-07-01T00:00Z)`: 4,344 sampled starts per site. Use a 709 h stay, 2° Earth margin, 156 h continuous sunlight from touchdown, Earth visible at touchdown. |
 | H1 2030 with those conditions | Eligible sampled starts / widest group (in samples): Nobile rim 1,055 / 241; IM-1 679 / 132; IM-2 419 / 161; de Gerlache rim 354 / 311; Shackleton rim 77 / 62; Shackleton floor 0 / 0. |
 | Same query, different ranking | Nobile rim leads for flexibility (1,055/4,344, about 24.3%). De Gerlache rim leads for best overlap: 366 h at its representative touchdown of 2030-05-26 18:00 UTC. The largest window of eligible starts also belongs to de Gerlache rim (311 consecutive sampled starts). |
+| Custom range outside the 2030 fixture | Scan `[2028-12-30T00:00Z, 2029-01-02T00:00Z)`: 72 sampled starts per site at full coverage, including the year boundary. Compare the results to the same hourly oracle, without making this range a built-in preset. |
 | 2030 whole year and beyond | For a 709 h stay show partial coverage, with 2030-12-02 10:00 UTC included and the next hour excluded. A 2031-only query has no coverage. A fully covered query for Shackleton floor has zero matching starts, which is a different outcome. |
 | 2026 change-of-plan exercise | Start at Shackleton rim on 14 November. Try the same site on 23 November and de Gerlache on 23 November. Verify the original is unchanged. The previous UI's separate 14→28 November example showed −52 h sunlight and +11 h Earth visibility (709 h stay, 2° margin). Treat that as a legacy regression clue; if the canonical rule changes the result, record the exact reason rather than requiring obsolete numbers. |
 
@@ -125,7 +128,8 @@ those checks.
   boundaries, single-sample groups, one gap splitting two groups, no qualified start,
   excluded reference sites and deterministic ties. No sample may be counted twice.
 - [ ] **W2.2 — Build the reproducible oracle (R2).** Add a small local check under
-  `site/tools/` for a synthetic array and the real H1 2030 fixture. Cross-check the
+  `site/tools/` for a synthetic array and both local snapshot fixtures (H1 2030 and the
+  custom cross-year range). Cross-check the
   implemented results against a simple hourly sweep of the same canonical engine, not
   against the previous screens or Atlas. If they diverge, narrow it to one site/hour
   and explain the difference before continuing. Record full H1 runtime; aim for initial
@@ -136,16 +140,20 @@ those checks.
 ### W3 — Ship the Expert entry in Explore (1.5 h)
 
 - [ ] **W3.1 — Period controls (R1, C2.4).** Add one `Find touchdown windows` panel to
-  Explore. Offer a day, year/half-year and custom dates with visible UTC, stay and editable
+  Explore. Offer an exact UTC hour, a day, a full or half year with a selectable year, and
+  custom dates with visible UTC, stay and editable
   conditions. Show requested vs evaluated coverage and distinct validation, searching,
   no-data, no-match and result states. Exact time and period searches share the same inputs
-  model. **Accept:** a first-time visitor can start H1 2030 without a flight or Atlas.
+  model. **Accept:** a first-time visitor can search a year or half-year they choose or
+  type a cross-year custom range without starting a flight or opening Atlas. A year/half-year
+  selection and its equivalent custom dates must produce identical results.
 - [ ] **W3.2 — Results, recommendation and trade-off (R2, C4.3).** Show the ranked terrain
   candidates, the top windows, representative times, terrain source and a plain-language
   reason for first place. Put the non-recommended reference sites somewhere clearly
   separate. A slower result for an earlier query must not replace the newest selection.
-  **Accept:** H1 shows Nobile first by flexibility and de Gerlache first by overlap; no
-  match explains the failing condition. At 390 px controls and cards remain usable.
+  **Accept:** the H1 regression fixture still puts Nobile first by flexibility and de
+  Gerlache first by overlap. A different valid query triggers a fresh ranking. No match
+  explains the failing condition. At 390 px controls and cards remain usable.
 
 ### W4 — Compare pinned choices in place (1.5 h)
 
@@ -163,7 +171,8 @@ those checks.
 ### W5 — Verify the flow, visuals and teaching mode (1.75 h)
 
 - [ ] **W5.1 — Desktop and 390 px (R6, C7.3).** In one isolated Playwright browser, run
-  H1 search, change the rank preference, pin two options, compare and return to Mission.
+  a user-entered search outside the H1 fixture, change the rank preference, pin two
+  options, compare and return to Mission. Re-run H1 separately as a regression.
   Exercise both exact-start and period modes as well as no coverage and no matches.
   Verify touch-size controls, keyboard focus, clipping, no console errors, and both old
   hashes redirecting to Explore while preserving mode. Capture screenshots/results and
@@ -184,7 +193,7 @@ those checks.
 ### W6 — Stop cleanly and hand off (1 h)
 
 - [ ] **W6.1 — Re-run the required checks for changed code.** Run window/ephemeris checks
-  applicable to the change, the H1 oracle, final browser checks and `git diff --check`.
+  applicable to the change, both search fixtures, final browser checks and `git diff --check`.
   Fix critical incorrect numbers, unsupported coverage claims and broken baseline state
   before visual polish. If a case cannot be verified, keep its box open.
 - [ ] **W6.2 — Leave a restart point.** Check off only verified outcomes in this file and
@@ -205,7 +214,7 @@ guarantees ten hours of wall-clock execution or survives host failure on its own
 Suggested kickoff, after switching to the feature branch:
 
 ```text
-/goal set Read TODO.md and doc/Background.md. Deliver the native Explore touchdown-window workflow in W0–W6 order. Use one writer, prove each acceptance check before marking it complete, and log checkpoints with the exact next action. At the ten-hour checkpoint leave a tested, recoverable state. Do not push or deploy.
+/goal set Read TODO.md and doc/Background.md. Deliver the native Explore touchdown-window workflow in W0–W6 order for user-selected dates and ranges. Treat the example dates as tests only. Use one writer, verify each checkbox, and log the next action. At ten hours leave a tested, recoverable state. Do not push or deploy.
 ```
 
 After each verified slice, or after 45–60 minutes without a finished slice, write a
