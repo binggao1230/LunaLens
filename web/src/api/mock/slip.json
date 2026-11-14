@@ -1,0 +1,36 @@
+{
+  "site": {
+    "lat": -89.9,
+    "lon": 129.2
+  },
+  "start_utc": "2026-11-14T00:00:00Z",
+  "slip_days": 3,
+  "mast_m": 2.0,
+  "margin_deg": 2.0,
+  "rows": [
+    {
+      "slip_day": 0,
+      "sunlit_at_touchdown": true,
+      "continuous_sun_h": 13,
+      "link_share": 0.375
+    },
+    {
+      "slip_day": 1,
+      "sunlit_at_touchdown": true,
+      "continuous_sun_h": 13,
+      "link_share": 0.375
+    },
+    {
+      "slip_day": 2,
+      "sunlit_at_touchdown": true,
+      "continuous_sun_h": 13,
+      "link_share": 0.375
+    },
+    {
+      "slip_day": 3,
+      "sunlit_at_touchdown": true,
+      "continuous_sun_h": 13,
+      "link_share": 0.375
+    }
+  ]
+}
