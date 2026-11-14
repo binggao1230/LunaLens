@@ -6,7 +6,6 @@ import './team-messages.js';
 import { escapeHtml, fmtLatLon, utcMidnight } from './format.js';
 import { createMission } from './views/mission.js';
 import { evaluateSiteMcda } from './engine/metrics.js';
-import { createPlan } from './views/plan.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, DAY = 864e5, HOUR = 36e5;
 // A site has a terrain model when its horizon came from LOLA rather than from a smooth sphere.
@@ -382,12 +381,13 @@ function atlasUrl() {
   const q = new URLSearchParams();
   q.set('s', `${s.lat.toFixed(4)},${lon.toFixed(4)},${s.short || s.id || 'site'}`);
   q.set('t', `${new Date(state.landing).toISOString().slice(0, 16)}Z`);
+  if (atlasLayer) q.set('layer', atlasLayer);
   return `atlas/index.html#${q.toString()}`;
 }
 
 // The frame is same-origin, so its share hash can be read directly: when the user changes the site,
 // the date or the pinned point inside the Atlas, the rest of the app follows without a reload.
-let atlasHash = '', atlasPoll = null;
+let atlasHash = '', atlasPoll = null, atlasLayer = '';
 function showAtlas() {
   const host = $('v-atlas');
   let frame = host.querySelector('iframe');
@@ -440,30 +440,15 @@ function syncFromAtlas() {
 }
 
 function showView(v) {
-  if (!['start', 'mission', 'explore', 'compare', 'slip', 'data', 'build', 'atlas', 'plan'].includes(v)) v = 'start';
+  if (!['start', 'mission', 'explore', 'compare', 'slip', 'data', 'build', 'atlas'].includes(v)) v = 'start';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}#/${v}`);
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
   window.scrollTo(0, 0);
   if (v === 'atlas') showAtlas();
-  if (v === 'plan') showPlan();
   renderAll();
 }
 
-// Plan: the mission page that puts the Atlas map in a window and wraps our own panels around it.
-let plan = null;
-function showPlan() {
-  if (!plan) {
-    plan = createPlan({
-      root: $('v-plan'), eph: () => eph, t,
-      sites: () => SITES, site: () => SITES[state.site],
-      landing: () => state.landing, setLanding,
-      hour: () => state.hour, setHour,
-      margin: () => state.margin, setMargin: (v) => { state.margin = v; recompute(); },
-      pickSite: (id) => { const k = SITES.findIndex((s) => s.id === id); if (k >= 0) { state.site = k; recompute(); } },
-    });
-  } else plan.render();
-}
 function jump(test, what) {
   const n = nextChange(test, state.hour);
   if (n != null && state.hour + n <= stayH()) setHour(state.hour + n); else toast(t('No {what} event left in this stay', { what: t(what) }));
@@ -650,7 +635,7 @@ function bind() {
   };
   document.querySelectorAll('[data-nav] button').forEach((b) => { b.onclick = () => showView(b.dataset.view); });
   document.querySelectorAll('[data-overlay]').forEach((b) => {
-    b.onclick = () => { showView('plan'); plan?.setLayer(b.dataset.overlay); };
+    b.onclick = () => { atlasLayer = b.dataset.overlay; showView('atlas'); };
   });
   document.addEventListener('click', (e) => {
     const g = e.target.closest('[data-go]'); if (g) return showView(g.dataset.go);

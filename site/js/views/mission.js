@@ -844,10 +844,8 @@ export function createMission(ctx) {
         : `${escapeHtml(t(riseWord))} ${escapeHtml(dur(next.timeMs - f.ms))}`;
     const sunNext = nextTransition(site, 'sun', f.index);
     const earthNext = nextTransition(site, 'earth', f.index);
-    el.innerHTML = `<button type="button" id="m-open-plan" class="btn-ghost btn-xs">${escapeHtml(t('Open in Plan'))}</button>`
-      + `<span><i class="dot sun"></i>${label(sunNext, 'Sunset in', 'Sunrise')}</span>`
+    el.innerHTML = `<span><i class="dot sun"></i>${label(sunNext, 'Sunset in', 'Sunrise')}</span>`
       + `<span><i class="dot earth"></i>${label(earthNext, 'Earthset in', 'Earthrise')}</span>`;
-    el.querySelector('#m-open-plan').onclick = () => ctx.go('plan');
   }
 
   function sendProbe() {
