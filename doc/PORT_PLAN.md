@@ -1,107 +1,51 @@
-# Port plan: a new map page modelled on `daniel27-space/lunar-navigator`
+# Atlas: the reference app vendored into our site
 
-Status: working document on branch `bing/port-plan`. Not merged. Written 2026-11-14.
+Status: branch `bing/port-plan`, local only. Written 2026-11-14.
 
-Decision taken: the reference entry for the same challenge is the spec. Where it and we differ, it wins. The new
-work is **one new page** inside our site; the existing Mission, Explore, Compare and Date-slip views stay until
-the new page can replace Explore.
+## What was decided
 
-## 1. What the new page is
+The reference entry for this challenge is the spec. Instead of re-implementing its map page in our
+buildless site, its production build is vendored and served as a page of its own.
 
-A full-screen south-polar map with everything the reference app puts around it:
+- Source: `github.com/daniel27-space/lunar-navigator`, `web/` (Vite + React + TypeScript).
+- Built once with `npm ci && npm run build`; `base: './'` in its `vite.config.ts` already makes the
+  output path-independent.
+- Output copied to `site/atlas/` (151 files, 94 MB, of which 90 MB is its precomputed data:
+  ephemeris table, south-polar elevation and slope tiles, the three PGDA illumination layers,
+  per-site terrain patches, mission images and lander models).
+- Nav: `Atlas` in both navs opens `atlas/index.html`; a floating `← LunaLens` link returns.
+- `.vendor/lunar-navigator/` holds the clone used for the build and is git-ignored.
+- `site/atlas/data/` is re-included through `!site/atlas/data/` in `.gitignore`, because the global
+  `data/` rule would otherwise drop the app's data.
 
-- **Layer bar**, one row of seven layers, each button carrying a label and a one-line subtitle: `Find a site`,
-  `Sun now`, `Avg sunlight`, `Avg Earth view`, `Shadow`, `Height`, `Slope`.
-- **Map canvas**: south-polar stereographic view, pan and zoom, markers for the curated sites, click to pin a
-  point, coordinate readout.
-- **Right-hand panel**: onboarding ("Start here" with two entry paths), latitude/longitude entry, assumptions
-  (sunlit rule, Earth mask, observer height) collapsed by default, and the finder.
-- **Bottom time bar**: play, 1 h / 6 h / 1 d / 7 d speeds, a scrubber and the UTC clock.
-- **Verdict and date ranking**: two or three pinned points compared in words with a per-measure winner, and a
-  ranked strip of landing dates for a 7 / 14 / 30-day stay.
-- **Share and export**: a URL that reopens the same points, date and assumptions, and one CSV.
+## What it brings
 
-## 2. Data pipeline — our own scripts, PGDA as the source
+Seven south-polar layers (`Find a site`, `Sun now`, `Avg sunlight`, `Avg Earth view`, `Shadow`,
+`Height`, `Slope`), a site finder with hard limits and a ranked shortlist, landing-date ranking with
+a baseline comparison, adjustable assumptions (sunlit rule, Earth mask, observer height), pinning by
+click or coordinates, a share link and CSV export, 41 landing sites with mission cards, and a 3D
+mission view.
 
-We download the source rasters and build our own products, so provenance stays ours. Sources confirmed from the
-reference's `layers.json`:
+Its data contract matches ours (MOON_ME, R = 1737.4 km, east-positive, azimuth clockwise from
+north), which is why our own site can cite the same sources without a frame conversion.
 
-| Layer | Source raster | Native | Product we build |
-|---|---|---|---|
-| Avg sunlight | `https://pgda.gsfc.nasa.gov/data/MoonIllumination/AVGVISIB_75S_120M_201608.TIF` | 120 m, int16, scale 4e-5 | 2048² WebP, `fraction = value/250`, nodata 255 |
-| Avg Earth view | `…/AVGVISIB_75S_120M_201608_EARTH.TIF` | same | same encoding |
-| Permanent shadow | `…/LPSR_75S_120M_201608.TIF` | same | 1-bit mask as WebP, 255 = shadowed |
-| Height | our `dem240.i16.gz` (LOLA LDEM_75S_240M) | 240 m | hillshade + encoded height tile |
-| Slope | computed from `dem240` over an 80 m baseline | 240 m | WebP, degrees × 10 |
-| Global DEM for the 3D globe | `https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_16.tif` | 16 px/deg | RGBA PNG, `h_m = (R*256+G)*0.5 − 10000` |
+## Verified
 
-Citation for the three PGDA products: Mazarico et al. (2011), *Icarus* 211, 1066–1081, 2016-08 release, PGDA
-product 69. Every product lands in `site/data/layers/` with its own entry in `PROVENANCE.json` and a loader in
-`site/js/engine/layers.js`.
+- Served from our own static server: page loads at `#/` and at `/atlas/`, layers switch, site finder
+  and time bar work, back link returns to `index.html`.
+- 1440 x 900 and 390 x 844: no overlap between the back link and the app's own controls after
+  moving it below the layer bar on desktop and below the title on mobile.
+- Console: only the app's own `THREE.Clock` deprecation warning and one a11y notice.
 
-All layers share one grid: 2048² over ±304 km, pixel 296.875 m, row 0 = max y, identical to the reference's
-`sp_meta.json`, so the same shader and the same hit-testing serve every layer.
+## Still open
 
-## 3. Rendering
-
-- **Map**: one canvas, stereographic projection `r = 2R·tan((90+lat)/2)`, `x = r·sin(lon)`, `y = r·cos(lon)`.
-  Layer images drawn on demand and composited with their ramp; a hillshade base underneath; markers on top.
-- **`Sun now`**: the reference ray-marches the DEM per pixel on the GPU. We do the same with a fragment shader:
-  the DEM goes up as a 16-bit height texture, each pixel marches towards the Sun's azimuth and stops at the first
-  occluder; the Sun's disc is 0.5°, so the visible fraction, not a binary test, sets the light. This is the one
-  piece that must match their result closely, because it is the same physics our numbers use.
-- **3D globe**: replace the 96×64 sphere with a displaced mesh built from their 4K DEM (encoding above, 8 m
-  quantum) plus the 4K colour map, so the Moon has real relief at global scale instead of a texture on a ball.
-- **Colour**: neutral chrome, hue only for data, one ramp per layer, legend always visible, no colour-only
-  signal. Copy their listed rules rather than their CSS.
-
-## 4. Logic to port
-
-From `web/src/lib/`, stripped to plain JS modules under `site/js/engine/`:
-
-| Module | Functions we need |
-|---|---|
-| `windows.ts` | per-hour sunlight / Earth / both under a `Criteria`, longest gaps, stay slicing |
-| `landing.ts` | stay statistics and `fitScore = 0.6 × sunlight + 0.4 × Earth`, date ranking |
-| `verdict.ts` | per-measure winner with a threshold; near-equal measures omitted; one sentence out |
-| `assumptions.ts` | `any / half / all` sunlit rule, Earth mask `0/2/5/10°`, observer `2/5/10 m` |
-| `finder.ts` | hard constraints (slope, sunlight range, Earth minimum, PSR proximity) then preference score |
-| `ephem.ts` | table reader and interpolation; our reader stays, its interpolation is ours to match |
-
-Our existing `metrics.js`, `site.js` and `geometry.js` stay as the substrate; the ported modules replace the
-precomputed `sunVis` flag with a rule function so the assumptions panel can actually change the answer.
-
-## 5. Phases
-
-| Phase | Work | Acceptance | Est. |
-|---|---|---|---|
-| **P0** | Data pipeline: download the three PGDA rasters, build the 2048² WebPs, slope and height tiles, the 4K globe DEM, `PROVENANCE.json` entries | Every product loads in a throwaway page; the slope layer matches a hand check at Shackleton; the three PGDA rasters agree with the reference's published means | 6–8 h |
-| **P1** | Map canvas: projection, pan/zoom, hillshade base, layer switching, ramps, legend, markers, pin, coordinate readout | The seven layer buttons switch the map; a pin reads back the same lat/lon it was placed at within one pixel; 1440 px and 390 px | 8–10 h |
-| **P2** | `Sun now`: DEM to GPU, shadow ray-march, Sun-disc fraction, terminator; time bar with speeds and UTC clock | At Shackleton rim the shader agrees with `site.series.sunVis` for the same hour; the bar moves the shadow at 1 h / 1 d | 6–8 h |
-| **P3** | Right panel: onboarding, coordinate entry, assumptions, pin list, share link | Changing the sunlit rule changes every number on the page and raises a non-default badge; a shared URL reopens identical state | 6–8 h |
-| **P4** | Finder: constraints, ranking, suitability overlay, shortlist; click a shortlist row to pin it | Slope ≤ 15°, sunlight ≥ 40 %, Earth ≥ 30 % returns ≥ 3 cells and the overlay shades exactly those | 8 h |
-| **P5** | `verdict` + `landing`: two-or-three-point comparison in words, ranked landing dates | "Shackleton rim, 14 Nov vs 23 Nov" gets one sentence; the strip names the best date per stay length | 6–8 h |
-| **P6** | 3D globe on the 4K DEM; replace the current sphere | Relief visible at the limb; the terminator follows the scrubber; no frame-rate regression at 390 px | 6–8 h |
-| **P7** | Site table to 41 entries with re-sourced coordinates; mission cards | Every coordinate carries a source; a spot check of five matches the published site | 4–6 h |
-| **P8** | QA: 1440/390, first-load budget, deploy | First load stays under 3 MB; deploy workflow rejects a file over 25 MiB | 4 h |
-
-Order: P0 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8. P1 and P2 make the page look like the reference; P4 and P5
-are what makes it useful; P6 is the visual upgrade the brief asked for.
-
-## 6. What we keep from our side
-
-- The 3D polar view with the graticule, the 75°S ring and the orbit rings.
-- The horizon panorama and the countdowns in Explore.
-- Our validated ephemeris (2026–2030, SVS-checked) until the rule-based series is proven to reproduce it.
-- The trilingual interface and the typing/lint checks.
-
-## 7. Risks
-
-- **Two maps, two answers.** Until the new page replaces Explore, the atlas has two ways to show the polar map.
-  Keep the new page behind its own route, and do not surface its numbers in Explore.
-- **Shader parity.** A ray-marched shadow that disagrees with `site.series` is worse than no shadow. P2's
-  acceptance is that they agree; if they cannot be made to agree, ship the terminator only and say so.
-- **Delivery.** Three PGDA rasters plus tiles must not enter the first load. Everything under `site/data/layers/`
-  is fetched on the layer's first use.
-- **Schedule.** This is 2–3 days of work. P0–P2 give a page that already looks like the reference; if the clock
-  runs out there, stop and ship that, not a half-finished finder.
+1. **Deploy cost.** The deploy workflow uploads `site/` to Cloudflare Workers; 94 MB and 151 files
+   are inside the plan's limits (25 MiB per file, 20,000 files) but the upload time and the
+   repository size (`.git` is now about 196 MB) are real costs. Options: keep it, or move the data
+   to a release asset fetched at deploy time.
+2. **Two products, one nav.** The vendored app is self-contained; it does not read our landing date
+   or chosen site. Either accept that it is its own page or pass state through the URL later.
+3. **Our own pages.** Mission, Explore, Compare and Date slip stay as they are. The Atlas page is
+   additive; nothing in it replaces them yet.
+4. **Provenance.** The app carries its own credits. Our Data page should link to the Atlas sources
+   (PGDA product 69, LOLA, JPL DE440) so the two pages do not disagree.
