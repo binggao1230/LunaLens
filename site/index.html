@@ -154,7 +154,7 @@ body.owners .scrub[data-owner]{position:sticky}
 body.owners [data-owner]::after{content:attr(data-owner);position:absolute;top:-9px;right:10px;background:var(--text);color:var(--surface);
   font-size:11px;line-height:1.5;padding:0 8px;border-radius:99px;white-space:nowrap;z-index:4;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis}
 .wrap{overflow-x:auto}
-body[data-view=build] .scrub,body[data-view=data] .scrub{display:none}
+body[data-view=build] .scrub,body[data-view=data] .scrub,body[data-view=atlas] .scrub{display:none}
 table.bm{border-collapse:collapse;font-size:13px;width:100%;min-width:860px}
 table.bm th,table.bm td{border:1px solid var(--border);padding:6px 8px;text-align:left;vertical-align:top}
 table.bm th{font-weight:650;white-space:nowrap}
@@ -213,7 +213,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 <header class="appbar">
   <b class="brand"><img src="assets/lunalens-logo.svg" alt="" width="28" height="28">LunaLens<img src="assets/nasa-logo.svg" alt="NASA" class="nasa-mark" width="33" height="28"></b>
   <nav class="tabs" data-nav>
-    <button data-view="mission">Mission</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Date slip</button>
+    <button data-view="mission">Mission</button><button data-link="atlas/index.html">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Date slip</button>
   </nav>
   <div class="tray" id="tray"></div>
   <nav class="side" data-nav><button data-view="data">Data</button></nav>
@@ -292,6 +292,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
       </div>
     </div>
   </section>
+
 
   <!-- ================= View 2: Compare ================= -->
   <section class="view" id="v-compare">
@@ -397,7 +398,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   <div id="now"></div>
 </div>
 <nav class="tabbar" data-nav>
-  <button data-view="mission">Mission</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Slip</button>
+  <button data-view="mission">Mission</button><button data-link="atlas/index.html">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Slip</button>
   <button data-view="data">Data</button>
 </nav>
 <div id="flight" role="dialog" aria-modal="true"></div>
