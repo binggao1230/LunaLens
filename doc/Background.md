@@ -21,7 +21,7 @@ This challenge is particularly acute at the Moon's south pole, where many future
 
 In practice, mission development rarely proceeds on a fixed timeline. Hardware development challenges, launch delays, or other factors often force mission planners to reconsider their original landing date and location. When this happens, engineers need to quickly evaluate alternative sites in the same region, or alternative dates at the same site, to understand how these changes impact mission feasibility. A tool that enables rapid, intuitive comparison of multiple scenarios would accelerate this decision-making process and help teams identify viable alternatives when constraints shift.
 
-> **LunaLens (C1, C2):** Mission can compare sites on one date. The standalone Compare and Date slip tabs are retired. The proposed solution is to keep a baseline and try a different date or nearby point inside the existing Expert workflow.
+> **LunaLens (C1, C2):** Mission can compare sites on one date. The standalone Compare and Date slip tabs are retired. Keep a baseline in Explore, then either try another point and time or start with a date range and ask which known sites offer usable touchdown windows. See the [Expert planning scenarios](#expert-planning-scenarios).
 
 Tools that provide this information — such as NASA's Quickmap, Moon Trek, and the JPL Horizons System — are built for detailed analysis and are often difficult for non-specialists to use effectively for rapid scenario comparison. Evaluating each site-data combination means navigating multiple interfaces and interpreting raw data. This leaves a gap between the technical data available and the accessible tools needed to support agile mission planning. An intuitive interface that translates complex ephemeris and topographic data into clear, comparable visualizations could help bridge that gap.
 
@@ -34,10 +34,10 @@ Your challenge is to create a tool or application that enables rapid evaluation 
 > **LunaLens (C1–C7):** The seven ideas below are used as internal product criteria. Each criterion has a test and a status in the scorecard at the end of this document.
 
 - **Interactive site selection and comparison:** You may consider allowing users to choose from a curated list of notable landing sites – such as past Apollo missions, future CLPS mission targets, targets of other commercial lunar missions, or landing sites from other countries' lunar programs – as well as the ability to input custom lunar coordinates. You may also consider enabling side-by-side or sequential comparison of multiple sites to help users quickly assess trade-offs.
-  > **LunaLens (C1):** Explore supports named sites and latitude/longitude. Mission compares several sites on one date; preserving an exact scenario between Mission and Explore and trying a second date in context remain open.
+> **LunaLens (C1):** Explore supports named sites and latitude/longitude. Mission compares several sites on one date. Add the Expert comparison of different sites at the same UTC time or over the same period, and of different windows at one site.
 
 - **Date and time flexibility:** You may consider allowing users to select landing dates and times, and providing tools to explore how conditions change across different lunar days or seasons. This enables users to understand how mission schedule adjustments affect feasibility.
-  > **LunaLens (C2):** Users can choose a landing date and preview later hours. The stored landing is still UTC midnight. Add an independent UTC time field, show the covered range, and test dates across seasons.
+> **LunaLens (C2):** Users can choose a landing date and preview later hours. The stored landing is still UTC midnight. Add a UTC hour and period presets such as “First half of 2030”, show the date range the selected stay can actually use, and test across seasons.
 
 - **Sun and Earth position visualization:** Display the positions of the Sun and Earth relative to the horizon at a selected landing site on a chosen date. You may consider showing how much time remains before sunset or Earthset, as this directly impacts mission operations and power generation windows.
   > **LunaLens (C3):** The Explore panorama shows both bodies against the site skyline. Countdown labels still need to distinguish Earth crossing the geometric horizon from Earth crossing the selected link margin.
@@ -46,7 +46,7 @@ Your challenge is to create a tool or application that enables rapid evaluation 
   > **LunaLens (C4):** Explore shows the angles and the two windows. Mission shows overlap and a site score. Put the physical meanings and failed conditions next to the results before refining the score.
 
 - **Multiple visualization approaches:** You may explore 2D maps, 3D surface visualizations, or other creative representations that help users understand the spatial relationships between the landing site, Sun, and Earth.
-  > **LunaLens (C5):** The native 2D map and the 3D terrain view exist. The next useful addition is a way to identify the direction of the terrain that blocks a body. Atlas is supplementary to the native path.
+> **LunaLens (C5):** The native 2D map and 3D terrain view exist. Mission already draws schematic Moon-around-Earth and Earth-around-Sun rings. Preserve both as explanatory visuals and identify the skyline segment that blocks a body when inspecting a case. Atlas is supplementary to the native path.
 
 - **Temporal dynamics:** You may consider creating animations or timeline views that show how Sun and Earth positions change over a lunar day or across multiple days, helping users understand the duration and timing of operational windows.
   > **LunaLens (C6):** Playback and the timeline already show the changing Sun and Earth windows. Recheck that preview controls still leave the landing time unchanged when a time-of-day field is added.
@@ -81,7 +81,7 @@ Technical approach:
 User experience:
 
 - Your interface could prioritize rapid scenario comparison, allowing mission planners to evaluate multiple site-date combinations efficiently.
-  > **LunaLens (C1, C7):** Keep the baseline visible while the user tries a change in the current workspace. Do not require the retired tabs or repeat coordinates on another page.
+> **LunaLens (C1, C7):** Keep the baseline visible while the user tries a change in the current workspace. Show why the ranked option is first and let the user put two results side by side without retyping coordinates, dates or conditions.
 
 - Consider how to clearly communicate time remaining before sunset or Earthset, as this is critical operational information.
   > **LunaLens (C3):** Countdowns exist. A link-margin crossing needs its own label and must use the same margin as the visible window.
@@ -109,7 +109,7 @@ Engagement and impact:
   > **LunaLens (C1, C4):** Mission provides same-date CSV export. A reproducible decision also needs the exact UTC landing time, observation time if relevant, mission conditions and terrain source on the result or export.
 
 - It could help teams respond quickly when schedule changes or hardware development challenges require landing date or location adjustments.
-  > **LunaLens (C1, C2):** Rehearse a nine-day delay and a nearby alternative in the remaining Expert pages. Keep the original values visible enough to explain what changed.
+> **LunaLens (C1, C2):** Rehearse both a nine-day delay to a known plan and a period-first search for a plan that has no fixed date yet. Keep the original values visible enough to explain what changed.
 
 - It could also serve as an educational tool to help students and the public understand lunar exploration challenges and why mission planning is so complex.
   > **LunaLens (C7):** The merged Education story includes a guide and a clearly separate illustrative verdict. Completion in all three languages and on a physical phone is still unverified.
@@ -117,6 +117,48 @@ Engagement and impact:
 *For data and resources related to this challenge, refer to the Resources tab at the top of the page. More resources may be added before the hackathon begins.*
 
 > **LunaLens (C3–C5):** See [Resources.md](Resources.md) and the Expert Data view for sources and limits. Data is retained even though the standalone Compare and Date slip views were retired.
+
+## Expert planning scenarios
+
+This section is a LunaLens proposal, not part of the official challenge text. A **touchdown
+window** is a sequence of hourly UTC sample times at which a lander could start a stay and
+meet the selected Sun and Earth visibility conditions. It is a screen for lunar surface
+conditions. It is not an Earth launch window, an ascent window from the Moon, a transfer
+trajectory, or a landing safety assessment. Those decisions require trajectory, vehicle
+and other mission inputs this product does not have.
+
+| Planner's question | Use the existing Explore workspace to answer it |
+|---|---|
+| “We know only the year or half-year. Which sites and dates should we investigate?” | Enter a UTC period and a stay length. Rank terrain-backed candidate sites under one set of conditions, show up to three useful windows per site, and state why each recommended result qualifies. |
+| “Which site works better if we arrive at the same time?” | Pin two sites at the same UTC touchdown. Show pass/fail reasons and the difference in visibility and outages over the same elapsed stay. |
+| “Which site gives us more choice over the same period?” | Evaluate both sites against the same UTC samples, conditions and stay length. Compare the count and share of eligible starts, widest eligible window, and shared opportunities. Clearly label the two dates if each site's representative plan differs. |
+| “We are committed to this site. Which time is better?” | Keep the site and conditions fixed. Compare two exact touchdowns, or two date ranges with their own valid sample counts. Show both UTC dates and compare the stays on a common elapsed-hour axis. |
+
+The default recommendation favors easier scheduling: more eligible touchdown hours, then a
+wider uninterrupted set of starts. A planner can instead prioritize overlap between sunlight
+and Earth view during the stay. The two preferences may recommend different sites. Always
+show the required thresholds, terrain source, earliest and latest eligible sampled starts,
+and the representative touchdown. If there are no matches, show which conditions rule
+options out. If the data end early, show the covered period separately from failed starts.
+
+### Release checks for the planning workflow
+
+These checks clarify the open items in the scorecard; they do not add points or change the
+baseline. The [construction map](../TODO.md) gives the implementation and verification order.
+
+- [ ] **R1 (C2.3, C2.4):** Search a day, first/second half-year, year or custom UTC range,
+  with hourly touchdown samples and a complete stay. Report partial or absent coverage.
+- [ ] **R2 (C1.4, C4.3):** Return a native shortlist of terrain-backed sites and eligible
+  windows. Explain the ranking and show the no-match state; exclude smooth-sphere references
+  from recommendations.
+- [ ] **R3 (C1.4, C4.3):** Compare two sites at the same UTC touchdown and over a shared
+  period. Expose shared eligible starts and use a common denominator for period results.
+- [ ] **R4 (C1.4, C2.3):** Compare two windows at one site without changing the baseline,
+  terrain or constraints. Include absolute UTC and align the two stays by elapsed time.
+- [ ] **R5 (C5.2):** Retest both existing orbit rings at two UTC times. Label them as
+  schematic, distinguish the polar boundary, and keep 2D planning usable without WebGL.
+- [ ] **R6 (C7.3):** From an unopened app, an unfamiliar user can find and compare two
+  plausible options for the example period without re-entering a site or changing tabs.
 
 ## LunaLens scorecard
 
@@ -141,14 +183,14 @@ Atlas as evidence that a native Expert workflow works.
 - [x] **C1.1 (5):** Select a preset or enter custom lunar coordinates in Explore.
 - [x] **C1.2 (3):** See multiple sites on one landing date in Mission.
 - [ ] **C1.3 (7):** Switch between Mission and Explore with the same exact point, landing time and conditions.
-- [ ] **C1.4 (10):** Try an alternate date and a nearby point, preserve the baseline, and read the differences without restoring a standalone tab.
+- [ ] **C1.4 (10):** Recommend sites from a period, compare two sites at one time or across one period, and compare two times at one site without losing the baseline or restoring a standalone tab. See R2–R4.
 
 ### C2. Landing time
 
 - [x] **C2.1 (3):** Choose a supported landing date.
 - [x] **C2.2 (4):** Move the playback cursor without changing the landing date.
 - [ ] **C2.3 (5):** Enter and preserve a non-midnight UTC landing time; explain resolution and reject out-of-range stays.
-- [ ] **C2.4 (3):** Reuse a scenario across dates in different seasons within the data range and explain the difference.
+- [ ] **C2.4 (3):** Search comparable UTC periods including a year and half-year, respect the available full-stay coverage, and explain differences across dates within the data range. See R1.
 
 ### C3. Horizon and body positions
 
@@ -177,4 +219,4 @@ Atlas as evidence that a native Expert workflow works.
 
 - [x] **C7.1 (4):** Provide English, French and Chinese interface options and a glossary of the core terms.
 - [x] **C7.2 (2):** Provide a guided Education entry with an explicitly illustrative verdict.
-- [ ] **C7.3 (4):** Watch a newcomer complete and explain the delay workflow at desktop and phone widths with touch and keyboard checks.
+- [ ] **C7.3 (4):** Watch a newcomer complete and explain both the period-first search and a date change at desktop and phone widths with touch and keyboard checks. See R6.
