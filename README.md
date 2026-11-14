@@ -12,7 +12,7 @@ Planning is done; the product code is not written yet. What exists today:
 
 | Part | State |
 |---|---|
-| Plans and rules (`doc/`, `AGENTS.md`, `CONTRIBUTING.md`, `team/`) | Ready |
+| Plans and rules (`doc/`, `AGENTS.md`, `CONTRIBUTING.md`) | Ready |
 | Layout prototype (`prototype/`) | Runs locally, see below. Fake numbers, real maps |
 | Backend (`backend/`) | Not started. Skeleton owner: Chenlin |
 | Frontend (`web/`) | Not started. Skeleton owner: Eya |
@@ -73,11 +73,11 @@ What gets published is set in `wrangler.jsonc` (the `prototype/` folder for now)
 
 ## Find your work
 
-1. Open `team/<your-name>/README.md`: what you own, what you give to and need from others, how to work.
-2. Open `team/<your-name>/TODO.md`: your tasks. Tick them as you go; this is how the team sees progress.
-3. Read `CONTRIBUTING.md` once: branches and pull requests.
+1. `doc/PRODUCT.md` and `doc/PLAN.md` say what we build and how; `doc/WORKPLAN.md` holds the interfaces.
+2. Read `CONTRIBUTING.md` once: branches and pull requests.
+3. Take items from the plan or from the person you work with. The per-person folders in `archive/team/` are retired.
 
-If you work with an AI agent, point it at the same three files plus `AGENTS.md`.
+If you work with an AI agent, point it at `AGENTS.md` too.
 
 ## Contribute
 
@@ -113,7 +113,7 @@ AGENTS.md          rules for everyone and every AI agent
 CONTRIBUTING.md    branches, pull requests, who merges
 doc/               PRODUCT.md (what we build) · PLAN.md (approach, roadmap, resources)
                    WORKPLAN.md (layout, code structure, interfaces, roles) · challenge text
-team/<name>/       README.md (briefing) + TODO.md (tasks and progress), one folder per person
+archive/team/      retired per-person plans, history only
 prototype/         throwaway layout prototype; never import from it
 backend/  web/     product code, to come
 ```

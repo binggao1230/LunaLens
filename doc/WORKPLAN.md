@@ -122,7 +122,7 @@ web/
 
 data/        DEMs, kernels, intermediates — not in Git
 doc/         PRODUCT.md, PLAN.md, WORKPLAN.md, challenge text
-team/        one folder per person: README.md (instructions) + TODO.md (tasks and progress)
+archive/team/ retired per-person plans, history only
 design/      exported screens, logo, slides                                       ← Designer
 prototype/   throwaway layout prototype — never imported
 ```
@@ -214,8 +214,8 @@ whatever the people in the conversation share, but everything written into the r
 
 ### Task list per person
 
-The working copy of each list, with checkboxes and progress, is `team/<name>/TODO.md`. The lists below are the
-planning summary; when they differ, the TODO file is current.
+The per-person lists in `archive/team/` are retired. The lists below stay as the planning summary for who does
+which work package; progress is tracked in pull requests.
 
 Hours follow the roadmap in `PLAN.md` §3. "Pre" = before the event.
 
