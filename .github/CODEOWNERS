@@ -1,0 +1,4 @@
+# Everyone reviews everything, so opening a pull request asks all six for a review and
+# GitHub emails each of them (review requests are emailed by default). The lead merges.
+# See CONTRIBUTING.md → Who merges.
+* @binggao1230 @Zeylal @Dev-code3D @eyaam @wangchenlin0501 @MaevaTonyaA

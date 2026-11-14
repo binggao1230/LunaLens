@@ -37,9 +37,12 @@ Then read, in this order: `AGENTS.md`, then the plan documents it lists.
 
 ## Who merges
 
-**Bing merges, after checking the change.** Everyone else opens the pull request and leaves it alone. A workflow
-comments once on every new pull request with an @mention of all six members, which sends each of them an email:
-keep GitHub's mention emails on (GitHub → Settings → Notifications).
+**Bing merges, after checking the change.** Everyone else opens the pull request and leaves it alone.
+
+`.github/CODEOWNERS` lists all six members for every path, so GitHub asks each of them for a review the moment a
+pull request opens, and review requests are emailed by default (GitHub → Settings → Notifications). No setting can
+turn on another person's email for them, so if you want certainty, also click **Watch → Custom → Pull requests**
+on the repository page once.
 
 | The pull request touches | Needs before Bing merges |
 |---|---|
