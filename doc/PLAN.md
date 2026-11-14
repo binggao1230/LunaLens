@@ -106,8 +106,8 @@ Two layers, so the public link never depends on anyone's laptop:
 - Live since 2026-11-14 at `https://luna-lens.gaobing1230.workers.dev`, serving `site/` behind a Cloudflare
   Access email check (one-time code). The app sits in the Zero Trust organization shared with the PLM hackathon
   project, so the login page's design is account-wide. The check comes off before submission so judges can open it.
-  Local canonical address for the same build: `http://100.76.141.11:8768/` (tailnet), served by
-  `site/tools/serve.py`, which binds `0.0.0.0`.
+  Same build locally: `python3 site/tools/serve.py 8768`, which binds `0.0.0.0` so a phone on the network can open
+  it at the machine's own address. The address is machine-specific and is not written down.
 - Access reports "a code has been emailed" even when it delivers nothing: an address outside the app's Allow
   policy, or a repeat request within a few minutes, is dropped silently. `[VERIFIED 2026-11-14]` A fresh address
   receives the code from `noreply@notify.cloudflare.com` in about 20 s. To test delivery without bothering anyone,
