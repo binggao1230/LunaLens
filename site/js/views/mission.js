@@ -48,6 +48,9 @@ const MESSAGES = {
   'no terrain': ['sans relief', '无地形'],
   'Sun': ['Soleil', '太阳'],
   'Earth': ['Terre', '地球'],
+  'Sub-solar point': ['Point subsolaire', '日下点'],
+  '{v} M km': ['{v} M km', '{v} 百万公里'],
+  '{pct}% lit': ['{pct} % éclairée', '{pct}% 受照'],
   'Both': ['Les deux', '同时可见'],
   'min': ['min', '分钟'],
   'h': ['h', '小时'],
@@ -144,7 +147,7 @@ export function createMission(ctx) {
     const j = Math.round(index);
     const state = eph.stateAt(index);
     const status = new Map(sites().map((site) => [site.id, statusOf(site, j)]));
-    return { ms, index, j, sun: unit(state[1], state[0]), earth: unit(state[4], state[3]), earthLat: state[4], earthLon: state[3], sunLat: state[1], sunLon: state[0], status };
+    return { ms, index, j, sun: unit(state[1], state[0]), earth: unit(state[4], state[3]), earthLat: state[4], earthLon: state[3], sunLat: state[1], sunLon: state[0], sunDistKm: state[2], earthDistKm: state[5], status };
   }
 
   /* ---------- start page ---------- */
@@ -178,7 +181,7 @@ export function createMission(ctx) {
           <canvas id="m-3d" aria-label="3D Moon"></canvas><canvas id="m-2d" aria-label="2D Moon" hidden></canvas>
           <div class="overlay-tl"><div><h2 id="m-title"></h2><div class="hint" id="m-hint"></div></div>
             <div style="display:flex;gap:8px;align-items:center"><button class="btn-ghost" id="m-reset"></button><div class="mseg" id="m-seg"><button data-mode="3d"></button><button data-mode="2d"></button></div></div></div>
-          <div class="legend2" id="m-legend"></div><div class="site-label" id="m-label"></div>
+          <div class="legend2" id="m-legend"></div><div class="m-readout" id="m-readout"></div><div class="site-label" id="m-label"></div>
         </section>
         <section class="glass timebar"><button id="m-play"></button><input type="range" id="m-time" min="0" max="${SPAN}" step="1" value="0"><span class="when" id="m-when"></span></section>
         <section class="glass lanes" id="m-lanes"></section>
@@ -350,7 +353,7 @@ export function createMission(ctx) {
       const controls = new OrbitControls(camera, canvas);
       controls.enablePan = false; controls.minDistance = 1.7; controls.maxDistance = 14; controls.rotateSpeed = 0.7;
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
-      scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.2));
+      scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
       const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: new T.TextureLoader().load('assets/moon_1024.jpg', () => request()), roughness: 1, metalness: 0 }));
       scene.add(moon);
 
@@ -361,25 +364,38 @@ export function createMission(ctx) {
         g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
         return new T.CanvasTexture(c);
       };
-      const earthTexture = () => {
-        const c = document.createElement('canvas'); c.width = 512; c.height = 256;
-        const g = c.getContext('2d');
-        g.fillStyle = '#1d5fc0'; g.fillRect(0, 0, 512, 256);
-        let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-        g.fillStyle = '#3e9a5a';
-        for (let i = 0; i < 70; i++) { g.beginPath(); g.ellipse(rnd() * 512, 40 + rnd() * 176, 8 + rnd() * 36, 5 + rnd() * 18, rnd() * 3, 0, 6.3); g.fill(); }
-        g.fillStyle = 'rgba(255,255,255,.7)';
-        for (let i = 0; i < 46; i++) { g.beginPath(); g.ellipse(rnd() * 512, rnd() * 256, 14 + rnd() * 40, 3 + rnd() * 7, rnd() * 3, 0, 6.3); g.fill(); }
-        g.fillRect(0, 0, 512, 12); g.fillRect(0, 244, 512, 12);
-        return new T.CanvasTexture(c);
+      // Earth is a camera-facing disk shaded pixel by pixel from the Moon's line of sight, not the
+      // camera's: the camera sits outside the Earth, so camera shading would show the wrong phase.
+      const earthCanvas = document.createElement('canvas');
+      earthCanvas.width = earthCanvas.height = 160;
+      const earthTex = new T.CanvasTexture(earthCanvas);
+      const earth = new T.Sprite(new T.SpriteMaterial({ map: earthTex, transparent: true, depthWrite: false }));
+      earth.scale.set(0.72, 0.72, 1);
+      const paintEarth = (sunDir, fwd) => {
+        const S = 160, R = S / 2 - 2, g = earthCanvas.getContext('2d');
+        const img = g.createImageData(S, S), out = img.data;
+        const right = new T.Vector3().crossVectors(fwd, new T.Vector3(0, 1, 0)).normalize();
+        const up = new T.Vector3().crossVectors(right, fwd).normalize();
+        for (let py = 0; py < S; py++) {
+          const ny = (S / 2 - (py + 0.5)) / R;
+          for (let px = 0; px < S; px++) {
+            const nx = (px + 0.5 - S / 2) / R, r2 = nx * nx + ny * ny, o = (py * S + px) * 4;
+            if (r2 > 1) { out[o + 3] = 0; continue; }
+            const nz = Math.sqrt(1 - r2);
+            const x = right.x * nx + up.x * ny - fwd.x * nz;
+            const y = right.y * nx + up.y * ny - fwd.y * nz;
+            const z = right.z * nx + up.z * ny - fwd.z * nz;
+            const shade = 0.05 + 0.95 * Math.pow(Math.max(0, x * sunDir.x + y * sunDir.y + z * sunDir.z), 0.55);
+            out[o] = 44 * shade; out[o + 1] = 108 * shade; out[o + 2] = 208 * shade; out[o + 3] = 255;
+          }
+        }
+        g.putImageData(img, 0, 0);
+        earthTex.needsUpdate = true;
       };
-      const earth = new T.Mesh(new T.SphereGeometry(0.36, 48, 32), new T.MeshStandardMaterial({ map: earthTexture(), roughness: 0.9, emissive: 0x0b1d40, emissiveIntensity: 0.9 }));
-      const earthGlow = new T.Sprite(new T.SpriteMaterial({ map: glowTexture('rgba(110,170,255,.55)'), blending: T.AdditiveBlending, depthWrite: false }));
-      earthGlow.scale.set(1.4, 1.4, 1);
       const sunBody = new T.Mesh(new T.SphereGeometry(0.22, 24, 16), new T.MeshBasicMaterial({ color: 0xffd45a }));
       const sunGlow = new T.Sprite(new T.SpriteMaterial({ map: glowTexture('rgba(255,205,90,.7)'), blending: T.AdditiveBlending, depthWrite: false }));
       sunGlow.scale.set(2.8, 2.8, 1);
-      scene.add(earth, earthGlow, sunBody, sunGlow);
+      scene.add(earth, sunBody, sunGlow);
       const starPositions = [];
       for (let i = 0; i < 900; i++) {
         const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = Math.sqrt(1 - u * u), d = 40 + Math.random() * 30;
@@ -393,6 +409,9 @@ export function createMission(ctx) {
       scene.add(markerGroup);
       const selectRing = new T.Mesh(new T.RingGeometry(1.7, 2.1, 32), new T.MeshBasicMaterial({ color: 0xffffff, side: T.DoubleSide }));
       scene.add(selectRing);
+      const sunSpot = new T.Mesh(new T.SphereGeometry(1, 12, 8), new T.MeshBasicMaterial({ color: 0xffe066 }));
+      sunSpot.scale.setScalar(0.018);
+      scene.add(sunSpot);
       let markers = [], markerKey = '', pending = false, tween = 0, home = null;
       const sphereGeometry = new T.SphereGeometry(1, 16, 12), ringGeometry = new T.RingGeometry(1.5, 2, 24);
 
@@ -430,9 +449,19 @@ export function createMission(ctx) {
         buildMarkers();
         sunLight.position.set(...f.sun).multiplyScalar(10);
         earth.position.set(...f.earth).multiplyScalar(3.0);
-        earthGlow.position.copy(earth.position);
+        paintEarth(new T.Vector3(...f.sun).normalize(), new T.Vector3(...f.earth).normalize());
         sunBody.position.set(...f.sun).multiplyScalar(8);
         sunGlow.position.copy(sunBody.position);
+        sunSpot.position.set(...f.sun).multiplyScalar(1.004);
+        // The angle at the Moon between Sun and Earth is the Moon's phase angle; Earth, seen from
+        // the Moon, shows the complement of the Moon's illuminated fraction.
+        const phase = Math.acos(clamp(dot3(f.sun, f.earth), -1, 1));
+        const lit = Math.round(((1 - Math.cos(phase)) / 2) * 100);
+        // The angle at the Moon between Sun and Earth is the Moon's phase angle; Earth, seen from
+        // the Moon, shows the complement of the Moon's illuminated fraction.
+        $('m-readout').innerHTML = `<div>${escapeHtml(t('Sub-solar point'))} ${fmtLatLon(f.sunLat, f.sunLon, 1)}</div>`
+          + `<div>${escapeHtml(t('Earth'))} ${escapeHtml(t('{v} M km', { v: (f.earthDistKm / 1e6).toFixed(2) }))} · ${escapeHtml(t('{pct}% lit', { pct: lit }))}</div>`
+          + `<div>${escapeHtml(t('Sun'))} ${escapeHtml(t('{v} M km', { v: (f.sunDistKm / 1e6).toFixed(1) }))}</div>`;
         const chosen = pickedSite();
         for (const m of markers) {
           const status = f.status.get(m.site.id), selected = m.site === chosen;
