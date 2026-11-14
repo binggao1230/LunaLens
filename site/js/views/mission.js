@@ -5,7 +5,7 @@ import { createPolar3d } from './polar3d/index.js';
 import { mountProbePreviews } from './probe-gallery.js';
 import { playProbeFlight } from './probe-flight.js';
 import { onMode, isEducation } from '../mode.js';
-import { CHARACTER_SVG } from '../edu/character.js';
+import { CHARACTER_MARKUP } from '../edu/character.js';
 
 const D2R = Math.PI / 180, HOUR = 36e5, SPAN = 709;
 const COLORS = { link: '#43d98a', sun: '#f5c542', dark: '#7d7993', both: '#9be7ff' };
@@ -216,7 +216,7 @@ export function createMission(ctx) {
       <h1 aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt=""><span>Lens</span></h1>
       <p class="lede">${escapeHtml(t(edu ? LEDE_SIMPLE : LEDE))}</p>
       <div class="pick">${escapeHtml(t('Choose your probe'))}</div>
-      <div class="guide-row" id="guide"${edu ? '' : ' hidden'}><div class="edu-char mood-happy" aria-hidden="true">${CHARACTER_SVG}</div>
+      <div class="guide-row" id="guide"${edu ? '' : ' hidden'}><div class="edu-char mood-happy" aria-hidden="true">${CHARACTER_MARKUP}</div>
         <p class="guide-bubble" role="status">${escapeHtml(t('Hi! I\'ll be your mission guide. Pick a lander and press Validate.'))}</p></div>
       <div class="probe-grid" data-model-error="${escapeHtml(t('Model unavailable. Select another probe or continue.'))}">
         ${PROBES.map(p => {

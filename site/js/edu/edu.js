@@ -6,7 +6,7 @@
 import { escapeHtml } from '../format.js';
 import { isEducation, onMode } from '../mode.js';
 import { switchMode } from '../mode-transition.js';
-import { CHARACTER_SVG } from './character.js';
+import { CHARACTER_MARKUP } from './character.js';
 import { assess, isOk, findBreakingDelay, findGoDelay, bestNearby, BATTERY_H, BATTERY_BONUS_H } from './verdict.js';
 
 const DAY = 864e5, TOTAL = 6;
@@ -168,7 +168,7 @@ export function createEducation(ctx) {
     const night = nightDays < 1 ? ui('final.underDay') : ui('final.days', { n: nightDays.toFixed(nightDays < 10 ? 1 : 0) });
     const learned = (get('ui.final.learned') ?? []).map((item) => `<li>${escapeHtml(item)}</li>`).join('');
     return `<div class="edu-final-wrap"><section class="edu-final" role="dialog" aria-modal="true" aria-labelledby="edu-final-title">
-      <div class="edu-char mood-celebrating">${CHARACTER_SVG}</div>
+      <div class="edu-char mood-celebrating">${CHARACTER_MARKUP}</div>
       <h2 id="edu-final-title" tabindex="-1">${escapeHtml(ui('final.title'))}</h2>
       <p class="edu-final-site">${escapeHtml(ui('final.site', { site: st.picked.label }))}</p>
       <div class="edu-stats">
@@ -194,7 +194,7 @@ export function createEducation(ctx) {
       const key = `skip|${ctx.language()}`;
       if (key !== st.key) {
         st.key = key;
-        root.innerHTML = `<div class="edu-mini"><div class="edu-char mood-happy">${CHARACTER_SVG}</div>
+        root.innerHTML = `<div class="edu-mini"><div class="edu-char mood-happy">${CHARACTER_MARKUP}</div>
           <button type="button" class="btn-ghost" data-act="replay">${escapeHtml(ui('replay'))}</button>
           <button type="button" class="btn-ghost" data-act="expert">${escapeHtml(ui('expert'))}</button></div>`;
       }
@@ -217,7 +217,7 @@ export function createEducation(ctx) {
     else if (st.step === 5) actions = btn('next', ui('complete'), canComplete() ? '' : 'disabled');
     const skip = st.step === 3 ? '' : `<button type="button" class="edu-skip" data-act="skip">${escapeHtml(ui('skip'))}</button>`;
     root.innerHTML = `<aside class="edu-panel step-${st.step}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
-      <div class="edu-char mood-${st.mood}">${CHARACTER_SVG}</div>
+      <div class="edu-char mood-${st.mood}">${CHARACTER_MARKUP}</div>
       <div class="edu-bubble">
         <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span>${[2, 4, 5].includes(st.step) ? verdictChip(r) : ''}</div>
         <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite">${escapeHtml(text)}</p>

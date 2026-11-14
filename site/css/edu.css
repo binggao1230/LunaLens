@@ -43,7 +43,7 @@ body.edu-on .lane-legend span:last-child{margin-left:auto}
 /* ---- start page: the guide ---- */
 .start [hidden]{display:none!important}
 .guide-row{position:relative;z-index:1;display:flex;align-items:flex-end;gap:10px;width:min(1280px,100%);margin:0 0 14px}
-.guide-row .edu-char{width:72px;height:72px}
+.guide-row .edu-char{width:72px;height:72px;margin:0 8px 0 10px}
 .guide-bubble{position:relative;margin:0 0 6px;max-width:560px;background:rgba(23,26,30,.94);border:1px solid rgba(90,167,240,.45);box-shadow:0 0 24px rgba(90,167,240,.18);border-radius:16px 16px 16px 4px;padding:12px 16px;font-size:15px;line-height:1.5;color:var(--text)}
 .guide-bubble::before{content:"";position:absolute;left:-7px;bottom:12px;width:12px;height:12px;background:rgba(23,26,30,.94);border-left:1px solid rgba(90,167,240,.45);border-bottom:1px solid rgba(90,167,240,.45);transform:rotate(45deg)}
 body.edu-on .start .btn-primary{background:#5aa7f0;color:#07111c;box-shadow:0 0 24px rgba(90,167,240,.35)}
@@ -102,41 +102,23 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
 .edu-note{font-size:12px;color:var(--muted);margin:0 0 14px}
 .edu-final .edu-actions{justify-content:center}
 
-/* ---- character moods (one SVG, parts toggled; see edu/character.js) ---- */
-.edu-char .c-eyes-closed,.edu-char .c-brows,.edu-char .c-flat,.edu-char .c-oh,.edu-char .c-alarm,.edu-char .c-zzz,.edu-char .c-stars{display:none}
-/* happy = talking: open eyes, open mouth, cheer lines, right arm out */
-.edu-char.mood-happy .c-arm-r{transform:rotate(38deg)}
-/* celebrating = cheering: closed happy eyes, arm raised, stars */
-.edu-char.mood-celebrating .c-eyes-closed,.edu-char.mood-celebrating .c-stars{display:block}
-.edu-char.mood-celebrating .c-eyes{display:none}
-.edu-char.mood-celebrating .c-arm-l{transform:rotate(60deg)}
-/* worried = alarmed: raised brows, round mouth, hand to the chin, red marks */
-.edu-char.mood-worried .c-brows,.edu-char.mood-worried .c-oh,.edu-char.mood-worried .c-alarm{display:block}
-.edu-char.mood-worried .c-open,.edu-char.mood-worried .c-cheer{display:none}
-.edu-char.mood-worried .c-arm-r{transform:rotate(-34deg)}
-.edu-char.mood-worried .c-arm-l{transform:rotate(-25deg)}
-/* sleeping: closed eyes, flat mouth, arms down */
-.edu-char.mood-sleeping .c-eyes-closed,.edu-char.mood-sleeping .c-flat,.edu-char.mood-sleeping .c-zzz{display:block}
-.edu-char.mood-sleeping .c-eyes,.edu-char.mood-sleeping .c-open,.edu-char.mood-sleeping .c-cheer{display:none}
-.edu-char.mood-sleeping .c-eyes-closed path{d:path("M55 36q3 4 6 0M65 36q3 4 6 0")}
-.edu-char.mood-sleeping .c-arm-r{transform:rotate(70deg)}
-.edu-char.mood-sleeping .c-tip{fill:#4e5a63}
-.edu-char .c-arm{transform-box:view-box;transition:transform .4s ease}
-.edu-char .c-arm-l{transform-origin:46px 70px}
-.edu-char .c-arm-r{transform-origin:74px 68px}
-.edu-char .c-body{transform-box:view-box;transform-origin:60px 110px}
-.edu-char.mood-happy .c-body{animation:edu-bob 2.6s ease-in-out infinite}
-.edu-char.mood-celebrating .c-body{animation:edu-jump .7s ease-in-out infinite}
-.edu-char.mood-celebrating .c-stars{animation:edu-twinkle 1s ease-in-out infinite alternate}
-.edu-char.mood-sleeping .c-zzz{animation:edu-float 2.4s ease-in-out infinite}
-.edu-char.mood-worried .c-body{animation:edu-shiver 1.6s ease-in-out infinite}
-.edu-char .c-tip{animation:edu-blink 2s ease-in-out infinite}
+/* ---- character moods: three traced poses (assets/mascot/), one shown per mood ---- */
+.edu-char .c-poses{display:block;position:relative;width:100%;height:100%;transform:scale(1.45);transform-origin:50% 92%} /* the traced files have wide margins */
+.edu-char img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;user-select:none;-webkit-user-drag:none;transform-origin:50% 100%}
+.edu-char.mood-happy img[data-pose=talking],.edu-char.mood-sleeping img[data-pose=talking]{display:block}
+.edu-char.mood-celebrating img[data-pose=cheering]{display:block}
+.edu-char.mood-worried img[data-pose=alert]{display:block}
+.edu-char.mood-sleeping img{filter:brightness(.55) saturate(.6)}
+.edu-char .c-zzz{display:none;position:absolute;right:-2px;top:-4px;font:700 15px/1 Geist,system-ui,sans-serif;color:#c3c7ce}
+.edu-char .c-zzz small{font-size:10px;vertical-align:top;margin-left:2px}
+.edu-char.mood-sleeping .c-zzz{display:block;animation:edu-float 2.4s ease-in-out infinite}
+.edu-char.mood-happy img{animation:edu-bob 2.6s ease-in-out infinite}
+.edu-char.mood-celebrating img{animation:edu-jump .7s ease-in-out infinite}
+.edu-char.mood-worried img{animation:edu-shiver 1.6s ease-in-out infinite}
 @keyframes edu-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @keyframes edu-jump{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-9px) scale(1.03)}}
-@keyframes edu-twinkle{from{opacity:.4;transform:scale(.9)}to{opacity:1;transform:scale(1.05)}}
 @keyframes edu-float{0%,100%{transform:translateY(0);opacity:.6}50%{transform:translateY(-5px);opacity:1}}
 @keyframes edu-shiver{0%,100%{transform:rotate(0)}30%{transform:rotate(-2deg)}60%{transform:rotate(2deg)}}
-@keyframes edu-blink{0%,100%{opacity:1}50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){
   .edu-char *,.guide-row,.edu-panel,.edu-mini,#mode-wipe,.wipe-card{animation:none!important;transition:none!important}
 }

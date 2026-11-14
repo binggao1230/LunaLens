@@ -4,7 +4,7 @@
 import { setMode, getMode } from './mode.js';
 import { t } from './i18n.js';
 import { escapeHtml } from './format.js';
-import { CHARACTER_SVG } from './edu/character.js';
+import { CHARACTER_MARKUP } from './edu/character.js';
 
 const ICON_PLANNER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M12 12l6.4-6.4"/></svg>';
 const FLIP_AT = 260, HOLD_UNTIL = 700, DONE_AT = 1100;
@@ -23,7 +23,7 @@ export function switchMode(mode, origin) {
   overlay.dataset.mode = mode;
   const education = mode === 'education';
   overlay.innerHTML = `<div class="wipe-card">
-    <div class="${education ? 'edu-char mood-celebrating' : 'wipe-icon'}">${education ? CHARACTER_SVG : ICON_PLANNER}</div>
+    <div class="${education ? 'edu-char mood-celebrating' : 'wipe-icon'}">${education ? CHARACTER_MARKUP : ICON_PLANNER}</div>
     <b>${escapeHtml(t(education ? 'Education mode' : 'Expert mode'))}</b>
     <span>${escapeHtml(t(education ? 'Simpler view, with a guide' : 'Full controls and numbers'))}</span>
   </div>`;
