@@ -14,6 +14,10 @@ and Data for method and sources. Keep Compare, Date slip and Plan retired as sta
 pages. Keep Mission's same-date comparison and CSV export; do not require Atlas, a flight
 animation or a live third-party API for the new workflow.
 
+The [Mission and Atlas workstream](#mission-and-atlas-workstream) is the next product
+slice from the voice notes. It adds a prototype tab without replacing the current pages
+or expanding the W0–W6 run's ten-hour commitment.
+
 ## Decisions to implement
 
 | Input or result | Contract |
@@ -238,6 +242,89 @@ Append one line per checkpoint: **UTC | slice/status | branch and commit | comma
 evidence | blockers | next exact action**. Record the session ID/path separately and use
 local screenshots or traces where useful. No implementation run has been started by
 this document.
+
+## Mission and Atlas workstream
+
+Build a separate **South Pole** prototype tab (working title) that moves from the
+Sun–Earth–Moon overview to a detailed south-pole surface map. The current Mission and
+Atlas tabs stay usable while the prototype is evaluated. Keep the existing Apollo
+comparison and CSV in legacy Mission; the prototype opens on the lunar south pole
+and leaves historical comparisons out. Compare, Date slip and Plan stay retired.
+
+| Slice | Depends on | First deliverable |
+|---|---|---|
+| M1. Connect the 3D overview and 2D atlas | W1.1–W1.2 for exact shared context | Tap the Moon to open the detailed polar map and return to the same view |
+| M2. Improve globe controls and preserve the orbit rings | Can reproduce in legacy Mission; validate in M1 | Predictable rotation, no unintended navigation, both orbit guides |
+| M3. Score a pilot region | W1.3 and M1's map surface | One colored, inspectable grid that recommends candidate cells |
+| M4. Scale map loading and add data | M3, plus verified source and coverage | Coarse overview with detailed tiles loaded on demand |
+| M5. Show Earth visibility with a signal pulse | W1.3, M1 and M2 | A point-to-Earth illustration driven by the selected site's geometric state |
+
+- [ ] **M1 — Open the detailed map from the Moon.** Add the prototype as one new tab with
+  two views: the existing Mission 3D scene and a full-width 2D south-pole map. Reuse the
+  [current globe hit test](site/js/views/polar3d/index.js#L278); retain marker selection,
+  and use a deliberate Moon tap to open the map. Provide a keyboard-accessible “Open
+  south-pole map” button and a 2D fallback if WebGL fails. Pass the selected site or map
+  pin, UTC touchdown and preview time separately. If the clicked point is outside polar
+  coverage, center the map on the south pole and explain why. Returning from the map
+  restores the camera and keeps any explicitly selected landing point. Use the
+  [separate Atlas app](doc/PORT_PLAN.md) in the prototype only where rights and
+  integration allow it; use the native polar map as a fallback. The current Atlas hash
+  accepts a pin/time on entry, and does not provide a working return path. Do not claim
+  an Atlas-to-Mission sync until that handoff is implemented.
+  **Accept:** on desktop and at 390 px, open the map by clicking/tapping the Moon, select
+  a polar point and return to the scene. Preserve the selected point and exact UTC
+  context with the native map. Test the same with Atlas if enabled. Dragging, pinching
+  and tapping a site marker do not accidentally switch views. The old tabs still work.
+- [ ] **M2 — Make globe dragging predictable.** Reproduce the current discomfort at an
+  overview zoom and near the pole. Compare a damped, north-aligned orbit with a
+  grab-the-globe control in which the point follows the pointer. Choose by which is
+  easier to track on mouse and touch. Keep the camera interaction separate from the
+  body positions, support pinch/wheel zoom, and offer “Reset to south pole”. Reuse the
+  existing cyan Moon-around-Earth and amber Earth-around-Sun schematic rings from W5.2;
+  do not add new orbit mechanics. Distinguish the cyan polar boundary from the cyan orbit
+  in the legend.
+  **Accept:** record before/after at desktop and 390 px. At both zooms, the view follows
+  a horizontal and vertical drag without jumping or flipping, pinch does not navigate,
+  and reset returns to a repeatable view. Check both rings at two UTC times.
+- [ ] **M3 — Add a color-coded candidate grid.** Start with a small covered region and
+  a regular grid in the documented south-polar projection. Record its bounds, nominal
+  cell size and native DEM resolution; do not imply sub-cell accuracy. At one selected
+  UTC touchdown and stay, calculate regional slope, total Earth visibility above the
+  chosen margin, and its longest continuous window using the native evaluation. Add
+  sunlight if an active mission rule requires it. Define editable hard limits and
+  preference targets before calculating a simple weighted score, with input values and
+  weights visible. Use light green for all limits and targets met, yellow for limits met
+  but a target missed, red for an evaluated hard-limit failure, and gray or hatching for
+  unknown/outside coverage. An aggregate score must never override a failed hard limit.
+  Use text and a legend alongside color. List the top qualifying cells and let users
+  jump from the list to the map. Tap a cell to show its metrics, failed rule, resolution
+  and an action to use it as a candidate. Treat the score as **regional screening**,
+  not landing safety or verified communications.
+  **Accept:** demonstrate a green, yellow, red and unknown cell with known inputs.
+  Changing the date or Earth margin updates the correct fields while the grid geometry
+  stays fixed. Confirm at least one sampled cell against native point inspection.
+- [ ] **M4 — Scale the detailed map and data without freezing interaction.** Load a
+  coarse overview first, then request fine relief and scoring data for the visible
+  bounds and zoom. Cache by data version and separate static slope tiles from
+  scenario-dependent visibility results; cancel or ignore old queries after a time or
+  region change. Profile the pilot before expanding to the full supported south-pole
+  area. Validate data version, coverage, projection and units before adding a source.
+  Atlas's existing finder already uses slope and long-term illumination/visibility;
+  label that reference layer separately from the native grid for a selected date.
+  **Accept:** drag, zoom and select during loading on desktop and at 390 px. The correct
+  tile appears after a rapid date change, no stale score is reused for a different
+  scenario, and the map explains missing data instead of coloring it red.
+- [ ] **M5 — Animate the selected point's Earth visibility.** Add a dashed path from the
+  selected lunar site in 3D toward Earth. Move a pulse along it while the native Earth
+  visibility state is available and stop it on the first blocked sample at the selected
+  time, including terrain or the local horizon. Show “Visible”, “Blocked” or “Unknown”
+  as text and use a static line or marker in reduced-motion mode. Paris or another
+  named target may be an explicitly illustrative label. A real station model would need
+  verified station and Earth-orientation data, plus separate endpoint and link checks;
+  the current engine uses Earth's direction and does not check reception in Paris.
+  **Accept:** scrub one visible, one blocked and one out-of-coverage case. The pulse and
+  label match the same site's native detail readout regardless of how the camera is
+  turned. No pulse plays for blocked or unknown; reduced motion has no moving pulse.
 
 ## Backlog outside the ten-hour core
 
