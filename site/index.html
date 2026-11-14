@@ -215,6 +215,11 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   .appbar .tray{order:5;flex:1 0 100%;justify-content:flex-start}
   .explore{grid-template-columns:minmax(0,1fr)}
 }
+/* Phones: the scenario tray needs its own row, or it crowds the language selector. */
+@media (max-width:760px){
+  .appbar{flex-wrap:wrap}
+  .appbar .tray{order:5;flex:1 0 100%;justify-content:flex-start;overflow-x:auto;padding-bottom:4px}
+}
 </style>
 <link rel="stylesheet" href="css/mission.css">
 <link rel="stylesheet" href="css/plan.css">
