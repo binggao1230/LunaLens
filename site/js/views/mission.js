@@ -38,7 +38,7 @@ const MESSAGES = {
   'Sunlit, no Earth link': ['Éclairé, sans liaison Terre', '有日照，无地球通信'],
   'In shadow': ['À l’ombre', '处于阴影'],
   'Sunlit as well': ['Aussi éclairé', '同时有日照'],
-  'Drag to rotate, scroll to zoom. Earth and Sun are not to scale. The cyan line is 75°S, where the terrain model ends.': ['Faites glisser pour tourner, molette pour zoomer. La Terre et le Soleil ne sont pas à l’échelle. La ligne cyan marque 75°S, limite du modèle de relief.', '拖动旋转，滚轮缩放。地球与太阳未按比例绘制。青色线为 75°S，地形模型到此为止。'],
+  'Drag to rotate, scroll to zoom. Not to scale. Cyan ring: the Moon’s orbit around Earth; amber: Earth’s orbit around the Sun. Cyan line: 75°S, where the terrain model ends.': ['Faites glisser pour tourner, molette pour zoomer. Hors échelle. Anneau cyan : orbite de la Lune autour de la Terre ; ambre : orbite de la Terre autour du Soleil. Ligne cyan : 75°S, limite du modèle de relief.', '拖动旋转，滚轮缩放。未按比例。青色圈：月球绕地球轨道；琥珀色圈：地球绕太阳轨道。青色线：75°S，地形模型边界。'],
   'The Moon as seen from Earth. Tap a dot to select a site.': ['La Lune vue depuis la Terre. Touchez un point pour choisir un site.', '从地球看到的月球。点击圆点选择地点。'],
   'Sun elevation': ['Élévation du Soleil', '太阳仰角'],
   'Earth elevation': ['Élévation de la Terre', '地球仰角'],
@@ -330,7 +330,7 @@ export function createMission(ctx) {
     $('m-prev').setAttribute('aria-label', t('Previous day'));
     $('m-next').setAttribute('aria-label', t('Next day'));
     $('m-title').textContent = t('Pick a landing site');
-    $('m-hint').textContent = t(local.mode === '3d' ? 'Drag to rotate, scroll to zoom. Earth and Sun are not to scale. The cyan line is 75°S, where the terrain model ends.' : local.flat === 'pole' ? 'LOLA relief, 75°S to the pole. Drag to pan, scroll to zoom. Dark is night.' : 'Whole Moon, near side in the centre. Drag to pan, scroll to zoom. Dark is night.');
+    $('m-hint').textContent = t(local.mode === '3d' ? 'Drag to rotate, scroll to zoom. Not to scale. Cyan ring: the Moon’s orbit around Earth; amber: Earth’s orbit around the Sun. Cyan line: 75°S, where the terrain model ends.' : local.flat === 'pole' ? 'LOLA relief, 75°S to the pole. Drag to pan, scroll to zoom. Dark is night.' : 'Whole Moon, near side in the centre. Drag to pan, scroll to zoom. Dark is night.');
     const [fp, fm] = $('m-flat').children;
     fp.textContent = t('South pole'); fm.textContent = t('Whole Moon');
     fp.classList.toggle('on', local.flat === 'pole'); fm.classList.toggle('on', local.flat === 'moon');

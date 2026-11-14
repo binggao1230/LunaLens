@@ -28,7 +28,16 @@ export async function createPolar3d(env) {
       reliefLight.layers.set(1);
       scene.add(reliefLight);
       camera.layers.enable(1);
-      const moonMap = new T.TextureLoader().load('assets/moon_color_4k.webp', () => request());
+      // Colour maps are sRGB; without that flag three treats them as linear and they look washed out. Anisotropy
+      // keeps the polar cap from smearing at grazing angles, which is most of this view.
+      const maxAniso = renderer.capabilities.getMaxAnisotropy();
+      const loadMap = (url) => {
+        const texture = new T.TextureLoader().load(url, () => request());
+        texture.colorSpace = T.SRGBColorSpace;
+        texture.anisotropy = maxAniso;
+        return texture;
+      };
+      const moonMap = loadMap('assets/moon_color_4k.webp');
       const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: moonMap, roughness: 1, metalness: 0 }));
       scene.add(moon);
 
@@ -60,10 +69,10 @@ export async function createPolar3d(env) {
       };
       // Earth keeps its own face to the Moon, so a lit sphere with the Blue Marble map shows the phase the
       // Moon actually sees, and the continents line up with the sub-Earth point instead of a painted blob.
-      const earthMap = new T.TextureLoader().load('assets/earth_day_2k.webp', () => request());
+      const earthMap = loadMap('assets/earth_day_4k.webp');
       const earth = new T.Mesh(new T.SphereGeometry(0.36, 48, 32),
         new T.MeshStandardMaterial({ map: earthMap, roughness: 1, metalness: 0 }));
-      const sunMap = new T.TextureLoader().load('assets/sun_disk_1k.webp', () => request());
+      const sunMap = loadMap('assets/sun_disk_1k.webp');
       const sunBody = new T.Sprite(new T.SpriteMaterial({ map: sunMap, blending: T.AdditiveBlending, transparent: true, depthWrite: false }));
       sunBody.scale.set(0.42, 0.42, 1);
       const sunGlow = new T.Sprite(new T.SpriteMaterial({ map: glowTexture('rgba(255,205,90,.7)'), blending: T.AdditiveBlending, depthWrite: false }));
@@ -77,6 +86,33 @@ export async function createPolar3d(env) {
       const starGeometry = new T.BufferGeometry();
       starGeometry.setAttribute('position', new T.Float32BufferAttribute(starPositions, 3));
       scene.add(new T.Points(starGeometry, new T.PointsMaterial({ color: 0xffffff, size: 1.4, sizeAttenuation: false, transparent: true, opacity: 0.7 })));
+
+      // Orbits, at the scene's own (compressed) scale: dashed rings for the Moon around Earth and for Earth
+      // around the Sun. Both lie in the ecliptic plane, which is the plane holding the Sun and Earth
+      // directions, so the ring through the Moon always passes through the Moon and the one through Earth
+      // always through Earth, whatever the scrubber says.
+      const ORBIT_POINTS = 181;
+      const makeOrbit = (color, opacity, dash) => {
+        const geometry = new T.BufferGeometry();
+        geometry.setAttribute('position', new T.BufferAttribute(new Float32Array(ORBIT_POINTS * 3), 3));
+        const line = new T.Line(geometry, new T.LineDashedMaterial({ color, dashSize: dash, gapSize: dash * 0.8, transparent: true, opacity, depthWrite: false }));
+        scene.add(line);
+        return line;
+      };
+      const moonOrbit = makeOrbit(0x58c8ff, 0.6, 0.1), earthOrbit = makeOrbit(0xe8b46a, 0.32, 0.4);
+      const setOrbit = (line, centre, radius, normal, reference) => {
+        const u = new T.Vector3().crossVectors(normal, reference).normalize();
+        const v = new T.Vector3().crossVectors(normal, u).normalize();
+        const attribute = line.geometry.attributes.position, array = attribute.array;
+        for (let i = 0; i < ORBIT_POINTS; i++) {
+          const angle = (i / (ORBIT_POINTS - 1)) * Math.PI * 2, c = Math.cos(angle) * radius, s = Math.sin(angle) * radius;
+          array[i * 3] = centre.x + c * u.x + s * v.x;
+          array[i * 3 + 1] = centre.y + c * u.y + s * v.y;
+          array[i * 3 + 2] = centre.z + c * u.z + s * v.z;
+        }
+        attribute.needsUpdate = true;
+        line.computeLineDistances();
+      };
 
       const markerGroup = new T.Group();
       scene.add(markerGroup);
@@ -181,6 +217,12 @@ export async function createPolar3d(env) {
         sunBody.position.set(...f.sun).multiplyScalar(8);
         sunGlow.position.copy(sunBody.position);
         sunSpot.position.set(...f.sun).multiplyScalar(1.004);
+        // Ecliptic normal from the two directions the scene already has; fall back to the pole if they align.
+        const earthDir = new T.Vector3(...f.earth).normalize(), sunDir = new T.Vector3(...f.sun).normalize();
+        const ecliptic = new T.Vector3().crossVectors(earthDir, sunDir);
+        if (ecliptic.lengthSq() < 1e-8) ecliptic.set(0, 0, 1); else ecliptic.normalize();
+        setOrbit(moonOrbit, earth.position.clone(), earth.position.length(), ecliptic, earthDir);
+        setOrbit(earthOrbit, sunBody.position.clone(), sunBody.position.distanceTo(earth.position), ecliptic, earthDir);
         // The angle at the Moon between Sun and Earth is the Moon's phase angle; Earth, seen from
         // the Moon, shows the complement of the Moon's illuminated fraction.
         const phase = Math.acos(clamp(dot3(f.sun, f.earth), -1, 1));
