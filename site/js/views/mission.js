@@ -4,6 +4,8 @@ import { nextTransition, evaluateSiteMcda } from '../engine/metrics.js';
 import { createPolar3d } from './polar3d/index.js';
 import { mountProbePreviews } from './probe-gallery.js';
 import { playProbeFlight } from './probe-flight.js';
+import { onMode, isEducation } from '../mode.js';
+import { CHARACTER_MARKUP } from '../edu/character.js';
 
 const D2R = Math.PI / 180, HOUR = 36e5, SPAN = 709;
 const COLORS = { link: '#43d98a', sun: '#f5c542', dark: '#7d7993', both: '#9be7ff' };
@@ -162,6 +164,14 @@ const PROBES = [
   { id: 'vikram', name: 'Vikram', meta: 'India’s lander; Chandrayaan-3 made the first soft landing in 2023.', sites: ['ch3'] },
 ];
 
+// Education mode wording for the probe cards: one plain sentence, no raw numbers.
+const SIMPLE_META = {
+  artemis: 'A concept lander for astronauts at the Moon’s south pole.',
+  apollo: 'The lander that carried astronauts to the Moon from 1969 to 1972.',
+  novac: 'A small robot lander that flew to the Moon in 2024 and 2025.',
+  vikram: 'India’s robot lander, which landed in 2023.',
+};
+
 export function createMission(ctx) {
   const $ = (id) => document.getElementById(id);
   const startEl = $('v-start'), missionEl = $('v-mission'), flightEl = $('flight');
@@ -213,13 +223,18 @@ export function createMission(ctx) {
 
   /* ---------- start page ---------- */
 
+  const probeMetaHtml = (p, edu) => escapeHtml(t(edu ? SIMPLE_META[p.id] ?? p.meta : p.meta));
+  const LEDE = 'See which lunar landing sites have sunlight and a direct line of sight to Earth, hour by hour. Pick a lander, choose a site, then send a probe.';
+  const LEDE_SIMPLE = 'Pick a lander, and your guide will take you to the Moon.';
   function renderStart() {
     disposePreview();
-    const selected = probe();
+    const selected = probe(), edu = isEducation();
     startEl.innerHTML = `<div class="start">
       <h1 aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt=""><span>Lens</span></h1>
-      <p class="lede">${escapeHtml(t('See which lunar landing sites have sunlight and a direct line of sight to Earth, hour by hour. Pick a lander, choose a site, then send a probe.'))}</p>
+      <p class="lede">${escapeHtml(t(edu ? LEDE_SIMPLE : LEDE))}</p>
       <div class="pick">${escapeHtml(t('Choose your probe'))}</div>
+      <div class="guide-row" id="guide"${edu ? '' : ' hidden'}><div class="edu-char mood-happy" aria-hidden="true">${CHARACTER_MARKUP}</div>
+        <p class="guide-bubble" role="status">${escapeHtml(t('Hi! I\'ll be your mission guide. Pick a lander and press Validate.'))}</p></div>
       <div class="probe-grid" data-model-error="${escapeHtml(t('Model unavailable. Select another probe or continue.'))}">
         ${PROBES.map(p => {
           return `<section class="probe-choice" data-probe-card="${p.id}" data-selected="${p.id === selected.id}">
@@ -229,14 +244,26 @@ export function createMission(ctx) {
             </div>
             <button class="probe-select" data-probe="${p.id}" aria-pressed="${p.id === selected.id}">
               <span class="probe-title">${escapeHtml(t(p.name))}</span><span class="probe-check" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m5 10 3 3 7-7"/></svg></span>
-              <span class="probe-meta">${escapeHtml(t(p.meta))}</span>
+              <span class="probe-meta">${probeMetaHtml(p, edu)}</span>
             </button>
           </section>`;
         }).join('')}
       </div>
-      <div class="start-actions"><button class="btn-primary" id="validate">${escapeHtml(t('Validate'))}<span aria-hidden="true">→</span></button></div></div>`;
+      <div class="start-actions"><button class="btn-primary" id="validate">${escapeHtml(t(edu ? 'Start the mission' : 'Validate'))}<span aria-hidden="true">→</span></button></div></div>`;
     disposePreview = mountProbePreviews(startEl.querySelector('.probe-grid'));
   }
+  /** The mode changed while the start page is up: update the guide, the cards and the button in place
+   *  (a full renderStart would reload the four 3D previews). */
+  function applyStartMode() {
+    if (!startEl.querySelector('.start')) return;
+    const edu = isEducation();
+    startEl.querySelector('#guide').hidden = !edu;
+    startEl.querySelector('.lede').textContent = t(edu ? LEDE_SIMPLE : LEDE);
+    for (const p of PROBES) { const meta = startEl.querySelector(`[data-probe="${p.id}"] .probe-meta`); if (meta) meta.innerHTML = probeMetaHtml(p, edu); }
+    const validate = startEl.querySelector('#validate');
+    if (validate) validate.firstChild.textContent = t(edu ? 'Start the mission' : 'Validate');
+  }
+  onMode(() => { if (view() === 'start') applyStartMode(); else if (view() === 'mission') refresh(true); });
 
   /* ---------- mission page skeleton ---------- */
 
@@ -355,7 +382,9 @@ export function createMission(ctx) {
     $('m-prev').setAttribute('aria-label', t('Previous day'));
     $('m-next').setAttribute('aria-label', t('Next day'));
     $('m-title').textContent = t('Pick a landing site');
-    $('m-hint').textContent = t(local.mode === '3d' ? 'Drag to rotate, scroll to zoom. Not to scale. Cyan ring: the Moon’s orbit around Earth; amber: Earth’s orbit around the Sun. Cyan line: 75°S, where the terrain model ends.' : local.flat === 'pole' ? 'LOLA relief, 75°S to the pole. Drag to pan, scroll to zoom. Dark is night.' : 'Whole Moon, near side in the centre. Drag to pan, scroll to zoom. Dark is night.');
+    $('m-hint').textContent = t(isEducation()
+      ? (local.mode === '3d' ? 'Drag to turn the Moon. Tap a dot to pick a site.' : 'Tap a dot to pick a site. Dark is night.')
+      : local.mode === '3d' ? 'Drag to rotate, scroll to zoom. Not to scale. Cyan ring: the Moon’s orbit around Earth; amber: Earth’s orbit around the Sun. Cyan line: 75°S, where the terrain model ends.' : local.flat === 'pole' ? 'LOLA relief, 75°S to the pole. Drag to pan, scroll to zoom. Dark is night.' : 'Whole Moon, near side in the centre. Drag to pan, scroll to zoom. Dark is night.');
     const [fp, fm] = $('m-flat').children;
     fp.textContent = t('South pole'); fm.textContent = t('Whole Moon');
     fp.classList.toggle('on', local.flat === 'pole'); fm.classList.toggle('on', local.flat === 'moon');
@@ -417,12 +446,15 @@ export function createMission(ctx) {
     return rows.map(([k, v]) => `<span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b>`).join('');
   }
 
+  // Education mode: one plain phrase for the current sky, in place of hours, coordinates and terrain.
+  const plainStatus = (status) => t(status.sun && status.link ? 'Sun and Earth in view' : status.link ? 'Earth in view, no Sun' : status.sun ? 'Sunlit, no Earth link' : 'In shadow');
   function renderList(force) {
   // A site has a terrain model when its horizon was computed from LOLA, not from a smooth sphere.
   const hasModel = (site) => Boolean(site.terrain && site.terrain !== 'none');
 
     const f = lastFrame ?? frame();
-    const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(',')].join('|');
+    const edu = isEducation();
+    const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(','), edu].join('|');
     const listEl = $('m-list');
     if (force || key !== local.listKey) {
       local.listKey = key;
@@ -454,7 +486,7 @@ export function createMission(ctx) {
                   <span class="nm">${escapeHtml(site.label)}</span>
                   ${badge}
                 </span>
-                <span class="sub2">${escapeHtml(t('{score}/100 MCDA', { score: score.score }))} · ${escapeHtml(t('{n} h lit and linked', { n: score.both }))} (${Math.round(score.bothPct)}%) · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}</span>
+                <span class="sub2">${edu ? escapeHtml(plainStatus(f.status.get(site.id))) : `${escapeHtml(t('{score}/100 MCDA', { score: score.score }))} · ${escapeHtml(t('{n} h lit and linked', { n: score.both }))} (${Math.round(score.bothPct)}%) · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}`}</span>
               </span>
               <span class="chev">⌄</span>
             </button>
@@ -466,15 +498,14 @@ export function createMission(ctx) {
     for (const row of listEl.querySelectorAll('[data-row]')) {
       const site = sites().find((s) => s.id === row.dataset.row); if (!site) continue;
       row.querySelector('.dotc').style.background = colorOf(f.status.get(site.id));
+      if (edu) row.querySelector('.sub2').textContent = plainStatus(f.status.get(site.id));
       if (row.classList.contains('open')) row.querySelector('.det').innerHTML = detailsHtml(site, f);
     }
   }
 
   function laneSites() {
-    if (local.compared && local.compared.size > 0) {
-      return orderedSites().filter((s) => local.compared.has(s.id));
-    }
-    return [];
+    const highlighted = ctx.eduHighlight?.()?.id ?? null; // Education mode always shows the site it is talking about
+    return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === highlighted);
   }
   function runsOf(test, site) {
     const start = Math.round(ctx.eph().indexOf(ctx.landing()));
@@ -539,7 +570,8 @@ export function createMission(ctx) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function renderLanes(force) {
-    const key = [local.probe, local.picked, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(',')].join('|');
+    const hl = ctx.eduHighlight?.() ?? null;
+    const key = [local.probe, local.picked, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(','), JSON.stringify(hl)].join('|');
     const el = $('m-lanes');
     if (force || key !== local.laneKey) {
       local.laneKey = key;
@@ -561,6 +593,7 @@ export function createMission(ctx) {
           <svg viewBox="0 0 ${SPAN} 54" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(site.label)}">
             <rect x="0" y="0" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="20" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="40" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/>
             ${rect(sun, 0, COLORS.sun)}${rect(link, 20, COLORS.link)}${rect(both, 40, COLORS.both)}
+            ${hl && hl.id === site.id ? `<rect class="edu-hl" x="${hl.from}" y="-1" width="${Math.max(1, hl.to - hl.from)}" height="56" rx="3" fill="rgba(255,107,107,.18)" stroke="#ff6b6b" stroke-width="1.5" vector-effect="non-scaling-stroke"/>` : ''}
             <line class="cur" x1="0" x2="0" y1="0" y2="54" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
           </svg>
         </div>`;
@@ -831,6 +864,7 @@ export function createMission(ctx) {
     renderLanes(full);
     renderScenario();
     if (local.mode === '3d') { create3d(); view3d?.request(); } else draw2d();
+    ctx.onMissionRefresh?.(chosenSite, lastFrame, local.hour);
   }
 
   // The two countdowns that decide a stay, for the picked site, and the way into the map page.
@@ -915,17 +949,20 @@ export function createMission(ctx) {
       local.compared = defaultCompared();
       for (const item of startEl.querySelectorAll('[data-probe-card]')) item.dataset.selected = String(item.dataset.probeCard === local.probe);
       for (const button of startEl.querySelectorAll('[data-probe]')) button.setAttribute('aria-pressed', String(button.dataset.probe === local.probe));
+      ctx.onProbePick?.(local.probe);
       return;
     }
-    if (event.target.closest('#validate')) {
-      local.picked = orderedSites()[0]?.id ?? null;
-      local.open = null;
-      local.hour = 0;
-      if (!local.compared || local.compared.size === 0) local.compared = defaultCompared();
-      local.flat = (pickedSite()?.lat ?? 0) < -75 ? 'pole' : 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0;
-      ctx.go('mission');
-    }
+    if (event.target.closest('#validate')) goMission();
   });
+  function goMission() {
+    ctx.onValidate?.();
+    local.picked = orderedSites()[0]?.id ?? null;
+    local.open = null;
+    local.hour = 0;
+    if (!local.compared || local.compared.size === 0) local.compared = defaultCompared();
+    local.flat = (pickedSite()?.lat ?? 0) < -75 ? 'pole' : 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0;
+    ctx.go('mission');
+  }
   document.querySelector('.brand')?.addEventListener('click', () => ctx.go('start'));
   buildMission();
   $('m-3d').hidden = local.mode !== '3d'; $('m-2d').hidden = local.mode !== '2d';
@@ -940,5 +977,12 @@ export function createMission(ctx) {
         refresh(true);
       }
     },
+    // Small API for Education mode (views/edu): drive the same screens the buttons drive.
+    validate: goMission,
+    send: sendProbe,
+    probe: () => local.probe,
+    pick(id) { if (!sites().some((s) => s.id === id)) return; local.picked = id; local.open = null; refresh(true); focusSite(); },
+    setHour(h) { local.hour = clamp(Math.round(h), 0, SPAN); refresh(); },
+    redraw: () => refresh(true),
   };
 }

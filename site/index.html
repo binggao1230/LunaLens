@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0f1113">
-<title>Luna Lens · Lunar landing site navigator</title>
+<title>LunaLens · Lunar landing site navigator</title>
 <style>
 :root{
   color-scheme:dark;
@@ -183,7 +183,6 @@ table.bm tr:first-child th{color:var(--text2);font-weight:500}
 }
 
 /* ---- merged build: language, loading, 3D, data page ---- */
-#lang{width:auto;min-height:32px;padding:4px 8px;font-size:13px;background:none}
 #loading{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:var(--page);color:var(--text2)}
 #loading[hidden]{display:none}
 .view-hidden{display:none!important}
@@ -213,7 +212,6 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   .scene-viewport{aspect-ratio:4/3}
   .scene-gesture{display:none}
   dl.kv{grid-template-columns:1fr}
-  #lang{max-width:110px}
 }
 /* Keep the full navigation usable on narrow tablet widths. */
 @media (min-width:761px) and (max-width:900px){
@@ -228,17 +226,24 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 }
 </style>
 <link rel="stylesheet" href="css/mission.css">
+<link rel="stylesheet" href="css/edu.css">
 </head>
 <body data-view="start">
 <div id="loading" role="status">Loading…</div>
 <header class="appbar">
-  <b class="brand"><img src="assets/lunalens-logo.svg" alt="" width="28" height="28">LunaLens</b>
+  <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span></b>
   <nav class="tabs" data-nav>
     <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Date slip</button>
   </nav>
   <div class="tray" id="tray"></div>
   <nav class="side" data-nav><button data-view="data">Data</button></nav>
-  <select id="lang" aria-label="Language"><option value="en">English</option><option value="fr">Français</option><option value="zh">中文</option></select>
+  <div class="seg-pill" id="mode-toggle" role="group" aria-label="Mode">
+    <button type="button" data-mode="expert" aria-pressed="true"><span class="long">Expert mode</span><span class="short">Expert</span></button>
+    <button type="button" data-mode="education" aria-pressed="false"><span class="long">Education mode</span><span class="short">Learn</span></button>
+  </div>
+  <div class="seg-pill" id="lang" role="group" aria-label="Language">
+    <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button><button type="button" data-lang="fr" lang="fr" aria-pressed="false">FR</button><button type="button" data-lang="zh" lang="zh" aria-pressed="false">中文</button>
+  </div>
 </header>
 
 <main>
@@ -458,6 +463,8 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Slip</button>
   <button data-view="data">Data</button>
 </nav>
+<div id="edu"></div>
+<div id="mode-wipe" aria-hidden="true"></div>
 <div id="flight" role="dialog" aria-modal="true"></div>
 <div id="tip"></div><div id="toast"></div>
 
