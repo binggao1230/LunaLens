@@ -70,6 +70,7 @@ alternative dates at the same site". The second half is what the product cannot 
 ## F. An educational mobile companion
 
 - **In progress:** Ionic Vue + Capacitor scaffold, accessible site/date selection, and first daily results are in `mobile/`. Results now use the existing local ephemeris and site engine for hourly sunlight, direct Earth visibility, and overlap. The guided comparison, timeline interaction, translations, source details, and native device review remain.
+- Add a welcoming branded start screen before the lesson, use the LunaLens logo in app branding, and add concise expandable explanations plus restrained, reduced-motion-aware learning animations.
 - **Next:** guide a same-date comparison between the familiar landed site and the south-pole site, with a plain-language prompt about the difference in sunlight and Earth visibility.
 - Build a separate, mobile-first (PWA) or mobile app for educators, students and younger learners. Keep the full analysis tools on
   the website; the app is a short, welcoming learning experience, not a smaller copy of every website view.

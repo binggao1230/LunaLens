@@ -1,6 +1,6 @@
+import ephemerisUrl from '../../../site/data/ephemeris.f64?url';
 import ephemerisData from '../../../site/data/ephemeris.json';
 import sitesData from '../../../site/data/sites.json';
-import ephemerisUrl from '../../../site/data/ephemeris.f64?url';
 import { Ephemeris } from '../../../site/js/engine/ephemeris.js';
 import { Site } from '../../../site/js/engine/site.js';
 
@@ -19,7 +19,7 @@ export type LearningSite = {
 export type DailyResult = {
   site: LearningSite;
   date: string;
-  samples: Array<{ hour: number; sunlight: boolean; earthVisible: boolean }>;
+  samples: { hour: number; sunlight: boolean; earthVisible: boolean }[];
   sunlightHours: number;
   earthVisibleHours: number;
   overlapHours: number;
@@ -43,7 +43,7 @@ async function loadEphemeris() {
   return ephemerisPromise;
 }
 
-export function getLearningSites() {
+export function getLearningSites(): LearningSite[] {
   return siteCatalog.sites.filter((site) => site.id === 'apollo11' || site.id === 'shackleton-rim');
 }
 
@@ -60,7 +60,9 @@ export async function getDailyResult(siteId: string, date: string): Promise<Dail
   const dataStart = Date.parse(metadata.start);
   const dataEnd = dataStart + (metadata.count - 1) * metadata.stepSeconds * 1000;
   if (startMs < dataStart || dayEnd - 60 * 60 * 1000 > dataEnd) {
-    throw new Error(`Choose a date within the available data: ${metadata.start.slice(0, 10)} to ${new Date(dataEnd).toISOString().slice(0, 10)}.`);
+    throw new Error(
+      `Choose a date within the available data: ${metadata.start.slice(0, 10)} to ${new Date(dataEnd).toISOString().slice(0, 10)}.`,
+    );
   }
 
   const ephemeris = await loadEphemeris();

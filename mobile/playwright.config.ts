@@ -19,7 +19,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev -- --port 5173 --strictPort',
+    command: 'npm run dev -- --host 0.0.0.0 --port 5173 --strictPort',
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

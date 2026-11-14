@@ -31,9 +31,9 @@ Android builds require Android Studio. Local iOS builds require macOS and Xcode.
 
 ## Current prototype boundary
 
-The current screen lets a learner choose between Tranquility Base and the Shackleton rim, select a supported UTC date, and view the calculated hourly sunlight, Earth visibility, and overlap. Results import the existing engine and curated site data from `../site/`; the ephemeris binary is emitted as a local build asset. No sample numbers substitute for the shared LunaLens engine.
+The welcome screen introduces the lesson and the distinctions between sunlight and Earth visibility. The exploration screen lets a learner choose between Tranquility Base and the Shackleton rim, select a supported UTC date, and view the calculated hourly sunlight, Earth visibility, and overlap. Results import the existing engine and curated site data from `../site/`; the ephemeris binary is emitted as a local build asset. No sample numbers substitute for the shared LunaLens engine.
 
-The next implementation step is the guided comparison flow. Keep the app independent from runtime network access and do not bundle the advanced website's full terrain datasets by default.
+Explanations are expandable so learners can choose how much detail they want. The next implementation step is the guided comparison flow. Keep the app independent from runtime network access and do not bundle the advanced website's full terrain datasets by default.
 
 ## Accessibility baseline
 
