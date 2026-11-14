@@ -1,105 +1,82 @@
 # TODO
 
-What is left to do on `site/`, the only build. The measure is the challenge text: `doc/Background.md` and
-`doc/Resources.md`. Written 2026-11-14 against `main` at `9b70eb2`; still under discussion.
+Reviewed against `main` at `6be10c5` on 14 November 2026. [The challenge](doc/Background.md) asks
+one practical question: if a lunar landing slips, can we quickly compare a new date at the same
+site and a nearby site on that date? Use `site/`, the web product, to answer it. Start with P0. Keep
+the full-width Atlas layout and keep the Plan page retired.
 
-## Where we stand against the challenge
+## What works today
 
-| Objective in `Background.md` | State | Gap |
-|---|---|---|
-| Site selection and comparison | Partly | 12 curated sites and custom coordinates work. Compare only shows different sites on one date |
-| Date and time flexibility | Partly | A date can be chosen, not a time of day. No view across seasons |
-| Sun and Earth relative to the horizon | Done | The horizon panorama and the countdowns are in Explore. The Mission page has neither |
-| Power and communication assessment | Done | Mast height is fixed at 2 m |
-| Multiple visualisation approaches | Partly | The 2D polar map and the terrain 3D in Explore work. The Mission 3D is weak. Two map overlays are placeholders |
-| Temporal dynamics | Done | Timeline and play work |
-| Accessibility across skill levels | Weak | Three languages. No plain-language explanations, no glossary |
+- Explore shows the Sun and Earth against a local skyline, with a timeline, playback and
+  countdowns. Mission has a south-pole 3D view with a local terrain patch and its own countdowns.
+  The Data page has a glossary, data sources and model limits.
+- Compare shows separate site/date rows and reports differences in hours. The `+14 d` shortcut
+  works. For Shackleton rim crest on 14 vs 28 November 2026, with the default 709-hour stay and
+  2° Earth margin, the deployed site reports **52 fewer hours of sunlight and 11 more hours of
+  Earth visibility above the margin**. The same-date Mission comparison and CSV export also work.
+- The Horizons fixture, browser/Python comparisons and 120-point PGDA sunlight check were rerun.
+  The PGDA check measured a Spearman correlation of 0.984 and an RMS difference of 2.71 percentage
+  points for long-term sunlight. It does not validate individual rise/set times or landing points.
+- The deployed homepage answered without login. Explore, Compare and Date slip had no horizontal
+  overflow at 390 px in headless Chromium. Physical phones and the final demo link remain unchecked.
 
-The background section's own scenario is a mission that slips: "alternative sites in the same region, or
-alternative dates at the same site". The second half is what the product cannot do yet, so it comes first.
-3D is "may explore" in the challenge text; it is not where the remaining time should go.
+## P0 — Make the date-slip decision work
 
-## A. Compare scenarios, not only sites
+- [ ] **Add the exact site and time the user chose.** Add a direct action from the selected point
+  in Explore to Compare. Make “Add scenario” use the current site and landing time; let users
+  edit each row's site or UTC landing time without changing the baseline. Store custom points
+  separately so a later pin cannot rewrite an earlier row. Keep the working `+14 d` shortcut.
+  See [scenario handling](site/js/app.js#L562).
+- [ ] **Turn a Date slip result into a comparison.** Let users select a day by touch or keyboard
+  and add it as another row, preserving the site and UTC time of day. The current control is
+  a [placeholder](site/index.html#L346). Show the selected date and its result before adding it.
+- [ ] **Use the same conditions for the same scenario.** Mission, Compare and Date slip should
+  agree on stay length, Earth margin, minimum continuous sunlight from touchdown and whether
+  Earth must be visible at touchdown. Distinguish geometric Earthrise/Earthset from the
+  opening/closing of the Earth visibility window at the selected margin. Show any failed
+  condition by name; put the score after the reasons. Check results at two margins, with and
+  without the touchdown requirement, and at a non-midnight landing time. State the time
+  resolution and guard against scenarios beyond the available data.
 
-- Finish the scenario tray: add, duplicate with another date, duplicate with another site, remove. All four are
-  dashed placeholders today.
-- A row in Compare is a scenario (site + landing date), not a fixed list of the curated sites.
-- Accept: Shackleton rim crest on 14 November and on 23 November sit in two rows, in no more steps than comparing
-  two sites.
+**Acceptance:** From Shackleton rim crest on 14 November 2026, compare the same site on 23 November
+and de Gerlache rim crest on 23 November. Keep all three rows intact when editing a row or picking
+a second custom point. At desktop width and about 390 px, a first-time user should be able to do
+this within one minute and explain which conditions each option passes and what it gains or loses.
 
-## B. A one-line verdict when the date slips
+## P1 — Make the result credible and the demo repeatable
 
-- Wire "Add selected day as a scenario" in Date slip to the tray from A.
-- When two scenarios are compared, say it in one sentence: hours of sunlight gained or lost, hours of Earth link
-  gained or lost, whether touchdown is in sunlight.
-- Add a landing time of day; it is fixed at 00:00 UTC.
-- Accept: "we slip 9 days, is the site still viable?" is answered without reading a table.
+- [ ] **Label terrain and show the quantities behind the score.** Six of the twelve native
+  presets use a smooth-sphere horizon; label them as references and keep them outside terrain
+  recommendations. Distinguish 40 m near-field + 240 m far-field profiles from 240 m-only
+  calculations. Put sunlight, Earth visibility, their overlap, the longest dark period and
+  the longest period without Earth visibility next to any score. Describe these as geometric
+  estimates, not actual power output, radio performance or battery survival. A user should be
+  able to tell why a case passed or failed without opening the Data page.
+- [ ] **Resolve the Atlas dependency before relying on it in a judged demo.** Atlas is the
+  [upstream app's production build](doc/PORT_PLAN.md), with separate defaults and data. The
+  current handoff carries a point and date into Atlas only. Confirm permission to redistribute
+  the code and assets and document the revision and credits. If permission cannot be verified,
+  leave Atlas out of the judged build and demo. The core workflow must work in native Explore,
+  Compare and Date slip either way.
+- [ ] **Make the data reproducible.** Recover or document the scripts or exact commands that
+  produced the ephemeris, DEMs, hillshade and preset skylines, with source URLs and parameters.
+  Record any missing steps in `site/data/PROVENANCE.json`. Verify coordinates against primary
+  sources before adding more presets; keep computed rim points distinct from official targets.
+- [ ] **Rehearse and check the submission.** Update [the submission draft](doc/SUBMISSION.md):
+  use the verified `+11 h` example, qualify the claims about terrain and link availability, and
+  reflect the current login status. Record the demo from one reproducible scenario. Check the
+  project and demo links without an account, and try the workflow on a physical iOS and Android
+  device. Confirm judging submission status separately; a successful deployment does not
+  confirm submission. See the draft for the event checklist.
 
-## C. One product, not two
+## P2 — Extend after the core flow passes
 
-- Preview a tracking-camera Earth-to-Moon flight using the selected lander's GLB, with skip, reduced motion and local textures.
-- Remove the extra model-reference captions from the start-page cards at the owner's request; retain asset provenance in `site/assets/models/README.md`.
-- **Shared state: verified.** Mission, Explore, Compare, Date slip and Plan all read one `state` for the landing
-  date and the picked site; changing the date in Plan shows up in Explore's date field, and the site follows the
-  same way. The framed Atlas page is the exception: it receives the scenario through its URL hash and sends
-  nothing back.
-- On the Mission page, show the countdown to sunset and to Earthset for the picked site, and one action that opens
-  it in Explore.
-- **`chenlin/mission-start`: superseded, do not merge.** Its four commits (carousel, Artemis model, GLTF and DRACO
-  loaders) arrived on `main` through #29 and #32; its tree is 1,999 lines behind and adding anything back would
-  revert work. No pull request; the owner can delete the branch.
-- Accept: change the date on Mission, switch to Explore, and the date and the site are the same.
-
-## D. 3D: stop the loss (two hours at most)
-
-- Drop the rendering code on `bing/3d-m1-wip`: the scene there shows a tan slab and a white dot. Keep only
-  `moon_color_4k.webp`. The Sun and Earth textures are not needed.
-- Mission 3D becomes: the camera starts over the south pole, the Moon uses the 4K texture, and picking a polar site
-  reuses the terrain patch that already works in Explore (`terrain-mesh.js`).
-- Heights at ×1 by default, or a caption that says the shadows are illustrative.
-- If the two hours run out, keep what is on `main` and change only the starting camera.
-
-## E. Terrain and trust
-
-- Fix the ranking: sites with no terrain (Chandrayaan-3 and the Apollo sites) rank above polar sites computed on
-  real terrain, and one of them carries the "Recommended" badge. Leave them out of the recommendation, or group
-  them apart and say why.
-- Implement multi-criteria site evaluation (MCDA funnel): separate terrain-backed candidate sites from smooth-sphere
-  reference sites, add the 6.5-day Artemis Human Lunar Return continuous-sunlight threshold, compute regional slope
-  on the 240 m LOLA DEM, and score sites across simultaneous Sun+Earth window, longest continuous sunlight, eclipse
-  survival (longest darkness), and horizon clearance (`archive/team/maeva/site-selection-workflow.md`).
-- Put the scripts that produced `ephemeris.*`, `dem240.*`, `dem480.*` and `polar-hillshade.*` into `site/tools/`.
-  If they cannot be recovered, say so in `PROVENANCE.json`.
-- Compare the sunlit share at a few polar sites with the PGDA 69 average-illumination raster and show the result on
-  the Data page.
-- The two map overlays (sunlit share, Earth-link share): build them, or remove the buttons.
-
-## F. For people who are not specialists
-
-- One plain sentence next to each number, for example "the Sun is 1.6° above the horizon, about three Sun-widths".
-- One action that sets Apollo 11 beside a south-pole site on the same date, to show why the pole is hard.
-- A glossary: azimuth, elevation, lunar day, libration, direct-to-Earth.
-- Visuals for the demo video and the slides.
-
-## G. Before submission
-
-- **Format and deadline, checked on the official site on 2026-11-14.** Submission happens on the team page's
-  Project tab: it opened Saturday 14 November at 09:00 and closes **Sunday 15 November at 23:59 local event time**;
-  a saved draft is not a submission, "Submit for Judging" must be clicked. Required fields: project name, summary,
-  demo link (slide deck of at most seven slides, or a video of at most 30 seconds, hosted publicly), final project
-  link, detailed description, the Super Intelligence disclosure, the NASA data used, and every other reference.
-  English throughout. Teams of at most six — we are six.
-- **Public links only.** Judges cannot log in: the Cloudflare Access email gate has to come off before submission,
-  and the final-project link must open without an account.
-- **No NASA branding.** This year's rules forbid generated content that uses NASA logos or design elements; the
-  NASA meatball was removed from the app bar on 2026-11-14 and its asset deleted. NASA data itself is encouraged.
-- **Site breadth: covered by the Atlas page for now.** Our own curated list stays at the twelve sites whose
-  coordinates carry a source, because every added point without a check would break the rule the list exists to
-  keep. The Atlas page already carries 41 past, failed and planned missions with their own terrain patches, so a
-  judge comparing the two entries sees the full field; the Data page states that those coordinates have not been
-  re-sourced. Adding them to our list stays worth doing once each pair is checked against a primary source.
-- **Phone pass: engine-level done, hardware outstanding.** Plan, Compare and the framed Atlas were driven at
-  390 x 844 with touch in Chrome and again in WebKit (the engine behind iOS Safari): no horizontal overflow, WebGL 2
-  present, the Atlas frame renders its canvas, and neither run logged a console error. What is left needs a person:
-  open the three pages on one iOS and one Android device and check the address bar, the back gesture and the map's
-  pinch zoom.
+- [ ] Let the native map shortlist nearby candidates for the chosen date and show which part
+  of the skyline blocks the Sun or Earth. Add regional slope to screening only once its
+  resolution and meaning are clear; the current score uses skyline clearance.
+- [ ] Compare dates across longer spans than the 28-day slip sweep, and add a guided Apollo
+  versus south-pole example for educators. Keep terms and assumptions understandable in all
+  three interface languages.
+- [ ] Improve 3D as an explanation of a result: verify the polar terrain and landmarks against
+  the same site used in 2D; keep the full lunar disc and polar boundary legible. Defer additional
+  flight effects, lander models and mobile app work.
