@@ -1,9 +1,10 @@
 // Cloudflare deployment of the static site (free plan). See doc/PLAN.md §2.5.
-// Today this publishes the layout prototype; switch "directory" to the frontend build (web/dist) when it exists.
+// Publishes site/, the real-engine build. Its data/ folder is not in git: the deploy workflow
+// downloads it from the lunalens-snapshot-2026-11-14 release before running Wrangler.
 {
   "name": "luna-lens",
   "compatibility_date": "2026-11-01",
   // Versioned preview URLs are not covered by the Access rule on the main address, so keep them off.
   "preview_urls": false,
-  "assets": { "directory": "./prototype" }
+  "assets": { "directory": "./site" }
 }

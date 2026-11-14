@@ -1,6 +1,6 @@
 # Deploy the static site to Cloudflare Workers on every push to main.
-# See doc/PLAN.md §2.5. The site is static assets only, so there is no build step:
-# Wrangler uploads whatever "assets.directory" points at in wrangler.jsonc.
+# See doc/PLAN.md §2.5. site/ carries the code; its data/ folder is 34 MB and stays out of git,
+# so the release holding it is downloaded and unpacked here before Wrangler runs.
 name: Deploy to Cloudflare
 
 on:
@@ -20,6 +20,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Fetch the site data from the snapshot release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/snapshot
+          gh release download lunalens-snapshot-2026-11-14 --repo "$GITHUB_REPOSITORY" \
+            --pattern 'lunalens.zip.part*' --pattern 'restore-lunalens.py' --pattern 'lunalens-files.json' \
+            --dir /tmp/snapshot
+          python3 /tmp/snapshot/restore-lunalens.py
+          mkdir -p site/data
+          cp -a /tmp/snapshot/lunalens/site/data/. site/data/
+          du -sh site/data
       - name: Deploy with Wrangler
         uses: cloudflare/wrangler-action@v4
         with:

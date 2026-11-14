@@ -97,12 +97,17 @@ Two layers, so the public link never depends on anyone's laptop:
   With the backend down, curated sites work fully and custom points show "available in the live demo".
 - None of Cloudflare Workers, Vercel or GitHub Pages can run our Python backend on a free plan (SPICE, numpy,
   115 MB elevation files), which is why the public layer is static.
-- Free-plan limits checked on 2026-11-14 `[VERIFIED]`: 20,000 files per Worker version, 25 MiB per file.
-  Precomputed JSON and map images must stay under 25 MiB each; raw DEMs are never deployed.
-- The lead runs deployments from their own machine (`npx wrangler deploy`, config in `wrangler.jsonc`).
-- Live since 2026-11-14 at `https://luna-lens.gaobing1230.workers.dev`, serving the prototype behind a Cloudflare
+- Free-plan limits checked on 2026-11-14 `[VERIFIED]`: 20,000 files per Worker version, 25 MiB per file. The
+  largest deployed asset is `site/data/dem240.i16.gz` at 24.4 MB, just under that per-file limit; anything bigger
+  must be split or served from elsewhere.
+- Deployment is automatic: every push to `main` runs `.github/workflows/deploy.yml`, which downloads the
+  `lunalens-snapshot-2026-11-14` release into `site/data/` (34 MB, not in git) and deploys `site/` with Wrangler.
+  A local `npx wrangler deploy` still works for a one-off, with `site/data/` in place.
+- Live since 2026-11-14 at `https://luna-lens.gaobing1230.workers.dev`, serving `site/` behind a Cloudflare
   Access email check (one-time code). The app sits in the Zero Trust organization shared with the PLM hackathon
   project, so the login page's design is account-wide. The check comes off before submission so judges can open it.
+  Local canonical address for the same build: `http://100.76.141.11:8768/` (tailnet), served by
+  `site/tools/serve.py`, which binds `0.0.0.0`.
 - Access reports "a code has been emailed" even when it delivers nothing: an address outside the app's Allow
   policy, or a repeat request within a few minutes, is dropped silently. `[VERIFIED 2026-11-14]` A fresh address
   receives the code from `noreply@notify.cloudflare.com` in about 20 s. To test delivery without bothering anyone,

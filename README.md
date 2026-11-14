@@ -26,34 +26,35 @@ git clone git@github.com:binggao1230/LunaLens.git
 cd LunaLens
 ```
 
-## Run the layout prototype
+## Run the site
 
-The prototype is one static page. It needs Python 3 and nothing else: no install step, no build.
+`site/` is the product: real Sun and Earth positions from JPL Horizons, real LOLA terrain, a 3D view, and no
+build step. It needs Python 3 and **`site/data/`**, 34 MB that is not in git.
 
 ```
-python3 -m http.server 8765 --bind 0.0.0.0 --directory prototype
+gh release download lunalens-snapshot-2026-11-14 --pattern '*'      # or download it in the browser
+python3 restore-lunalens.py                                         # verifies the parts, unpacks lunalens/
+cp -a lunalens/site/data/. site/data/
+python3 site/tools/serve.py 8768
 ```
 
-On Windows use `python` instead of `python3`. Then open:
+Then open:
 
-- on the same computer: http://localhost:8765/
-- on a phone or another computer on the same network: `http://<your-computer's-IP>:8765/`
+- **http://100.76.141.11:8768/** — the canonical address, reachable on the tailnet and from a phone
+- `http://<this-machine's-LAN-IP>:8768/` for the same machine on the local network
 
-Stop it with `Ctrl+C`. If port 8765 is taken, pick another number in both places.
+The server binds `0.0.0.0`, not `127.0.0.1`, or nothing but the machine itself could reach it.
 
-What to look at:
+What to look at: Explore (map, tiles, horizon panorama, 3D view), Compare, Date slip, Data; the timeline at the
+bottom is the time control. Controls with a dashed border are not built yet and say so on hover or tap.
 
-- **Explore, Compare, Date slip** (top bar; bottom tabs on a phone) are the three views of the product.
-- The **timeline at the bottom** is the time control: drag it, or press Play.
-- Controls with a **dashed border** are not built. Hover or tap them to read what they will do.
-- Each block has a small label saying **who builds it**.
-- **Build map** (top right) shows who does what and when. It is a planning page and will be removed before the demo.
+`prototype/` is the earlier fake-data layout and is retired; it is kept only as a reference.
 
 ## Online version
 
 https://luna-lens.gaobing1230.workers.dev
 
-Today this serves the layout prototype. It is behind an email check (Cloudflare Access): enter your email, receive
+This serves `site/`, the same build as the local one, behind an email check (Cloudflare Access): enter your email,
 a one-time code, and you are in for a week. Every address is accepted while the team is still being onboarded; the
 policy narrows to team addresses later, and the check comes off before submission.
 
@@ -69,7 +70,9 @@ the Actions tab. To deploy from a machine instead, from the repository root:
 npx wrangler deploy
 ```
 
-What gets published is set in `wrangler.jsonc` (the `prototype/` folder for now). Background: `doc/PLAN.md` §2.5.
+What gets published is set in `wrangler.jsonc` (`site/`). Its 34 MB `data/` folder is not in git, so the workflow
+downloads the released snapshot and unpacks it into `site/data/` before deploying; the same two commands in the
+section above do that by hand. Background: `doc/PLAN.md` §2.5.
 
 ## Find your work
 
