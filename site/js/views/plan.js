@@ -195,7 +195,7 @@ export function createPlan(env) {
         const ca = Math.cos((lat * Math.PI) / 180);
         const dot = ca * Math.cos((lon * Math.PI) / 180) * s[0] + ca * Math.sin((lon * Math.PI) / 180) * s[1] + Math.sin((lat * Math.PI) / 180) * s[2];
         const o = (y * TINT + x) * 4;
-        if (dot < 0) { px[o] = 2; px[o + 1] = 3; px[o + 2] = 6; px[o + 3] = 200; }
+        if (dot < 0) { px[o] = 6; px[o + 1] = 8; px[o + 2] = 14; px[o + 3] = 125; }
       }
     }
     cx.putImageData(data, 0, 0);
@@ -346,6 +346,7 @@ export function createPlan(env) {
       state.layer = b.dataset.layer;
       root.querySelectorAll('[data-layer]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
       const layer = LAYERS.find((l) => l.id === state.layer);
+      updateNote();
       ensure(layer).then(() => { draw(); renderPanels(); });
     };
   });
@@ -475,6 +476,19 @@ export function createPlan(env) {
     cx.fillText(new Date(e.timeOf(base + span)).toISOString().slice(0, 10), w - 60, 50);
   }
 
+  // One line under the map that says what the colours mean, including the night half of Sun now.
+  const NOTES = {
+    sun_now: 'Dark is the night side at this hour. The edge is the terminator from the Sun\u2019s position; cast shadows are not drawn yet.',
+    sun_avg: 'Share of the time the Sun is visible, averaged over 18.6 years (NASA GSFC). Brighter is more often lit.',
+    earth_avg: 'Share of the time Earth is visible, averaged over 18.6 years (NASA GSFC). Bright blue is a clear view.',
+    psr: 'Blue ground never sees the Sun: cold enough for water ice to survive.',
+    height: 'Relief of the south polar cap from LOLA, lit from the north-west.',
+    slope: 'Steepness of the ground. Green is gentle, red is over 20 degrees.',
+  };
+  function updateNote() {
+    if (els.note) els.note.textContent = NOTES[state.layer] ?? 'Click the ground to pin a point.';
+  }
+
   function updateSun() {
     const e = eph?.();
     if (!e) return;
@@ -494,6 +508,7 @@ export function createPlan(env) {
     await ensure(LAYERS.find((l) => l.id === state.layer));
     draw();
     renderPanels();
+    updateNote();
   })();
 
   return {
