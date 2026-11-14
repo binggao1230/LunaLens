@@ -31,9 +31,9 @@ Android builds require Android Studio. Local iOS builds require macOS and Xcode.
 
 ## Current prototype boundary
 
-The current screen introduces the learning flow and lets a learner choose between Tranquility Base and the Shackleton rim and select a supported date. It does not yet calculate or display site-specific science results. Do not add sample numbers as substitutes for the shared LunaLens engine.
+The current screen lets a learner choose between Tranquility Base and the Shackleton rim, select a supported UTC date, and view the calculated hourly sunlight, Earth visibility, and overlap. Results import the existing engine and curated site data from `../site/`; the ephemeris binary is emitted as a local build asset. No sample numbers substitute for the shared LunaLens engine.
 
-The next implementation step is a small app-facing adapter that loads the curated sites and ephemeris locally, uses the existing calculation modules in `../site/js/engine/`, and exposes date coverage and provenance to the learning screens. Keep the app independent from runtime network access and do not bundle the advanced website's full terrain datasets by default.
+The next implementation step is the guided comparison flow. Keep the app independent from runtime network access and do not bundle the advanced website's full terrain datasets by default.
 
 ## Accessibility baseline
 

@@ -62,9 +62,10 @@
           <p class="field-hint" id="date-hint">
             The current data covers 2026–2030. The selected date is interpreted at 00:00 UTC.
           </p>
-          <ion-button expand="block" class="start-button" @click="openLesson">
-            Explore this place <span class="button-arrow" aria-hidden="true">→</span>
+          <ion-button expand="block" class="start-button" :disabled="loading" @click="openLesson">
+            {{ loading ? 'Loading local data…' : 'Explore this place' }} <span class="button-arrow" aria-hidden="true">→</span>
           </ion-button>
+          <p v-if="errorMessage" class="error-note" role="alert">{{ errorMessage }}</p>
         </section>
 
         <section v-if="lessonOpen" class="concept-card" aria-labelledby="lesson-title" aria-live="polite">
@@ -110,6 +111,62 @@
           </p>
         </section>
 
+        <section v-if="dailyResult" class="results-card" aria-labelledby="results-title" aria-live="polite">
+          <div class="section-heading">
+            <span class="step-number step-number-complete" aria-hidden="true">2</span>
+            <div>
+              <p class="eyebrow">Your lunar day</p>
+              <h2 id="results-title">What happens at {{ displaySiteName }}?</h2>
+            </div>
+          </div>
+          <p class="result-date">{{ dailyResult.date }} · 00:00–23:00 UTC</p>
+
+          <div class="result-grid">
+            <article class="result-item sunlight-result">
+              <span class="result-icon" aria-hidden="true">☼</span>
+              <h3>Sunlight</h3>
+              <p class="result-number">{{ dailyResult.sunlightHours }} <span>of 24 hours</span></p>
+              <p>Hours when the Sun clears the available horizon.</p>
+            </article>
+            <article class="result-item earth-result">
+              <span class="result-icon" aria-hidden="true">◎</span>
+              <h3>Earth in view</h3>
+              <p class="result-number">{{ dailyResult.earthVisibleHours }} <span>of 24 hours</span></p>
+              <p>Hours when Earth's centre is above the available horizon.</p>
+            </article>
+            <article class="result-item overlap-result">
+              <span class="result-icon" aria-hidden="true">↗</span>
+              <h3>Both at once</h3>
+              <p class="result-number">{{ dailyResult.overlapHours }} <span>of 24 hours</span></p>
+              <p>Hours when sunlight and Earth in view overlap.</p>
+            </article>
+          </div>
+
+          <div class="timeline-block">
+            <h3>Hour-by-hour view</h3>
+            <p class="timeline-key"><span class="key-sun" aria-hidden="true">☼</span> Sunlight <span class="key-earth" aria-hidden="true">◎</span> Earth in view</p>
+            <ol class="timeline" aria-label="Hourly timeline from 00:00 to 23:00 UTC">
+              <li v-for="sample in dailyResult.samples" :key="sample.hour" class="timeline-hour">
+                <span class="hour-label">{{ String(sample.hour).padStart(2, '0') }}</span>
+                <span class="hour-track" :class="{ 'has-sun': sample.sunlight, 'has-earth': sample.earthVisible, 'has-both': sample.sunlight && sample.earthVisible }" aria-hidden="true">
+                  <span v-if="sample.sunlight">☼</span><span v-if="sample.earthVisible">◎</span><span v-if="!sample.sunlight && !sample.earthVisible">·</span>
+                </span>
+                <span class="sr-only">{{ String(sample.hour).padStart(2, '0') }}:00 UTC: {{ sample.sunlight ? 'sunlight' : 'no sunlight' }}, {{ sample.earthVisible ? 'Earth in view' : 'Earth below the horizon' }}.</span>
+              </li>
+            </ol>
+          </div>
+
+          <p class="science-note">
+            <strong>How to read this:</strong> Sunlight and a direct view of Earth are separate conditions. Earth in view is a geometric horizon check; it is not a full radio link assessment.
+          </p>
+          <p class="terrain-note">
+            <strong>Terrain:</strong> {{ terrainNote }} Data coverage: {{ dailyResult.coverage.start }} to {{ dailyResult.coverage.end }} UTC. Site coordinates: {{ dailyResult.site.source }}.
+          </p>
+          <p class="terrain-note">
+            <strong>Sun and Earth positions:</strong> NASA/JPL Horizons, DE441. <a href="https://ssd.jpl.nasa.gov/horizons/manual.html" target="_blank" rel="noopener noreferrer">Calculation source</a>.
+          </p>
+        </section>
+
         <footer class="page-footer">
           <span>Built for curious minds, from classrooms to the Moon.</span>
           <a href="https://luna-lens.gaobing1230.workers.dev" target="_blank" rel="noopener noreferrer"
@@ -124,10 +181,14 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonPage, IonSelect, IonSelectOption } from '@ionic/vue';
+import { getDailyResult, type DailyResult } from '../services/learning-science';
 
 const selectedSite = ref('apollo11');
 const selectedDate = ref('2027-01-01');
 const lessonOpen = ref(false);
+const dailyResult = ref<DailyResult | null>(null);
+const loading = ref(false);
+const errorMessage = ref('');
 
 const siteName = computed(() =>
   selectedSite.value === 'shackleton-rim'
@@ -141,9 +202,25 @@ const formattedDate = computed(() => {
   return `${year}-${month}-${day} at 00:00 UTC`;
 });
 
-function openLesson() {
+const displaySiteName = computed(() => dailyResult.value?.site.name.split(' · ')[0] ?? siteName.value);
+const terrainNote = computed(() =>
+  dailyResult.value?.site.horizon
+    ? `A sampled lunar terrain horizon is included (${dailyResult.value.site.terrain}).`
+    : 'A flat geometric horizon is used because a sampled terrain horizon is not available for this historical reference site.',
+);
+
+async function openLesson() {
   if (!selectedDate.value) return;
-  lessonOpen.value = true;
+  loading.value = true;
+  errorMessage.value = '';
+  try {
+    dailyResult.value = await getDailyResult(selectedSite.value, selectedDate.value);
+    lessonOpen.value = true;
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'The lunar data could not be loaded.';
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 
@@ -358,7 +435,8 @@ h1 {
 }
 
 .choice-card,
-.concept-card {
+.concept-card,
+.results-card {
   margin-top: 20px;
   padding: clamp(18px, 5vw, 28px);
   border: 1px solid #d8d3c8;
@@ -461,6 +539,145 @@ h2 {
   line-height: 1.55;
 }
 
+.results-card {
+  margin-top: 20px;
+}
+
+.result-date {
+  margin: -8px 0 16px 47px;
+  color: #4d5867;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.result-item {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #d9dce0;
+  border-radius: 13px;
+  background: #faf9f5;
+}
+
+.result-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 20px;
+}
+
+.sunlight-result .result-icon { color: #815500; background: #fff2ce; }
+.earth-result .result-icon { color: #145376; background: #e1f2f8; }
+.overlap-result .result-icon { color: #365032; background: #eaf1e1; }
+
+.result-item h3,
+.timeline-block h3 {
+  margin: 11px 0 5px;
+  color: #1f2d40;
+  font-size: 15px;
+}
+
+.result-number {
+  margin: 0;
+  color: #172337;
+  font-size: 23px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.result-number span {
+  display: block;
+  color: #4d5867;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.result-item > p:last-child {
+  margin: 9px 0 0;
+  color: #465365;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.timeline-block {
+  margin-top: 24px;
+  padding-top: 17px;
+  border-top: 1px solid #dedfdf;
+}
+
+.timeline-block h3 { margin: 0; font-size: 18px; }
+
+.timeline-key {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 7px 0 12px;
+  color: #465365;
+  font-size: 13px;
+}
+
+.key-sun { color: #815500; }
+.key-earth { margin-left: 8px; color: #145376; }
+
+.timeline {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline-hour { min-width: 0; text-align: center; }
+.hour-label { display: block; margin-bottom: 4px; color: #576171; font-size: 10px; font-variant-numeric: tabular-nums; }
+
+.hour-track {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 1px solid #ccd1d7;
+  border-radius: 7px;
+  background: #f2f3f4;
+  color: #59616b;
+  font-size: 14px;
+}
+
+.hour-track.has-sun { border-color: #b27b15; background: #fff3d3; color: #704900; }
+.hour-track.has-earth { border-color: #4082a4; background: #e4f3f8; color: #145376; }
+.hour-track.has-both { border-color: #536b3f; background: repeating-linear-gradient(135deg, #e8f0df 0 6px, #dce9d0 6px 12px); color: #304729; }
+
+.terrain-note,
+.error-note {
+  color: #39475a;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.terrain-note { margin: 12px 0 0; }
+.error-note { margin: 10px 0 0; color: #8b1d16; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .concept-list {
   display: grid;
   gap: 12px;
@@ -557,6 +774,20 @@ h2 {
   .form-grid {
     grid-template-columns: 1fr;
   }
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+  .result-item {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    column-gap: 11px;
+    align-items: center;
+  }
+  .result-icon { grid-row: span 2; }
+  .result-item h3 { margin: 0; }
+  .result-number { grid-column: 2; margin-top: 3px; }
+  .result-item > p:last-child { grid-column: 1 / -1; }
+  .timeline { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .page-footer {
     align-items: flex-start;
     flex-direction: column;
