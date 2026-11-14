@@ -102,21 +102,28 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
 .edu-note{font-size:12px;color:var(--muted);margin:0 0 14px}
 .edu-final .edu-actions{justify-content:center}
 
-/* ---- character moods ---- */
-/* Default (happy): closed smiling eyes, open mouth, one arm up, cheer lines, like the team's illustration. */
-.edu-char .c-eyes,.edu-char .c-brows,.edu-char .c-flat,.edu-char .c-smile,.edu-char .c-zzz,.edu-char .c-stars{display:none}
-.edu-char.mood-worried .c-eyes,.edu-char.mood-worried .c-brows,.edu-char.mood-worried .c-flat{display:block}
-.edu-char.mood-worried .c-eyes-closed,.edu-char.mood-worried .c-open,.edu-char.mood-worried .c-cheer{display:none}
-.edu-char.mood-sleeping .c-flat,.edu-char.mood-sleeping .c-zzz{display:block}
-.edu-char.mood-sleeping .c-open,.edu-char.mood-sleeping .c-cheer{display:none}
+/* ---- character moods (one SVG, parts toggled; see edu/character.js) ---- */
+.edu-char .c-eyes-closed,.edu-char .c-brows,.edu-char .c-flat,.edu-char .c-oh,.edu-char .c-alarm,.edu-char .c-zzz,.edu-char .c-stars{display:none}
+/* happy = talking: open eyes, open mouth, cheer lines, right arm out */
+.edu-char.mood-happy .c-arm-r{transform:rotate(38deg)}
+/* celebrating = cheering: closed happy eyes, arm raised, stars */
+.edu-char.mood-celebrating .c-eyes-closed,.edu-char.mood-celebrating .c-stars{display:block}
+.edu-char.mood-celebrating .c-eyes{display:none}
+.edu-char.mood-celebrating .c-arm-l{transform:rotate(60deg)}
+/* worried = alarmed: raised brows, round mouth, hand to the chin, red marks */
+.edu-char.mood-worried .c-brows,.edu-char.mood-worried .c-oh,.edu-char.mood-worried .c-alarm{display:block}
+.edu-char.mood-worried .c-open,.edu-char.mood-worried .c-cheer{display:none}
+.edu-char.mood-worried .c-arm-r{transform:rotate(-34deg)}
+.edu-char.mood-worried .c-arm-l{transform:rotate(-25deg)}
+/* sleeping: closed eyes, flat mouth, arms down */
+.edu-char.mood-sleeping .c-eyes-closed,.edu-char.mood-sleeping .c-flat,.edu-char.mood-sleeping .c-zzz{display:block}
+.edu-char.mood-sleeping .c-eyes,.edu-char.mood-sleeping .c-open,.edu-char.mood-sleeping .c-cheer{display:none}
 .edu-char.mood-sleeping .c-eyes-closed path{d:path("M55 36q3 4 6 0M65 36q3 4 6 0")}
+.edu-char.mood-sleeping .c-arm-r{transform:rotate(70deg)}
 .edu-char.mood-sleeping .c-tip{fill:#4e5a63}
-.edu-char.mood-celebrating .c-stars{display:block}
 .edu-char .c-arm{transform-box:view-box;transition:transform .4s ease}
 .edu-char .c-arm-l{transform-origin:46px 70px}
 .edu-char .c-arm-r{transform-origin:74px 68px}
-.edu-char.mood-worried .c-arm-r,.edu-char.mood-sleeping .c-arm-r{transform:rotate(70deg)}
-.edu-char.mood-celebrating .c-arm-l{transform:rotate(60deg)}
 .edu-char .c-body{transform-box:view-box;transform-origin:60px 110px}
 .edu-char.mood-happy .c-body{animation:edu-bob 2.6s ease-in-out infinite}
 .edu-char.mood-celebrating .c-body{animation:edu-jump .7s ease-in-out infinite}

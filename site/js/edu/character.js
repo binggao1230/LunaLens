@@ -1,11 +1,15 @@
-// The Education mode guide: the LunaLens mascot, a cheerful dog astronaut, drawn inline after the team's
-// illustration (flat style: brown dog, light glass helmet with an antenna, cream suit with blue-grey gloves,
-// boots and collar, one arm raised in a wave, yellow motion lines). The default is the happy, celebrating pose.
-// One SVG, four moods set by a CSS class on the wrapper (mood-happy, mood-worried, mood-sleeping,
-// mood-celebrating); css/edu.css shows and hides the parts.
+// The Education mode guide: the LunaLens mascot, a dog astronaut, drawn inline after the team's illustrations
+// (flat style: brown dog, light glass helmet with an antenna, cream suit with blue-grey gloves, boots and collar).
+// One SVG holds every pose; a CSS class on the wrapper picks the mood and css/edu.css shows and hides the parts:
+//   mood-happy        talking: open eyes, open mouth, one arm out, yellow cheer lines
+//   mood-celebrating  cheering: closed happy eyes, open mouth, arm raised, cheer lines and stars
+//   mood-worried      alarmed: raised brows, round mouth, hand to the chin, red "!!" and orange lines
+//   mood-sleeping     closed eyes, flat mouth, z z
 export const CHARACTER_SVG = `<svg viewBox="0 0 120 120" aria-hidden="true" focusable="false">
   <g class="c-body">
     <g class="c-cheer" fill="none" stroke="#f2b544" stroke-width="3.2" stroke-linecap="round"><path d="M101 38l3-8M106 46l7-5M108 56l8 1"/></g>
+    <g class="c-alarm"><g fill="none" stroke="#e8562f" stroke-width="3.4" stroke-linecap="round"><path d="M100 16l2-10M108 18l3-9"/></g><circle cx="99" cy="22" r="1.9" fill="#e8562f"/><circle cx="106.5" cy="24" r="1.9" fill="#e8562f"/>
+      <g fill="none" stroke="#f08a3c" stroke-width="3" stroke-linecap="round"><path d="M102 40l4-6M105 48l7-3M106 56l7 1"/></g></g>
     <path d="M44 86q-10 6-12 16q6-1 14-8" fill="#b5713a"/>
     <g class="c-arm c-arm-l"><path d="M46 70q-9 4-16 12" stroke="#ebe5e2" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="29" cy="83" r="5" fill="#6f8290"/></g>
     <g class="c-arm c-arm-r"><path d="M74 68q12-8 20-22" stroke="#ebe5e2" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="95" cy="45" r="5.2" fill="#6f8290"/></g>
@@ -24,12 +28,12 @@ export const CHARACTER_SVG = `<svg viewBox="0 0 120 120" aria-hidden="true" focu
     <path d="M48 28q-8 8-7 20q2 6 8 6q4-10 3-26z" fill="#8c4f2a"/>
     <path d="M47 30q6-12 20-12q6 0 8 4l-6 1l4 3l-5 1q6 6 6 16q0 12-11 13q-12 1-16-10q-3-9 0-16z" fill="#b5713a"/>
     <ellipse cx="75" cy="44" rx="5.5" ry="4.2" fill="#6b3a22"/>
-    <g class="c-eyes"><circle cx="58" cy="37" r="2.4" fill="#2b1a10"/><circle cx="68" cy="37" r="2.4" fill="#2b1a10"/></g>
+    <g class="c-eyes"><ellipse cx="58" cy="37.5" rx="2.1" ry="3" fill="#2b1a10"/><ellipse cx="68" cy="37" rx="2.1" ry="3" fill="#2b1a10"/></g>
     <g class="c-eyes-closed"><path d="M55 38q3-4 6 0M65 38q3-4 6 0" stroke="#2b1a10" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>
-    <g class="c-brows"><path d="M54 31l7 2M72 31l-7 2" stroke="#2b1a10" stroke-width="2" stroke-linecap="round"/></g>
-    <path class="c-smile" d="M60 46q4 4 8 0" stroke="#2b1a10" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <g class="c-brows"><path d="M54 31q3-3 7-1M64 30q4-2 8 0" stroke="#2b1a10" stroke-width="2" fill="none" stroke-linecap="round"/></g>
     <path class="c-flat" d="M60 47h8" stroke="#2b1a10" stroke-width="2" stroke-linecap="round"/>
     <path class="c-open" d="M60 45q5 1 10 -1q0 7-5 8q-5-1-5-7z" fill="#5a2f1e"/>
+    <g class="c-oh"><ellipse cx="64" cy="48" rx="4.2" ry="4.8" fill="#4a2418"/><ellipse cx="64" cy="50" rx="2.6" ry="2" fill="#e98c8c"/></g>
   </g>
   <g class="c-zzz" fill="#c3c7ce" font-family="Geist, system-ui, sans-serif" font-weight="700">
     <text x="92" y="22" font-size="12">z</text><text x="102" y="12" font-size="9">z</text>
