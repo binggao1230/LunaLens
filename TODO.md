@@ -247,9 +247,19 @@ this document.
 
 Build a separate **South Pole** prototype tab (working title) that moves from the
 Sun–Earth–Moon overview to a detailed south-pole surface map. The current Mission and
-Atlas tabs stay usable while the prototype is evaluated. Keep the existing Apollo
-comparison and CSV in legacy Mission; the prototype opens on the lunar south pole
-and leaves historical comparisons out. Compare, Date slip and Plan stay retired.
+Atlas tabs stay usable while the prototype is evaluated. The new tab is for south-pole
+site selection. The 3D view explains where the Moon, Earth and Sun are; the 2D map is
+where users inspect terrain, select points and review candidates. Compare, Date slip
+and Plan stay retired.
+
+**Which points belong in the new tab.** Draw the south-pole study boundary on the
+map. Use coordinates and the active terrain layer's documented footprint to decide
+what to show. Presets outside the study area do not appear in the default markers,
+site selector or recommendations. Within the study area, a named point may be a
+reference, but it qualifies as a candidate only if its terrain and visibility data
+cover the selected scenario. Mark missing data explicitly. Newly added presets and
+custom points follow the same rule; mission names are not a filter. Leave the legacy
+site catalogue and CSV intact.
 
 | Slice | Depends on | First deliverable |
 |---|---|---|
@@ -261,8 +271,9 @@ and leaves historical comparisons out. Compare, Date slip and Plan stay retired.
 
 - [ ] **M1 — Open the detailed map from the Moon.** Add the prototype as one new tab with
   two views: the existing Mission 3D scene and a full-width 2D south-pole map. Reuse the
-  [current globe hit test](site/js/views/polar3d/index.js#L278); retain marker selection,
-  and use a deliberate Moon tap to open the map. Provide a keyboard-accessible “Open
+  [current globe hit test](site/js/views/polar3d/index.js#L278). Show the study area and
+  current selection in 3D; leave the default site list and candidate markers to the 2D
+  map. Use a deliberate Moon tap to open the map. Provide a keyboard-accessible “Open
   south-pole map” button and a 2D fallback if WebGL fails. Pass the selected site or map
   pin, UTC touchdown and preview time separately. If the clicked point is outside polar
   coverage, center the map on the south pole and explain why. Returning from the map
@@ -274,7 +285,11 @@ and leaves historical comparisons out. Compare, Date slip and Plan stay retired.
   **Accept:** on desktop and at 390 px, open the map by clicking/tapping the Moon, select
   a polar point and return to the scene. Preserve the selected point and exact UTC
   context with the native map. Test the same with Atlas if enabled. Dragging, pinching
-  and tapping a site marker do not accidentally switch views. The old tabs still work.
+  and tapping a site marker do not accidentally switch views. Test three points: one
+  outside the study area is absent from the default map and list; a covered polar point
+  can be selected; a polar point without usable data is marked unknown and never enters
+  the shortlist. Adding a new nonpolar preset must not change the result. The old tabs
+  still work.
 - [ ] **M2 — Make globe dragging predictable.** Reproduce the current discomfort at an
   overview zoom and near the pole. Compare a damped, north-aligned orbit with a
   grab-the-globe control in which the point follows the pointer. Choose by which is
