@@ -486,5 +486,12 @@ export function createPlan(env) {
   return {
     render: () => { fit(); updateSun(); ensure(LAYERS.find((l) => l.id === state.layer)).then(() => { draw(); renderPanels(); }); draw(); },
     setDate: (ms) => { updateSun(); renderPanels(); draw(); },
+    setLayer: (id) => {
+      if (!LAYERS.some((l) => l.id === id)) return;
+      state.layer = id;
+      root.querySelectorAll('[data-layer]').forEach((o) => o.setAttribute('aria-pressed', String(o.dataset.layer === id)));
+      const layer = LAYERS.find((l) => l.id === id);
+      ensure(layer).then(() => { draw(); renderPanels(); });
+    },
   };
 }

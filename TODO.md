@@ -39,12 +39,15 @@ alternative dates at the same site". The second half is what the product cannot 
 
 - Preview a tracking-camera Earth-to-Moon flight using the selected lander's GLB, with skip, reduced motion and local textures.
 - Remove the extra model-reference captions from the start-page cards at the owner's request; retain asset provenance in `site/assets/models/README.md`.
-- The Mission page (start page, probe, send probe) and Explore / Compare / Date slip look like two products.
-  Check whether they share the landing date and the picked site; this has not been verified. If they do not, make
-  them share one state.
+- **Shared state: verified.** Mission, Explore, Compare, Date slip and Plan all read one `state` for the landing
+  date and the picked site; changing the date in Plan shows up in Explore's date field, and the site follows the
+  same way. The framed Atlas page is the exception: it receives the scenario through its URL hash and sends
+  nothing back.
 - On the Mission page, show the countdown to sunset and to Earthset for the picked site, and one action that opens
   it in Explore.
-- Open a pull request for the two commits left on `chenlin/mission-start` (lander model, GLTF loader), or drop them.
+- **`chenlin/mission-start`: superseded, do not merge.** Its four commits (carousel, Artemis model, GLTF and DRACO
+  loaders) arrived on `main` through #29 and #32; its tree is 1,999 lines behind and adding anything back would
+  revert work. No pull request; the owner can delete the branch.
 - Accept: change the date on Mission, switch to Explore, and the date and the site are the same.
 
 ## D. 3D: stop the loss (two hours at most)

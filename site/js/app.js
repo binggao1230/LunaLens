@@ -583,6 +583,9 @@ function bind() {
     setCustom(la, lon360(lo));
   };
   document.querySelectorAll('[data-nav] button').forEach((b) => { b.onclick = () => showView(b.dataset.view); });
+  document.querySelectorAll('[data-overlay]').forEach((b) => {
+    b.onclick = () => { showView('plan'); plan?.setLayer(b.dataset.overlay); };
+  });
   document.addEventListener('click', (e) => {
     const g = e.target.closest('[data-go]'); if (g) return showView(g.dataset.go);
     const f = e.target.closest('button[data-fake]'); if (f) toast(t('Not built yet. ') + t(f.dataset.fake), 4500);
