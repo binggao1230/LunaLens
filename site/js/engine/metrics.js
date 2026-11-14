@@ -25,11 +25,73 @@ export function windowMetrics(series, i0, i1) {
     sunPct: (100 * sun) / count,
     earthPct: (100 * earth) / count,
     bothPct: (100 * both) / count,
+    longestSunH: longestRun(series.sunVis, a, b, 1),
     longestDarkH: longestRun(series.sunVis, a, b, 0),
     longestNoCommH: longestRun(series.earthVis, a, b, 0),
     meanSunElLit: sun ? sunElLit / sun : null,
     maxSunEl,
     maxEarthEl,
+  };
+}
+
+export const MCDA_PRESETS = {
+  balanced: { both: 0.40, run: 0.25, dark: 0.20, terrain: 0.15 },
+  power: { both: 0.25, run: 0.40, dark: 0.25, terrain: 0.10 },
+  comms: { both: 0.55, run: 0.15, dark: 0.15, terrain: 0.15 },
+};
+
+/**
+ * Multi-Criteria Decision Analysis (MCDA) evaluation over [i0, i1) for a Site.
+ * Combines simultaneous power+link share, longest continuous sunlit run,
+ * eclipse survival (1 - longest dark share), and terrain horizon clearance.
+ */
+export function evaluateSiteMcda(site, i0, i1, { marginDeg = 2, preset = 'balanced', minSunDays = 6.5, needLinkAtTouchdown = true } = {}) {
+  const series = site.series;
+  const a = Math.max(0, Math.floor(i0)), b = Math.min(series.n, Math.ceil(i1));
+  const count = Math.max(1, b - a);
+  let lit = 0, link = 0, both = 0;
+  let sunRun = 0, longestSunH = 0, darkRun = 0, longestDarkH = 0, noCommRun = 0, longestNoCommH = 0;
+  let touchdownSunH = 0, stillTouchdownSun = true;
+  for (let i = a; i < b; i++) {
+    const s = series.sunVis[i] === 1;
+    const e = series.earthClr[i] > marginDeg;
+    if (s) {
+      lit++; sunRun++; if (sunRun > longestSunH) longestSunH = sunRun;
+      darkRun = 0;
+      if (stillTouchdownSun) touchdownSunH++;
+    } else {
+      sunRun = 0; darkRun++; if (darkRun > longestDarkH) longestDarkH = darkRun;
+      stillTouchdownSun = false;
+    }
+    if (e) { link++; noCommRun = 0; } else { noCommRun++; if (noCommRun > longestNoCommH) longestNoCommH = noCommRun; }
+    if (s && e) both++;
+  }
+  const touchdownLink = series.earthClr[a] > marginDeg;
+  const viable = touchdownSunH >= minSunDays * 24 && (!needLinkAtTouchdown || touchdownLink);
+  const cBoth = both / count;
+  const cRun = longestSunH / count;
+  const cDark = 1 - longestDarkH / count;
+  const maxHz = site.hasTerrain ? Math.max(0, site.maxHorizon()) : 0;
+  const cTerr = site.hasTerrain ? Math.max(0, Math.min(1, 1 - maxHz / 25)) : 0.5;
+  const w = MCDA_PRESETS[preset] ?? MCDA_PRESETS.balanced;
+  const wSum = w.both + w.run + w.dark + w.terrain;
+  const score = Math.round(100 * (w.both * cBoth + w.run * cRun + w.dark * cDark + w.terrain * cTerr) / wSum);
+  return {
+    hours: count,
+    lit, link, both,
+    litPct: (100 * lit) / count,
+    linkPct: (100 * link) / count,
+    bothPct: (100 * both) / count,
+    longestSunH,
+    longestDarkH,
+    longestNoCommH,
+    touchdownSunH,
+    touchdownLink,
+    viable,
+    hasTerrain: site.hasTerrain,
+    maxHorizonDeg: maxHz,
+    score,
+    components: { cBoth, cRun, cDark, cTerr },
   };
 }
 

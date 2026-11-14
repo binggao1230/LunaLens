@@ -23,6 +23,19 @@ export class Dem {
     const i = r0 * n + c0;
     return s * (d[i] * (1 - fr) * (1 - fc) + d[i + 1] * (1 - fr) * fc + d[i + n] * fr * (1 - fc) + d[i + n + 1] * fr * fc);
   }
+
+  /** Regional terrain slope in degrees at (latRad, lonRad) over the DEM grid spacing (central finite differences). */
+  slopeDeg(latRad, lonRad) {
+    const rho = 2 * R * Math.tan(Math.PI / 4 + latRad / 2);
+    const col = this.c + (rho * Math.sin(lonRad)) / this.res;
+    const row = this.c - (rho * Math.cos(lonRad)) / this.res;
+    const r = Math.round(row), c = Math.round(col), n = this.n;
+    if (!(r >= 1 && c >= 1 && r <= n - 2 && c <= n - 2)) return NaN;
+    const d = this.dn, s = this.scale, i = r * n + c;
+    const dzdx = (s * (d[i + 1] - d[i - 1])) / (2 * this.res);
+    const dzdy = (s * (d[i - n] - d[i + n])) / (2 * this.res);
+    return Math.atan(Math.hypot(dzdx, dzdy)) / DEG;
+  }
 }
 
 export async function loadDem(baseUrl = 'data/dem240', onProgress = () => {}) {
@@ -84,5 +97,5 @@ export function computeHorizon(dem, latDeg, lonDeg, { mastM = 2, azStepDeg = 0.5
     }
     out[a] = Math.asin(Math.max(-1, Math.min(1, best))) / DEG;
   }
-  return { horizon: out, groundM: ground };
+  return { horizon: out, groundM: ground, slopeDeg: dem.slopeDeg(lat, lon) };
 }
