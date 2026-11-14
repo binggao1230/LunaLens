@@ -320,12 +320,38 @@ function renderSettings() {
 }
 
 function toast(msg, ms) { const el = $('toast'); el.textContent = msg; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => { el.style.display = 'none'; }, ms || 1800); }
+// The Atlas page is its own application, framed inside this one. It reads a share hash holding the
+// pinned site and the clock, so the frame opens on whatever this page is showing.
+function atlasUrl() {
+  const s = SITES[state.site];
+  if (!s) return 'atlas/index.html';
+  const lon = s.lon > 180 ? s.lon - 360 : s.lon;
+  const q = new URLSearchParams();
+  q.set('s', `${s.lat.toFixed(4)},${lon.toFixed(4)},${s.short || s.id || 'site'}`);
+  q.set('t', `${new Date(state.landing).toISOString().slice(0, 16)}Z`);
+  return `atlas/index.html#${q.toString()}`;
+}
+
+function showAtlas() {
+  const host = $('v-atlas');
+  let frame = host.querySelector('iframe');
+  if (!frame) {
+    frame = document.createElement('iframe');
+    frame.title = 'Atlas';
+    frame.src = atlasUrl();
+    host.append(frame);
+  } else {
+    frame.src = atlasUrl();
+  }
+}
+
 function showView(v) {
-  if (!['start', 'mission', 'explore', 'compare', 'slip', 'data', 'build'].includes(v)) v = 'start';
+  if (!['start', 'mission', 'explore', 'compare', 'slip', 'data', 'build', 'atlas'].includes(v)) v = 'start';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}#/${v}`);
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
   window.scrollTo(0, 0);
+  if (v === 'atlas') showAtlas();
   renderAll();
 }
 function jump(test, what) {
@@ -463,18 +489,6 @@ function bind() {
     setCustom(la, lon360(lo));
   };
   document.querySelectorAll('[data-nav] button').forEach((b) => { b.onclick = () => showView(b.dataset.view); });
-  // The Atlas page is its own application; it reads a share hash holding the pinned site and the
-  // clock. Hand it what this page currently shows so the two do not open on different days.
-  const atlasUrl = () => {
-    const s = SITES[state.site];
-    if (!s) return 'atlas/index.html';
-    const lon = s.lon > 180 ? s.lon - 360 : s.lon;
-    const q = new URLSearchParams();
-    q.set('s', `${s.lat.toFixed(4)},${lon.toFixed(4)},${s.short || s.id || 'site'}`);
-    q.set('t', `${new Date(state.landing).toISOString().slice(0, 16)}Z`);
-    return `atlas/index.html#${q.toString()}`;
-  };
-  document.querySelectorAll('[data-link]').forEach((b) => { b.onclick = () => { location.href = b.dataset.link === 'atlas/index.html' ? atlasUrl() : b.dataset.link; }; });
   document.addEventListener('click', (e) => {
     const g = e.target.closest('[data-go]'); if (g) return showView(g.dataset.go);
     const f = e.target.closest('button[data-fake]'); if (f) toast(t('Not built yet. ') + t(f.dataset.fake), 4500);

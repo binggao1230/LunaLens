@@ -13,7 +13,9 @@ buildless site, its production build is vendored and served as a page of its own
 - Output copied to `site/atlas/` (151 files, 94 MB, of which 90 MB is its precomputed data:
   ephemeris table, south-polar elevation and slope tiles, the three PGDA illumination layers,
   per-site terrain patches, mission images and lander models).
-- Nav: `Atlas` in both navs opens `atlas/index.html`; a floating `← LunaLens` link returns.
+- Nav: `Atlas` is a view of this site (`#/atlas`) that frames `atlas/index.html` under our own header
+  and tab bar. The frame's `src` carries a share hash built from the current scenario
+  (`s=lat,lon,label&t=ISO`), so it opens on the site and date the rest of the page is showing.
 - `.vendor/lunar-navigator/` holds the clone used for the build and is git-ignored.
 - `site/atlas/data/` is re-included through `!site/atlas/data/` in `.gitignore`, because the global
   `data/` rule would otherwise drop the app's data.
@@ -43,8 +45,9 @@ north), which is why our own site can cite the same sources without a frame conv
    are inside the plan's limits (25 MiB per file, 20,000 files) but the upload time and the
    repository size (`.git` is now about 196 MB) are real costs. Options: keep it, or move the data
    to a release asset fetched at deploy time.
-2. **Two products, one nav.** The vendored app is self-contained; it does not read our landing date
-   or chosen site. Either accept that it is its own page or pass state through the URL later.
+2. **Two products, one nav.** The handoff is one-way: our date and site travel into the frame through
+   the URL hash, nothing travels back. Two-way sync needs `postMessage` both ways (the app already
+   serialises its own state, so the frame can be asked to send it).
 3. **Our own pages.** Mission, Explore, Compare and Date slip stay as they are. The Atlas page is
    additive; nothing in it replaces them yet.
 4. **Provenance.** The app carries its own credits. Our Data page should link to the Atlas sources
