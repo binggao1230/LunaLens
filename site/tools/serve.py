@@ -27,7 +27,8 @@ class Server(http.server.ThreadingHTTPServer):
 
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
-    with Server(("127.0.0.1", port), functools.partial(Handler, directory=str(SITE))) as server:
-        print(f"LunaLens at http://127.0.0.1:{port}/  (Ctrl+C to stop)")
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8768
+    # 0.0.0.0, not 127.0.0.1: the team opens the site from other machines on the LAN and over Tailscale.
+    with Server(("0.0.0.0", port), functools.partial(Handler, directory=str(SITE))) as server:
+        print(f"LunaLens at http://0.0.0.0:{port}/  (LAN: this machine's IP)  (Ctrl+C to stop)")
         server.serve_forever()
