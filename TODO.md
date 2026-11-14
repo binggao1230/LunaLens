@@ -37,6 +37,7 @@ alternative dates at the same site". The second half is what the product cannot 
 
 ## C. One product, not two
 
+- Remove the extra model-reference captions from the start-page cards at the owner's request; retain asset provenance in `site/assets/models/README.md`.
 - The Mission page (start page, probe, send probe) and Explore / Compare / Date slip look like two products.
   Check whether they share the landing date and the picked site; this has not been verified. If they do not, make
   them share one state.
