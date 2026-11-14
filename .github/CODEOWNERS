@@ -1,4 +1,4 @@
-# Everyone reviews everything, so opening a pull request asks all six for a review and
-# GitHub emails each of them (review requests are emailed by default). The lead merges.
-# See CONTRIBUTING.md → Who merges.
+# Everyone reviews everything: opening a pull request asks all six for a review, and GitHub
+# emails review requests by default. A pull request is how the team hears about a change;
+# anyone can merge once the checks are green (CONTRIBUTING.md → Pull requests).
 * @binggao1230 @Zeylal @Dev-code3D @eyaam @wangchenlin0501 @MaevaTonyaA
