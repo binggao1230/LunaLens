@@ -29,7 +29,9 @@ the team sees your progress. How to work: `README.md` in this folder.
 ## H24–36
 
 - [ ] `validate.py`: our angles vs. JPL Horizons, our sunlit share vs. the PGDA illumination map → `/api/validation`
-- [ ] Deploy the server where the demo will run
+- [ ] Make the public build work with no server: frontend reads the precomputed JSON for curated sites (`doc/PLAN.md` §2.5)
+- [ ] `/api/health` endpoint, so the frontend can tell whether the live backend is reachable
+- [ ] Run the live backend on Bing's Mac under PM2 (`luna-lens-api`, bound to `0.0.0.0`); Bing exposes it through a Cloudflare Tunnel
 
 ## H36–48
 

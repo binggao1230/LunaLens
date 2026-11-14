@@ -36,7 +36,7 @@ the team sees your progress. How to work: `README.md` in this folder.
 ## H36–48
 
 - [ ] Fixes only
-- [ ] Production build served for the demo
+- [ ] Production build that runs as static files only; data client falls back to precomputed JSON when `/api/health` does not answer (`doc/PLAN.md` §2.5)
 
 ## Blocked / questions
 
