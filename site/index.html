@@ -54,7 +54,7 @@ svg text{fill:var(--text2);font-size:11px;font-family:inherit}
 #tip{position:fixed;z-index:10;pointer-events:none;display:none;background:var(--surface);
   color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 9px;
   font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.18);max-width:240px;font-variant-numeric:tabular-nums}
-.row{display:grid;grid-template-columns:230px 1fr 250px;gap:6px 14px;
+.row{display:grid;grid-template-columns:230px 1fr 310px;gap:6px 14px;
   align-items:center;padding:10px;border:1px solid transparent;border-radius:10px;cursor:pointer;
   width:100%;text-align:left;background:none;min-height:0}
 .row + .row{border-top-color:var(--border);border-radius:0}
@@ -318,8 +318,17 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   <!-- ================= View 2: Compare ================= -->
   <section class="view" id="v-compare">
     <section class="card">
-      <h2>Compare scenarios</h2>
-      <p class="sub">Shared time axis. Upper strip: sunlight. Lower strip: direct-to-Earth link. Each row is one scenario — a site and a landing date. The first row is the baseline; the line above compares every other row with it.</p>
+      <div class="cardhead">
+        <div>
+          <h2>Compare scenarios</h2>
+          <p class="sub" style="margin:0">Shared time axis. Upper strip: sunlight. Lower strip: direct-to-Earth link. Each row is one scenario — a site and a landing date. Rows come ordered by terrain coverage, then by the multi-criteria score for that date.</p>
+        </div>
+        <div class="seg" id="mcda-preset" role="group" aria-label="MCDA weighting preset">
+          <button type="button" data-preset="balanced" class="on">Balanced</button>
+          <button type="button" data-preset="power">Power</button>
+          <button type="button" data-preset="comms">Comms</button>
+        </div>
+      </div>
       <div id="compare"></div>
       <div class="actions" id="compare-actions">
         <button data-action="add">+ Add scenario</button>

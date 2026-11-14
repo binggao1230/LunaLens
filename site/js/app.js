@@ -5,9 +5,12 @@ import { t, getLanguage, setLanguage, initTranslations, applyTranslations } from
 import './team-messages.js';
 import { escapeHtml, fmtLatLon, utcMidnight } from './format.js';
 import { createMission } from './views/mission.js';
+import { evaluateSiteMcda } from './engine/metrics.js';
 import { createPlan } from './views/plan.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, DAY = 864e5, HOUR = 36e5;
+// A site has a terrain model when its horizon came from LOLA rather than from a smooth sphere.
+const isModelled = (s) => Boolean(s.terrain && s.terrain !== 'none');
 const SLIP_DAYS = 28, LOOKAHEAD_H = 60 * 24, SIM_H = SLIP_DAYS * 24 + LOOKAHEAD_H;
 const SUN_R = 0.265;
 const STAYS = { lunar1: 709, days14: 336, lunar2: 1417 };
@@ -31,7 +34,7 @@ const SITE_SOURCES = {
 const $ = (id) => document.getElementById(id);
 const state = {
   site: 0, landing: 0, hour: 0, timer: null, stayKey: 'lunar1', margin: 2,
-  slipMinDays: 5, slipNeedLink: true, slipMetric: 'sun', version: 0,
+  slipMinDays: 6.5, slipNeedLink: true, slipMetric: 'sun', mcdaPreset: 'balanced', version: 0,
   // A scenario is one site on one landing date. Compare rows and the header tray both read this
   // list, so "the same site nine days later" is a row like any other.
   scenarios: [], scenario: 0,
@@ -93,7 +96,14 @@ function simulate(site, landingMs = state.landing) {
     if (r.frac[i] > 0) { lit++; run++; best = Math.max(best, run); } else run = 0;
     comm += r.comm[i];
   }
+  const mcda = evaluateSiteMcda(site, base, base + hours, {
+    marginDeg: state.margin,
+    preset: state.mcdaPreset,
+    minSunDays: state.slipMinDays,
+    needLinkAtTouchdown: state.slipNeedLink,
+  });
   r.litPct = 100 * lit / hours; r.commPct = 100 * comm / hours; r.longest = best;
+  r.longestDark = mcda.longestDarkH; r.score = mcda.score; r.viable = mcda.viable;
   return r;
 }
 
@@ -194,14 +204,28 @@ function renderTimeline() {
 function renderCompare() {
   const hours = stayH();
   const verdict = compareVerdict(hours);
-  $('compare').innerHTML = (verdict ? `<p class="verdict">${verdict}</p>` : '') + state.scenarios.map((x, k) => {
+  // Rank scenarios, not sites: each row's score comes from its own landing date.
+  const mcdaOf = (s, landing) => {
+    const start = Math.round(eph.indexOf(landing));
+    return evaluateSiteMcda(s, start, start + hours, { marginDeg: state.margin, preset: state.mcdaPreset, minSunDays: 6.5 });
+  };
+  const ranked = state.scenarios.map((x, k) => {
     const s = SITES[x.site];
     const r = simulate(s, x.landing);
+    const m = mcdaOf(s, x.landing);
+    r.score = m.score;
+    return { x, k, s, r, m };
+  }).sort((a, b) => (Number(isModelled(b.s)) - Number(isModelled(a.s))) || (Number(b.m.viable) - Number(a.m.viable)) || (b.m.score - a.m.score));
+  let viableRank = 0;
+  $('compare').innerHTML = (verdict ? `<p class="verdict">${verdict}</p>` : '') + ranked.map(({ x, k, s, r, m }) => {
+    if (isModelled(s) && m.viable) viableRank++;
+    const rec = isModelled(s) && m.viable && viableRank <= 3 ? ` <span class="pill">${escapeHtml(t('Recommended'))}</span>` : '';
+    const terrNote = isModelled(s) ? escapeHtml(s.terrain) : escapeHtml(t('Reference (smooth sphere)'));
     return `<button class="row${k === state.scenario ? ' sel' : ''}" data-scenario="${k}">
-      <div><div class="nm">${escapeHtml(s.label)} · ${scenarioDate(x)}</div><div class="co">${escapeHtml(s.tagText)} · ${coordText(s)}</div></div>
+      <div><div class="nm">${escapeHtml(s.label)} · ${scenarioDate(x)}${rec}</div><div class="co">${escapeHtml(s.tagText)} · ${coordText(s)} · ${terrNote}</div></div>
       <svg viewBox="0 0 ${hours} 30" preserveAspectRatio="none" aria-hidden="true">${strip(r, 0, 1, 0, 13)}${stripComm(r, 0, 1, 17, 13)}
         <rect x="${state.hour - 1}" y="0" width="2.5" height="30" fill="var(--text)"/></svg>
-      <div class="nums"><div><b>${r.litPct.toFixed(0)}%</b>${t('sunlit')}</div><div><b>${r.commPct.toFixed(0)}%</b>${t('Earth link')}</div><div><b>${fmtDur(r.longest)}</b>${t('longest sun')}</div></div>
+      <div class="nums"><div><b>${r.score}/100</b>${t('MCDA')}</div><div><b>${r.litPct.toFixed(0)}%</b>${t('sunlit')}</div><div><b>${r.commPct.toFixed(0)}%</b>${t('Earth link')}</div><div><b>${fmtDur(r.longest)}</b>${t('longest sun')}</div></div>
     </button>`;
   }).join('');
 }
@@ -341,7 +365,7 @@ function renderSettings() {
   $('mast').innerHTML = option('2', t('2 m (fixed)'), true);
   $('mast').title = t('Skylines are computed for a 2 m mast.');
   $('margin').innerHTML = [2, 5].map((v) => option(v, `${v}°`, v === state.margin)).join('');
-  $('slipMin').innerHTML = [5, 10, 14].map((v) => option(v, t('{n} days', { n: v }), v === state.slipMinDays)).join('');
+  $('slipMin').innerHTML = [[5, '5 days'], [6.5, '6.5 days (Artemis III)'], [10, '10 days'], [14, '14 days']].map(([v, l]) => option(v, t(l), v === state.slipMinDays)).join('');
   $('slipLink').innerHTML = option('yes', t('Yes'), state.slipNeedLink) + option('no', t('No'), !state.slipNeedLink);
   $('play').textContent = `${state.timer ? '❚❚' : '▶'} ${t(state.timer ? 'Pause' : 'Play')}`;
   $('jsun').textContent = `${t('Sun')} ⏭`;
@@ -465,6 +489,7 @@ async function setCustom(lat, lon) {
       const result = computeHorizon(dem, lat, site.lon, { minRangeM: 480 });
       if (result && SITES[k] === site) {
         site.setHorizon(result.horizon, result.groundM, 'LOLA 240 m, computed in your browser', 480);
+        site.slopeDeg = result.slopeDeg;
         sims[k] = simulate(site); state.version++; renderAll();
       }
       $('toast').style.display = 'none';
@@ -645,7 +670,7 @@ function bind() {
   $('date').onchange = (e) => { const ms = Date.parse(`${e.target.value}T00:00:00Z`); if (!Number.isNaN(ms)) setLanding(ms); };
   $('stay').onchange = (e) => { state.stayKey = e.target.value; state.hour = 0; recompute(); };
   $('margin').onchange = (e) => { state.margin = Number(e.target.value); recompute(); };
-  $('slipApply').onclick = () => { state.slipMinDays = Number($('slipMin').value); state.slipNeedLink = $('slipLink').value === 'yes'; renderSlip(); };
+  $('slipApply').onclick = () => { state.slipMinDays = Number($('slipMin').value); state.slipNeedLink = $('slipLink').value === 'yes'; recompute(); };
   $('slipMetricBtn').onclick = () => { state.slipMetric = state.slipMetric === 'sun' ? 'link' : 'sun'; renderSlip(); };
   $('play').onclick = () => {
     if (state.timer) { clearInterval(state.timer); state.timer = null; renderSettings(); return; }
@@ -661,6 +686,12 @@ function bind() {
     if (action === 'remove') dropScenario(state.scenario);
     else addScenario(action === 'add' ? 'current' : action);
   };
+  $('mcda-preset')?.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-preset]'); if (!b) return;
+    state.mcdaPreset = b.dataset.preset;
+    $('mcda-preset').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+    recompute();
+  });
   $('lang').onchange = (e) => {
     setLanguage(e.target.value); applyTranslations(); hideTip(); renderAll(); renderSources();
     if (scene3d) render3d();

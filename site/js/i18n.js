@@ -228,6 +228,17 @@ const messages = {
   'Continuous sunlight': ['Ensoleillement continu', '连续日照'],
   'yes': ['oui', '是'],
   'no': ['non', '否'],
+  '5 days': ['5 jours', '5 天'],
+  '6.5 days (Artemis III)': ['6,5 jours (Artemis III)', '6.5 天（Artemis III）'],
+  '10 days': ['10 jours', '10 天'],
+  '14 days': ['14 jours', '14 天'],
+  'Balanced': ['Équilibré', '均衡权重'],
+  'Power priority': ['Priorité énergie', '日照优先'],
+  'Comms priority': ['Priorité liaison', '通信优先'],
+  'MCDA': ['MCDA', '综合分'],
+  'Reference (smooth sphere)': ['Référence (sphère lisse)', '参考点（光滑球面）'],
+  'slope {deg}° (240 m DEM)': ['pente {deg}° (MNT 240 m)', '坡度 {deg}°（240 m DEM）'],
+  'Shared time axis. Upper strip: sunlight. Lower strip: direct-to-Earth link. Ranked by real terrain coverage first, then Multi-Criteria Decision Analysis (MCDA) score.': ['Axe temporel commun. Bande du haut : ensoleillement. Bande du bas : liaison directe vers la Terre. Classé par couverture réelle du relief, puis par score multicritère (MCDA).', '共享时间轴。上条：日照；下条：地球直连。优先排列具有真实地形的数据点，再按多准则决策（MCDA）评分排序。'],
 };
 
 let language = 'en';

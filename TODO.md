@@ -64,6 +64,10 @@ alternative dates at the same site". The second half is what the product cannot 
 - Fix the ranking: sites with no terrain (Chandrayaan-3 and the Apollo sites) rank above polar sites computed on
   real terrain, and one of them carries the "Recommended" badge. Leave them out of the recommendation, or group
   them apart and say why.
+- Implement multi-criteria site evaluation (MCDA funnel): separate terrain-backed candidate sites from smooth-sphere
+  reference sites, add the 6.5-day Artemis Human Lunar Return continuous-sunlight threshold, compute regional slope
+  on the 240 m LOLA DEM, and score sites across simultaneous Sun+Earth window, longest continuous sunlight, eclipse
+  survival (longest darkness), and horizon clearance (`archive/team/maeva/site-selection-workflow.md`).
 - Put the scripts that produced `ephemeris.*`, `dem240.*`, `dem480.*` and `polar-hillshade.*` into `site/tools/`.
   If they cannot be recovered, say so in `PROVENANCE.json`.
 - Compare the sunlit share at a few polar sites with the PGDA 69 average-illumination raster and show the result on
