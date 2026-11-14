@@ -20,6 +20,8 @@ const MESSAGES = {
   'Drag to rotate · scroll to zoom': ['Glissez pour tourner · défilez pour zoomer', '拖动旋转 · 滚轮缩放'],
   'Loading model…': ['Chargement du modèle…', '正在加载模型…'],
   'Model unavailable. Select another probe or continue.': ['Modèle indisponible. Choisissez une autre sonde ou continuez.', '模型不可用。可选择其他探测器或继续。'],
+  'Representative model · not mission-specific': ['Modèle représentatif · non spécifique à la mission', '代表性模型 · 非该任务精确模型'],
+  'Model: Chandrayaan-2 reference · not the Chandrayaan-3 lander': ['Modèle : référence Chandrayaan-2 · pas l’atterrisseur Chandrayaan-3', '模型：月船二号参考 · 非月船三号着陆器'],
   'Artemis lander concept': ['Concept d’atterrisseur Artemis', 'Artemis 着陆器概念'],
   'Illustrative Artemis lander for crewed south-pole missions.': ['Atterrisseur Artemis illustratif pour les missions habitées au pôle Sud.', '阿尔忒弥斯载人南极任务的概念着陆器。'],
   'Apollo Lunar Module': ['Module lunaire Apollo', '阿波罗登月舱'],
@@ -138,6 +140,13 @@ const PROBES = [
   { id: 'vikram', name: 'Vikram', meta: 'India’s lander; Chandrayaan-3 made the first soft landing in 2023.', sites: ['ch3'] },
 ];
 
+// Two cards show a model that is not the mission's own lander. The note keeps the card honest;
+// see site/assets/models/README.md for the provenance of each file.
+const MODEL_NOTES = {
+  novac: 'Representative model · not mission-specific',
+  vikram: 'Model: Chandrayaan-2 reference · not the Chandrayaan-3 lander',
+};
+
 export function createMission(ctx) {
   const $ = (id) => document.getElementById(id);
   const startEl = $('v-start'), missionEl = $('v-mission'), flightEl = $('flight');
@@ -207,6 +216,7 @@ export function createMission(ctx) {
               <span class="probe-title">${escapeHtml(t(p.name))}</span><span class="probe-check" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m5 10 3 3 7-7"/></svg></span>
               <span class="probe-meta">${escapeHtml(t(p.meta))}</span>
             </button>
+            ${MODEL_NOTES[p.id] ? `<p class="model-caption">${escapeHtml(t(MODEL_NOTES[p.id]))}</p>` : ''}
           </section>`;
         }).join('')}
       </div>
