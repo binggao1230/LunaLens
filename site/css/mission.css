@@ -92,6 +92,7 @@ body[data-view=start] #v-start,body[data-view=mission] #v-mission{display:block}
 .srow>button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:none;background:none;color:var(--text);padding:10px 12px;min-height:52px;border-radius:0}
 .srow .dotc{width:11px;height:11px;border-radius:50%;flex:none}
 .srow .nm{font-weight:600;font-size:14px;display:block}
+.srow .badge{margin-left:8px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#0b0a14;background:var(--sun);border-radius:99px;padding:1px 7px;vertical-align:2px}
 .srow .sub2{font-size:12px;color:var(--muted);font-family:var(--mono);display:block}
 .srow .chev{margin-left:auto;color:var(--muted);transition:transform .2s ease}
 .srow.open .chev{transform:rotate(180deg)}

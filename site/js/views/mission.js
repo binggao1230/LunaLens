@@ -51,6 +51,8 @@ const MESSAGES = {
   'Sub-solar point': ['Point subsolaire', '日下点'],
   '{v} M km': ['{v} M km', '{v} 百万公里'],
   '{pct}% lit': ['{pct} % éclairée', '{pct}% 受照'],
+  'Recommended': ['Recommandé', '推荐'],
+  '{n} h lit and linked': ['{n} h éclairé et relié', '{n} 小时同时可用'],
   'Both': ['Les deux', '同时可见'],
   'min': ['min', '分钟'],
   'h': ['h', '小时'],
@@ -266,19 +268,35 @@ export function createMission(ctx) {
     ];
     return rows.map(([k, v]) => `<span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b>`).join('');
   }
+  // Hours in the stay when the site is both sunlit and linked: the one number that answers "which site".
+  function scoreOf(site) {
+    const start = Math.round(ctx.eph().indexOf(ctx.landing())), margin = ctx.margin();
+    let both = 0, lit = 0, link = 0;
+    for (let h = 0; h <= SPAN; h++) {
+      const j = start + h, sun = site.series.sunVis[j] === 1, earth = site.series.earthClr[j] > margin;
+      if (sun) lit += 1;
+      if (earth) link += 1;
+      if (sun && earth) both += 1;
+    }
+    return { both, lit, link, hours: SPAN + 1 };
+  }
   function renderList(force) {
     const f = lastFrame ?? frame();
-    const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), sites().length].join('|');
+    const key = [local.probe, local.picked, local.open, local.query, getLanguage(), ctx.margin(), ctx.landing(), sites().length].join('|');
     const listEl = $('m-list');
     if (force || key !== local.listKey) {
       local.listKey = key;
-      const rows = orderedSites().filter((site) => !local.query || `${site.label} ${site.short}`.toLowerCase().includes(local.query));
-      listEl.innerHTML = rows.length ? rows.map((site) => {
+      const rows = orderedSites()
+        .filter((site) => !local.query || `${site.label} ${site.short}`.toLowerCase().includes(local.query))
+        .map((site) => ({ site, score: scoreOf(site) }))
+        .sort((a, b) => b.score.both - a.score.both);
+      listEl.innerHTML = rows.length ? rows.map(({ site, score }, rank) => {
         const open = local.open === site.id;
         const terrain = !site.terrain || site.terrain === 'none' ? t('no terrain') : site.terrain;
+        const badge = rank < 3 && score.both > 0 ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
         return `<div class="srow${site.id === local.picked ? ' on' : ''}${open ? ' open' : ''}" data-row="${escapeHtml(site.id)}">
           <button data-id="${escapeHtml(site.id)}" aria-expanded="${open}"><span class="dotc"></span>
-            <span><span class="nm">${escapeHtml(site.label)}</span><span class="sub2">${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}</span></span><span class="chev">⌄</span></button>
+            <span><span class="nm">${escapeHtml(site.label)}${badge}</span><span class="sub2">${escapeHtml(t('{n} h lit and linked', { n: score.both }))} · ${escapeHtml(fmtLatLon(site.lat, site.lon))} · ${escapeHtml(terrain)}</span></span><span class="chev">⌄</span></button>
           <div class="det"></div></div>`;
       }).join('') : `<div class="empty">${escapeHtml(t('No site matches that search.'))}</div>`;
     }
