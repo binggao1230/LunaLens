@@ -42,11 +42,14 @@ every path, so GitHub asks each of them for a review the moment one opens, and r
 default (GitHub → Settings → Notifications). No setting can turn on someone else's email for them, so if you want
 certainty, click **Watch → Custom → Pull requests** on the repository page once.
 
-**Anyone can merge, the author included, once the checks are green.** The pull request is there so the change is
-seen, discussed in the thread and recorded, not to make anyone wait for permission. Two exceptions: a change to
-someone else's paths waits for that owner's word in the thread, and a change to `doc/` or to the API contract
-(`backend/lunalens/api/schemas.py`, `web/src/api/mock/`) also gets a message to both frontend developers, because
-everyone builds against them.
+**`main` needs one approving review; the repository owner is exempt.** GitHub does not let anyone approve their
+own pull request, so a pull request by a teammate cannot be merged by its author until someone else approves it —
+then whoever is around squash-merges it. `binggao1230` merges anything at any time, his own included, and does
+not wait for an approval. Approvals are dismissed when new commits are pushed.
+
+Two changes also wait for a particular person: someone else's paths need that owner's word in the thread, and
+`doc/` or the API contract (`backend/lunalens/api/schemas.py`, `web/src/api/mock/`) needs a message to both
+frontend developers, because everyone builds against them.
 
 If `main` moved while you worked: `git fetch && git rebase origin/main`, fix conflicts in your own files, and ask
 the other owner about conflicts in theirs. Never force-push `main`.
