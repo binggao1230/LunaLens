@@ -167,17 +167,16 @@ Both frontend developers build against those files and switch to the live API at
 ## 5. Seven work packages
 
 Six people are confirmed; the seventh seat is open. The assignment below is a **proposal by the planning agent,
-not yet confirmed by the people named**. Zeynep, Eya and Assem are placed from their own introductions. The split
-between the three ESILV members is a guess, because their individual skills are not recorded here; swap them
-freely, but keep one owner per package.
+not yet confirmed by the people named**. Zeynep, Eya and Assem are placed from their own introductions; the three ESILV members are placed from the
+lead's description of their strengths. Keep one owner per package.
 
 | # | Role | Person (proposed) | Basis | Owns | Features |
 |---|---|---|---|---|---|
-| 1 | **Lead / product** | Bing Gao | Team organiser | Scope, `sites.json`, demo script, submission, merging, unblocking | F1 data, all of §7 demo |
+| 1 | **Lead / product** | Bing Gao | Team lead | Scope, `sites.json`, demo script, submission, merging, unblocking | F1 data, all of §7 demo |
 | 2 | **Designer** | Zeynep Uzan | UX/UI designer, Figma, presentation materials | Visual system, high-fidelity screens, chart styling, copy, slides and video visuals | F9 wording, all screens |
 | 3 | **Science A — ephemeris** | Bing Gao until a seventh member joins | Smallest science package (about half a day) | `ephem/`, Horizons tests; then helps C | F3 (angles) |
-| 4 | **Science B — terrain** | Chenlin Wang *(guess)* | — | `terrain/`, data download, map images | F3 (horizon), F8 (map data) |
-| 5 | **Science C — windows + API** | Maeva Andriamaniraka *(guess)* | — | `windows/`, `api/`, precompute, validation | F4, F5, F7, F10 data |
+| 4 | **Science B — terrain** | Maeva Andriamaniraka | Numerical computation, mathematics, theory | `terrain/`, data download, map images | F3 (horizon), F8 (map data) |
+| 5 | **Science C — windows + API** | Chenlin Wang | Fast AI-assisted coding; this package is mostly integration | `windows/`, `api/`, precompute, validation | F4, F5, F7, F10 data |
 | 6 | **Frontend A — explore** | Eya Amrach | Computer engineering graduate, UX/UI + web development | `app/`, `state/`, `api/`, blocks 1, 2, 6, 7, 8, 9, 15 | F2, F3, F4, F5 |
 | 7 | **Frontend B — map + compare** | Assem Hssini | Web engineering student, builds interfaces | Blocks 3, 4, 5, 10–14 | F1, F6, F7, F8 |
 
@@ -189,6 +188,13 @@ Consequences of having six people:
   late at H12 the lead joins Science B and the demo script waits.
 - If a seventh member joins and can write Python, they take Science A from hour 0. If they are a third web
   developer instead, Frontend A hands them `state/` and `api/` and the lead keeps ephemeris.
+- Maeva owns the hardest mathematics (projection, curvature, horizon mask) and also **reviews the formulas in
+  Science C** (`visibility.py`: solar disk fraction, link rule). Chenlin writes that code; Maeva signs off the maths.
+- AI-assisted code in `windows/` and `api/` moves fast and can be wrong without failing. Every function in
+  `windows/` gets a hand-made test case with a known answer before it is wired into the API (see `AGENTS.md`,
+  correctness rules).
+- If the terrain package needs more coding hands than mathematics, Chenlin pairs with Maeva on `terrain/` after
+  the API stubs are serving (about H3), and the lead covers `windows/` once ephemeris is done.
 - Eya also has UX/UI experience and is the natural reviewer for the designer's hand-off to code.
 
 Working language is English (see `AGENTS.md`). Several members also speak French; spoken coordination can use
@@ -269,7 +275,6 @@ Every arrow has a stand-in listed on the right, so nobody is idle in the first h
 ## 7. Before the event
 
 - [ ] Lead: confirm the proposed names in §5 with each person; fill or close the seventh seat; repository access for everyone
-- [ ] Lead: confirm with Chenlin and Maeva which of terrain / windows + API fits each of them
 - [ ] Everyone: clone, read `AGENTS.md`, `PRODUCT.md` §4–§6 and their section here
 - [ ] Science A + B: data downloaded and shared (about 0.5 GB)
 - [ ] Frontend A: `web/` scaffold merged; Science C: `backend/` scaffold merged
