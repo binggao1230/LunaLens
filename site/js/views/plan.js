@@ -256,12 +256,103 @@ export function createPlan(env) {
     view.h = Math.max(1, Math.round(box.height));
     canvas.width = Math.round(view.w * view.dpr);
     canvas.height = Math.round(view.h * view.dpr);
-    state.scale = (Math.min(view.w, view.h) / (2 * HALF_KM)) * 1.02;
+    state.scale = (Math.min(view.w, view.h) / (2 * R_KM)) * 1.04;
   }
   const toScreen = (x, y) => [view.w / 2 + (x - state.cx) * state.scale, view.h / 2 - (y - state.cy) * state.scale];
   const toWorld = (sx, sy) => [state.cx + (sx - view.w / 2) / state.scale, state.cy - (sy - view.h / 2) / state.scale];
 
   /* ---------------- drawing ---------------- */
+
+  // ---- the whole Moon, seen from above the south pole -------------------------------------
+  // The cap rasters only cover 80°S–90°S, so the page draws the full disc underneath them from the
+  // LROC colour map, with the same flat-sphere sun terminator the narrower view used to fake. The
+  // dashed circles mark 80°S (edge of the layer rasters) and 75°S (edge of the 240 m terrain).
+  const DISC = 1024;
+  let colourImg = null, discCanvas = null, discKey = '';
+  function ensureColour() {
+    if (colourImg) return colourImg;
+    colourImg = new Image();
+    colourImg.src = 'assets/moon_color_4k.webp';
+    colourImg.decoding = 'async';
+    return colourImg;
+  }
+
+  async function buildDisc() {
+    const img = ensureColour();
+    if (!(img.complete && img.naturalWidth)) await new Promise((res) => { img.onload = res; img.onerror = res; });
+    if (!img.naturalWidth) return;
+    const key = state.sun ? state.sun.join(',') : 'flat';
+    const shadeSun = state.layer === 'sun_now';
+    if (key === discKey && discCanvas) return;
+    discKey = key;
+    const src = document.createElement('canvas');
+    src.width = img.naturalWidth; src.height = img.naturalHeight;
+    src.getContext('2d').drawImage(img, 0, 0);
+    const tex = src.getContext('2d').getImageData(0, 0, img.naturalWidth, img.naturalHeight).data;
+    const W = img.naturalWidth, H = img.naturalHeight;
+    const [slat, slon] = state.sun ?? [0, 0];
+    const sla = (slat * Math.PI) / 180, slo = (slon * Math.PI) / 180;
+    const S = [Math.cos(sla) * Math.cos(slo), Math.cos(sla) * Math.sin(slo), Math.sin(sla)];
+    const c = document.createElement('canvas');
+    c.width = c.height = DISC;
+    const cx = c.getContext('2d');
+    const out = cx.createImageData(DISC, DISC);
+    const px = out.data;
+    for (let y = 0; y < DISC; y++) {
+      for (let x = 0; x < DISC; x++) {
+        const u = ((x + 0.5) / DISC) * 2 - 1;
+        const v = ((y + 0.5) / DISC) * 2 - 1;
+        const r2 = u * u + v * v;
+        if (r2 > 1) continue;
+        const wx = u, wy = -v, wz = -Math.sqrt(1 - r2);
+        const lat = Math.asin(wz) * 180 / Math.PI;
+        const lon = ((Math.atan2(wy, wx) * 180 / Math.PI) % 360 + 360) % 360;
+        const tx = Math.min(W - 1, Math.max(0, Math.round((lon / 360) * W)));
+        const ty = Math.min(H - 1, Math.max(0, Math.round(((90 - lat) / 180) * H)));
+        const t = (ty * W + tx) * 4;
+        let k = 1;
+        if (shadeSun) {
+          const dot = wx * S[0] + wy * S[1] + wz * S[2];
+          k = 0.06 + 0.94 * (1 - Math.exp(-4 * Math.max(0, dot)));
+        } else k = 0.55;
+        const o = (y * DISC + x) * 4;
+        px[o] = tex[t] * k;
+        px[o + 1] = tex[t + 1] * k;
+        px[o + 2] = tex[t + 2] * k;
+        px[o + 3] = 255;
+      }
+    }
+    cx.putImageData(out, 0, 0);
+    discCanvas = c;
+  }
+
+  function drawDisc() {
+    if (!discCanvas) return;
+    const [cx0, cy0] = toScreen(0, 0);
+    const radius = R_KM * state.scale;
+    g.drawImage(discCanvas, cx0 - radius, cy0 - radius, radius * 2, radius * 2);
+  }
+
+  function dashedCircle(lat, colour, label) {
+    g.save();
+    g.setLineDash([5, 5]);
+    g.strokeStyle = colour;
+    g.lineWidth = 1;
+    g.beginPath();
+    for (let lon = 0; lon <= 360; lon += 3) {
+      const [sx, sy] = toScreen(...kmOf(lat, lon));
+      if (lon === 0) g.moveTo(sx, sy); else g.lineTo(sx, sy);
+    }
+    g.stroke();
+    g.setLineDash([]);
+    if (label && view.w > 480) {
+      const [sx, sy] = toScreen(...kmOf(lat, 20));
+      g.font = '10px ui-monospace, monospace';
+      g.fillStyle = colour;
+      g.fillText(label, sx + 4, sy - 4);
+    }
+    g.restore();
+  }
 
   function draw() {
     if (!g) return;
@@ -269,12 +360,18 @@ export function createPlan(env) {
     g.fillStyle = '#05070a';
     g.fillRect(0, 0, view.w, view.h);
     const layer = LAYERS.find((l) => l.id === state.layer) || LAYERS[0];
-    if (layer.id === 'sun_now') { buildSun(); if (sunCanvas) drawRaster(sunCanvas, 1); }
-    else {
-      if (tinted.get('height')) drawRaster(tinted.get('height'), 1);
-      if (layer.id !== 'height' && tinted.get(layer.id)) drawRaster(tinted.get(layer.id), 0.94);
+    drawDisc();
+    // The cap rasters are 594 m per pixel; below that size on screen they add nothing but noise.
+    const capPx = HALF_KM * state.scale;
+    if (capPx > 90) {
+      if (layer.id === 'sun_now') { buildSun(); if (sunCanvas) drawRaster(sunCanvas, 1); }
+      else {
+        if (tinted.get('height')) drawRaster(tinted.get('height'), 1);
+        if (layer.id !== 'height' && tinted.get(layer.id)) drawRaster(tinted.get(layer.id), 0.94);
+      }
     }
-    if (layer.id !== 'sun_now') graticule();
+    dashedCircle(-80, 'rgba(147,167,189,.55)', '80°S');
+    dashedCircle(-75, 'rgba(88,200,255,.55)', '75°S');
     markers();
     pins();
     els.scale.textContent = `${Math.round(100 * state.scale)} px = 100 km`;
@@ -394,7 +491,8 @@ export function createPlan(env) {
       root.querySelectorAll('[data-layer]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
       const layer = LAYERS.find((l) => l.id === state.layer);
       updateNote();
-      ensure(layer).then(() => { draw(); renderPanels(); });
+      discKey = '';
+      buildDisc().then(() => ensure(layer)).then(() => { draw(); renderPanels(); });
     };
   });
 
@@ -438,7 +536,7 @@ export function createPlan(env) {
     root.querySelector('#plan-margin').onchange = (e) => { setMargin?.(Number(e.target.value)); renderPanels(); };
 
     els.date.value = new Date(landing?.() ?? Date.now()).toISOString().slice(0, 10);
-    els.date.onchange = () => { setLanding?.(Date.parse(`${els.date.value}T00:00:00Z`)); updateSun(); renderPanels(); draw(); };
+    els.date.onchange = () => { setLanding?.(Date.parse(`${els.date.value}T00:00:00Z`)); updateSun(); discKey = ''; buildDisc().then(draw); renderPanels(); };
     els.hour.value = String(hour?.() ?? 0);
     els.hour.oninput = () => { setHour?.(Number(els.hour.value)); renderPanels(); };
     els.when.textContent = f ? f.when : '';
@@ -552,6 +650,7 @@ export function createPlan(env) {
     fit();
     updateSun();
     for (const layer of LAYERS) { if (layer.id === 'height') await ensure(layer); }
+    await buildDisc();
     await ensure(LAYERS.find((l) => l.id === state.layer));
     draw();
     renderPanels();
