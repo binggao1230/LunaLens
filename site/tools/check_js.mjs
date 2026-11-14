@@ -58,17 +58,17 @@ for (const w of ['sun', 'earth']) {
   assert.notEqual(s.visibleAt(w, edge + 0.001), nt.state, `${w}: no state change at transition`);
 }
 
-// PLAN.md §2.2: JPL Horizons, lunar surface observer at 222.69°E, 89.45°S, 0 km, target Earth.
+// archive/doc/PLAN.md §2.2: JPL Horizons, lunar surface observer at 222.69°E, 89.45°S, 0 km, target Earth.
 // 2027-01-01 00:00 UT -> Az 144.4607°, El -6.6957°. The table is hourly and this instant is on the hour,
 // so no interpolation difference is expected; measured on 2026-11-14: 0.0015° in azimuth, 0.0005° in
 // elevation, which is what rounding the published fixture to four decimals explains. Tolerance 0.01°,
-// the target in PLAN.md §2.2.
+// the target in archive/doc/PLAN.md §2.2.
 {
   const fixture = { az: 144.4607, el: -6.6957 };
   const i = eph.indexOf(Date.parse('2027-01-01T00:00:00Z'));
   const state = eph.stateAt(i);
   const got = azEl(siteBasis(-89.45, 222.69, 0), state[4], state[3], state[5]);
   const dAz = Math.abs(((got.az - fixture.az + 540) % 360) - 180), dEl = Math.abs(got.el - fixture.el);
-  console.log(`\nHorizons fixture (PLAN.md §2.2): Az ${got.az.toFixed(4)} vs ${fixture.az} (${dAz.toFixed(4)}°), El ${got.el.toFixed(4)} vs ${fixture.el} (${dEl.toFixed(4)}°)`);
+  console.log(`\nHorizons fixture (archive/doc/PLAN.md §2.2): Az ${got.az.toFixed(4)} vs ${fixture.az} (${dAz.toFixed(4)}°), El ${got.el.toFixed(4)} vs ${fixture.el} (${dEl.toFixed(4)}°)`);
   assert.ok(dAz < 0.01 && dEl < 0.01, `Horizons fixture: azimuth differs by ${dAz.toFixed(4)}°, elevation by ${dEl.toFixed(4)}°`);
 }
