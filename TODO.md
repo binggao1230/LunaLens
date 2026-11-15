@@ -1,5 +1,6 @@
 # LunaLens construction map
 
+- [ ] Expert Map controls: move A/B/C save and replace actions into the left selected-points section; keep a prominent, separate Enter Atlas button at the top of the right results panel.
 - [ ] Expert Map desktop: reserve separate left study, centre map and right results columns so panels and controls do not cover the terrain.
 - [ ] Expert Map picking: select exact map coordinates without opening Atlas; explicitly save or replace A/B/C from the selected-point card and keep Atlas as a separate action.
 - [ ] Expert Map saved points: show comparable window scores with a red-to-yellow-to-green score colour, best touchdown and screening-limit failures; refresh scores when the scenario changes.
