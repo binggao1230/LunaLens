@@ -7,12 +7,6 @@
 .seg-pill button:focus-visible{outline:2px solid #f5c542;outline-offset:2px}
 .seg-pill .short{display:none}
 .seg-pill svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-#lang{padding-left:8px}
-#lang>svg{color:var(--muted);margin-right:3px}
-#lang button{padding:4px 8px}
-.appbar #mode-toggle{margin-left:auto}
-body[data-view=start] .appbar .side{margin-left:auto}
-body[data-view=start] .appbar #mode-toggle,body:not([data-view=start]) .appbar #mode-toggle{margin-left:0}
 
 /* ---- the mode switch: a circle wipes out from the pressed control, holds, then fades ---- */
 #mode-wipe{position:fixed;inset:0;z-index:90;pointer-events:none;display:none;place-items:center;
@@ -33,8 +27,7 @@ body[data-view=start] .appbar #mode-toggle,body:not([data-view=start]) .appbar #
 @keyframes wipe-pop{from{transform:translateY(10px) scale(.9);opacity:0}to{transform:none;opacity:1}}
 
 /* ---- Education mode is the simpler interface: no Expert navigation, numbers, exports or comparison controls ---- */
-/* Same navigation in both modes; Education only hides the Data page. */
-body.edu-on .appbar .side,body.edu-on .tabbar button[data-view=data]{display:none}
+/* Same navigation in both modes, Data included. */
 body.edu-on .m-readout,body.edu-on .side-head-actions,body.edu-on .pill2,body.edu-on .lane-export,body.edu-on .lane-meta,
 body.edu-on .srow-chk,body.edu-on .srow .chev,body.edu-on .srow .det{display:none!important}
 body.edu-on .srow-top>button{padding-left:12px}
@@ -128,18 +121,10 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
 }
 
 @media (max-width:760px){
-  .seg-pill .long{display:none}
-  .seg-pill .short{display:inline}
-  .seg-pill button{padding:4px 10px}
-  .appbar{flex-wrap:wrap;row-gap:8px}
-  body[data-view=start] .appbar,body:not([data-view=start]) .appbar{padding-top:10px;padding-bottom:10px;min-height:0}
-  body[data-view=start] .appbar .brand,body:not([data-view=start]) .appbar .brand{flex:1 1 100%}
-  body:not([data-view=start]) .appbar #lang{margin-left:0}
   .guide-row{gap:8px;margin-bottom:10px}
   .guide-row .edu-char{width:56px;height:56px}
   .guide-bubble{font-size:13px;padding:10px 12px}
   body.edu-on[data-view=mission] main{padding-bottom:52vh}
-  body.edu-on .tabbar{grid-template-columns:repeat(3,1fr)}
   .edu-panel{left:0;right:0;bottom:54px;width:auto;grid-template-columns:1fr;gap:0;max-height:50vh}
   .edu-panel .edu-char{position:absolute;left:12px;bottom:calc(100% - 14px);width:64px;height:64px;z-index:1}
   .edu-panel{padding-top:0}
@@ -154,8 +139,6 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
 /* ---- Education mode look (after the team's mockup): deep navy, hairline dividers, thin tracked labels, blue pills ---- */
 body.edu-on[data-view=mission]{--page:#070b14;--surface:#0b111c;--border:rgba(200,220,240,.12);--text2:#b9c4d4;--muted:#7f8da3;--earth:#5aa7f0}
 body.edu-on[data-view=mission]::before{background:radial-gradient(120% 80% at 20% 0%,#0d1626 0%,#070b14 55%,#05080f 100%)}
-/* The top bar stays exactly as in Expert mode; the pills keep their right-hand place when Data is hidden. */
-body.edu-on .appbar #mode-toggle{margin-left:auto}
 body.edu-on[data-view=mission] main{max-width:1600px;padding:0 28px 56px}
 body.edu-on[data-view=mission] .mission{grid-template-columns:minmax(0,1fr) 420px;gap:0}
 body.edu-on[data-view=mission] .glass{background:transparent;border:0;border-radius:0;box-shadow:none}
@@ -227,4 +210,72 @@ body.edu-on .edu-final .btn-primary{background:#5aa7f0;color:#07111c;border-radi
   body.edu-on[data-view=mission] .stage h2{font-size:20px}
   body.edu-on[data-view=mission] .side-head h3{font-size:24px}
   body.edu-on[data-view=mission] .stage .hint{font-size:9px}
+}
+
+:root{--bar-h:56px;--bottom-nav-h:0px;--scrub-h:0px}
+html,body{height:100%;overflow:hidden}
+body{padding-bottom:0}
+#page-scroll{position:fixed;inset:var(--bar-h) 0 calc(var(--bottom-nav-h) + var(--scrub-h));overflow:auto}
+body[data-view=start]{--bottom-nav-h:0px}
+.appbar{position:sticky;top:0;z-index:40;box-sizing:border-box;height:var(--bar-h);min-height:0;margin:0;padding:0 16px;gap:16px;
+  display:flex;align-items:center;background:#121518;border-bottom:1px solid var(--border);
+  backdrop-filter:none;-webkit-backdrop-filter:none;font-family:"Geist","PingFang SC","Noto Sans SC",system-ui,-apple-system,sans-serif}
+.appbar .brand{flex:none;margin-right:0;gap:4px}
+.appbar .brand .nasa-mark{display:block;width:31px;height:26px;margin-left:6px;filter:none;object-fit:contain}
+.appbar .tabs{margin:0 auto 0 0;gap:0;align-self:stretch}
+.appbar .side{margin:0;align-self:stretch}
+.appbar .tray{display:none}
+body[data-view=start] .tabbar{display:none}
+.tabbar{background:#121518;font-family:"Geist","PingFang SC","Noto Sans SC",system-ui,-apple-system,sans-serif}
+.appbar .tabs button,.appbar .side button{height:100%;min-height:0;padding:0 12px;border-radius:0;background:none;
+  font-size:14px;font-weight:500;color:var(--text2);box-shadow:inset 0 -2px 0 transparent;transition:color .15s ease,box-shadow .15s ease}
+.appbar .tabs button:hover,.appbar .side button:hover{color:var(--text)}
+.appbar .tabs button.on,.appbar .side button.on{background:none;color:var(--text);font-weight:500;box-shadow:inset 0 -2px 0 var(--text)}
+.appbar .tabs button:focus-visible,.appbar .side button:focus-visible{outline-offset:-4px}
+.appbar #mode-toggle,.appbar .lang-menu{flex:none;margin:0}
+.appbar .seg-pill,.lang-btn{height:36px;min-height:0;box-sizing:border-box}
+
+body[data-view=start] .appbar{background:transparent;border-bottom-color:transparent}
+
+.lang-menu{position:relative;display:flex}
+.lang-btn{display:inline-flex;align-items:center;gap:6px;padding:0 9px 0 10px;border-radius:10px;border:1px solid var(--border);background:transparent;
+  color:var(--text);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:background-color .15s ease}
+.lang-btn:hover,.lang-btn[aria-expanded=true]{background:rgba(255,255,255,.08)}
+.lang-btn:focus-visible,.lang-list button:focus-visible{outline:2px solid #f5c542;outline-offset:2px}
+.lang-btn svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.lang-btn>svg:first-child{color:var(--muted)}
+.lang-chev{width:12px!important;height:12px!important;color:var(--muted);transition:transform .15s ease}
+.lang-btn[aria-expanded=true] .lang-chev{transform:rotate(180deg)}
+.lang-list{position:absolute;right:0;top:calc(100% + 8px);min-width:156px;padding:4px;border-radius:12px;border:1px solid var(--border);
+  background:#171a1e;box-shadow:0 12px 32px rgba(0,0,0,.45);animation:lang-in .12s ease-out}
+.lang-list[hidden]{display:none}
+.lang-list button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:36px;padding:0 10px;border:0;border-radius:8px;
+  background:none;color:var(--text2);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.lang-list button:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.lang-list button[aria-checked=true]{color:var(--text);font-weight:600}
+.lang-list button[aria-checked=true]::after{content:"";width:5px;height:10px;margin-right:2px;border:solid currentColor;border-width:0 1.6px 1.6px 0;transform:rotate(45deg) translateY(-2px)}
+@keyframes lang-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.lang-list{animation:none}.lang-chev,.lang-btn,.appbar .tabs button,.appbar .side button{transition:none}}
+
+@media (max-width:1100px){
+  .seg-pill .long{display:none}
+  .seg-pill .short{display:inline}
+}
+/* Narrow tablets: the mode switch keeps its icons only, with their names in aria-label. */
+@media (min-width:761px) and (max-width:900px){
+  .seg-pill .short{display:none}
+  .seg-pill button{padding:4px 9px}
+  .appbar{gap:12px;padding:0 12px}
+  .appbar .tabs button,.appbar .side button{padding:0 9px}
+}
+/* Phones: two rows on every page, brand and language on the first, the mode switch across the second. */
+@media (max-width:760px){
+  :root{--bar-h:92px;--bottom-nav-h:54px}
+  .pole{height:calc(100svh - var(--bar-h) - 54px)}
+  .appbar{flex-wrap:wrap;align-content:center;gap:6px 8px;padding:0 12px}
+  .appbar .brand{flex:1 1 0;min-width:0;order:1}
+  .appbar .lang-menu{order:2}
+  .appbar #mode-toggle{order:3;flex:1 0 100%}
+  .appbar #mode-toggle button{flex:1;justify-content:center}
+  .appbar .tabs,.appbar .side{display:none}
 }
