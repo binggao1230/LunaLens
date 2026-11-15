@@ -151,6 +151,17 @@ export function createEducation(ctx) {
 
   /* ---------- rendering ---------- */
 
+  // Beside the Site locations list: the panel's right edge sits just left of the list, at the list's lower half.
+  function placeNearSites() {
+    const panel = root.querySelector('.edu-panel.near-sites'), list = document.querySelector('#v-mission .side-panel');
+    if (!panel) return;
+    if (!list || innerWidth <= 1060) { panel.style.left = ''; panel.style.right = ''; return; }
+    const r = list.getBoundingClientRect();
+    panel.style.left = 'auto';
+    panel.style.right = `${Math.max(16, innerWidth - r.left + 12)}px`;
+  }
+  addEventListener('resize', placeNearSites);
+
   const visible = () => st.active && st.story && st.step > 0 && ctx.view() === 'mission';
 
   function leversHtml(r) {
@@ -227,7 +238,9 @@ export function createEducation(ctx) {
     const art = full
       ? `<div class="edu-char edu-hero"><img src="assets/mascot/astronaut_dog_moon.svg" alt="" draggable="false"></div>`
       : `<div class="edu-char mood-${st.mood}">${CHARACTER_MARKUP}</div>`;
-    root.innerHTML = `<aside class="edu-panel step-${st.step}${full ? ' full' : ''}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
+    // Some lines are about the site list: there Lumi moves next to it (story JSON, "nearSites").
+    const near = !full && (get('nearSites') ?? []).includes(st.say?.path);
+    root.innerHTML = `<aside class="edu-panel step-${st.step}${full ? ' full' : ''}${near ? ' near-sites' : ''}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
       ${art}
       <div class="edu-bubble">
         <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span></div>
@@ -236,6 +249,7 @@ export function createEducation(ctx) {
         <div class="edu-actions">${actions}${skip}</div>
       </div>
     </aside>`;
+    placeNearSites();
     if (st.focus) { st.focus = false; root.querySelector('#edu-text')?.focus({ preventScroll: true }); }
   }
 

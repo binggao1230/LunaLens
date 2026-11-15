@@ -47,6 +47,8 @@
       "note": "Simplifié pour apprendre : les batteries et le relais sont illustratifs."
     }
   },
+  "_nearSites": "Lines where Lumi stands next to the Site locations list (step path.index).",
+  "nearSites": ["objective.intro.4"],
   "steps": {
     "objective": {
       "intro": [

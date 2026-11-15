@@ -47,6 +47,8 @@
       "note": "Simplified for learning: the batteries and the relay are illustrative."
     }
   },
+  "_nearSites": "Lines where Lumi stands next to the Site locations list (step path.index).",
+  "nearSites": ["objective.intro.4"],
   "steps": {
     "objective": {
       "intro": [

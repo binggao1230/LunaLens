@@ -47,6 +47,8 @@
       "note": "为教学而简化：电池和中继卫星只是示意。"
     }
   },
+  "_nearSites": "Lines where Lumi stands next to the Site locations list (step path.index).",
+  "nearSites": ["objective.intro.4"],
   "steps": {
     "objective": {
       "intro": [
