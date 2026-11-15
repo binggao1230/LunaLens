@@ -229,6 +229,7 @@ export function createMission(ctx) {
     return list.find((s) => s.id === local.picked) ?? orderedSites()[0];
   }
   function defaultCompared() {
+    if (isEducation()) return new Set(); // Education: the graph shows the sites the user picks
     const list = sites();
     const probeSites = probe()?.sites?.filter((id) => list.some((s) => s.id === id)) ?? [];
     const initial = probeSites.length >= 2 ? probeSites.slice(0, 4) : orderedSites().slice(0, 3).map((s) => s.id);
@@ -375,7 +376,7 @@ export function createMission(ctx) {
       if (event.target.closest('.srow-chk')) return;
       const row = event.target.closest('[data-id]'); if (!row) return;
       const same = local.picked === row.dataset.id;
-      local.picked = row.dataset.id;
+      local.picked = row.dataset.id; if (isEducation()) local.compared.add(row.dataset.id);
       local.open = same && local.open === row.dataset.id ? null : row.dataset.id;
       refresh(true);
       focusSite();
@@ -564,8 +565,8 @@ export function createMission(ctx) {
 
   function laneSites() {
     const highlighted = ctx.eduHighlight?.()?.id ?? null; // Education mode always shows the site it is talking about
-    // Education mode does not compare: the timeline shows only the picked site.
-    if (isEducation()) { const picked = pickedSite()?.id; return orderedSites().filter((s) => s.id === picked || s.id === highlighted); }
+    // Education mode: the timeline shows the sites the user picked (compared) and the picked one.
+    if (isEducation()) { const picked = pickedSite()?.id; return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === picked || s.id === highlighted); }
     return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === highlighted);
   }
   function runsOf(test, site) {
@@ -903,7 +904,7 @@ export function createMission(ctx) {
       const moved = drag?.moved; drag = null;
       if (moved) return;
       const box = canvas.getBoundingClientRect(), hit = nearest(event.clientX - box.left, event.clientY - box.top);
-      if (hit) { local.picked = hit.site.id; refresh(true); }
+      if (hit) { local.picked = hit.site.id; if (isEducation()) local.compared.add(hit.site.id); ctx.onSitePick?.(local.picked); refresh(true); }
     });
     canvas.addEventListener('wheel', (event) => {
       event.preventDefault();
@@ -977,7 +978,7 @@ export function createMission(ctx) {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const selected = PROBES.find(probe => probe.id === local.probe);
     flightEl.innerHTML = `<canvas class="flight-scene" aria-label="${escapeHtml(t(selected.name))}"></canvas>
-      <div class="flight-countdown" aria-hidden="true">5</div>
+      <div class="flight-countdown" aria-hidden="true">${[5, 4, 3, 2, 1].map((n, i) => `<span style="animation-delay:${i}s">${n}</span>`).join('')}</div>
       <div class="flight-top"><span>${escapeHtml(t(selected.name))}</span><button class="btn-ghost flight-skip">${escapeHtml(t('Exit flight'))}<span aria-hidden="true">↗</span></button></div>
       <div class="flight-caption"><p class="flight-phase" role="status">${escapeHtml(t('Preparing spacecraft…'))}</p>
         <h2>${escapeHtml(site.short)}</h2>
@@ -998,24 +999,17 @@ export function createMission(ctx) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     let done = false, disposeFlight, lastPhase = '', countdownTimer = null;
-    const sceneCanvas = flightEl.querySelector('.flight-scene');
-    let countdownDone = reduced;
-    const revealFlight = () => {
-      if (countdownDone && sceneCanvas.dataset.ready === 'true') flightEl.classList.remove('is-counting');
-    };
+    const COUNTDOWN_MS = 5000;
+    const deadline = performance.now() + (reduced ? 0 : COUNTDOWN_MS);
     if (!reduced) {
-      let countdown = 5;
-      countdownTimer = setInterval(() => {
-        countdown -= 1;
-        if (countdown >= 0) countdownEl.textContent = String(countdown);
-        else { clearInterval(countdownTimer); countdownEl.remove(); countdownDone = true; revealFlight(); }
-      }, 1000);
+      // The digits are CSS animations on the compositor and the end is a wall-clock deadline, so a busy main thread (model decode, texture upload) cannot stall or skew the count.
+      countdownTimer = setTimeout(() => { countdownEl.remove(); flightEl.classList.remove('is-counting'); }, COUNTDOWN_MS);
     } else {
       countdownEl.remove();
     }
     const finish = () => {
       if (done) return; done = true; flying = false;
-      clearInterval(countdownTimer);
+      clearTimeout(countdownTimer);
       flightEl.classList.remove('is-counting');
       document.removeEventListener('keydown', handleKey);
       document.body.style.overflow = previousOverflow;
@@ -1037,7 +1031,7 @@ export function createMission(ctx) {
     skip.focus();
     disposeFlight = playProbeFlight(flightEl.querySelector('canvas'), {
       probe: selected.id, site: { lat: site.lat, lon: site.lon }, reduced,
-      startAt: reduced ? 0 : performance.now() + 6000,
+      startAt: reduced ? 0 : deadline,
       onComplete: () => {
         phase.textContent = t('Landed · exit when you are ready');
       },
@@ -1046,7 +1040,6 @@ export function createMission(ctx) {
         disposeFlight?.();
       },
       onProgress: (progress, key) => {
-        revealFlight();
         fill.style.transform = `scaleX(${progress})`;
         if (key !== lastPhase) { phase.textContent = t(key); lastPhase = key; }
       },

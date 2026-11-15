@@ -460,16 +460,24 @@ function syncFromAtlas() {
   if (changed) { $('date').value = new Date(state.landing).toISOString().slice(0, 10); recompute(); }
 }
 
+function syncNav() {
+  const v = document.body.dataset.view, stage = pole?.state.stage ?? 'globe';
+  document.querySelectorAll('[data-nav] button').forEach((b) => {
+    const on = b.dataset.stage ? (v === 'pole' && b.dataset.stage === stage) || (v === 'atlas' && b.dataset.stage === 'atlas') : b.dataset.view === v || (v === 'data' && b.dataset.view === 'explore');
+    b.classList.toggle('on', on);
+  });
+}
+
 function showView(v) {
   if (v === 'compare' || v === 'slip' || v === 'plan') v = 'explore';
   if (!['start', 'mission', 'explore', 'data', 'build', 'atlas', 'pole'].includes(v)) v = 'start';
   // Education mode is the Mission page only (the start page is its probe picker); every other page is an Expert tool.
   if (getMode() === 'education' && !['start', 'mission'].includes(v)) v = 'mission';
   // Expert mode has no Mission page: the start page and the Mission page belong to Education mode.
-  if (getMode() !== 'education' && ['start', 'mission'].includes(v)) v = 'explore';
+  if (getMode() !== 'education' && ['start', 'mission'].includes(v)) v = 'pole';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}${formatHash(v)}`);
-  document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v || (['explore', 'data'].includes(v) && b.dataset.view === 'atlas')));
+  syncNav();
   $('page-scroll').scrollTo(0, 0);
   if (v === 'atlas') showAtlas();
   renderAll();
@@ -674,12 +682,18 @@ function bind() {
     if (Number.isNaN(la) || Number.isNaN(lo) || la < -90 || la > 90) return toast(t('Enter a latitude between −90 and 90 and a longitude in °E'));
     setCustom(la, lon360(lo));
   };
-  document.querySelectorAll('[data-nav] button').forEach((b) => { b.onclick = () => showView(b.dataset.view); });
+  document.querySelectorAll('[data-nav] button').forEach((b) => {
+    b.onclick = () => {
+      const { view, stage } = b.dataset;
+      if (stage) pole?.showStage(stage);
+      if (!stage || document.body.dataset.view !== view) showView(view);
+    };
+  });
   $('mode-toggle').onclick = (e) => { const b = e.target.closest('button[data-mode]'); if (b) switchMode(b.dataset.mode, b); };
   onMode((m) => {
     renderChrome();
     if (m === 'education' && !['start', 'mission'].includes(document.body.dataset.view)) { showView('mission'); return; }
-    if (m !== 'education' && ['start', 'mission'].includes(document.body.dataset.view)) { showView('explore'); return; }
+    if (m !== 'education' && ['start', 'mission'].includes(document.body.dataset.view)) { showView('pole'); return; }
     history.replaceState(null, '', `${location.search}${formatHash(document.body.dataset.view)}`);
   });
   // A pasted or edited hash on the open page: apply its mode and view (showView uses replaceState, so no loop).
@@ -757,9 +771,10 @@ function bind() {
     const b = e.target.closest('button[data-lang]'); if (!b) return;
     setLangOpen(false); langBtn.focus();
     if (b.dataset.lang === getLanguage()) return;
-    setLanguage(b.dataset.lang); applyTranslations(); hideTip(); renderChrome(); renderAll(); renderSources();
-    edu?.setLanguage(getLanguage());
-    if (scene3d) render3d();
+    setLanguage(b.dataset.lang);
+    for (const step of [renderChrome, applyTranslations, hideTip, renderAll, renderSources, () => edu?.setLanguage(getLanguage()), () => { if (scene3d) render3d(); }, () => pole?.relocalize()]) {
+      try { step(); } catch (error) { console.error('language switch step failed', error); }
+    }
   };
 
   $('pano').addEventListener('pointermove', (e) => {
@@ -899,6 +914,7 @@ async function start() {
     addPoint: (lat, lon) => setCustom(lat, lon),
     dem: () => ensureDem(),
     view: () => document.body.dataset.view,
+    syncNav,
     toast,
   });
   pole.mount();
