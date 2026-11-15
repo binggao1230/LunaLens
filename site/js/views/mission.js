@@ -25,7 +25,7 @@ const MESSAGES = {
   'Skip flight': ['Passer le vol', '跳过飞行'],
   'Illustrative flight · not to scale': ['Vol illustratif · hors échelle', '飞行演示 · 非真实比例'],
   'Preparing spacecraft…': ['Préparation du vaisseau…', '正在准备探测器…'],
-  'Mission': ['Mission', 'Mission'],
+  'Mission': ['Mission', '任务'],
   'See which lunar landing sites have sunlight and a direct line of sight to Earth, hour by hour. Pick a lander, choose a site, then send a probe.': ['Voyez quels sites d’alunissage reçoivent la lumière du Soleil et voient la Terre en direct, heure par heure. Choisissez un atterrisseur, un site, puis envoyez une sonde.', '逐小时查看哪些月面着陆点有阳光、又能直视地球。选择着陆器与地点，然后发射探测器。'],
   'Choose your probe': ['Choisissez votre sonde', '选择你的探测器'],
   'Validate': ['Valider', '确认'],
