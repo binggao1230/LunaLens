@@ -119,7 +119,7 @@ export function createSouthPole(ctx) {
             <button type="button" id="sp-gzout" aria-label="${escapeHtml(t('Zoom out'))}">−</button>
           </div>
           <div class="pole-time" role="group" aria-label="${escapeHtml(t('Time speed'))}">
-            ${[1, 2, 3, 5, 10].map((s) => `<button type="button" data-speed="${s}"${s === 1 ? ' class="on"' : ''}>${s}×</button>`).join('')}
+            ${[1, 5, 10].map((s) => `<button type="button" data-speed="${s}"${s === 1 ? ' class="on"' : ''}>${s}×</button>`).join('')}
             <button type="button" id="sp-pause" aria-label="${escapeHtml(t('Pause'))}">⏸</button>
             <span>${escapeHtml(t('1× = 1 h/s'))}</span>
           </div>
