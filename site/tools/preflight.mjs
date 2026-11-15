@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(here, '..', '..');
-const url = process.argv[2] ?? 'https://luna-lens.gaobing1230.workers.dev/';
+const url = process.argv[2] ?? 'https://binggao1230.github.io/LunaLens/';
 
 let failed = 0;
 const ok = (label, detail = '') => console.log(`  PASS  ${label}${detail ? `  ${detail}` : ''}`);
@@ -58,7 +58,7 @@ for (const [label, pattern] of [
   ['Super Intelligence disclosure', /Super Intelligence/],
   ['NASA data list', /NASA data/i],
   ['demo within limits', /seven slides|30-second/i],
-  ['final-project link', /luna-lens\.gaobing1230\.workers\.dev/],
+  ['final-project link', /binggao1230\.github\.io\/LunaLens/],
   ['sunlight validation quoted', /rank correlation 0\.98/i],
 ]) {
   if (pattern.test(draft)) ok(label); else bad(label);

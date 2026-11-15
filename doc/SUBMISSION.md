@@ -70,7 +70,7 @@ uses its own teaching rules.
 
 ## Final project link
 
-`https://luna-lens.gaobing1230.workers.dev/`
+`https://binggao1230.github.io/LunaLens/`
 
 Check the exact release in an anonymous browser. Make the same check for the demo.
 Do not infer the current login policy from an old draft or deployment.
