@@ -219,9 +219,9 @@ body.edu-on[data-view=mission] .empty{font-size:11px;letter-spacing:.14em;text-t
 body.edu-on[data-view=mission] #m-send{background:linear-gradient(180deg,#7cb8f3,#5aa7f0);color:#07111c;border-radius:99px;min-height:56px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;box-shadow:0 0 30px rgba(90,167,240,.45),0 12px 30px -12px rgba(90,167,240,.8)}
 body.edu-on[data-view=mission] #m-send:hover{filter:brightness(1.06)}
 /* window comparison */
-body.edu-on[data-view=mission] .lanes{border-top:1px solid var(--border);border-radius:0;padding:20px 8px 8px;margin-top:0;gap:12px}
+body.edu-on[data-view=mission] .lanes{border-top:1px solid var(--border);border-radius:0;padding:24px 8px 8px;margin-top:0;gap:14px}
 body.edu-on[data-view=mission] .lane-axis,body.edu-on[data-view=mission] .lane-legend{font-family:inherit;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-body.edu-on[data-view=mission] .lane-site .nm{font-size:15px;font-weight:400}
+body.edu-on[data-view=mission] .lane-site .nm{font-size:16px;font-weight:400}
 body.edu-on[data-view=mission] .lane-site svg{height:40px}
 @media (max-width:520px){
   body.edu-on[data-view=mission] .lanes{padding:14px 4px 8px;gap:10px}
