@@ -229,8 +229,11 @@ body[data-view=start] .start{min-height:calc(100svh - 76px);padding:26px 4vw 120
 body[data-view=mission] .glass{background:#171a1e;backdrop-filter:none;-webkit-backdrop-filter:none;border-color:#353a42;box-shadow:none}
 body[data-view=mission] .stage{background:#101316}
 .mission [hidden]{display:none!important}
-body[data-view=mission] .appbar,body[data-view=mission] .tabbar{background:#121518}
-body[data-view=mission] .appbar .side{margin-left:auto}
+/* The Mission top bar is the top bar of every page except the start page: same font, surface and the same place for Data, mode and language. */
+body:not([data-view=start]) .appbar,body:not([data-view=start]) .tabbar{background:#121518;font-family:"Geist","PingFang SC","Noto Sans SC",system-ui,-apple-system,sans-serif}
+body:not([data-view=start]) .appbar .side{margin-left:auto}
+/* The scenario tray (Compare, Date slip) fills the space between the tabs and Data. When its chips are wider than that space it scrolls instead of clipping its first chip. Narrower widths keep their own wrap rules. */
+@media (min-width:901px){body:not([data-view=start]) .appbar .tray{justify-content:safe flex-end}}
 body[data-view=mission] .datebar{grid-column:1/-1}
 .mseg{background:#20242a;border-color:#353a42;border-radius:10px;padding:4px}
 .mseg button{border-radius:7px}
