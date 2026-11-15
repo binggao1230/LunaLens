@@ -294,7 +294,9 @@ export function createEducation(ctx) {
       : `<div class="edu-char mood-${st.mood}">${CHARACTER_MARKUP}</div>`;
     // Some lines are about the site list: there Lumi moves next to it (story JSON, "nearSites").
     const near = !full && (get('nearSites') ?? []).some((p) => (p.endsWith('.') ? st.say?.path?.startsWith(p) : p === st.say?.path));
-    root.innerHTML = `<aside class="edu-panel step-${st.step}${full ? ' full' : ''}${near ? ' near-sites' : ''}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
+    // The graph bubbles (time, graph, click the graph) move off the bottom of the page so the graphs stay visible.
+    const offGraph = st.step === STEP.objective && [TIME_SEGMENT, GRAPH_SEGMENT, GRAPH_SEGMENT + 1].includes(st.sub) && !full && !near;
+    root.innerHTML = `<aside class="edu-panel step-${st.step}${full ? ' full' : ''}${near ? ' near-sites' : ''}${offGraph ? ' off-graph' : ''}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
       ${art}
       <div class="edu-bubble">
         <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite"><b class="edu-speaker">${escapeHtml(get('character.name') ?? 'Lumi')}</b>${escapeHtml(text)}</p>

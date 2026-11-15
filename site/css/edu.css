@@ -497,3 +497,7 @@ body.flight-on .edu-panel:not(.full){top:120px;bottom:auto;left:24px;right:auto;
 /* Mission complete card: the two suggestions for what to do next. */
 .edu-next-steps{margin:14px 0 4px;font-size:13px;line-height:1.5;color:#c9d6e6}
 .edu-next-steps p{margin:0 0 6px}
+
+/* Graph bubbles sit at the top right, over the site list, so the graphs at the bottom stay visible. */
+.edu-panel.off-graph{top:120px;bottom:auto;left:auto;right:24px;width:min(420px,calc(100vw - 48px))}
+@media (max-width:760px){.edu-panel.off-graph{top:110px;left:12px;right:12px;bottom:auto;width:auto;max-height:45vh}}
