@@ -188,7 +188,7 @@ export function createMission(ctx) {
 
   const probe = () => PROBES.find((p) => p.id === local.probe);
   // Education mode shows three sites, chosen from the real calculations for the landing date at touchdown:
-  // one with Sun and an Earth link, one with an Earth link but no Sun, one with neither. Expert mode shows all.
+  // one with Sun and an Earth link, one with Sun but no Earth link, one with neither. Expert mode shows all.
   let trioKey = '', trio = [];
   function eduTrio() {
     const all = ctx.sites().filter((s) => !s.custom);
@@ -201,9 +201,10 @@ export function createMission(ctx) {
     const used = new Set();
     const pick = (...pools) => { for (const pool of pools) { const r = take(pool, used); if (r) { used.add(r.site.id); return r.site; } } return null; };
     const good = pick(rows.filter((r) => r.sun && r.link).sort(byBest), [...rows].sort(byBest));
-    const noSun = pick(rows.filter((r) => r.link && !r.sun).sort(byBest), rows.filter((r) => r.sun && !r.link).sort(byBest), [...rows].sort(byBest));
+    // Second slot: sunlit but no Earth link (power, but nobody hears it); Earth-without-Sun only if no such site exists.
+    const noLink = pick(rows.filter((r) => r.sun && !r.link).sort(byBest), rows.filter((r) => r.link && !r.sun).sort(byBest), [...rows].sort(byBest));
     const dark = pick(rows.filter((r) => !r.sun && !r.link).sort(byBest), [...rows].sort((a, b) => a.both - b.both));
-    trio = [good, noSun, dark].filter(Boolean);
+    trio = [good, noLink, dark].filter(Boolean);
     trioKey = key;
     return trio;
   }
@@ -219,7 +220,7 @@ export function createMission(ctx) {
 
   function orderedSites() {
     const list = sites();
-    if (isEducation()) return list; // the trio keeps its order: good, no Sun, neither
+    if (isEducation()) return list; // the trio keeps its order: good, no Earth link, neither
     const first = probe().sites.map((id) => list.find((s) => s.id === id)).filter(Boolean);
     return [...first, ...list.filter((s) => !first.includes(s))];
   }
