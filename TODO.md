@@ -1,15 +1,18 @@
 # LunaLens construction map
 
+- [ ] Expert Map desktop: reserve separate left study, centre map and right results columns so panels and controls do not cover the terrain.
+- [ ] Expert Map picking: select exact map coordinates without opening Atlas; explicitly save or replace A/B/C from the selected-point card and keep Atlas as a separate action.
+- [ ] Expert Map saved points: show comparable window scores with a red-to-yellow-to-green score colour, best touchdown and screening-limit failures; refresh scores when the scenario changes.
 - [x] Expert Map: colour blocks and detail labels by screening score bands (green 85+, yellow 70–84, red below 70); EN/FR/ZH legend.
 - [x] Expert Map: right-side card bar with the Top 3 recommended blocks and saved A/B/C points (sunlight and Earth bars plus score, link hours, slope); desktop only, the left list stays on narrow screens.
-- [x] Expert Globe: add an "Enter the South Pole" button that opens the Map; the study panel starts collapsed on the Globe and open on the Map; place the compact search-window control at the top-right.
-- [ ] Top menu becomes the Expert flow: 1 · Globe, 2 · Map, 3 · Atlas, 4 · Explore (same bar style, EN/FR/ZH). The separate Atlas and Expert entries and the in-page stage switch are removed; Expert mode opens on the Globe.
-- [ ] Expert layout: remove the persistent bottom window bar; a single bottom "Search window" button opens the date, length and slider dialog in Globe and Map. Keep the entry button and readout clear of it and collapse the Globe panel before the initial dialog opens.
-- [ ] Expert Map: render detailed, higher-contrast terrain from the existing 240 m DEM at the displayed resolution after zooming or panning; keep the screening grid and coordinates aligned.
-- [ ] Expert language switching: register static text using English keys so controls update immediately after an initial Chinese or French load.
+- [x] Expert Globe: add an "Enter the South Pole" button that opens the Map; the study panel starts collapsed on the Globe and open on the Map.
+- [x] Top menu becomes the Expert flow: 1 · Globe, 2 · Map, 3 · Atlas, 4 · Explore (same bar style, EN/FR/ZH). The separate Atlas and Expert entries and the in-page stage switch are removed; Expert mode opens on the Globe.
+- [x] Expert layout: remove the persistent bottom window bar; a single bottom "Search window" button opens the date, length and slider dialog in Globe and Map. Keep the entry button and readout clear of it and collapse the Globe panel before the initial dialog opens.
+- [x] Expert Map: render detailed, higher-contrast terrain from the existing 240 m DEM at the displayed resolution after zooming or panning; keep the screening grid and coordinates aligned.
+- [x] Expert language switching: register static text using English keys so controls and open block details update immediately after an initial Chinese or French load.
 
 - [x] Mobile and small-screen responsiveness: adapt main web app content, element sizes, probe cards, and controls for narrow mobile screens (~390 px), add automatic screen size mode detection, and drop redundant standalone mobile subpage link.
-- [ ] Drop the Explore and Data tabs: Atlas gets an Explore entry button and Explore ends with a Data entry button.
+- [x] Keep Explore as step 4 of the Expert navigation and retain its Data entry button.
 - [x] Ask for Expert or Education mode on the first screen; Expert mode drops the Mission page; Education mode shows the Mission page only (no Data, Atlas, Explore, South Pole or mobile link).
 - [x] Add the mobile-first companion at `site/mobile/`: place and UTC day pickers, hourly Sun/Earth/overlap readout, timeline and EN/FR/ZH copy, linked from the main header.
 - [ ] South Pole: make the search-window end date drive the grid (best touchdown per block, one sample per UTC day), refresh A/B/C on scenario change, add sunlight to the screening score, sync the 3D clock with the Earth-link readout, centre Refine on the selected block, add an edit-search-window action with UTC date fields, and fix the mobile map aspect ratio.

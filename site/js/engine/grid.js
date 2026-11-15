@@ -188,7 +188,7 @@ export function skySeries(ephemeris, lat, lon, groundM, horizonDeg, { fromIndex,
  * return that candidate's stay statistics and classification. Hard-limit failures never
  * win: a failed candidate carries no score and is skipped when a scoring one exists.
  */
-export function screenCellWindow(ephemeris, { lat, lon, groundM, slopeDeg, horizonDeg }, { startIndex, endIndex, stayH, marginDeg, sampleStepH = 24 }, limits = DEFAULT_LIMITS, targets = DEFAULT_TARGETS, weights = DEFAULT_WEIGHTS) {
+export function screenCellWindow(ephemeris, { lat, lon, groundM, slopeDeg, horizonDeg }, { startIndex, endIndex, stayH, marginDeg, sampleStepH = 24, scoreFailed = false }, limits = DEFAULT_LIMITS, targets = DEFAULT_TARGETS, weights = DEFAULT_WEIGHTS) {
   const sky = skySeries(ephemeris, lat, lon, groundM, horizonDeg, { fromIndex: startIndex, toIndex: endIndex, stayH, marginDeg });
   if (!sky) return null;
   const { from, span, earthOpen, sunOpen } = sky;
@@ -209,9 +209,10 @@ export function screenCellWindow(ephemeris, { lat, lon, groundM, slopeDeg, horiz
     }
     const stats = { earthPct: (100 * earthOpenH) / stayH, geometricPct: 0, longestH: longestE, firstBlockedH: null, sunPct: (100 * sunOpenH) / stayH, longestSunH: longestS, bothPct: (100 * both) / stayH };
     const cls = classify({ groundM, slopeDeg, horizonDeg, stats }, limits, targets, weights);
-    const score = cls.score ?? -1;
-    if (!best || score > best.score || (score === best.score && stats.earthPct > best.stats.earthPct)) {
-      best = { startIndex: s, stats, class: cls, score };
+    const score = cls.score ?? (scoreFailed ? cls.rawScore : null) ?? -1;
+    const qualifies = cls.score != null;
+    if (!best || (qualifies && !best.qualifies) || (qualifies === best.qualifies && (score > best.score || (score === best.score && stats.earthPct > best.stats.earthPct)))) {
+      best = { startIndex: s, stats, class: cls, score, qualifies };
     }
   }
   return best ? { startIndex: best.startIndex, stats: best.stats, class: best.class } : null;
@@ -275,8 +276,9 @@ export function classify(cell, limits = DEFAULT_LIMITS, targets = DEFAULT_TARGET
   const cSun = T.sunPct > 0 ? clamp01(sunPct / T.sunPct) : 1;
   const sunBonus = T.sunPct < 100 ? 0.25 * clamp01((sunPct - T.sunPct) / Math.max(1e-6, 100 - T.sunPct)) : 0;
   const weighted = W.earth * (cEarth + earthBonus) + W.sun * (cSun + sunBonus) + W.slope * (cSlope + slopeBonus) + W.window * (cWindow + windowBonus);
-  const score = failed.length ? null : Math.round(100 * weighted / 1.25);
-  return { status: failed.length ? 'red' : missed.length ? 'yellow' : 'green', failed, missed, score };
+  const rawScore = Math.round(100 * weighted / 1.25);
+  const score = failed.length ? null : rawScore;
+  return { status: failed.length ? 'red' : missed.length ? 'yellow' : 'green', failed, missed, score, rawScore };
 }
 
 /** Plain-language failure/miss labels used by the panel and the cell list. */
