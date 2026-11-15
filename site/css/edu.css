@@ -221,7 +221,6 @@ body[data-view=start]{--bottom-nav-h:0px}
   display:flex;align-items:center;background:#121518;border-bottom:1px solid var(--border);
   backdrop-filter:none;-webkit-backdrop-filter:none;font-family:"Geist","PingFang SC","Noto Sans SC",system-ui,-apple-system,sans-serif}
 .appbar .brand{flex:none;margin-right:0;gap:4px}
-.appbar .brand .nasa-mark{display:block;width:31px;height:26px;margin-left:6px;filter:none;object-fit:contain}
 .appbar .tabs{margin:0 auto 0 0;gap:0;align-self:stretch}
 .appbar .side{margin:0;align-self:stretch}
 .appbar .tray{display:none}
