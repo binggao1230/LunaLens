@@ -658,19 +658,30 @@ export function createSouthPole(ctx) {
     saveSlot(name);
   }
 
-  function atlasSelection() {
-    const doc = els['sp-atlas']?.contentDocument;
-    const where = doc?.querySelector('.site.active .where')?.textContent ?? '';
-    const m = where.match(/(\d+(?:\.\d+)?)°\s*([NS]).*?(\d+(?:\.\d+)?)°\s*([EW])/);
-    if (!m) return null;
-    return { lat: Number(m[1]) * (m[2] === 'S' ? -1 : 1), lon: Number(m[3]) * (m[4] === 'E' ? 1 : -1), label: t('Atlas point') };
-  }
-
-  function syncAtlasTarget() {
-    const point = atlasSelection(); if (!point) return;
-    ui.target = point;
-    if (els['sp-target']) els['sp-target'].textContent = `${t('Atlas point')} · ${fmtLatLon(point.lat, point.lon, 3)}`;
-    renderAtlasSlots();
+  function syncAtlasState(state) {
+    const sites = (Array.isArray(state?.sites) ? state.sites : [])
+      .filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lon)).slice(0, 3);
+    const names = ['A', 'B', 'C'];
+    const next = { A: null, B: null, C: null };
+    const free = [...names];
+    const ignored = new Set([t('Selected point'), t('Atlas point'), t('Screened block'), 'Selected point', '已选点']);
+    for (const site of sites) {
+      const label = String(site.label ?? '').trim();
+      if (!names.includes(label) && ignored.has(label)) continue;
+      let name = names.includes(label) ? label : free[0];
+      if (!name) break;
+      const prev = Object.values(ui.slots).find((slot) => slot && sameSpot(slot, site));
+      next[name] = prev ?? { lat: site.lat, lon: site.lon, label: label || t('Atlas point'), metrics: null };
+      if (!next[name].metrics) measureSlot(next[name]);
+      free.splice(free.indexOf(name), 1);
+    }
+    ui.slots = next;
+    if (state?.active && Number.isFinite(state.active.lat) && Number.isFinite(state.active.lon)) {
+      ui.target = { lat: state.active.lat, lon: state.active.lon, label: state.active.label || t('Atlas point') };
+      if (els['sp-target']) els['sp-target'].textContent = `${ui.target.label} · ${fmtLatLon(ui.target.lat, ui.target.lon, 3)}`;
+    }
+    renderSlots();
+    drawMap();
   }
 
   function renderAtlasSlots() {
@@ -682,7 +693,7 @@ export function createSouthPole(ctx) {
   }
 
   function assignAtlasSlot(name) {
-    const point = atlasSelection() ?? ui.target;
+    const point = ui.target;
     if (!point) { setNotice(t('Select a point in Atlas first.')); return; }
     ui.target = point;
     saveSlot(name);
@@ -939,9 +950,9 @@ export function createSouthPole(ctx) {
     };
     els['sp-abc'].addEventListener('click', (e) => { const b = e.target.closest('[data-slot]'); if (b) assignMapSlot(b.dataset.slot); });
     document.querySelector('.pole-atlas-actions').addEventListener('click', (e) => { const b = e.target.closest('[data-slot]'); if (b) assignAtlasSlot(b.dataset.slot); });
-    els['sp-atlas'].addEventListener('load', () => {
-      const doc = els['sp-atlas'].contentDocument;
-      if (doc) doc.addEventListener('click', () => setTimeout(syncAtlasTarget, 180));
+    window.addEventListener('message', (event) => {
+      if (event.source !== els['sp-atlas'].contentWindow || event.data?.type !== 'lunalens:atlas-state') return;
+      syncAtlasState(event.data);
     });
     els['sp-slots'].addEventListener('click', (e) => { const b = e.target.closest('[data-remove]'); if (!b) return; ui.slots[b.dataset.remove] = null; renderSlots(); drawMap(); });
     bindMap();
