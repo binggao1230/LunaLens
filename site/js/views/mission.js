@@ -998,6 +998,7 @@ export function createMission(ctx) {
     const site = pickedSite(); if (!site) return;
     stopPlay();
     flying = true;
+    document.body.classList.add('flight-on'); // the story bubble moves out of the flight caption's way (css/edu.css)
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const selected = PROBES.find(probe => probe.id === local.probe);
     flightEl.innerHTML = `<canvas class="flight-scene" aria-label="${escapeHtml(t(selected.name))}"></canvas>
@@ -1032,6 +1033,7 @@ export function createMission(ctx) {
     }
     const finish = () => {
       if (done) return; done = true; flying = false;
+      document.body.classList.remove('flight-on');
       clearTimeout(countdownTimer);
       flightEl.classList.remove('is-counting');
       document.removeEventListener('keydown', handleKey);

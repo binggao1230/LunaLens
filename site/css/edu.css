@@ -489,3 +489,7 @@ body.edu-on :disabled,body.edu-on [aria-disabled=true]{cursor:not-allowed!import
 /* The story points at the sunrise / Stays in view countdown line while it explains it: the same pulsing green glow. */
 #m-scenario.edu-point{border-radius:10px;box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 22px 5px rgba(67,217,138,.45);animation:edu-time-pulse 1.4s ease-in-out infinite}
 @media (prefers-reduced-motion: reduce){#m-scenario.edu-point{animation:none}}
+
+/* While the probe flies, the story bubble moves above the flight caption (bottom left) so both can be read. */
+body.flight-on .edu-panel:not(.full){top:120px;bottom:auto;left:24px;right:auto;transform:none;width:min(420px,calc(100vw - 48px))}
+@media (max-width:760px){body.flight-on .edu-panel:not(.full){top:110px;left:12px;right:12px;transform:none;width:auto;max-height:45vh}}
