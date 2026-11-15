@@ -1,5 +1,7 @@
 {
-  "character": { "name": "Lumi" },
+  "character": {
+    "name": "Lumi"
+  },
   "ui": {
     "panel": "Story guide",
     "step": "Step {n} of {total}",
@@ -13,7 +15,11 @@
     "complete": "Complete mission",
     "playAgain": "Play again",
     "expert": "Switch to expert mode",
-    "verdict": { "go": "Ready to go", "risky": "Risky", "nogo": "Not safe" },
+    "verdict": {
+      "go": "Ready to go",
+      "risky": "Risky",
+      "nogo": "Not safe"
+    },
     "levers": {
       "move": "Move to higher ground",
       "moveTo": "Try {site}",
@@ -45,8 +51,17 @@
       "namePlaceholder": "Explorer",
       "awarded": "Awarded to {name}",
       "note": "Simplified for learning: the batteries and the relay are illustrative."
-    }
+    },
+    "confirm": "Confirm selection",
+    "tryAgain": "Try another site",
+    "choice": "Your choice: {site}"
   },
+  "_nearSites": "Lines where Lumi stands high beside the Site locations list. Entries ending in '.' match every line of that step.",
+  "nearSites": [
+    "objective.intro.4",
+    "objective.intro.5",
+    "site."
+  ],
   "steps": {
     "objective": {
       "intro": [
@@ -55,23 +70,23 @@
         "Why the south pole? Some deep craters there never see the Sun, and they hide ice. Ice can become water to drink, air to breathe and fuel for rockets.",
         "Two golden rules keep a lander alive. It needs sunlight for power, and it must see Earth to talk to us.",
         "Rule 1: sunlight. At the south pole the Sun stays low, near the horizon, so hills and crater walls can block it. Our landing site must be a place the Sun's rays can reach.",
-        "Rule 2: Earth. Our lander talks to us by radio, and radio needs a clear path to Earth. From the south pole, Earth also sits low in the sky, so our site must be able to see it over the hills.",
-        "Now pick a landing site in the list or on the map. Green dots see Earth, amber dots see only the Sun, grey dots sit in shadow."
+        "Rule 2: Earth. Our lander talks to us by radio, and radio needs a clear path to Earth. From the south pole, Earth also sits low in the sky, so our site must be able to see it over the hills."
       ]
     },
     "history": {
       "intro": "People have landed on the Moon before! Tap a flag to discover their stories."
     },
     "site": {
-      "intro": "Here the Sun never climbs high. It rolls along the horizon like a slow golden ball.",
-      "happy": "Sun on the panels and Earth in the sky. This spot feels right.",
-      "worried": "Only one of our two rules is true here. Let's look a little longer.",
-      "sleeping": "Dark and quiet. The lander would sleep here, perhaps forever.",
-      "shadow": "This crater floor has not seen the Sun for ages. Try the high ground on a rim.",
-      "ready": "{site} could work. Press Continue when you are sure.",
+      "pick": "Now pick a landing site in the list or on the map. Green dots see Earth, amber dots see only the Sun, grey dots sit in shadow.",
+      "good": "Great choice! {site} has sunlight for the panels and Earth in view to talk to us. This lander will live.",
+      "noLink": "{site} gets sunlight, but Earth is hidden behind the terrain. The lander would have power, but nobody could hear it. Try another site.",
+      "noSun": "{site} can see Earth, but the Sun can't reach it. With no power, the lander would fall silent. Try another site.",
+      "neither": "{site} is in shadow and can't see Earth. The lander would be dark and silent. Try another site.",
       "darkWeek": "Every spot is dark this week. Let's jump to a brighter one."
     },
-    "launch": { "cheer": "Up we go! Hold on tight, the Moon is waiting." },
+    "launch": {
+      "cheer": "Up we go! Hold on tight, the Moon is waiting."
+    },
     "anomaly": {
       "delay": "Oh no, a storm on Earth held us back. We lifted off some days late.",
       "night": "The Sun has already left {site}. The night ahead is longer than our battery.",
@@ -88,6 +103,8 @@
       "go": "Green at last! You turned a bad day into a good plan.",
       "notyet": "Not yet. Try another lever, or combine two."
     },
-    "done": { "cheer": "You did it, Space Planner. The Moon remembers brave choices." }
+    "done": {
+      "cheer": "You did it, Space Planner. The Moon remembers brave choices."
+    }
   }
 }

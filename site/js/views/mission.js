@@ -1,5 +1,5 @@
 import { t, getLanguage, registerMessages, hasTranslation } from '../i18n.js';
-import { escapeHtml, fmtDeg, fmtLatLon, fmtDateTime, fmtDayMonth } from '../format.js';
+import { escapeHtml, fmtDeg, fmtLatLon, fmtDateTime, fmtDayMonth, fmtTime } from '../format.js';
 import { nextTransition, nextMarginTransition, evaluateSiteMcda } from '../engine/metrics.js';
 import { createPolar3d } from './polar3d/index.js';
 import { mountProbePreviews } from './probe-gallery.js';
@@ -187,7 +187,28 @@ export function createMission(ctx) {
   let historic = null, project2d = null; // Education mode: historic landing-site flags over the map and the globe
 
   const probe = () => PROBES.find((p) => p.id === local.probe);
-  const sites = () => ctx.sites();
+  // Education mode shows three sites, chosen from the real calculations for the landing date at touchdown:
+  // one with Sun and an Earth link, one with Sun but no Earth link, one with neither. Expert mode shows all.
+  let trioKey = '', trio = [];
+  function eduTrio() {
+    const all = ctx.sites().filter((s) => !s.custom);
+    const j = Math.round(ctx.eph().indexOf(ctx.landing()));
+    const key = `${ctx.landing()}|${ctx.margin()}|${all.length}`;
+    if (key === trioKey) return trio;
+    const rows = all.map((site) => ({ site, ...statusOf(site, j), both: scoreOf(site).both }));
+    const byBest = (a, b) => b.both - a.both;
+    const take = (list, used) => list.find((r) => !used.has(r.site.id));
+    const used = new Set();
+    const pick = (...pools) => { for (const pool of pools) { const r = take(pool, used); if (r) { used.add(r.site.id); return r.site; } } return null; };
+    const good = pick(rows.filter((r) => r.sun && r.link).sort(byBest), [...rows].sort(byBest));
+    // Second slot: sunlit but no Earth link (power, but nobody hears it); Earth-without-Sun only if no such site exists.
+    const noLink = pick(rows.filter((r) => r.sun && !r.link).sort(byBest), rows.filter((r) => r.link && !r.sun).sort(byBest), [...rows].sort(byBest));
+    const dark = pick(rows.filter((r) => !r.sun && !r.link).sort(byBest), [...rows].sort((a, b) => a.both - b.both));
+    trio = [good, noLink, dark].filter(Boolean);
+    trioKey = key;
+    return trio;
+  }
+  const sites = () => (isEducation() ? eduTrio() : ctx.sites());
   const view = () => document.body.dataset.view;
   const dur = (ms) => {
     const totalMin = Math.max(0, Math.round(ms / 60000));
@@ -199,6 +220,7 @@ export function createMission(ctx) {
 
   function orderedSites() {
     const list = sites();
+    if (isEducation()) return list; // the trio keeps its order: good, no Earth link, neither
     const first = probe().sites.map((id) => list.find((s) => s.id === id)).filter(Boolean);
     return [...first, ...list.filter((s) => !first.includes(s))];
   }
@@ -270,7 +292,7 @@ export function createMission(ctx) {
     const validate = startEl.querySelector('#validate');
     if (validate) validate.firstChild.textContent = t(edu ? 'Start the mission' : 'Validate');
   }
-  onMode(() => { if (view() === 'start') applyStartMode(); else if (view() === 'mission') refresh(true); });
+  onMode(() => { if (isEducation()) { view2d.z = 1; view2d.x = 0; view2d.y = 0; } if (view() === 'start') applyStartMode(); else if (view() === 'mission') refresh(true); });
 
   /* ---------- mission page skeleton ---------- */
 
@@ -498,11 +520,11 @@ export function createMission(ctx) {
       const rows = orderedSites()
         .filter((site) => !local.query || `${site.label} ${site.short}`.toLowerCase().includes(local.query))
         .map((site) => ({ site, score: scoreOf(site) }))
-        .sort((a, b) =>
+        .sort((a, b) => (isEducation() ? 0 : 1) * (
           (Number(hasModel(b.site)) - Number(hasModel(a.site))) ||
           (Number(b.score.viable) - Number(a.score.viable)) ||
           (b.score.score - a.score.score) ||
-          (b.score.both - a.score.both));
+          (b.score.both - a.score.both)));
       let viableRank = 0;
       listEl.innerHTML = rows.length ? rows.map(({ site, score }) => {
         const open = local.open === site.id;
@@ -633,7 +655,8 @@ export function createMission(ctx) {
             <rect x="0" y="0" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="20" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="40" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/>
             ${rect(sun, 0, COLORS.sun)}${rect(link, 20, COLORS.link)}${rect(both, 40, COLORS.both)}
             ${hl && hl.id === site.id ? `<rect class="edu-hl" x="${hl.from}" y="-1" width="${Math.max(1, hl.to - hl.from)}" height="56" rx="3" fill="rgba(255,107,107,.18)" stroke="#ff6b6b" stroke-width="1.5" vector-effect="non-scaling-stroke"/>` : ''}
-            <line class="cur" x1="0" x2="0" y1="0" y2="54" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+            <rect class="cur-day" x="0" y="-2" width="24" height="58" fill="rgba(245,197,66,.12)"/>
+            <line class="cur" x1="0" x2="0" y1="-2" y2="56" stroke="#f5c542" stroke-width="2" vector-effect="non-scaling-stroke"/>
           </svg>
         </div>`;
       }).join('') : `<div class="empty" style="text-align:center;padding:18px;color:var(--muted);font-size:13px">${escapeHtml(t('No sites selected for comparison. Tick checkboxes in Site locations to compare.'))}</div>`;
@@ -648,6 +671,7 @@ export function createMission(ctx) {
           <span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))} <span class="pill2">${activeSites.length} ${escapeHtml(t('compared'))}</span></span>
         </div>
       </div>
+      <div class="lane-axis lane-now-row"><span></span><div class="lane-now-track"><span class="lane-now" id="m-lane-now"></span></div></div>
       ${lanes}
       <div class="lane-axis">
         <span></span>
@@ -658,7 +682,17 @@ export function createMission(ctx) {
         </div>
       </div>`;
     }
+    // Where we are looking: the cursor line, the day around it, and a date chip above the lanes.
     for (const line of el.querySelectorAll('.cur')) { line.setAttribute('x1', local.hour); line.setAttribute('x2', local.hour); }
+    const dayStart = Math.floor(local.hour / 24) * 24;
+    for (const day of el.querySelectorAll('.cur-day')) { day.setAttribute('x', dayStart); day.setAttribute('width', Math.min(24, SPAN - dayStart)); }
+    const chip = el.querySelector('#m-lane-now');
+    if (chip) {
+      const ms = ctx.landing() + local.hour * HOUR, f = local.hour / SPAN;
+      chip.textContent = `${fmtDayMonth(ms)} · ${fmtTime(ms)}`;
+      chip.style.left = `${(f * 100).toFixed(2)}%`;
+      chip.style.transform = `translateX(${f < 0.08 ? 0 : f > 0.92 ? -100 : -50}%)`;
+    }
   }
   function renderTime() {
     $('m-time').value = local.hour;
@@ -858,11 +892,11 @@ export function createMission(ctx) {
       if (drag) {
         const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
         if (Math.hypot(dx, dy) > 4) drag.moved = true;
-        if (drag.moved) { view2d.x = drag.vx + dx; view2d.y = drag.vy + dy; draw2d(); }
+        if (drag.moved && !isEducation()) { view2d.x = drag.vx + dx; view2d.y = drag.vy + dy; draw2d(); } // Education: the 2D map stays put
         return;
       }
       const hit = nearest(event.clientX - box.left, event.clientY - box.top), id = hit ? hit.site.id : null;
-      canvas.style.cursor = hit ? 'pointer' : 'grab';
+      canvas.style.cursor = hit ? 'pointer' : isEducation() ? 'default' : 'grab';
       if (id !== hoverId) { hoverId = id; draw2d(); }
     });
     canvas.addEventListener('pointerup', (event) => {
@@ -991,7 +1025,7 @@ export function createMission(ctx) {
         flightEl.classList.remove('show'); flightEl.innerHTML = '';
         if (document.activeElement === document.body || document.activeElement === skip) returnFocus?.focus();
       }, 240);
-      ctx.arrive(sites().indexOf(site));
+      ctx.arrive(ctx.sites().indexOf(site));
     };
     const handleKey = event => {
       if (event.key === 'Escape') { event.preventDefault(); finish(); }
