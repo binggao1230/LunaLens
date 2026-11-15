@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://binggao1230.github.io/LunaLens/"><img src="design/checks/w6-compare-desktop.webp" alt="LunaLens Map comparison with shared Sun and Earth timeline" width="900"></a>
+  <a href="https://binggao1230.github.io/LunaLens/"><img src="design/checks/readme-map.png" alt="LunaLens Map comparison with shared Sun and Earth timeline" width="900"></a>
 </p>
 
 <p align="center"><sub>Map comparison: one current point, saved points, a shared timeline, and a floating Atlas comparison panel.</sub></p>
@@ -74,12 +74,14 @@ screening tool, not a landing-safety, power or radio-link model.
 
 ### Screenshots
 
-| Atlas view | Expert mode at 390 px |
+| Atlas view | Detailed comparison |
 |---|---|
-| <img src="design/checks/m1-atlas-stage.png" alt="Atlas terrain view with the Sun and Earth markers" width="480"> | <img src="design/checks/w6-expert-390.webp" alt="LunaLens Expert mode at 390 px" width="220"> |
+| <img src="design/checks/readme-atlas.png" alt="Atlas terrain view with the floating comparison sidebar and four layers" width="480"> | <img src="design/checks/readme-compare.png" alt="Detailed comparison with two saved points" width="480"> |
 
 The native Expert flow is `Windows → Globe → Map → Atlas`; Mission and Education are
 separate entries for classroom and public use.
+
+All screenshots are English and show the current release.
 
 ### What it does
 
