@@ -6,7 +6,7 @@ import { t } from './i18n.js';
 import { escapeHtml } from './format.js';
 import { CHARACTER_MARKUP } from './edu/character.js';
 
-const ICON_PLANNER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M12 12l6.4-6.4"/></svg>';
+export const ICON_PLANNER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M12 12l6.4-6.4"/></svg>';
 const FLIP_AT = 260, HOLD_UNTIL = 700, DONE_AT = 1100;
 let run = 0;
 

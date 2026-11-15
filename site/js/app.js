@@ -7,7 +7,8 @@ import { escapeHtml, fmtLatLon, utcMidnight } from './format.js';
 import { createMission } from './views/mission.js';
 import { createEducation } from './edu/edu.js';
 import { getMode, setMode, onMode, initMode, parseHash, formatHash } from './mode.js';
-import { switchMode } from './mode-transition.js';
+import { switchMode, ICON_PLANNER } from './mode-transition.js';
+import { CHARACTER_MARKUP } from './edu/character.js';
 import { evaluateSiteMcda } from './engine/metrics.js';
 import { createExpert } from './views/expert.js';
 import { createSouthPole } from './views/southpole/index.js';
@@ -462,8 +463,10 @@ function syncFromAtlas() {
 function showView(v) {
   if (v === 'compare' || v === 'slip' || v === 'plan') v = 'explore';
   if (!['start', 'mission', 'explore', 'data', 'build', 'atlas', 'pole'].includes(v)) v = 'start';
-  // Education mode has the Mission and Data pages only; Atlas, Explore and South Pole are Expert tools.
-  if (getMode() === 'education' && ['atlas', 'explore', 'pole'].includes(v)) v = 'mission';
+  // Education mode is the Mission page only (the start page is its probe picker); every other page is an Expert tool.
+  if (getMode() === 'education' && !['start', 'mission'].includes(v)) v = 'mission';
+  // Expert mode has no Mission page: the start page and the Mission page belong to Education mode.
+  if (getMode() !== 'education' && ['start', 'mission'].includes(v)) v = 'explore';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}${formatHash(v)}`);
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
@@ -675,7 +678,8 @@ function bind() {
   $('mode-toggle').onclick = (e) => { const b = e.target.closest('button[data-mode]'); if (b) switchMode(b.dataset.mode, b); };
   onMode((m) => {
     renderChrome();
-    if (m === 'education' && ['atlas', 'explore', 'pole'].includes(document.body.dataset.view)) { showView('mission'); return; }
+    if (m === 'education' && !['start', 'mission'].includes(document.body.dataset.view)) { showView('mission'); return; }
+    if (m !== 'education' && ['start', 'mission'].includes(document.body.dataset.view)) { showView('explore'); return; }
     history.replaceState(null, '', `${location.search}${formatHash(document.body.dataset.view)}`);
   });
   // A pasted or edited hash on the open page: apply its mode and view (showView uses replaceState, so no loop).
@@ -812,12 +816,35 @@ function bind() {
   mapPick('globe', GW, GH, globeXY, (x, y) => ({ lat: 90 - y / GH * 180, lon: ((x / GW * 360 - 180) % 360 + 360) % 360 }), () => true);
 }
 
+/** The first screen: Expert or Education, chosen before anything else. A link that already names a mode skips it. */
+function openModeGate() {
+  const gate = $('mode-gate');
+  const label = (key) => escapeHtml(t(key));
+  gate.innerHTML = `<h1 id="gate-title">${label('Choose your mode')}</h1>
+    <p class="gate-sub">${label('You can change it later from the top bar.')}</p>
+    <div class="gate-cards">
+      <button type="button" class="gate-card" data-mode="expert"><div class="wipe-icon">${ICON_PLANNER}</div><b>${label('Expert mode')}</b><span>${label('Full controls and numbers')}</span></button>
+      <button type="button" class="gate-card" data-mode="education"><div class="edu-char mood-happy" aria-hidden="true">${CHARACTER_MARKUP}</div><b>${label('Education mode')}</b><span>${label('Simpler view, with a guide')}</span></button>
+    </div>`;
+  gate.hidden = false;
+  gate.onclick = (event) => {
+    const card = event.target.closest('.gate-card');
+    if (!card) return;
+    setMode(card.dataset.mode);
+    gate.hidden = true;
+    gate.innerHTML = '';
+    showView(getMode() === 'education' ? 'start' : document.body.dataset.view);
+  };
+  gate.querySelector('.gate-card').focus();
+}
+
 async function start() {
   const [ephemeris, siteData] = await Promise.all([
     loadEphemeris('data/ephemeris'),
     fetch('data/sites.json').then((r) => { if (!r.ok) throw new Error('Could not load the site list'); return r.json(); }),
   ]);
   eph = ephemeris;
+  const hashNamesMode = !!parseHash(location.hash).mode;
   initMode();
   SITES = siteData.sites.map((raw) => makeSite(raw));
   const first = SITES.findIndex((s) => s.id === DEFAULT_SITE);
@@ -880,6 +907,7 @@ async function start() {
   showView(parseHash(location.hash).view);
   loadMaps();
   $('loading').hidden = true;
+  if (!hashNamesMode) openModeGate();
 }
 
 start().catch((error) => {

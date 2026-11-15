@@ -15,6 +15,8 @@ const messages = {
   'Expert mode': ['Mode expert', '专家模式'],
   'Expert': ['Expert', '专家'],
   'Education mode': ['Mode éducation', '教育模式'],
+  'Choose your mode': ['Choisis ton mode', '选择模式'],
+  'You can change it later from the top bar.': ['Tu pourras le changer plus tard dans la barre du haut.', '之后可以在顶部栏切换。'],
   'Learn': ['Apprendre', '学习'],
   'Hi! I\'m Lumi, and I\'ll be your mission guide. Pick a lander and press Validate to go to the Moon!': ['Salut ! Je suis Lumi, et je serai ton guide de mission. Choisis un atterrisseur et appuie sur Valider pour partir sur la Lune !', '你好！我是 Lumi，你的任务向导。选一个着陆器，然后按“确认”，出发去月球！'],
   'Start the mission': ['Commencer la mission', '开始任务'],
