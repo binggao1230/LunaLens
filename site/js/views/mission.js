@@ -229,6 +229,7 @@ export function createMission(ctx) {
     return list.find((s) => s.id === local.picked) ?? orderedSites()[0];
   }
   function defaultCompared() {
+    if (isEducation()) return new Set(); // Education: the graph shows the sites the user picks
     const list = sites();
     const probeSites = probe()?.sites?.filter((id) => list.some((s) => s.id === id)) ?? [];
     const initial = probeSites.length >= 2 ? probeSites.slice(0, 4) : orderedSites().slice(0, 3).map((s) => s.id);
@@ -375,7 +376,7 @@ export function createMission(ctx) {
       if (event.target.closest('.srow-chk')) return;
       const row = event.target.closest('[data-id]'); if (!row) return;
       const same = local.picked === row.dataset.id;
-      local.picked = row.dataset.id;
+      local.picked = row.dataset.id; if (isEducation()) local.compared.add(row.dataset.id);
       local.open = same && local.open === row.dataset.id ? null : row.dataset.id;
       refresh(true);
       focusSite();
@@ -564,8 +565,8 @@ export function createMission(ctx) {
 
   function laneSites() {
     const highlighted = ctx.eduHighlight?.()?.id ?? null; // Education mode always shows the site it is talking about
-    // Education mode does not compare: the timeline shows only the picked site.
-    if (isEducation()) { const picked = pickedSite()?.id; return orderedSites().filter((s) => s.id === picked || s.id === highlighted); }
+    // Education mode: the timeline shows the sites the user picked (compared) and the picked one.
+    if (isEducation()) { const picked = pickedSite()?.id; return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === picked || s.id === highlighted); }
     return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === highlighted);
   }
   function runsOf(test, site) {
@@ -903,7 +904,7 @@ export function createMission(ctx) {
       const moved = drag?.moved; drag = null;
       if (moved) return;
       const box = canvas.getBoundingClientRect(), hit = nearest(event.clientX - box.left, event.clientY - box.top);
-      if (hit) { local.picked = hit.site.id; refresh(true); }
+      if (hit) { local.picked = hit.site.id; if (isEducation()) local.compared.add(hit.site.id); ctx.onSitePick?.(local.picked); refresh(true); }
     });
     canvas.addEventListener('wheel', (event) => {
       event.preventDefault();
