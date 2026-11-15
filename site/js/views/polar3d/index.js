@@ -187,7 +187,7 @@ export async function createPolar3d(env) {
       const sunSpot = new T.Mesh(new T.SphereGeometry(1, 12, 8), new T.MeshBasicMaterial({ color: 0xffe066 }));
       sunSpot.scale.setScalar(0.018);
       scene.add(sunSpot);
-      let markers = [], markerKey = '', pending = false, tween = 0, home = null;
+      let markers = [], markerKey = '', tween = 0, home = null;
       const sphereGeometry = new T.SphereGeometry(1, 16, 12), ringGeometry = new T.RingGeometry(1.5, 2, 24);
 
       const buildMarkers = () => {
@@ -207,7 +207,6 @@ export async function createPolar3d(env) {
           return { site, normal, dotMesh, ring };
         });
       };
-      const request = () => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); };
       // Terrain at the picked site: the same generator Explore uses, heights at ×1 (no exaggeration).
       const reliefGroup = new T.Group();
       scene.add(reliefGroup);

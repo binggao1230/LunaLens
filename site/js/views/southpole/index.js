@@ -29,6 +29,7 @@ export function createSouthPole(ctx) {
     grid: { scope: 'pole', cells: [], token: 0, done: false, startedMs: 0, ms: 0, scenarioMs: 0 },
     rangeHandle: null,
     cell: null, popupCell: null,
+    slots: { A: null, B: null, C: null }, target: null,
     limits: { ...DEFAULT_LIMITS }, targets: { ...DEFAULT_TARGETS }, weights: { ...DEFAULT_WEIGHTS },
     globe: null, globeFailed: false, atlasSrc: '', atlasKey: '', atlasRev: 0, moonReady: false,
   };
@@ -143,6 +144,9 @@ export function createSouthPole(ctx) {
         </div>
         <div id="sp-sites"></div>
         <label class="pole-label">${escapeHtml(t('Map point'))}<span class="pole-point" id="sp-point">${escapeHtml(t('None selected'))}</span></label>
+        <h3>${escapeHtml(t('Selected points A/B/C'))}</h3>
+        <div id="sp-slots"></div>
+        <div id="sp-compare"></div>
         <h3>${escapeHtml(t('Earth link at the preview time'))}</h3>
         <input type="range" id="sp-preview" min="0" max="1" step="1" value="0" aria-label="${escapeHtml(t('Preview hour in the stay'))}">
         <p class="pole-link" id="sp-link"></p>
@@ -178,6 +182,16 @@ export function createSouthPole(ctx) {
           <label>${escapeHtml(t('Stay'))}<select id="sp-mstay"></select></label>
           <p id="sp-mwindowinfo" class="sub"></p>
           <div class="pole-modal-actions"><button type="button" class="btn-primary" id="sp-confirm">${escapeHtml(t('Use this window'))}</button></div>
+        </div>
+      </div>
+
+      <div class="pole-atlas-pick" id="sp-atlas-pick" hidden>
+        <p class="sub" id="sp-target"></p>
+        <div class="pole-atlas-actions">
+          <button type="button" class="btn-ghost btn-xs" data-slot="A">A</button>
+          <button type="button" class="btn-ghost btn-xs" data-slot="B">B</button>
+          <button type="button" class="btn-ghost btn-xs" data-slot="C">C</button>
+          <button type="button" class="btn-primary btn-xs" id="sp-back-map">${escapeHtml(t('Back to map'))}</button>
         </div>
       </div>
 
@@ -325,6 +339,14 @@ export function createSouthPole(ctx) {
       g.beginPath(); g.arc(x, y, site.id === ui.selected ? 5.5 : 4, 0, Math.PI * 2);
       g.fillStyle = site.id === ui.selected ? '#fff' : '#9be7ff'; g.fill(); g.strokeStyle = '#0f1113'; g.lineWidth = 1.5; g.stroke();
     }
+    const slotColors = { A: '#58c8ff', B: '#f5c542', C: '#ff9ad5' };
+    for (const [name, slot] of Object.entries(ui.slots)) {
+      if (!slot) continue;
+      const p = project(slot.lat, slot.lon), [x, y] = screenOf(p.xKm, p.yKm);
+      g.beginPath(); g.arc(x, y, 6, 0, Math.PI * 2); g.fillStyle = slotColors[name]; g.fill();
+      g.strokeStyle = '#0f1113'; g.lineWidth = 2; g.stroke();
+      g.fillStyle = '#fff'; g.font = 'bold 12px sans-serif'; g.fillText(name, x + 9, y + 4);
+    }
   }
 
   function bindMap() {
@@ -346,7 +368,7 @@ export function createSouthPole(ctx) {
       if (hit) { ui.cell = hit; openCell(hit); return; }
       const q = unproject(xKm, yKm);
       if (q.lat > STUDY_LAT) { setNotice(t('Outside the 85°S study area: no screening. The map stays on the pole.')); centrePole(); return; }
-      addPoint(q.lat, q.lon);
+      openAtlasAt(q.lat, q.lon);
     });
     cv.addEventListener('wheel', (e) => {
       e.preventDefault();
@@ -465,23 +487,76 @@ export function createSouthPole(ctx) {
     document.getElementById('sp-close-popup').onclick = () => { els['sp-popup'].hidden = true; };
   }
 
-  function atlasTarget(cell) {
+  function atlasTarget() {
     const q = new URLSearchParams();
-    const lat = cell ? cell.lat : selectedSite()?.lat, lon = cell ? cell.lon : selectedSite()?.lon;
-    if (Number.isFinite(lat) && Number.isFinite(lon)) q.set('s', `${lat.toFixed(4)},${(((lon + 180) % 360 + 360) % 360 - 180).toFixed(4)},${t('Screened block')}`);
+    const tgt = ui.target;
+    const lat = tgt ? tgt.lat : selectedSite()?.lat, lon = tgt ? tgt.lon : selectedSite()?.lon;
+    if (Number.isFinite(lat) && Number.isFinite(lon)) q.set('s', `${lat.toFixed(4)},${(((lon + 180) % 360 + 360) % 360 - 180).toFixed(4)},${tgt?.label ?? t('Selected point')}`);
     q.set('t', `${new Date(ctx.landing()).toISOString().slice(0, 16)}Z`);
     const key = q.toString();
     return { key, url: `atlas/index.html?sp=${++ui.atlasRev}#${key}` };
   }
 
-  function syncAtlas(cell = ui.popupCell) {
-    const { key, url } = atlasTarget(cell);
+  function syncAtlas() {
+    const { key, url } = atlasTarget();
     if (key !== ui.atlasKey) { ui.atlasKey = key; els['sp-atlas'].src = url; }
   }
 
   function enterAtlas(cell) {
     ui.popupCell = cell;
+    if (cell) ui.target = { lat: cell.lat, lon: cell.lon, label: t('Screened block') };
     setStage('atlas');
+  }
+
+  function openAtlasAt(lat, lon, label = t('Map point')) {
+    ui.target = { lat, lon, label };
+    setStage('atlas');
+  }
+
+  function sameSpot(a, b) { return a && b && Math.abs(a.lat - b.lat) < 1e-3 && Math.abs(a.lon - b.lon) < 1e-3; }
+
+  async function measureSlot(slot) {
+    if (!slot) return;
+    try {
+      const dem = await ctx.dem();
+      const h = computeHorizon(dem, slot.lat, slot.lon, { minRangeM: 480 });
+      if (!h) { slot.metrics = null; renderSlots(); return; }
+      const stats = earthStats(eph(), slot.lat, slot.lon, h.groundM, h.horizon, {
+        startIndex: Math.round(eph().indexOf(ctx.landing())), stayH: ctx.stayH(), marginDeg: ctx.margin(),
+      });
+      slot.metrics = { earthPct: stats?.earthPct ?? null, longestH: stats?.longestH ?? null, slopeDeg: h.slopeDeg };
+    } catch { slot.metrics = null; }
+    renderSlots(); drawMap();
+  }
+
+  function saveSlot(name) {
+    if (!ui.target) return;
+    const existing = Object.values(ui.slots).find((s) => sameSpot(s, ui.target));
+    if (existing) { setNotice(t('That point is already saved.')); return; }
+    ui.slots[name] = { ...ui.target, metrics: null };
+    measureSlot(ui.slots[name]);
+    renderSlots();
+    setNotice(t('Saved point {name}: {pos}.', { name, pos: fmtLatLon(ui.target.lat, ui.target.lon, 3) }));
+  }
+
+  function renderSlots() {
+    const names = ['A', 'B', 'C'];
+    const colors = { A: '#58c8ff', B: '#f5c542', C: '#ff9ad5' };
+    els['sp-slots'].innerHTML = names.map((n) => {
+      const s = ui.slots[n];
+      if (!s) return `<p class="sub" style="margin:2px 0">${n} · ${escapeHtml(t('empty'))}</p>`;
+      const m = s.metrics;
+      return `<div class="pole-slot"><b style="color:${colors[n]}">${n}</b><span>${escapeHtml(fmtLatLon(s.lat, s.lon, 2))}</span><span>${m ? `${Math.round(m.earthPct)}% · ${m.longestH} h` : escapeHtml(t('measuring…'))}</span><button type="button" class="btn-ghost btn-xs" data-remove="${n}" aria-label="${escapeHtml(t('Remove {name}', { name: n }))}">×</button></div>`;
+    }).join('');
+    const filled = names.map((n) => [n, ui.slots[n]]).filter(([, s]) => s && s.metrics);
+    if (filled.length >= 2) {
+      els['sp-compare'].innerHTML = `<table class="pole-cmp"><thead><tr><th></th>${filled.map(([n]) => `<th style="color:${colors[n]}">${n}</th>`).join('')}</tr></thead><tbody>
+        <tr><th>${escapeHtml(t('Earth visibility'))}</th>${filled.map(([, s]) => `<td>${Math.round(s.metrics.earthPct)}%</td>`).join('')}</tr>
+        <tr><th>${escapeHtml(t('Longest link'))}</th>${filled.map(([, s]) => `<td>${s.metrics.longestH} h</td>`).join('')}</tr>
+        <tr><th>${escapeHtml(t('Slope'))}</th>${filled.map(([, s]) => `<td>${s.metrics.slopeDeg.toFixed(1)}°</td>`).join('')}</tr></tbody></table>`;
+    } else {
+      els['sp-compare'].innerHTML = `<p class="sub">${escapeHtml(t('Save at least two points to compare them.'))}</p>`;
+    }
   }
 
   /* ---------- render ---------- */
@@ -493,6 +568,11 @@ export function createSouthPole(ctx) {
     els['sp-map-wrap'].hidden = stage !== 'map';
     els['sp-atlas'].hidden = stage !== 'atlas';
     els['sp-panel'].hidden = stage === 'atlas';
+    els['sp-atlas-pick'].hidden = stage !== 'atlas';
+    if (stage === 'atlas') {
+      const tgt = ui.target;
+      els['sp-target'].textContent = tgt ? `${t(tgt.label)} · ${fmtLatLon(tgt.lat, tgt.lon, 3)} · ${fmtDateTime(ctx.landing())}` : '';
+    }
     if (stage === 'globe') ensureGlobe();
     else if (stage === 'map') { if (!ui.grid.cells.length) buildGrid(ui.grid.scope); else if (ui.tab === 'moon') drawMoon(); else drawMap(); }
     else if (stage === 'atlas') syncAtlas(ui.popupCell ?? ui.cell);
@@ -520,7 +600,7 @@ export function createSouthPole(ctx) {
 
   function renderAll() {
     if (!ui.built) return;
-    renderStaySelects(); syncWindowInputs(); renderSites(); renderLink(); renderGrid(); renderDetail(); renderPreviewRange(); renderHud(); renderPanelToggle();
+    renderStaySelects(); syncWindowInputs(); renderSites(); renderLink(); renderGrid(); renderDetail(); renderPreviewRange(); renderHud(); renderSlots(); renderPanelToggle();
     if (ui.stage === 'map') { if (ui.tab === 'moon') drawMoon(); else drawMap(); }
     if (ui.stage === 'atlas') syncAtlas(ui.popupCell ?? ui.cell);
   }
@@ -698,6 +778,9 @@ export function createSouthPole(ctx) {
       if (best) { ui.selected = best.id; ctx.selectSite(best.id); renderAll(); }
       else if (y > 512 * 0.68) { setTab('southpole'); }
     };
+    document.querySelector('.pole-atlas-actions').addEventListener('click', (e) => { const b = e.target.closest('[data-slot]'); if (b) saveSlot(b.dataset.slot); });
+    els['sp-back-map'].onclick = () => setStage('map');
+    els['sp-slots'].addEventListener('click', (e) => { const b = e.target.closest('[data-remove]'); if (!b) return; ui.slots[b.dataset.remove] = null; renderSlots(); drawMap(); });
     bindMap();
   }
 
