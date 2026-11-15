@@ -13,7 +13,7 @@
           >
             <ion-select-option value="fr">FR</ion-select-option>
             <ion-select-option value="en">EN</ion-select-option>
-            <ion-select-option value="zh">简体中文</ion-select-option>
+            <ion-select-option value="zh">简中</ion-select-option>
           </ion-select>
         </header>
 
@@ -77,11 +77,6 @@
             </p>
           </div>
         </details>
-
-        <footer class="welcome-footer">
-          <span>{{ t('Ready to explore offline') }}</span>
-          <router-link to="/explore">{{ t('Start exploring') }} <span aria-hidden="true">→</span></router-link>
-        </footer>
       </main>
     </ion-content>
   </ion-page>
@@ -118,14 +113,18 @@ const { language, setLanguage, t } = useLanguage();
   object-fit: contain;
 }
 .language-select {
-  min-height: 42px;
-  min-width: 94px;
-  padding: 0 9px;
+  width: 70px;
+  min-height: 36px;
+  min-width: 70px;
+  margin-left: auto;
+  padding: 0 4px;
+  --padding-start: 6px;
+  --padding-end: 4px;
   border: 1px solid #d3d5d5;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fffefa;
   color: #203b62;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 750;
 }
 .welcome-hero {
@@ -394,24 +393,6 @@ details[open] .expand-mark {
   color: #173e6b;
   font-size: 12px;
   font-weight: 700;
-}
-.welcome-footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 10px 18px;
-  margin: 14px 2px 0;
-  color: #596273;
-  font-size: 12px;
-  line-height: 1.5;
-}
-.welcome-footer a {
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: #173e6b;
-  font-weight: 650;
 }
 :global(:focus-visible) {
   outline: 3px solid #a04e00;

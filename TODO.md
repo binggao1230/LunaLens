@@ -70,6 +70,7 @@ alternative dates at the same site". The second half is what the product cannot 
 ## F. An educational mobile companion
 
 - **In progress:** Ionic Vue + Capacitor app in `mobile/` has a simple branded start screen, saved English/French/Simplified Chinese language choice, all 12 curated sites, and local daily results for sunlight, Earth visibility, and their overlap. Expandable, NASA-sourced learning notes cover lunar daylight and broad surface-temperature ranges. The guided site comparison, native device review, and educator review remain.
+- Add concise, localized context for each selected reference site and explain how to read hourly samples and polar illumination limits.
 - **Next:** guide a same-date comparison between a familiar landed site and a south-pole site, with a plain-language prompt about how sunlight and Earth visibility differ.
 - Build a separate, mobile-first (PWA) or mobile app for educators, students and younger learners. Keep the full analysis tools on
   the website; the app is a short, welcoming learning experience, not a smaller copy of every website view.

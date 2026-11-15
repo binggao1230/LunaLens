@@ -16,7 +16,7 @@
           >
             <ion-select-option value="fr">FR</ion-select-option>
             <ion-select-option value="en">EN</ion-select-option>
-            <ion-select-option value="zh">简体中文</ion-select-option>
+            <ion-select-option value="zh">简中</ion-select-option>
           </ion-select>
         </header>
 
@@ -217,7 +217,6 @@
         </section>
 
         <footer class="page-footer">
-          <span>{{ t('Ready to explore offline') }}</span>
           <a href="https://luna-lens.gaobing1230.workers.dev" target="_blank" rel="noopener noreferrer"
             >{{ t('Full LunaLens website') }} <span class="external-hint">↗</span></a
           >
@@ -301,14 +300,18 @@ async function openLesson(): Promise<void> {
 }
 
 .language-select {
-  min-height: 42px;
-  min-width: 94px;
-  padding: 0 9px;
+  width: 70px;
+  min-height: 36px;
+  min-width: 70px;
+  margin-left: auto;
+  padding: 0 4px;
+  --padding-start: 6px;
+  --padding-end: 4px;
   border: 1px solid #d3d5d5;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fffefa;
   color: #203b62;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 750;
 }
 
