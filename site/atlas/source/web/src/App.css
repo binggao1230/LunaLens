@@ -3449,7 +3449,8 @@ body[data-over='marker'] .viewport canvas {
   display: none !important;
 }
 
-/* Embedded Atlas keeps the layer row and time bar; the dock cards belong to Map. */
+/* Embedded Atlas keeps only Sun now and the time bar; the dock cards belong to Map. */
+.app[data-embed='on'] .layerbar,
 .app[data-embed='on'] .chrome > .stage {
   display: none !important;
 }

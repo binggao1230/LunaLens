@@ -1,7 +1,7 @@
 // Only three sites can be pinned. When a new pin pushes one out, say so and offer to undo it.
 // The same notice offers to put back a site removed by hand.
 import { useStore } from '../store'
-import { SITE_LETTERS } from './controls'
+import { SITE_LABELS } from './controls'
 
 export function ReplacedNotice() {
   const replaced = useStore((s) => s.replaced)
@@ -13,10 +13,10 @@ export function ReplacedNotice() {
   const out = replaced.removed
   const byHand = replaced.added.length === 0
   const text = byHand
-    ? `Removed ${out.map((p) => `${SITE_LETTERS[p.slot]} · ${p.label}`).join(', ')}.`
+    ? `Removed ${out.map((p) => `${SITE_LABELS[p.slot]} · ${p.label}`).join(', ')}.`
     : out.length === 1 && added.length === 1
-      ? `Replaced ${SITE_LETTERS[out[0].slot]} · ${out[0].label} with ${added[0].label}.`
-      : `Replaced ${out.map((p) => `${SITE_LETTERS[p.slot]} · ${p.label}`).join(', ')} with ${added.length} new ${added.length === 1 ? 'site' : 'sites'}.`
+      ? `Replaced ${SITE_LABELS[out[0].slot]} · ${out[0].label} with ${added[0].label}.`
+      : `Replaced ${out.map((p) => `${SITE_LABELS[p.slot]} · ${p.label}`).join(', ')} with ${added.length} new ${added.length === 1 ? 'site' : 'sites'}.`
   return (
     <div className="notice" role="status">
       <p>

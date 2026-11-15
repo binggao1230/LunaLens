@@ -310,7 +310,7 @@ export const useStore = create<State>((set, get) => ({
       // Keep the most recent pins so comparison stays readable; the new pin takes a free colour.
       const kept = s.pins.slice(-(MAX_PINS - 1))
       const slot = [0, 1, 2].find((k) => !kept.some((q) => q.slot === k)) ?? 0
-      const pin: Pin = { ...p, id, slot, label: p.label ?? `Point ${'ABC'[slot]}` }
+      const pin: Pin = { ...p, id, slot, label: p.label ?? `Point #${slot + 1}` }
       const pins = [...kept, pin]
       // Remember what was pushed out. Pins added in one go (Compare top 3) share one record.
       const out = s.pins.slice(0, s.pins.length - kept.length)

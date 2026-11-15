@@ -5,13 +5,14 @@ import type { CSSProperties, ReactNode } from 'react'
 export const INK = '#eceef2' // --accent
 export const ON_ACCENT = '#0b0c0f' // --on-accent
 
+export const SITE_LABELS = ['#1', '#2', '#3']
 export const SITE_LETTERS = ['A', 'B', 'C']
 
-/** The one way a pinned site is identified in panels: its letter on its colour. */
+/** The one way a pinned site is identified in panels: its number on its colour. */
 export function Badge({ slot }: { slot: number }) {
   return (
-    <i className="badge" data-slot={slot} role="img" aria-label={`Site ${SITE_LETTERS[slot]}`}>
-      {SITE_LETTERS[slot]}
+    <i className="badge" data-slot={slot} role="img" aria-label={`Site ${SITE_LABELS[slot]}`}>
+      {SITE_LABELS[slot]}
     </i>
   )
 }
