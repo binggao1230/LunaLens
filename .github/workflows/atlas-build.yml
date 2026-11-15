@@ -1,0 +1,41 @@
+# Keep the vendored Atlas source and its committed runtime bundle in sync.
+# Run: site/tools/build_atlas.sh, then commit the generated site/atlas files.
+name: Atlas build check
+
+on:
+  pull_request:
+    paths:
+      - 'site/atlas/source/**'
+      - 'site/atlas/index.html'
+      - 'site/atlas/assets/**'
+      - 'site/tools/build_atlas.sh'
+  push:
+    branches: [main]
+    paths:
+      - 'site/atlas/source/**'
+      - 'site/atlas/index.html'
+      - 'site/atlas/assets/**'
+      - 'site/tools/build_atlas.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/atlas/source/web/package-lock.json
+      - name: Rebuild Atlas from source
+        run: site/tools/build_atlas.sh
+      - name: Verify the committed bundle matches source
+        run: |
+          if [ -n "$(git status --porcelain --untracked-files=all -- site/atlas)" ]; then
+            git status --short -- site/atlas
+            echo "::error::Atlas source and committed build are out of sync. Run site/tools/build_atlas.sh and commit the output."
+            exit 1
+          fi

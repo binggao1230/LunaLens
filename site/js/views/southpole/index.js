@@ -738,7 +738,7 @@ export function createSouthPole(ctx) {
     for (const s of sites) q.append('s', `${s.lat.toFixed(4)},${(((s.lon + 180) % 360 + 360) % 360 - 180).toFixed(4)},${s.name}`);
     q.set('t', `${new Date(ctx.landing()).toISOString().slice(0, 16)}Z`);
     const key = q.toString();
-    return { key, url: `atlas/index.html?sp=${++ui.atlasRev}#${key}` };
+    return { key, url: `atlas/index.html?embed=1&sp=${++ui.atlasRev}#${key}` };
   }
 
   function syncAtlas() {
