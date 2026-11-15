@@ -56,7 +56,7 @@ export function createSouthPole(ctx) {
     cell: null, popupCell: null, draft: null,
     slots: { A: null, B: null, C: null }, target: null,
     limits: { ...DEFAULT_LIMITS }, targets: { ...DEFAULT_TARGETS }, weights: { ...DEFAULT_WEIGHTS },
-    globe: null, globeFailed: false, atlasSrc: '', atlasKey: '', atlasRev: 0, atlasReady: false, moonReady: false, syncingSliders: false,
+    globe: null, globeFailed: false, atlasSrc: '', atlasKey: '', atlasRev: 0, atlasReady: false, atlasFocusPending: false, moonReady: false, syncingSliders: false,
     animRunning: true, animSpeed: 5,
     clockMs: null,
   };
@@ -773,7 +773,7 @@ export function createSouthPole(ctx) {
 
   function syncAtlas() {
     const { key, url } = atlasTarget();
-    if (key !== ui.atlasKey) { ui.atlasKey = key; ui.atlasReady = false; els['sp-atlas'].src = url; }
+    if (key !== ui.atlasKey) { ui.atlasKey = key; ui.atlasReady = false; if (ui.stage === 'atlas') ui.atlasFocusPending = true; els['sp-atlas'].src = url; }
   }
 
   function enterAtlas(cell) {
@@ -902,7 +902,10 @@ export function createSouthPole(ctx) {
     drawMap();
     if (!ui.atlasReady) {
       ui.atlasReady = true;
-      setTimeout(pushAtlasCommand, 120);
+      setTimeout(() => {
+        pushAtlasCommand();
+        if (ui.atlasFocusPending) { ui.atlasFocusPending = false; focusAtlas(); }
+      }, 120);
     }
   }
 
@@ -933,6 +936,7 @@ export function createSouthPole(ctx) {
   }
 
   function focusAtlas() {
+    if (ui.stage !== 'atlas') return;
     const point = atlasPoint();
     const win = els['sp-atlas']?.contentWindow;
     if (!point || !win) return;
@@ -999,6 +1003,7 @@ export function createSouthPole(ctx) {
     els['sp-windowhud'].hidden = atlas;
     syncWindowButton();
     if (atlas) {
+      if (previous !== 'atlas') ui.atlasFocusPending = true;
       const tgt = ui.target;
       els['sp-target'].textContent = tgt ? `${t(tgt.label)} · ${fmtLatLon(tgt.lat, tgt.lon, 3)} · ${fmtDateTime(clockMs())}` : '';
     }
@@ -1015,7 +1020,7 @@ export function createSouthPole(ctx) {
       syncAtlas(ui.popupCell ?? ui.cell);
       setTimeout(() => {
         pushAtlasCommand();
-        if (previous !== 'atlas' && ui.atlasReady) focusAtlas();
+        if (previous !== 'atlas' && ui.atlasReady) { ui.atlasFocusPending = false; focusAtlas(); }
       }, 120);
     }
     ctx.syncNav?.();
