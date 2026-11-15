@@ -18,6 +18,12 @@ python3 tools/serve.py 8768
 
 Then open <http://127.0.0.1:8768/>. Opening `index.html` as a file does not work (module loading is blocked on `file://`).
 
+## Design tokens and UI kit
+
+Fonts, colours and radii are defined once in `css/tokens.css`; buttons, toggles, dropdowns and focus rings once in
+`css/ui.css`, loaded last. `ui-kit.html` (open it from the same server) shows every token and component live, in
+Expert and Education mode.
+
 ## Checks
 
 ```sh

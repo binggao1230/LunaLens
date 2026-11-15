@@ -1,0 +1,53 @@
+/* LunaLens shared components. Loaded after every other stylesheet so the same control looks the same on
+   every page and in both modes. Colours, fonts and radii come from css/tokens.css; site/ui-kit.html shows
+   all of this live. Change a component here, not in a page stylesheet.
+
+   Main colour: amber (--primary) for the main button, focus rings and selection.
+   Secondary colour: blue (--accent) for secondary emphasis and the Education theme.
+   Toggles: one quiet segmented style. Dropdowns: one style with a chevron. */
+
+/* ---- type ---- */
+body,.appbar,.tabbar,button,input,select,textarea{font-family:var(--font-sans)}
+.num,.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+
+/* ---- buttons ---- */
+.btn-primary,.start .btn-primary,body.edu-on .start .btn-primary,body.edu-on .edu-actions .btn-primary,body.edu-on .edu-final .btn-primary,
+body.edu-on[data-view=mission] #m-send{background:var(--primary);color:var(--primary-ink);border:none;border-radius:var(--r-pill);box-shadow:none;font-weight:600}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;filter:none}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:var(--r-pill)}
+.btn-ghost:hover{background:rgba(255,255,255,.08)}
+
+/* ---- toggles: the header switch style everywhere (mode, language, 3D/2D, map, scene, presets) ---- */
+.seg,.mseg,.seg-pill{display:inline-flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--border);border-radius:var(--r-control);background:transparent;overflow:visible}
+.seg button,.mseg button,.seg-pill button{border:0;border-radius:7px;background:none;color:var(--muted);min-height:28px;padding:4px 10px;font:inherit;font-size:12.5px;font-weight:500;box-shadow:none;cursor:pointer;transition:color .15s ease,background-color .15s ease}
+.seg button:hover,.mseg button:hover,.seg-pill button:hover{color:var(--text)}
+.seg button.on,.mseg button.on,.seg button[aria-pressed=true],.seg-pill button[aria-pressed=true]{background:rgba(255,255,255,.1);color:var(--text);font-weight:600;box-shadow:none}
+body.edu-on[data-view=mission] .mseg{background:transparent;border:1px solid var(--border);border-radius:var(--r-control);padding:3px}
+body.edu-on[data-view=mission] .mseg button{border-radius:7px;font-size:12.5px;letter-spacing:0;text-transform:none;font-weight:500;color:var(--muted);padding:4px 10px}
+body.edu-on[data-view=mission] .mseg button.on{background:rgba(255,255,255,.1);color:var(--text);font-weight:600;box-shadow:none}
+
+/* ---- dropdowns: the same field and chevron for every native select ---- */
+select,.fields select,.ex-fields select,.pole select,.pole-window-stay select,.pole-modal-card select,
+body[data-view=start] select,body[data-view=mission] select{appearance:none;-webkit-appearance:none;font:inherit;font-size:13px;color:var(--text);
+  background-color:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-control);min-height:36px;padding:6px 30px 6px 10px;cursor:pointer;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23a0a7b2' stroke-width='1.5' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 10px center;background-size:10px 6px}
+select:hover{border-color:rgba(200,220,240,.35)}
+select option{background:var(--surface);color:var(--text)}
+/* The header language menu is the custom dropdown; its list matches the select fields. */
+.lang-btn{border-radius:var(--r-control);border-color:var(--border)}
+.lang-list{background:var(--surface);border-color:var(--border);border-radius:12px}
+
+/* ---- text inputs ---- */
+input[type=date],input[type=number],input[type=search],input[type=text]{font:inherit;color:var(--text);background-color:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-control)}
+input[type=range]{accent-color:var(--primary)}
+input[type=checkbox]{accent-color:var(--primary)}
+
+/* ---- focus and selection: one ring everywhere ---- */
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,canvas:focus-visible,[tabindex]:focus-visible,
+.lang-btn:focus-visible,.lang-list button:focus-visible,.seg-pill button:focus-visible,.pcard:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
+::selection{background:var(--primary);color:var(--primary-ink)}
+
+/* ---- the small wide-tracked label ---- */
+.label{font-size:11px;letter-spacing:var(--tracking);text-transform:uppercase;color:var(--muted);font-weight:500}
