@@ -299,7 +299,7 @@ export function createMission(ctx) {
         <input type="search" id="m-search" autocomplete="off">
         <div class="m-scenario" id="m-scenario"></div>
         <div class="sl" id="m-list"></div>
-        <button class="btn-primary" id="m-send"></button>
+        <button class="btn-primary" id="m-send" hidden></button>
       </aside>
     </div>`;
     historic = createHistoric({
@@ -428,6 +428,7 @@ export function createMission(ctx) {
     $('m-search').placeholder = t('Search sites');
     $('m-search').setAttribute('aria-label', t('Search sites'));
     $('m-send').textContent = `${t('Send probe')} →`;
+    $('m-send').hidden = !isEducation();
     $('m-play').textContent = `${local.timer ? '❚❚' : '▶'} ${t(local.timer ? 'Pause' : 'Play')}`;
   }
 
@@ -935,13 +936,14 @@ export function createMission(ctx) {
   }
 
   function sendProbe() {
-    if (flying) return;
+    if (!isEducation() || flying) return;
     const site = pickedSite(); if (!site) return;
     stopPlay();
     flying = true;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const selected = PROBES.find(probe => probe.id === local.probe);
     flightEl.innerHTML = `<canvas class="flight-scene" aria-label="${escapeHtml(t(selected.name))}"></canvas>
+      <div class="flight-countdown" aria-hidden="true">5</div>
       <div class="flight-top"><span>${escapeHtml(t(selected.name))}</span><button class="btn-ghost flight-skip">${escapeHtml(t('Exit flight'))}<span aria-hidden="true">↗</span></button></div>
       <div class="flight-caption"><p class="flight-phase" role="status">${escapeHtml(t('Preparing spacecraft…'))}</p>
         <h2>${escapeHtml(site.short)}</h2>
@@ -952,16 +954,35 @@ export function createMission(ctx) {
     flightEl.setAttribute('role', 'dialog');
     flightEl.setAttribute('aria-modal', 'true');
     flightEl.setAttribute('aria-label', t('Probe on its way to {site}', { site: site.short }));
+    if (!reduced) flightEl.classList.add('is-counting');
     requestAnimationFrame(() => flightEl.classList.add('in'));
     const skip = flightEl.querySelector('.flight-skip');
     const phase = flightEl.querySelector('.flight-phase');
+    const countdownEl = flightEl.querySelector('.flight-countdown');
     const fill = flightEl.querySelector('.flight-track-fill');
     const returnFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    let done = false, disposeFlight, lastPhase = '';
+    let done = false, disposeFlight, lastPhase = '', countdownTimer = null;
+    const sceneCanvas = flightEl.querySelector('.flight-scene');
+    let countdownDone = reduced;
+    const revealFlight = () => {
+      if (countdownDone && sceneCanvas.dataset.ready === 'true') flightEl.classList.remove('is-counting');
+    };
+    if (!reduced) {
+      let countdown = 5;
+      countdownTimer = setInterval(() => {
+        countdown -= 1;
+        if (countdown >= 0) countdownEl.textContent = String(countdown);
+        else { clearInterval(countdownTimer); countdownEl.remove(); countdownDone = true; revealFlight(); }
+      }, 1000);
+    } else {
+      countdownEl.remove();
+    }
     const finish = () => {
       if (done) return; done = true; flying = false;
+      clearInterval(countdownTimer);
+      flightEl.classList.remove('is-counting');
       document.removeEventListener('keydown', handleKey);
       document.body.style.overflow = previousOverflow;
       flightEl.classList.remove('in');
@@ -982,6 +1003,7 @@ export function createMission(ctx) {
     skip.focus();
     disposeFlight = playProbeFlight(flightEl.querySelector('canvas'), {
       probe: selected.id, site: { lat: site.lat, lon: site.lon }, reduced,
+      startAt: reduced ? 0 : performance.now() + 6000,
       onComplete: () => {
         phase.textContent = t('Landed · exit when you are ready');
       },
@@ -990,6 +1012,7 @@ export function createMission(ctx) {
         disposeFlight?.();
       },
       onProgress: (progress, key) => {
+        revealFlight();
         fill.style.transform = `scaleX(${progress})`;
         if (key !== lastPhase) { phase.textContent = t(key); lastPhase = key; }
       },

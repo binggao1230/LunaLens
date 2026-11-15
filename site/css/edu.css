@@ -141,6 +141,7 @@ body.edu-on[data-view=mission]{--page:#070b14;--surface:#0b111c;--border:rgba(20
 body.edu-on[data-view=mission]::before{background:radial-gradient(120% 80% at 20% 0%,#0d1626 0%,#070b14 55%,#05080f 100%)}
 body.edu-on[data-view=mission] main{max-width:1600px;padding:0 28px 56px}
 body.edu-on[data-view=mission] .mission{grid-template-columns:minmax(0,1fr) 420px;gap:0}
+body.edu-on[data-view=mission] .side-panel{height:min(74svh,720px);min-height:420px;align-self:start}
 body.edu-on[data-view=mission] .glass{background:transparent;border:0;border-radius:0;box-shadow:none}
 body.edu-on[data-view=mission] button:focus-visible,body.edu-on[data-view=mission] input:focus-visible{outline-color:#5aa7f0}
 /* date bar */
@@ -201,11 +202,14 @@ body.edu-on .edu-final{background:#0b111c;border-color:rgba(90,167,240,.35)}
 body.edu-on .edu-final .btn-primary{background:#5aa7f0;color:#07111c;border-radius:99px;letter-spacing:.14em;text-transform:uppercase;font-size:12px}
 @media (max-width:1060px){
   body.edu-on[data-view=mission] .mission{grid-template-columns:1fr}
+  body.edu-on[data-view=mission] .side-panel{height:min(68svh,560px);min-height:360px}
   body.edu-on[data-view=mission] .stage{border-right:0;border-bottom:1px solid var(--border)}
   body.edu-on[data-view=mission] .side-panel{padding-left:0;padding-top:18px}
 }
 @media (max-width:760px){
   body.edu-on[data-view=mission] main{padding:0 14px 260px}
+  body.edu-on[data-view=mission] .side-panel{height:min(54svh,460px);min-height:320px;margin-bottom:0}
+  body.edu-on[data-view=mission] #m-send{position:sticky;bottom:64px;z-index:56}
   body.edu-on[data-view=mission] .datebar{padding:14px 4px 16px}
   body.edu-on[data-view=mission] .stage h2{font-size:20px}
   body.edu-on[data-view=mission] .side-head h3{font-size:24px}

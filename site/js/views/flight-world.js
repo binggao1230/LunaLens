@@ -160,7 +160,7 @@ export function buildFlightWorld(T, renderer, data, colour, earthMap, compact) {
     `,
   }));
   scene.add(globe, around, near);
-  scene.add(new T.HemisphereLight(0xd4deed, 0x44403b, 1.05));
+  scene.add(new T.HemisphereLight(0xd4deed, 0x44403b, 0.45));
   const sun = new T.DirectionalLight(0xfff4e0, 2.8);
   sun.position.set(...data.sun).multiplyScalar(10000);
   scene.add(sun);

@@ -6,6 +6,8 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0f1113">
 <title>LunaLens · Lunar landing site navigator</title>
+<link rel="icon" type="image/svg+xml" sizes="any" href="assets/favicon-light.svg">
+<link rel="icon" type="image/svg+xml" sizes="any" media="(prefers-color-scheme: dark)" href="assets/favicon-dark.svg">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="vendor/noUiSlider/nouislider.min.css">
 <style>
@@ -290,7 +292,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-map-tools button{width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:var(--text2);display:grid;place-items:center;cursor:pointer}
 .pole-map-tools button:hover{background:var(--surface-2);color:var(--text)}
 .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#sp-map{height:100%;width:auto;max-width:100%;background:#0f1113;cursor:crosshair}
+#sp-map{width:auto;height:auto;max-width:100%;max-height:100%;background:#0f1113;cursor:crosshair}
 #sp-moon{width:auto;height:auto;max-width:100%;max-height:100%;margin:auto;object-fit:contain;background:#05070a}
 .pole-globe-hint{position:absolute;left:16px;bottom:96px;max-width:420px;margin:0;color:var(--muted);font-size:12px;pointer-events:none;z-index:3}
 .pole-globe-zoom{position:absolute;right:392px;top:16px;display:flex;gap:6px;z-index:4}
@@ -346,6 +348,8 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-window-dates .arrow{color:var(--muted)}
 .pole-window-stay{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
 .pole-window-stay select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:11.5px}
+.pole-window-edit{font:inherit;font-size:11.5px;padding:5px 9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;white-space:nowrap}
+.pole-window-edit:hover{border-color:var(--accent);color:var(--text)}
 .pole-window-close{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:0 2px}
 .pole-window-close:hover{color:var(--text)}
 .pole-window-track{position:relative}
@@ -378,7 +382,10 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-modal-card h2{margin:0;font-size:18px}
 .pole-modal-card label{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
 .pole-modal-card input[type=range]{flex:1;accent-color:var(--accent)}
+.pole-modal-card input[type=date]{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px;min-height:30px}
 .pole-modal-card select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px}
+.pole-modal-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.pole-modal-dates label{display:flex;flex-direction:column;align-items:stretch;gap:4px;font-size:11.5px;color:var(--muted)}
 .pole-modal-actions{display:flex;justify-content:flex-end;margin-top:4px}
 .pole-popup{position:absolute;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;background:rgba(5,7,10,.45)}
 .pole-popup[hidden]{display:none}
