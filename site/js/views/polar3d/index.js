@@ -28,12 +28,15 @@ export async function createPolar3d(env) {
       let pending = false;
       // Hoisted so texture loads that finish before the rest of the scene is built can still request a frame.
       function request() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); }
+      // The orbit axis is the Earth-facing axis (+x) unless the grab control asks for the polar axis. From the
+      // opening view over the south pole, orbiting around the axis you look along only spins the globe in place
+      // and jams against the polar clamp. OrbitControls reads camera.up once, in its constructor, so set it first.
+      camera.up.set(...(grab ? [0, 1, 0] : [1, 0, 0]));
       const controls = new OrbitControls(camera, canvas);
       controls.enablePan = false; controls.minDistance = 1.05; controls.maxDistance = MAX_DIST;
       controls.enableDamping = true; controls.dampingFactor = 0.08;
       controls.rotateSpeed = 0.5; controls.zoomSpeed = 0.8;
       controls.minPolarAngle = 0.02; controls.maxPolarAngle = Math.PI - 0.02;
-      camera.up.set(...(grab ? [0, 1, 0] : [1, 0, 0]));
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
       // The south pole is always within about 1.5° of the terminator, so the Sun alone leaves the terrain
