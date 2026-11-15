@@ -320,6 +320,9 @@ export function createSouthPole(ctx) {
           <button type="button" class="pole-min" id="sp-panel-toggle" aria-label="${escapeHtml(t('Minimize panel'))}" title="${escapeHtml(t('Minimize panel'))}">${icon('close')}</button>
         </div>
         <div id="sp-sites"></div>
+        <h3>${escapeHtml(t('Top 3 recommended blocks'))}</h3>
+        <p class="sub" id="sp-list-note"></p>
+        <ol class="pole-list" id="sp-list"></ol>
         <label class="pole-label">${escapeHtml(t('Map point'))}<span class="pole-point" id="sp-point">${escapeHtml(t('None selected'))}</span></label>
         <h3>${escapeHtml(t('Selected points A/B/C'))}</h3>
         <div id="sp-slots"></div>
@@ -334,8 +337,6 @@ export function createSouthPole(ctx) {
         <div class="pole-grid-actions"><button type="button" class="btn-ghost btn-xs" id="sp-refine">${escapeHtml(t('Refine to 2 km cells'))}</button><button type="button" class="btn-ghost btn-xs" id="sp-restart">${escapeHtml(t('Restart grid'))}</button><button type="button" class="btn-ghost btn-xs" id="sp-probe">${escapeHtml(t('Test an unknown cell'))}</button></div>
         <p class="pole-progress" id="sp-progress" role="status" aria-live="polite"></p>
         <div class="pole-legend" id="sp-legend"></div>
-        <h3>${escapeHtml(t('Top qualifying cells'))}</h3>
-        <ol class="pole-list" id="sp-list"></ol>
         <div class="pole-detail" id="sp-cell"></div>
       </aside>
 
@@ -393,7 +394,7 @@ export function createSouthPole(ctx) {
       </div>
     </div>`;
     initTranslations();
-    for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-range2', 'sp-window-now', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-len', 'sp-mslider', 'sp-mrange', 'sp-mwindowinfo', 'sp-confirm', 'sp-mcancel', 'sp-mstart', 'sp-mdays', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-hide', 'sp-window-show', 'sp-win-start', 'sp-win-end', 'sp-window-count', 'sp-window-edit', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target']) els[id] = document.getElementById(id);
+    for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-list-note', 'sp-cell', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-range2', 'sp-window-now', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-len', 'sp-mslider', 'sp-mrange', 'sp-mwindowinfo', 'sp-confirm', 'sp-mcancel', 'sp-mstart', 'sp-mdays', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-hide', 'sp-window-show', 'sp-win-start', 'sp-win-end', 'sp-window-count', 'sp-window-edit', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target']) els[id] = document.getElementById(id);
     bind();
     initWindow();
     restoreSlots();
@@ -564,6 +565,14 @@ export function createSouthPole(ctx) {
       g.beginPath(); g.arc(x, y, site.id === ui.selected ? 5.5 : 4, 0, Math.PI * 2);
       g.fillStyle = site.id === ui.selected ? '#fff' : '#9be7ff'; g.fill(); g.strokeStyle = '#0f1113'; g.lineWidth = 1.5; g.stroke();
     }
+    topCells().forEach((cell, i) => {
+      const [cx, cy] = screenOf(cell.xKm, cell.yKm), half = Math.max(8, cell.cellKm * pxPerKm() / 2);
+      g.strokeStyle = '#fff'; g.lineWidth = 2.5; g.strokeRect(cx - half, cy - half, half * 2, half * 2);
+      g.beginPath(); g.arc(cx, cy, 11, 0, Math.PI * 2); g.fillStyle = '#0f1113'; g.fill();
+      g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke();
+      g.fillStyle = '#fff'; g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(String(i + 1), cx, cy + 0.5); g.textAlign = 'start'; g.textBaseline = 'alphabetic';
+    });
     const slotColors = { A: '#58c8ff', B: '#f5c542', C: '#ff9ad5' };
     for (const [name, slot] of Object.entries(ui.slots)) {
       if (!slot) continue;
@@ -665,7 +674,7 @@ export function createSouthPole(ctx) {
     }
     const end = Math.min(idx + 8, cells.length);
     for (let i = idx; i < end; i++) cells[i] = applyScenario(cells[i]);
-    renderProgress();
+    renderProgress(); renderList();
     setTimeout(() => recomputeCells(end, t0), 0);
   }
 
@@ -1078,9 +1087,17 @@ export function createSouthPole(ctx) {
       + field('targetSunPct', t('Sunlight target (%)'), ui.targets.sunPct);
   }
 
+  function topCells() {
+    return ui.grid.cells.filter((c) => c.class?.score != null && c.stats)
+      .sort((x, y) => y.class.score - x.class.score || y.stats.earthPct - x.stats.earthPct).slice(0, 3);
+  }
+
   function renderList() {
-    const rank = ui.grid.cells.filter((c) => c.class?.score != null).sort((a, b) => b.class.score - a.class.score).slice(0, 6);
-    els['sp-list'].innerHTML = rank.length ? rank.map((c) => `<li><button type="button" class="pole-cell-btn" data-cell="${c.row}-${c.col}"><span>${fmtLatLon(c.lat, c.lon, 2)}</span><b>${c.class.score}</b><span>${Math.round(c.stats.sunPct)}% sun · ${Math.round(c.stats.earthPct)}% Earth · ${c.static.slopeDeg.toFixed(1)}°</span></button></li>`).join('') : `<li class="sub">${escapeHtml(t('No qualifying cell yet.'))}</li>`;
+    const cells = ui.grid.cells;
+    const pending = cells.filter((c) => !c.class?.status || c.class.status === 'pending').length;
+    const rank = topCells();
+    if (els['sp-list-note']) els['sp-list-note'].textContent = pending ? t('Computing… {n} blocks left.', { n: pending }) : t('Best touchdown per block in the search window, ranked by screening score.');
+    els['sp-list'].innerHTML = rank.length ? rank.map((c, i) => `<li><button type="button" class="pole-cell-btn" data-cell="${c.row}-${c.col}"><span><b>#${i + 1}</b> ${fmtLatLon(c.lat, c.lon, 2)}</span><b>${c.class.score}</b><span>${Math.round(c.stats.sunPct)}% ${escapeHtml(t('sun'))} · ${Math.round(c.stats.earthPct)}% ${escapeHtml(t('Earth'))} · ${c.static.slopeDeg.toFixed(1)}°${c.touchdownMs ? ` · ${escapeHtml(fmtDateTime(c.touchdownMs))}` : ''}</span></button></li>`).join('') : `<li class="sub">${escapeHtml(t('No qualifying cell yet.'))}</li>`;
   }
 
   function renderDetail() {
