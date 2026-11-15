@@ -78,7 +78,7 @@
       ]
     },
     "history": {
-      "intro": ["Tant de sondes (et d'humains !) se sont déjà posées sur la Lune !", "Active les sites historiques pour voir où les missions se sont déjà posées.", "Clique ici pour voir toutes les missions qui sont allées sur la Lune avant.", "Regarde IM-2 Athena. Il a manqué sa cible de seulement environ 250 mètres.", "Il s'est posé dans un cratère froid et sombre, couché sur le côté. Sans lumière du Soleil sur ses panneaux, il n'a pas pu se recharger."]
+      "intro": ["Tant de sondes se sont déjà posées sur la Lune, et certaines transportaient aussi des humains !", "Active les sites historiques pour voir où les missions se sont déjà posées.", "Clique ici pour voir toutes les missions qui sont allées sur la Lune avant.", "Tu peux explorer les différents sites. Touche n'importe quel drapeau pour lire son histoire.", "Regarde IM-2 Athena. Il a manqué sa cible de seulement environ 250 mètres.", "Il s'est posé dans un cratère froid et sombre, couché sur le côté. Sans lumière du Soleil sur ses panneaux, il n'a pas pu se recharger."]
     },
     "site": {
       "pick": "C'est l'heure de ta première mission ! Nous voulons nous poser sur la Lune le 16/11/2026. Choisis un site d'atterrissage dans la liste ou clique dessus sur la carte.",
