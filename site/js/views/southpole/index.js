@@ -32,7 +32,7 @@ export function createSouthPole(ctx) {
     slots: { A: null, B: null, C: null }, target: null,
     limits: { ...DEFAULT_LIMITS }, targets: { ...DEFAULT_TARGETS }, weights: { ...DEFAULT_WEIGHTS },
     globe: null, globeFailed: false, atlasSrc: '', atlasKey: '', atlasRev: 0, moonReady: false,
-    animRunning: false, animSpeed: 1,
+    animRunning: true, animSpeed: 5,
   };
   const staticCache = new Map();
   const els = {};
@@ -119,7 +119,7 @@ export function createSouthPole(ctx) {
             <button type="button" id="sp-gzout" aria-label="${escapeHtml(t('Zoom out'))}">−</button>
           </div>
           <div class="pole-time" role="group" aria-label="${escapeHtml(t('Time speed'))}">
-            ${[1, 5, 10].map((s) => `<button type="button" data-speed="${s}"${s === 1 ? ' class="on"' : ''}>${s}×</button>`).join('')}
+            ${[1, 5, 10].map((s) => `<button type="button" data-speed="${s}"${s === 5 ? ' class="on"' : ''}>${s}×</button>`).join('')}
             <button type="button" id="sp-pause" aria-label="${escapeHtml(t('Pause'))}">⏸</button>
             <span>${escapeHtml(t('1× = 1 h/s'))}</span>
           </div>
@@ -609,8 +609,12 @@ export function createSouthPole(ctx) {
         b.textContent = used ? `${b.dataset.slot} ✓` : b.dataset.slot;
       }
     }
-    if (stage === 'globe') ensureGlobe();
-    else if (stage === 'map') {
+    if (stage === 'globe') {
+      ui.animRunning = true;
+      els['sp-pause'].textContent = '⏸';
+      for (const b of document.querySelectorAll('.pole-time [data-speed]')) b.classList.toggle('on', Number(b.dataset.speed) === ui.animSpeed);
+      ensureGlobe();
+    } else if (stage === 'map') {
       if (!ui.map.opened) { centrePole(); ui.map.opened = true; }
       if (!ui.grid.cells.length) buildGrid(ui.grid.scope); else if (ui.tab === 'moon') drawMoon(); else drawMap();
     }
