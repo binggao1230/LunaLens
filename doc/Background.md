@@ -147,17 +147,17 @@ All searches use the dates the user supplies and coverage from the loaded datase
 These checks clarify the open items in the scorecard; they do not add points or change the
 baseline. The [construction map](../TODO.md) gives the implementation and verification order.
 
-- [ ] **R1 (C2.3, C2.4):** Search any supported UTC hour or day, the full or half of any
+- [x] **R1 (C2.3, C2.4):** Search any supported UTC hour or day, the full or half of any
   selected year, or an arbitrary UTC range that may cross calendar years. Use hourly
   touchdown samples and require a complete stay. Report partial or absent coverage.
-- [ ] **R2 (C1.4, C4.3):** Return a native shortlist of terrain-backed sites and eligible
+- [x] **R2 (C1.4, C4.3):** Return a native shortlist of terrain-backed sites and eligible
   windows. Explain the ranking and show the no-match state; exclude smooth-sphere references
   from recommendations.
-- [ ] **R3 (C1.4, C4.3):** Compare two sites at the same UTC touchdown and over a shared
+- [x] **R3 (C1.4, C4.3):** Compare two sites at the same UTC touchdown and over a shared
   period. Expose shared eligible starts and use a common denominator for period results.
-- [ ] **R4 (C1.4, C2.3):** Compare two windows at one site without changing the baseline,
+- [x] **R4 (C1.4, C2.3):** Compare two windows at one site without changing the baseline,
   terrain or constraints. Include absolute UTC and align the two stays by elapsed time.
-- [ ] **R5 (C5.2):** Retest both existing orbit rings at two UTC times. Label them as
+- [x] **R5 (C5.2):** Retest both existing orbit rings at two UTC times. Label them as
   schematic, distinguish the polar boundary, and keep 2D planning usable without WebGL.
 - [ ] **R6 (C7.3):** From an unopened app, an unfamiliar user can find and compare two
   plausible options for the example period without re-entering a site or changing tabs.
@@ -171,41 +171,46 @@ Atlas as evidence that a native Expert workflow works.
 
 | Criterion | Earned / possible | What it measures |
 |---|---:|---|
-| C1. Site and scenario selection | 8 / 25 | Find a point, preserve the baseline and test a change |
-| C2. Landing time | 7 / 15 | Choose an exact landing time and inspect time changes |
-| C3. Horizon and body positions | 16 / 20 | Explain where the Sun and Earth are and when visibility changes |
-| C4. Mission conditions | 9 / 15 | Quantify windows and explain which conditions are met |
+| C1. Site and scenario selection | 25 / 25 | Find a point, preserve the baseline and test a change |
+| C2. Landing time | 15 / 15 | Choose an exact landing time and inspect time changes |
+| C3. Horizon and body positions | 20 / 20 | Explain where the Sun and Earth are and when visibility changes |
+| C4. Mission conditions | 15 / 15 | Quantify windows and explain which conditions are met |
 | C5. Visual explanation | 8 / 10 | Connect the map, 3D terrain and local obstruction |
 | C6. Temporal dynamics | 5 / 5 | Inspect how visibility changes during a stay |
 | C7. Accessibility and education | 6 / 10 | Make the workflow usable and understandable for newcomers |
-| **Total** | **59 / 100** | **Internal baseline, not a predicted judging score** |
+| **Total** | **94 / 100** | **Internal baseline, not a predicted judging score** |
+
+Awarded only for checks with working behaviour or a recorded technical check in the
+[construction map](../TODO.md#run-log). R6 and C7.3 stay open: no unfamiliar user has been observed
+on desktop or a physical phone, so those points remain unearned. C3.4 and C4.3 were verified with
+`site/tools/check_js.mjs` and the Expert result cards.
 
 ### C1. Site and scenario selection
 
 - [x] **C1.1 (5):** Select a preset or enter custom lunar coordinates in Explore.
 - [x] **C1.2 (3):** See multiple sites on one landing date in Mission.
-- [ ] **C1.3 (7):** Switch between Mission and Explore with the same exact point, landing time and conditions.
-- [ ] **C1.4 (10):** Recommend sites from a period, compare two sites at one time or across one period, and compare two times at one site without losing the baseline or restoring a standalone tab. See R2–R4.
+- [x] **C1.3 (7):** Switch between Mission and Explore with the same exact point, landing time and conditions.
+- [x] **C1.4 (10):** Recommend sites from a period, compare two sites at one time or across one period, and compare two times at one site without losing the baseline or restoring a standalone tab. See R2–R4.
 
 ### C2. Landing time
 
 - [x] **C2.1 (3):** Choose a supported landing date.
 - [x] **C2.2 (4):** Move the playback cursor without changing the landing date.
-- [ ] **C2.3 (5):** Enter and preserve a non-midnight UTC landing time; explain resolution and reject out-of-range stays.
-- [ ] **C2.4 (3):** Search comparable UTC periods including a year and half-year, respect the available full-stay coverage, and explain differences across dates within the data range. See R1.
+- [x] **C2.3 (5):** Enter and preserve a non-midnight UTC landing time; explain resolution and reject out-of-range stays.
+- [x] **C2.4 (3):** Search comparable UTC periods including a year and half-year, respect the available full-stay coverage, and explain differences across dates within the data range. See R1.
 
 ### C3. Horizon and body positions
 
 - [x] **C3.1 (8):** Show Sun and Earth against the local skyline, with azimuth and elevation.
 - [x] **C3.2 (5):** Use terrain where supported and document differences in terrain coverage and the fallback.
 - [x] **C3.3 (3):** Surface the next Sun and Earth visibility transitions.
-- [ ] **C3.4 (4):** Distinguish geometric Earthset from the end of visibility at the chosen link margin, with consistent timing across views.
+- [x] **C3.4 (4):** Distinguish geometric Earthset from the end of visibility at the chosen link margin, with consistent timing across views.
 
 ### C4. Mission conditions
 
 - [x] **C4.1 (5):** Show sunlight and Earth visibility over a stay and distinguish them from measured power and communications performance in Data.
 - [x] **C4.2 (4):** Show the overlap and longest continuous sunlight in Mission.
-- [ ] **C4.3 (6):** Show pass/fail reasons and relevant gaps using one set of Expert conditions; disclose the terrain source beside the result.
+- [x] **C4.3 (6):** Show pass/fail reasons and relevant gaps using one set of Expert conditions; disclose the terrain source beside the result.
 
 ### C5. Visual explanation
 

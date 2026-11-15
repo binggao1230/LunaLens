@@ -223,6 +223,55 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   .appbar{flex-wrap:wrap}
   body[data-view=compare] .appbar .tray,body[data-view=slip] .appbar .tray{order:5;flex:1 0 100%;justify-content:flex-start;overflow-x:auto;padding-bottom:4px}
 }
+/* Expert search: one panel, ranked cards, in-place A/B comparison. */
+.expert{margin-bottom:14px}
+.ex-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 12px;align-items:end}
+.ex-fields label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.ex-fields label[hidden]{display:none}
+.ex-fields input,.ex-fields select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:7px 8px;min-height:34px}
+.ex-fields .ex-check{flex-direction:row;align-items:center;gap:6px;color:var(--text)}
+.ex-fields .ex-check input{min-height:0;width:16px;height:16px}
+.ex-note{margin:8px 0 0;color:var(--muted);font-size:12px}
+.ex-rank{display:inline-flex;margin:8px 0 0}
+.ex-cov{margin:8px 0 0;color:var(--muted);font-size:13px}
+.ex-card{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-top:10px;background:var(--surface-2)}
+.ex-cardhead{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.ex-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
+.ex-stats div{display:flex;flex-direction:column;gap:2px}
+.ex-stats b{font-size:15px}
+.ex-stats span{color:var(--muted);font-size:12px}
+.ex-why{margin:6px 0;color:var(--muted);font-size:12.5px}
+.ex-windows{display:flex;flex-direction:column;gap:6px}
+.ex-window{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--text);border-top:1px solid var(--border);padding-top:6px}
+.ex-window>span{flex:1 1 220px;min-width:0}
+.ex-pin,.ex-open{font:inherit;font-size:12px;padding:4px 9px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;min-height:28px}
+.ex-pin{font-weight:700}
+.ex-pin:hover,.ex-open:hover{border-color:var(--accent)}
+.ex-failed{margin-top:10px}
+.ex-failed summary{cursor:pointer;color:var(--muted)}
+.ex-fail{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:12.5px}
+.ex-fail li{margin:4px 0}
+.ex-ref{margin:10px 0 0;color:var(--muted);font-size:12.5px}
+.ex-best{margin:12px 0 0;font-size:13px;color:var(--text)}
+.ex-pins{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.ex-chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:99px;padding:3px 4px 3px 10px;font-size:12px;background:var(--surface-2)}
+.ex-chip.empty{color:var(--muted);padding-right:10px}
+.ex-chip button{font:inherit;border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:2px 6px}
+.ex-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px}
+.ex-table th,.ex-table td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top}
+.ex-table thead th{color:var(--muted);font-weight:600}
+.ex-table td.pos{color:var(--good)}
+.ex-table td.neg{color:var(--critical)}
+.ex-tls{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px}
+.ex-tl{margin:0}
+.ex-tl figcaption{font-size:12px;color:var(--muted);margin-bottom:3px}
+.ex-tl svg{width:100%;height:30px;display:block;background:var(--grid);border-radius:4px}
+.ex-tl-scale{font-size:11px;color:var(--muted)}
+.ex-cond{color:var(--muted);font-size:12px;margin:4px 0}
+.ex-common{font-size:13px;margin:8px 0 0}
+@media (max-width:520px){.ex-pin,.ex-open{min-height:36px;padding:6px 12px}.ex-window{gap:10px}}
+.ex-empty{color:var(--muted);margin:10px 0 0}
+.det-actions{display:flex;gap:6px;margin-top:6px}
 </style>
 <link rel="stylesheet" href="css/mission.css">
 <link rel="stylesheet" href="css/edu.css">
@@ -250,6 +299,31 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   <section class="view" id="v-mission"></section>
   <!-- ================= View 1: Explore ================= -->
   <section class="view" id="v-explore">
+    <section class="card expert" id="expert">
+      <div class="cardhead">
+        <div><h2>Find touchdown windows</h2>
+          <p class="sub" style="margin:0">Search any UTC period for terrain-backed sites whose entire stay meets one set of Sun and Earth conditions. A touchdown window is a surface-conditions screen, not a launch, landing-safety or radio-clearance decision.</p></div>
+      </div>
+      <div class="ex-fields">
+        <label>Period<select id="ex-mode"><option value="year">Full year</option><option value="half">Half year</option><option value="day">One day</option><option value="hour">Exact hour</option><option value="range">Custom range</option></select></label>
+        <label id="ex-yearWrap">Year<select id="ex-year"></select></label>
+        <label id="ex-halfWrap">Half<select id="ex-half"><option value="1">Jan – Jun</option><option value="2">Jul – Dec</option></select></label>
+        <label id="ex-dayWrap">Day (UTC)<input id="ex-day" type="date"></label>
+        <label id="ex-hourWrap">Touchdown (UTC)<input id="ex-hour" type="datetime-local" step="3600"></label>
+        <label id="ex-startWrap">Start date (UTC)<input id="ex-start" type="date"></label>
+        <label id="ex-endWrap">End date (UTC, inclusive)<input id="ex-end" type="date"></label>
+        <label>Stay<select id="ex-stay"></select></label>
+        <label>Earth margin<select id="ex-margin"></select></label>
+        <label>Sun from touchdown (h)<input id="ex-sun" type="number" min="0" max="1417" step="1" value="156"></label>
+        <label class="ex-check"><input id="ex-earth" type="checkbox" checked>Earth at touchdown</label>
+        <button class="btn-primary" id="ex-run" type="button">Find windows</button>
+      </div>
+      <p class="ex-note" id="ex-years-note"></p>
+      <div id="ex-status" role="status" aria-live="polite"></div>
+      <div id="ex-results"></div>
+      <div id="ex-compare"></div>
+      <p class="ex-note">Screening only: hourly samples of the apparent solar limb and Earth clearance against the LOLA skyline. Power output, thermal survival, radio performance and landing safety are not modelled. Near-field terrain is 40 m where available and 240 m elsewhere, so treat results as regional constraints, not a landing-point survey.</p>
+    </section>
     <div class="explore">
       <div>
         <section class="card">
@@ -278,6 +352,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
           <h2>Scenario settings</h2>
           <div class="fields two">
             <label>Landing date (UTC)<input id="date" type="date"></label>
+            <label>Touchdown time (UTC)<input id="time" type="time" step="3600" value="00:00"></label>
             <label>Stay length<select id="stay"></select></label>
             <label>Mast height<select id="mast"></select></label>
             <label>Link margin<select id="margin"></select></label>

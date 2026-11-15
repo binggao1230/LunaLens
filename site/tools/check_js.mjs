@@ -6,7 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Ephemeris } from '../js/engine/ephemeris.js';
 import { Site } from '../js/engine/site.js';
-import { windowMetrics, nextTransition } from '../js/engine/metrics.js';
+import { windowMetrics, nextTransition, nextMarginTransition } from '../js/engine/metrics.js';
 import { Dem, computeHorizon } from '../js/engine/dem.js';
 import { siteBasis, azEl } from '../js/engine/geometry.js';
 
@@ -71,4 +71,18 @@ for (const w of ['sun', 'earth']) {
   const dAz = Math.abs(((got.az - fixture.az + 540) % 360) - 180), dEl = Math.abs(got.el - fixture.el);
   console.log(`\nHorizons fixture (archive/doc/PLAN.md §2.2): Az ${got.az.toFixed(4)} vs ${fixture.az} (${dAz.toFixed(4)}°), El ${got.el.toFixed(4)} vs ${fixture.el} (${dEl.toFixed(4)}°)`);
   assert.ok(dAz < 0.01 && dEl < 0.01, `Horizons fixture: azimuth differs by ${dAz.toFixed(4)}°, elevation by ${dEl.toFixed(4)}°`);
+}
+
+// Expert event meanings (TODO W1.3, C3.4): a link margin closes the window earlier than the
+// geometric Earthset, and the geometric event is independent of the margin.
+{
+  const s = sites.find((x) => x.id === 'im1');
+  const i = s.series.earthClr.findIndex((v, k) => v > 3 && v < 4.5 && s.series.earthVis[k] === 1);
+  assert.ok(i >= 0, 'im1 must have a sample between 3° and 4.5° clearance');
+  const geo = nextTransition(s, 'earth', i);
+  const m2 = nextMarginTransition(s, 2, i), m5 = nextMarginTransition(s, 5, i);
+  assert.equal(m2.state, true, '2° margin is open');
+  assert.equal(m5.state, false, '5° margin is closed at the same instant');
+  assert.notEqual(m2.kind, m5.kind, 'the margin crossing differs from the geometric event');
+  console.log(`\nMargin vs geometry (im1, ${new Date(eph.timeOf(i)).toISOString()}, clearance ${s.series.earthClr[i].toFixed(2)}°): geometric ${geo.kind}; 2° ${m2.kind}; 5° ${m5.kind}`);
 }

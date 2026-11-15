@@ -88,11 +88,11 @@ those checks.
 
 ### W0 — Establish the baseline (0.5 h)
 
-- [ ] **W0.1 — Record inputs.** Start a single working branch, record its base SHA, data
+- [x] **W0.1 — Record inputs.** Start a single working branch, record its base SHA, data
   metadata, site counts and the exact first task in the run log below. Verify that the
   snapshot is present and that the native site opens locally using `site/tools/serve.py`
   bound to `0.0.0.0`. Do not download replacement data unless the expected inputs are missing.
-- [ ] **W0.2 — Capture the old behavior.** Run `node site/tools/check_js.mjs`,
+- [x] **W0.2 — Capture the old behavior.** Run `node site/tools/check_js.mjs`,
   `node site/tools/check_team.mjs` with a working Python/NumPy interpreter, and
   `python3 site/tools/check_ephemeris_svs.py`. Record any pre-existing failure. Capture a
   desktop and 390 px Mission/Explore baseline, including both Mission orbit rings if visible.
@@ -100,19 +100,19 @@ those checks.
 
 ### W1 — Make site, time and conditions consistent (1.75 h)
 
-- [ ] **W1.1 — Shared native scenario (C1.3).** In the native app keep stable site identities
+- [x] **W1.1 — Shared native scenario (C1.3).** In the native app keep stable site identities
   for presets and custom pins, a UTC touchdown hour and one set of Expert conditions.
   Mission's “Inspect this site” opens the exact point in Explore. Returning to Mission
   retains it. Follow the existing Mission/Education boundary and preserve Mission CSV.
   **Accept:** return from Explore for both a preset and a custom polar point. A second pin
   must not change the original coordinates. Use rendered labels as evidence.
-- [ ] **W1.2 — Strict time and coverage (C2.3, R1).** Put input normalization and validation
+- [x] **W1.2 — Strict time and coverage (C2.3, R1).** Put input normalization and validation
   in a pure native engine function. Treat `touchdownMs` and `previewHour` separately.
   Replace the fixed 88-day reservation with stay-aware validation; cap only the cosmetic
   preview/lookahead at available data. Audit callers that assume the full old buffer.
   **Accept:** preserve 23 November 2026 at 12:00 UTC when preview moves six hours; pass the
   boundary, partial-coverage and no-coverage fixtures, with no invalid arrays or NaN.
-- [ ] **W1.3 — One set of windows and event meanings (C3.4, C4.3).** Reuse the native site
+- [x] **W1.3 — One set of windows and event meanings (C3.4, C4.3).** Reuse the native site
   samples and expose one fixed-duration evaluation to Mission, Explore and later W2. Use
   the dynamic sampled Sun rule for totals; a drawn disk fraction must not override it.
   Separate geometric Earthset from the margin-based window ending. Truncate any unavailable
@@ -123,7 +123,7 @@ those checks.
 
 ### W2 — Calculate the shortlist (2 h)
 
-- [ ] **W2.1 — Native search and window grouping (R1, R2).** Put UTC range validation,
+- [x] **W2.1 — Native search and window grouping (R1, R2).** Put UTC range validation,
   per-hour evaluation, grouping and rank keys in a browser-independent module under
   `site/js/engine/`. Pass the site list and normalized conditions explicitly; no DOM,
   network or Atlas source. Return coverage and reasons as well as results. Cache site
@@ -131,7 +131,7 @@ those checks.
   **Accept:** unit checks cover start-inclusive/end-exclusive ranges, clipping at both
   boundaries, single-sample groups, one gap splitting two groups, no qualified start,
   excluded reference sites and deterministic ties. No sample may be counted twice.
-- [ ] **W2.2 — Build the reproducible oracle (R2).** Add a small local check under
+- [x] **W2.2 — Build the reproducible oracle (R2).** Add a small local check under
   `site/tools/` for a synthetic array and both local snapshot fixtures (H1 2030 and the
   custom cross-year range). Cross-check the
   implemented results against a simple hourly sweep of the same canonical engine, not
@@ -143,7 +143,7 @@ those checks.
 
 ### W3 — Ship the Expert entry in Explore (1.5 h)
 
-- [ ] **W3.1 — Period controls (R1, C2.4).** Add one `Find touchdown windows` panel to
+- [x] **W3.1 — Period controls (R1, C2.4).** Add one `Find touchdown windows` panel to
   Explore. Offer an exact UTC hour, a day, a full or half year with a selectable year, and
   custom dates with visible UTC, stay and editable
   conditions. Show requested vs evaluated coverage and distinct validation, searching,
@@ -151,7 +151,7 @@ those checks.
   model. **Accept:** a first-time visitor can search a year or half-year they choose or
   type a cross-year custom range without starting a flight or opening Atlas. A year/half-year
   selection and its equivalent custom dates must produce identical results.
-- [ ] **W3.2 — Results, recommendation and trade-off (R2, C4.3).** Show the ranked terrain
+- [x] **W3.2 — Results, recommendation and trade-off (R2, C4.3).** Show the ranked terrain
   candidates, the top windows, representative times, terrain source and a plain-language
   reason for first place. Put the non-recommended reference sites somewhere clearly
   separate. A slower result for an earlier query must not replace the newest selection.
@@ -161,12 +161,12 @@ those checks.
 
 ### W4 — Compare pinned choices in place (1.5 h)
 
-- [ ] **W4.1 — Two exact starts (R3, R4, C1.4).** Pin A/B from inspection or a ranked
+- [x] **W4.1 — Two exact starts (R3, R4, C1.4).** Pin A/B from inspection or a ranked
   window. Provide same-time two-site and same-site two-time choices. Freeze the comparison
   assumptions; if a global assumption changes, recompute both consistently and say so.
   Show signed deltas, absolute UTC labels and timelines aligned by elapsed stay.
   **Accept:** run the three 2026 cases without retyping coordinates or losing the baseline.
-- [ ] **W4.2 — Two ranges (R3, R4).** For two sites use one shared set of UTC candidates
+- [x] **W4.2 — Two ranges (R3, R4).** For two sites use one shared set of UTC candidates
   and report eligible counts, common starts and longest eligible groups. For the same site
   across two windows, keep separate denominators and display each representative date.
   **Accept:** test sites whose windows do and do not intersect, and two same-site periods
@@ -174,21 +174,21 @@ those checks.
 
 ### W5 — Verify the flow, visuals and teaching mode (1.75 h)
 
-- [ ] **W5.1 — Desktop and 390 px (R6, C7.3).** In one isolated Playwright browser, run
+- [x] **W5.1 — Desktop and 390 px (R6, C7.3).** In one isolated Playwright browser, run
   a user-entered search outside the H1 fixture, change the rank preference, pin two
   options, compare and return to Mission. Re-run H1 separately as a regression.
   Exercise both exact-start and period modes as well as no coverage and no matches.
   Verify touch-size controls, keyboard focus, clipping, no console errors, and both old
   hashes redirecting to Explore while preserving mode. Capture screenshots/results and
   separate the automated walkthrough from the still-required newcomer and phone tests.
-- [ ] **W5.2 — Preserve and explain the orbits (R5, C5.2).** Verify the two existing
+- [x] **W5.2 — Preserve and explain the orbits (R5, C5.2).** Verify the two existing
   [Mission rings](site/js/views/polar3d/index.js) from #51: cyan Moon around Earth, amber
   Earth around the Sun. Check two UTC times in Mission at desktop and 390 px. Clearly
   name the schematic rings and distinguish them from the cyan polar boundary. Sun/Earth
   directions change with time; the circles and distances are illustrative.
   Check that a WebGL failure leaves Explore usable. Do not redo the orbit or use it in
   the search. If it fails, report the scene/camera/viewport and screenshot; keep 2D usable.
-- [ ] **W5.3 — Protect Education and result provenance (C4.3, C7.2).** Verify that Expert
+- [x] **W5.3 — Protect Education and result provenance (C4.3, C7.2).** Verify that Expert
   settings survive a mode toggle and the guided Mission starts without the retired tabs.
   When showing an Expert recommendation, expose terrain/assumptions and geometry limits.
   When showing an Education verdict, keep the existing illustrative wording. Do not mark
@@ -218,6 +218,17 @@ Append one line per checkpoint: **UTC | slice/status | branch and commit | comma
 evidence | blockers | next exact action**. Record the session ID/path separately and use
 local screenshots or traces where useful. No implementation run has been started by
 this document.
+
+### Run log
+
+| UTC | Slice/status | Branch and commit | Commands and evidence | Blockers | Next exact action |
+|---|---|---|---|---|---|
+| 2026-11-14T23:51Z | W0 done | `bing/omp-touchdown-windows` from `9f1afd5` | `check_ephemeris_svs.py`: PASS, 8,760 h, max Sun/Earth 0.0065°, 0.67 km. `check_js.mjs`: PASS with the backend venv on `PATH` (worst JS/PY metric difference 0.000; 240 m skyline max 0.005°). `check_team.mjs`: PASS, margin 2°/5°, 709 h from 2026-11-14, zero hourly mismatches. Snapshot: 43,824 hourly samples 2026-01-01T00:00Z → 2030-12-31T23:00Z; latest complete 709 h touchdown 2030-12-02T10:00Z; 12 presets, 6 with LOLA skylines. Service `luna-lens-site` on :8768 (0.0.0.0). Screens in `design/baseline/` (Mission and Explore at desktop and 390 px; both orbit rings visible). Pre-existing console noise: `ResizeObserver loop completed with undelivered notifications` (2). | `backend/.venv` was broken (a wrapper that exec'd itself); rebuilt with `python3 -m venv` + NumPy 2.5.4. No data blocker. | W1.1 shared native scenario. |
+| 2026-11-15T00:17Z | W1 done | same branch | `site/js/engine/scenario.js`: five entry modes, UTC hour snapping with reported `adjustedMs`, stay-aware complete-stay bound (`touchdown + stay <= last sample`), requested/evaluated/omitted coverage, preview clamped separately. Mission date+time inputs preserve 12:00 UTC while the preview moved 39 h. Custom points keep identity (`c<lat>_<lon>`): two polar picks, first still at −89.50°, 120.00°E. Mission `Inspect in Explore` opened Nobile rim at the same 2026-11-15 00:00 UTC. `nextMarginTransition` added; `check_js.mjs` shows geometric `none` while 2° is open and 5° closes at im1 2026-01-11 10:00 (clearance 4.48°). | none | W2 oracle. |
+| 2026-11-15T00:17Z | W2 done | same branch | `site/js/engine/search.js`: prefix-sum eligibility, groups split by any gap, representative = max overlap → shortest darkness → earliest, stable ID tie-break, reference sites excluded, coverage and aggregate failures. `node site/tools/check_search.mjs`: 13 checks pass, including start-inclusive/end-exclusive, single-sample group, gap split, margin equality, invalid stay, H1 2030 exact (1,055/241, 679/132, 419/161, 354/311, 77/62, 0/0), Nobile first by flexibility, de Gerlache 366 h at 2030-05-26 18:00 first by overlap, cross-year 72 starts against an independent sweep, 2030 partial end at 2030-12-02 10:00, 2031 no coverage. H1 scan 6–7 ms, 4,344 starts × 6 terrain sites, arm64 macOS, no throttling (budget: <2 s desktop). | none | W3 panel. |
+| 2026-11-15T00:17Z | W3 done | same branch | `site/js/views/expert.js` + Explore markup: five period modes, editable stay/margin/continuous-sun/Earth requirement, requested vs evaluated coverage, distinct invalid/searching/no-data/no-match/result states, ranked cards with terrain, reasons, up to three windows, reference list. Verified in browser: H1 via half-year 2030 (Nobile 1,055/241 first, de Gerlache 366 h first on overlap), arbitrary range, cross-year 2028-12-30→2029-01-02 = 72 starts, no-match day 2026-01-08 with per-condition counts, 2031 range = no coverage (not no-match), 390 px no horizontal clipping, 36 px phone controls, keyboard focus ring on every control, no page errors. | The WebKit harness needed a scroll nudge to repaint text after resize; page DOM and sizes were correct. | W4 comparison. |
+| 2026-11-15T00:17Z | W4 done | same branch | Pins A/B from ranked windows without retyping; hourly A/B with signed B−A deltas and two elapsed-hour timelines; period comparison with each range's own denominator, shared-denominator common starts, and non-intersecting message. Verified: de Gerlache vs Nobile (366/327 h overlap, −39 h), 828 of 3,707 common UTC starts in H2 2030, Nobile vs Shackleton rim H1 common = 0, de Gerlache two same-site windows (26 May/15 Jun, −4 h overlap, +55 h sunlight), de Gerlache H1 vs Nobile year (8.1% vs 29.1%, no common start). Global condition change re-runs the search and both comparisons. | “Same site, two periods of different lengths” is reachable by re-running a period and re-pinning; the automatic default for same-site pins stays hourly. | W5 checks. |
+| 2026-11-15T00:17Z | W5 done | same branch | Automated browser walkthrough at 1440 and 390 px: user-entered cross-year search, rank switch, pin and compare, Inspect, return to Mission. H1 re-run separately. Old hashes `#/compare/expert`, `#/slip/expert` → Explore with expert; `#/plan/education` → Explore with education. Mission CSV present and enabled. Orbit rings visible at 2026-11-15 and 2027-05-14, desktop and 390. WebGL disabled by init script: search, 2D map and tiles remain usable; the 3D card says “3D is unavailable on this device…”. Education start page shows Validate and no retired tabs; expert settings (200 h sun, 5° margin) survived a mode toggle. Results show terrain, assumptions and the screening/geometry limit note. Legacy 14→28 Nov clue: Earth +11 h matches; sunlight −65 h instead of −52 h because the canonical rule uses the hourly apparent solar limb (`sunVis`) while the retired Compare used a fixed 0.265° disk fraction. **Still open:** C7.3 newcomer and physical-phone tests, six-step Education walk in three languages, C5.3 skyline segment. | none | W6 close-out. |
 
 ## Mission and Atlas workstream
 

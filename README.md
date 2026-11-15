@@ -49,9 +49,28 @@ own address instead of `localhost` — `ipconfig getifaddr en0` on macOS, `hostn
 by your network settings. The server listens on `0.0.0.0`, so both work.
 
 In this checkout, Mission provides 3D and an optional Education story, Explore provides native point
-and time inspection, Atlas is a separate regional map, and Data explains sources and accuracy.
-Standalone Compare and Date slip are retired; their old links go to Explore. The period search and
-combined South Pole tab are planned in TODO. The public release can lag a local branch.
+and time inspection plus the Expert touchdown search, Atlas is a separate regional map, and Data
+explains sources and accuracy. Standalone Compare and Date slip are retired; their old links go to
+Explore. The period search is implemented in `site/js/engine/search.js`; the combined South Pole tab
+is still planned in TODO. The public release can lag a local branch.
+
+Inside Explore, `Find touchdown windows` takes an exact UTC hour, a day, a half-year, a year, or a
+custom range, ranks terrain-backed sites under one set of conditions, and lets two pinned windows be
+compared in place. Every result carries its coverage and the reason it qualified; smooth-sphere
+references are listed separately and never ranked. Stay length, Earth margin, continuous-sun hours and
+the touchdown Earth requirement are editable screening assumptions, not mission requirements.
+
+## Checks
+
+```sh
+node site/tools/check_search.mjs        # search rules, H1 2030 fixture, cross-year fixture, runtime
+node site/tools/check_js.mjs            # browser engine vs the Python reference (needs NumPy)
+node site/tools/check_team.mjs          # browser windows vs backend/lunalens/windows
+python3 site/tools/check_ephemeris_svs.py
+```
+
+`check_js.mjs` and `check_team.mjs` read a Python interpreter from `PATH` (or the backend venv argument
+for the second). Records for the current run are in `TODO.md` under `Run log`.
 
 ## Online version
 
