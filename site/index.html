@@ -329,6 +329,12 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-windowbar label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex:1 1 220px}
 .pole-windowbar input[type=range]{flex:1;min-width:100px;accent-color:var(--accent)}
 .pole-windowbar p{flex:1 1 100%;margin:0;font-size:12px;color:var(--muted)}
+.pole-range2{position:relative;flex:2 1 320px;height:30px;touch-action:none}
+.pole-range2-track{position:absolute;left:0;right:0;top:12px;height:6px;border-radius:3px;background:var(--grid)}
+.pole-range2-fill{position:absolute;top:12px;height:6px;border-radius:3px;background:var(--accent);pointer-events:none}
+.pole-range2-thumb{position:absolute;top:4px;width:20px;height:20px;padding:0;border-radius:50%;background:var(--text);border:2px solid var(--surface);transform:translateX(-50%);cursor:grab;touch-action:none}
+.pole-range2-thumb:active{cursor:grabbing}
+.pole-range2-thumb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pole-windowbar select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px}
 .pole-modal{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(5,7,10,.72);backdrop-filter:blur(4px)}
 .pole-modal[hidden]{display:none}
@@ -343,6 +349,15 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-popup-card{width:min(420px,calc(100% - 32px));padding:14px 16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:0 18px 60px rgba(0,0,0,.5)}
 .pole-popup-card h3{margin:0 0 4px;font-size:15px}
 .pole-popup-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.pole-slot{display:grid;grid-template-columns:22px 1fr auto 26px;gap:6px;align-items:center;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)}
+.pole-slot span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pole-slot button{padding:0 4px;min-height:22px}
+.pole-cmp{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.pole-cmp th,.pole-cmp td{text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)}
+.pole-cmp thead th{color:var(--muted);font-weight:600}
+.pole-atlas-pick{position:absolute;left:16px;bottom:96px;z-index:8;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:rgba(15,17,19,.92);backdrop-filter:blur(10px);max-width:420px}
+.pole-atlas-pick p{margin:0 0 8px;font-size:12.5px;color:var(--muted)}
+.pole-atlas-actions{display:flex;gap:6px;flex-wrap:wrap}
 @media(max-width:900px){.pole-side{left:8px;right:8px;top:auto;bottom:86px;width:auto;max-height:46%}.pole-hud{left:8px;right:8px;top:56px;max-width:none}.pole-tabs{left:8px;top:8px;transform:none}.pole-globe-zoom{right:8px;top:8px}.pole-windowbar{left:8px;right:8px;bottom:8px;gap:8px}.pole-windowbar p{display:none}.pole-globe-hint{display:none}}
 </style>
 <link rel="stylesheet" href="css/mission.css">

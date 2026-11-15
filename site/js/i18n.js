@@ -483,6 +483,23 @@ const messages = {
   'Slope target (°)': ['Objectif de pente (°)', '坡度目标（°）'],
   'Visibility target (%)': ['Objectif de visibilité (%)', '可见性目标（%）'],
   'Link window target (h)': ['Objectif de fenêtre de liaison (h)', '链路窗口目标（小时）'],
+  'Selected points A/B/C': ['Points sélectionnés A/B/C', '已选点 A/B/C'],
+  'empty': ['vide', '空'],
+  'measuring…': ['mesure…', '测量中…'],
+  'Save at least two points to compare them.': ['Enregistrez au moins deux points pour les comparer.', '至少保存两个点才能比较。'],
+  'Back to map': ['Retour à la carte', '返回地图'],
+  'Saved point {name}: {pos}.': ['Point {name} enregistré : {pos}.', '已保存点 {name}：{pos}。'],
+  'That point is already saved.': ['Ce point est déjà enregistré.', '该点已保存。'],
+  'Remove {name}': ['Retirer {name}', '移除 {name}'],
+  'Longest link': ['Plus longue liaison', '最长链路'],
+  'Slope': ['Pente', '坡度'],
+  'True scale: Moon radius = 1 unit; Earth 3.67 radii at 221; Sun 400 radii at 86,100. Move over the south cap to see it is selectable; click opens the 2D map.': ['Échelle réelle : rayon lunaire = 1 ; Terre 3,67 rayons à 221 ; Soleil 400 rayons à 86 100. Survolez la calotte sud : elle est sélectionnable ; un clic ouvre la carte 2D.', '真实比例：月球半径=1；地球半径 3.67，距离 221；太阳半径 400，距离 86,100。移到南极冠可选中，点击打开 2D 地图。'],
+  'Frame the Moon': ['Cadrer la Lune', '对准月球'],
+  'Frame Earth at true distance': ['Cadrer la Terre à distance réelle', '按真实距离对准地球'],
+  'Frame the Sun at true distance': ['Cadrer le Soleil à distance réelle', '按真实距离对准太阳'],
+  'Moon': ['Lune', '月球'],
+  'Launch window': ['Fenêtre de lancement', '发射窗口'],
+  'Selected point': ['Point sélectionné', '已选点'],
 };
 
 let language = 'en';

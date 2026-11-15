@@ -20,10 +20,16 @@ export async function createPolar3d(env) {
       const renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
       renderer.setPixelRatio(Math.min(devicePixelRatio, env.maxPixelRatio ?? 2));
       const scene = new T.Scene();
-      const camera = new T.PerspectiveCamera(42, 1, 0.01, 200);
+      // One scene unit = one Moon radius. All sizes and distances use that same scale.
+      const MOON_R_KM = 1737.4;
+      const SCALE = { earthR: 6371 / MOON_R_KM, earthD: 384400 / MOON_R_KM, sunR: 695700 / MOON_R_KM, sunD: 149.6e6 / MOON_R_KM };
+      const MAX_DIST = SCALE.sunD * 1.8;
+      const camera = new T.PerspectiveCamera(42, 1, 0.02, MAX_DIST * 4);
+      let pending = false;
+      // Hoisted so texture loads that finish before the rest of the scene is built can still request a frame.
+      function request() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); }
       const controls = new OrbitControls(camera, canvas);
-      controls.enablePan = false; controls.minDistance = 1.03; controls.maxDistance = 14; controls.rotateSpeed = 0.7;
-      if (grab) controls.enabled = false;
+      controls.enablePan = false; controls.minDistance = 1.03; controls.maxDistance = MAX_DIST; controls.rotateSpeed = 0.7;
       camera.up.set(1, 0, 0);
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
@@ -77,17 +83,17 @@ export async function createPolar3d(env) {
       // Earth keeps its own face to the Moon, so a lit sphere with the Blue Marble map shows the phase the
       // Moon actually sees, and the continents line up with the sub-Earth point instead of a painted blob.
       const earthMap = loadMap('assets/earth_day_4k.webp');
-      const earth = new T.Mesh(new T.SphereGeometry(0.36, 48, 32),
+      const earth = new T.Mesh(new T.SphereGeometry(SCALE.earthR, 64, 48),
         new T.MeshStandardMaterial({ map: earthMap, roughness: 1, metalness: 0 }));
       const sunMap = loadMap('assets/sun_disk_1k.webp');
       const sunBody = new T.Sprite(new T.SpriteMaterial({ map: sunMap, blending: T.AdditiveBlending, transparent: true, depthWrite: false }));
-      sunBody.scale.set(0.42, 0.42, 1);
+      sunBody.scale.set(2 * SCALE.sunR, 2 * SCALE.sunR, 1);
       const sunGlow = new T.Sprite(new T.SpriteMaterial({ map: glowTexture('rgba(255,205,90,.7)'), blending: T.AdditiveBlending, depthWrite: false }));
-      sunGlow.scale.set(2.8, 2.8, 1);
+      sunGlow.scale.set(3.2 * SCALE.sunR, 3.2 * SCALE.sunR, 1);
       scene.add(earth, sunBody, sunGlow);
       const starPositions = [];
       for (let i = 0; i < 900; i++) {
-        const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = Math.sqrt(1 - u * u), d = 40 + Math.random() * 30;
+        const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = Math.sqrt(1 - u * u), d = 300000 + Math.random() * 300000;
         starPositions.push(r * Math.cos(a) * d, u * d, r * Math.sin(a) * d);
       }
       const starGeometry = new T.BufferGeometry();
@@ -272,12 +278,10 @@ export async function createPolar3d(env) {
         // appears once the camera is close enough for the relief to mean something.
         reliefGroup.visible = camera.position.length() < 1.5;
         sunLight.position.set(...f.sun).multiplyScalar(10);
-        earth.position.set(...f.earth).multiplyScalar(3.0);
+        earth.position.set(...f.earth).multiplyScalar(SCALE.earthD);
         earth.lookAt(0, 0, 0);
-        sunBody.position.set(...f.sun).multiplyScalar(8);
+        sunBody.position.set(...f.sun).multiplyScalar(SCALE.sunD);
         sunGlow.position.copy(sunBody.position);
-        sunSpot.position.set(...f.sun).multiplyScalar(1.004);
-        // Ecliptic normal from the two directions the scene already has; fall back to the pole if they align.
         const earthDir = new T.Vector3(...f.earth).normalize(), sunDir = new T.Vector3(...f.sun).normalize();
         const ecliptic = new T.Vector3().crossVectors(earthDir, sunDir);
         if (ecliptic.lengthSq() < 1e-8) ecliptic.set(0, 0, 1); else ecliptic.normalize();
@@ -370,7 +374,7 @@ export async function createPolar3d(env) {
           const [a, b] = [...pointers.values()];
           const d = Math.hypot(a.x - b.x, a.y - b.y);
           if (pinchDist > 0 && d > 0) {
-            camera.position.setLength(clamp(camera.position.length() * (pinchDist / d), 1.03, 14));
+            camera.position.setLength(clamp(camera.position.length() * (pinchDist / d), 1.03, MAX_DIST));
             request();
           }
           pinchDist = d;
@@ -386,13 +390,14 @@ export async function createPolar3d(env) {
         const ax = clamp(dx * SENS, -0.2, 0.2), ay = clamp(dy * SENS, -0.2, 0.2);
         const upAxis = new T.Vector3().setFromMatrixColumn(camera.matrix, 1).normalize();
         const rightAxis = new T.Vector3().setFromMatrixColumn(camera.matrix, 0).normalize();
-        const before = camera.position.clone().normalize();
-        camera.position.applyAxisAngle(upAxis, -ax);
-        camera.position.applyAxisAngle(rightAxis, ay);
-        const next = camera.position.clone().normalize();
-        // Stop before crossing the far pole; the prototype is a south-pole view, not a full spin.
-        if (next.y > 0.9 && next.y > before.y) camera.position.copy(before.multiplyScalar(camera.position.length()));
-        camera.lookAt(0, 0, 0);
+        // Rotate position and orientation by the same screen-axis quaternion. No lookAt/up
+        // recomputation, so the view cannot snap when the direction nears the up axis.
+        const qUp = new T.Quaternion().setFromAxisAngle(upAxis, -ax);
+        const qRight = new T.Quaternion().setFromAxisAngle(rightAxis, ay);
+        const q = qRight.multiply(qUp);
+        camera.position.applyQuaternion(q);
+        camera.quaternion.premultiply(q);
+        camera.updateMatrixWorld();
         request();
       });
       const endPointer = (event) => {
@@ -405,7 +410,7 @@ export async function createPolar3d(env) {
       canvas.addEventListener('wheel', (event) => {
         if (!grab) return;
         event.preventDefault();
-        camera.position.setLength(clamp(camera.position.length() * Math.exp(event.deltaY * 0.0012), 1.03, 14));
+        camera.position.setLength(clamp(camera.position.length() * Math.exp(event.deltaY * 0.0012), 1.03, MAX_DIST));
         request();
       }, { passive: false });
       canvas.addEventListener('pointerup', (event) => {
@@ -427,7 +432,13 @@ export async function createPolar3d(env) {
       view3d = {
         request: () => { if (!home) { setHome(); home = true; } request(); },
         reset: () => flyTo(homeDir(), 3.6),
-        zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.03, 14)); request(); },
+        zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.03, MAX_DIST)); request(); },
+        frame: (kind) => {
+          const f = getFrame(); if (!f) return;
+          if (kind === 'sun') flyTo(new T.Vector3(...f.sun), SCALE.sunD * 1.4);
+          else if (kind === 'earth') flyTo(new T.Vector3(...f.earth), SCALE.earthD * 1.8);
+          else flyTo(homeDir(), 3.6);
+        },
         focus: (site) => flyTo(new T.Vector3(...unit(site.lat, site.lon)), site.lat <= -75 ? 1.07 : undefined),
       };
       resize();
