@@ -575,6 +575,10 @@ const messages = {
   'days': ['jours', '天'],
   'Quick length': ['Durée rapide', '常用时长'],
   '{from} → {to} (UTC)': ['{from} → {to} (UTC)', '{from} → {to}（UTC）'],
+  'Top 3 recommended blocks': ['3 blocs recommandés', '推荐的前三个区块'],
+  'Computing… {n} blocks left.': ['Calcul en cours… {n} blocs restants.', '计算中…还剩 {n} 个区块。'],
+  'Best touchdown per block in the search window, ranked by screening score.': ['Meilleur alunissage par bloc dans la fenêtre, classé par score de criblage.', '按筛选得分排序，每个区块取搜索窗口内的最佳着陆时刻。'],
+  'sun': ['soleil', '日照'],
 };
 
 let language = 'en';
