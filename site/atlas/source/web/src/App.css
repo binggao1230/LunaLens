@@ -3423,9 +3423,7 @@ body[data-over='marker'] .viewport canvas {
   opacity: 0.45;
 }
 
-/* Embedded Expert workspace: the parent owns the clock and the guidance. */
-.app[data-embed='on'] .timebar .play,
-.app[data-embed='on'] .timebar .rates,
+/* Embedded Atlas keeps its own layer row and time bar. Hide only source/help chrome. */
 .app[data-embed='on'] .credit-line,
 .app[data-embed='on'] .layer-note,
 .app[data-embed='on'] .mainmenu,
@@ -3449,4 +3447,12 @@ body[data-over='marker'] .viewport canvas {
 .app[data-embed='on'] .tour,
 .app[data-embed='on'] .status {
   display: none !important;
+}
+
+/* Embedded Atlas keeps the layer row and time bar; the dock cards belong to Map. */
+.app[data-embed='on'] .chrome > .stage {
+  display: none !important;
+}
+.app[data-embed='on'] .chrome > .timebar {
+  margin-top: auto;
 }

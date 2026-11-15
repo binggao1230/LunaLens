@@ -35,7 +35,7 @@ import { AddByCoords } from './ui/AddByCoords'
 import { AssumptionsHead, AssumptionsPanel, useAssumptionsChanged } from './ui/Assumptions'
 import { Compare } from './ui/Compare'
 import { DateEditor } from './ui/DateEditor'
-import { INK, ON_ACCENT, Segmented, SITE_LETTERS } from './ui/controls'
+import { INK, ON_ACCENT, Segmented } from './ui/controls'
 import { ErrorBoundary } from './ui/ErrorBoundary'
 import { FinderPanel } from './ui/FinderPanel'
 import { PRESET_IDS } from './ui/CopyLink'
@@ -211,13 +211,15 @@ function TimeBar({ ephem }: { ephem: Ephem }) {
 function PinMarkers({ elevation }: { elevation: (lat: number, lon: number) => number }) {
   const pins = useStore((s) => s.pins)
   const active = useStore((s) => s.activePin)
-  const maps = useMemo(() => SITE_COLORS.map((c, i) => badgeTexture(SITE_LETTERS[i], c)), [])
+  const maps = useMemo(() => SITE_COLORS.map((c) => dotTexture(c)), [])
   return (
     <>
       {pins.map((p) => (
-        <sprite key={p.id} position={sitePosKm(p.lat, p.lon, elevation(p.lat, p.lon) + 250)} scale={p.id === active ? [0.05, 0.05, 1] : [0.04, 0.04, 1]}
+        <sprite
+          key={p.id}
+          position={sitePosKm(p.lat, p.lon, elevation(p.lat, p.lon) + 250)}
+          scale={p.id === active ? [0.06, 0.06, 1] : [0.05, 0.05, 1]}
           renderOrder={6}
-          // Clicking a site's badge selects that site (not a new point beside it).
           userData={MARKER}
           onClick={(e) => {
             if (e.delta > 4 || !insideDisc(e)) return
@@ -225,17 +227,26 @@ function PinMarkers({ elevation }: { elevation: (lat: number, lon: number) => nu
             useStore.getState().setActivePin(p.id)
           }}
         >
-          <spriteMaterial
-            map={maps[p.slot]}
-            opacity={p.id === active ? 1 : 0.8}
-            sizeAttenuation={false}
-            depthTest={false}
-            transparent
-          />
+          <spriteMaterial map={maps[p.slot]} sizeAttenuation={false} depthTest={false} transparent opacity={p.id === active ? 1 : 0.8} />
         </sprite>
       ))}
     </>
   )
+}
+
+/** A letterless waypoint marker: a coloured disc with a dark centre. */
+function dotTexture(color: string): THREE.Texture {
+  const c = document.createElement('canvas')
+  c.width = c.height = 96
+  const g = c.getContext('2d')!
+  g.beginPath()
+  g.arc(48, 48, 32, 0, Math.PI * 2)
+  g.fillStyle = color
+  g.fill()
+  g.lineWidth = 7
+  g.strokeStyle = ON_ACCENT
+  g.stroke()
+  return new THREE.CanvasTexture(c)
 }
 
 /** Latitude and longitude of the highest cell within `radiusM` of a patch's centre. */
@@ -434,28 +445,8 @@ function SitesPanel({ pins, activePin, ephem, terrain, patchOf, pending, global,
     </aside>
   )
 }
-
-/** A pinned site's marker: its letter on its colour, with a dark outline so it reads on any ground. */
-function badgeTexture(letter: string, color: string): THREE.Texture {
-  const c = document.createElement('canvas')
-  c.width = c.height = 96
-  const g = c.getContext('2d')!
-  g.beginPath()
-  g.arc(48, 48, 38, 0, Math.PI * 2)
-  g.fillStyle = color
-  g.fill()
-  g.lineWidth = 8
-  g.strokeStyle = ON_ACCENT
-  g.stroke()
-  g.fillStyle = ON_ACCENT
-  g.font = '600 50px system-ui, sans-serif'
-  g.textAlign = 'center'
-  g.textBaseline = 'middle'
-  g.fillText(letter, 48, 51)
-  return new THREE.CanvasTexture(c)
-}
-
 export default function App() {
+
   const { ephem, terrain, error, missions, patchIndex } = useData()
   useClock(ephem)
   const globeMap = useGlobeMap(BASE)
@@ -623,9 +614,13 @@ export default function App() {
         .map((s: { lat: number; lon: number; label?: string }) => ({ lat: s.lat, lon: s.lon, label: String(s.label ?? ''), hM: elevation(s.lat, s.lon) }))
       const store = useStore.getState()
       if (Array.isArray(raw.sites)) store.replacePins(sites, raw.active ?? null)
+      if (typeof raw.layer === 'string') store.setLayer(raw.layer as LayerMode)
       if (Number.isFinite(raw.tMs)) {
         store.setPlaying(false)
         store.setTime(raw.tMs)
+      }
+      if (raw.focus && Number.isFinite(raw.focus.lat) && Number.isFinite(raw.focus.lon)) {
+        store.goTo({ kind: 'site', lat: raw.focus.lat, lon: raw.focus.lon, hM: elevation(raw.focus.lat, raw.focus.lon) })
       }
     }
     window.addEventListener('message', onCommand)
@@ -634,6 +629,11 @@ export default function App() {
   const pick = useCallback(
     (lat: number, lon: number, label?: string) => addPin({ lat, lon, hM: elevation(lat, lon), label }),
     [addPin, elevation],
+  )
+  // The embedded Atlas is a fixed viewport; point selection belongs to Map.
+  const pickScene = useCallback(
+    (lat: number, lon: number) => { if (!EMBEDDED) pick(lat, lon) },
+    [pick],
   )
   // A pick made while a mission view is open first closes it (the same way out as its close
   // button), and goes ahead when the camera is back up; see store.whenShowcaseClosed.
@@ -812,6 +812,7 @@ export default function App() {
   const mainMenu = useRef<HTMLDetailsElement>(null)
   const mode = useStore((s) => s.mode)
   const setMode = useStore((s) => s.setMode)
+  useEffect(() => { if (EMBEDDED) setMode('plan') }, [setMode])
   const welcome = useStore((s) => s.welcome)
   const closeMenus = () => {
     if (mainMenu.current) mainMenu.current.open = false
@@ -877,12 +878,12 @@ export default function App() {
       <div className="viewport">
         <MoonCanvas quality={quality}>
           <color attach="background" args={['#000']} />
-          <Globe sunDir={sun.dir} cuts={cuts} map={globeMap} relief={globeRelief} segments={detail.globe} onPick={pick} />
+          <Globe sunDir={sun.dir} cuts={cuts} map={globeMap} relief={globeRelief} segments={detail.globe} onPick={pickScene} />
           {terrain && (
-            <MoonTerrain terrain={terrain} sunDir={sun.dir} sunRad={sun.rad} layer={layer} score={score} dataBase={BASE} map={globeMap} relief={globeRelief} overlays cuts={patchCuts} detail={detail} onPick={pick} />
+            <MoonTerrain terrain={terrain} sunDir={sun.dir} sunRad={sun.rad} layer={layer} score={score} dataBase={BASE} map={globeMap} relief={globeRelief} overlays cuts={patchCuts} detail={detail} onPick={pickScene} />
           )}
           {shownPatches.map((t) => (
-            <MoonTerrain key={t.id} terrain={t} sunDir={sun.dir} sunRad={sun.rad} layer={layer} dataBase={BASE} map={globeMap} relief={globeRelief} overlays={false} detail={detail} onPick={pick} />
+            <MoonTerrain key={t.id} terrain={t} sunDir={sun.dir} sunRad={sun.rad} layer={layer} dataBase={BASE} map={globeMap} relief={globeRelief} overlays={false} detail={detail} onPick={pickScene} />
           ))}
           <Missions missions={missions} heights={missionHeights} onSelect={selectMission} onHover={onHover} />
           {bodies && <SkyBodies sun={bodies.sun} earth={bodies.earth} tMs={tMs} />}
