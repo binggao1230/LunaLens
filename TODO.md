@@ -70,11 +70,29 @@ Record a new fixture only when input files or evaluation rules intentionally cha
 
 ## Ten-hour execution order
 
+
 Time boxes are estimates, not a requirement to keep coding for ten hours. The matrix
 shows dependencies and the evidence required to mark a slice done. If the run is short
 on time, protect complete-stay validation, one accurate shortlist and the two core A/B
 flows. Defer styling, advanced search, orbit redesign and publishing before weakening
 those checks.
+
+- **Done:** save metallic finishes in the shared Artemis and Apollo GLBs, verify/reimport Apollo from its official NASA source, and use these materials in both gallery and flight. Original geometry, textures and markings are retained; desktop, narrow preview and landed renders checked.
+- **Done:** show Earth, the lander and the distant Moon together at departure; reuse the existing 4K Earth texture, widen the regional terrain view, and enlarge the lander. Preserve the original departure camera and pacing; settle Earth outside the frame so the camera reveals a steady Earth during lunar approach.
+- **Done:** Earth is visible at departure and touchdown; the enlarged demonstration lander stays clear over measured regional terrain, retains its braking/descent attitude, and holds the landed shot until Exit/Esc. Desktop and 390 px framing checked.
+- Preview a tracking-camera Earth-to-Moon flight using the selected lander's GLB, with skip, reduced motion and local textures.
+- Remove the extra model-reference captions from the start-page cards at the owner's request; retain asset provenance in `site/assets/models/README.md`.
+- **Shared state: verified.** Mission, Explore, Compare, Date slip and Plan all read one `state` for the landing
+  date and the picked site; changing the date in Plan shows up in Explore's date field, and the site follows the
+  same way. The framed Atlas page is the exception: it receives the scenario through its URL hash and sends
+  nothing back.
+- On the Mission page, show the countdown to sunset and to Earthset for the picked site, and one action that opens
+  it in Explore.
+- **`chenlin/mission-start`: superseded, do not merge.** Its four commits (carousel, Artemis model, GLTF and DRACO
+  loaders) arrived on `main` through #29 and #32; its tree is 1,999 lines behind and adding anything back would
+  revert work. No pull request; the owner can delete the branch.
+- Accept: change the date on Mission, switch to Explore, and the date and the site are the same.
+
 
 | Slice | Budget | Depends on | Deliverable |
 |---|---:|---|---|
