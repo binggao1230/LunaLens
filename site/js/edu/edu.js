@@ -22,7 +22,7 @@ const MODE_SEGMENT = 3;
 const SCENARIO_SEGMENT = 10;
 // History segments: 1 and 2 point at the Historic sites switch; 3 is the explore line; 4 opens the failed IM-2 landing
 // (segment 5 explains it).
-const HISTORY_SWITCH = [1, 2], HISTORY_FAILED = 4;
+const HISTORY_SWITCH = [1], HISTORY_FAILED = 3;
 const fmt = (s, v = {}) => String(s ?? '').replace(/\{(\w+)\}/g, (m, k) => (v[k] ?? m));
 
 /** ctx: { mission, sites, eph, landing, setLanding, margin, showView, view, language, toast } */
@@ -148,7 +148,7 @@ export function createEducation(ctx) {
       else { st.revealed = null; st.focus = true; say('site.pick', {}, 'happy'); render(); }
     } else if (st.step === STEP.history) {
       if (st.sub < historyLines().length - 1) moveHistory(st.sub + 1);
-      else { ctx.mission.closeFlag?.(); enterAnomaly(); }
+      else { ctx.mission.closeFlag?.(); enterDone(); } // the story ends after the history bubbles
     }
     else if (st.step === STEP.launch && st.landed) enterHistory(0); // after the landing: the history bubbles, then the anomaly
     else if (st.step === STEP.anomaly) {
@@ -297,7 +297,6 @@ export function createEducation(ctx) {
     root.innerHTML = `<aside class="edu-panel step-${st.step}${full ? ' full' : ''}${near ? ' near-sites' : ''}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
       ${art}
       <div class="edu-bubble">
-        <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span></div>
         <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite"><b class="edu-speaker">${escapeHtml(get('character.name') ?? 'Lumi')}</b>${escapeHtml(text)}</p>
         ${st.step === STEP.site && !st.revealed && st.picked && st.chosen ? `<p class="edu-choice">${escapeHtml(ui('choice', { site: st.picked.short }))}</p>` : ''}
         ${st.step === STEP.site && !st.revealed && st.noPick ? `<p class="edu-error" role="alert">${escapeHtml(ui('pickFirst'))}</p>` : ''}
