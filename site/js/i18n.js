@@ -16,7 +16,7 @@ const messages = {
   'Expert': ['Expert', '专家'],
   'Education mode': ['Mode éducation', '教育模式'],
   'Learn': ['Apprendre', '学习'],
-  'Hi! I\'ll be your mission guide. Pick a lander and press Validate.': ['Salut ! Je serai ton guide de mission. Choisis un atterrisseur et appuie sur Valider.', '你好！我是你的任务向导。选一个着陆器，然后按“确认”。'],
+  'Hi! I\'m Lumi, and I\'ll be your mission guide. Pick a lander and press Validate to go to the Moon!': ['Salut ! Je suis Lumi, et je serai ton guide de mission. Choisis un atterrisseur et appuie sur Valider pour partir sur la Lune !', '你好！我是 Lumi，你的任务向导。选一个着陆器，然后按“确认”，出发去月球！'],
   'Start the mission': ['Commencer la mission', '开始任务'],
   'Historic sites': ['Sites historiques', '历史着陆点'],
   'Show historic landing sites': ['Afficher les sites historiques', '显示历史着陆点'],
