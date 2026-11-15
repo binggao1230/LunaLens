@@ -459,6 +459,6 @@ body.edu-on .tabbar button[data-view=atlas],body.edu-on .tabbar button[data-view
 #m-lanes.edu-point{border-radius:14px;box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 26px 6px rgba(67,217,138,.5);animation:edu-time-pulse 1.4s ease-in-out infinite}
 @media (prefers-reduced-motion: reduce){#m-lanes.edu-point{animation:none}}
 
-/* The story points at the 3D / 2D switch while it explains the 2D Moon view: the same pulsing green glow. */
-#m-seg.edu-point{border-radius:99px;box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 26px 6px rgba(67,217,138,.5);animation:edu-time-pulse 1.4s ease-in-out infinite}
-@media (prefers-reduced-motion: reduce){#m-seg.edu-point{animation:none}}
+/* The story points at the whole Moon view while it explains the south pole in 3D or 2D: the same pulsing green glow. */
+#m-stage.edu-point{box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 26px 6px rgba(67,217,138,.5);animation:edu-time-pulse 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){#m-stage.edu-point{animation:none}}

@@ -68,13 +68,13 @@
         "Hello, explorer! I'm {name}, your mission guide. Today we're going to land on the Moon, at its south pole.",
         "Why the Moon? It's the closest world to Earth, and a great place to learn how to live and work far from home.",
         "Why the south pole? Some deep craters there never see the Sun, and they hide ice. Ice can become water to drink, air to breathe and fuel for rockets.",
+        "You can see the south pole in 3D or in 2D. Switch 3D to 2D at the top right of the Moon view to see it flat.",
         "Two golden rules keep a lander alive. It needs sunlight for power, and it must see Earth to talk to us.",
         "Rule 1: sunlight. At the south pole the Sun stays low, near the horizon, so hills and crater walls can block it. Our landing site must be a place the Sun's rays can reach.",
         "Rule 2: Earth. Our lander talks to us by radio, and radio needs a clear path to Earth. From the south pole, Earth also sits low in the sky, so our site must be able to see it over the hills.",
         "Both rules depend on when we land. The Sun and Earth move across the sky, so the time you choose decides which sites pass. Drag the time bar at the top to see how they change.",
         "This graph shows the next 30 days for this site. Yellow means Sunlight, green means Earth in view, and cyan means both at once. A good landing time is cyan.",
-        "Click on the graph to move its bar and read the exact time.",
-        "There is also a 2D Moon you can visualise. Switch 3D to 2D at the top right of the Moon view to see it flat."
+        "Click on the graph to move its bar and read the exact time."
       ]
     },
     "history": {
