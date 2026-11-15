@@ -1,4 +1,4 @@
-export const FLIGHT_SECONDS = 28;
+export const FLIGHT_SECONDS = 14; // shortened from 28 s: the flight phases are fractions of this
 export const clampProgress = value => Math.min(1, Math.max(0, value));
 export const smoothProgress = value => {
   const progress = clampProgress(value);

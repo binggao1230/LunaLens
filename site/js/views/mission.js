@@ -1003,7 +1003,7 @@ export function createMission(ctx) {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const selected = PROBES.find(probe => probe.id === local.probe);
     flightEl.innerHTML = `<canvas class="flight-scene" aria-label="${escapeHtml(t(selected.name))}"></canvas>
-      <div class="flight-countdown" aria-hidden="true">${[5, 4, 3, 2, 1].map((n, i) => `<span style="animation-delay:${i}s">${n}</span>`).join('')}</div>
+      <div class="flight-countdown" aria-hidden="true">${[3, 2, 1].map((n, i) => `<span style="animation-delay:${i}s">${n}</span>`).join('')}</div>
       <div class="flight-top"><span>${escapeHtml(t(selected.name))}</span><button class="btn-ghost flight-skip">${escapeHtml(t('Exit flight'))}<span aria-hidden="true">↗</span></button></div>
       <div class="flight-caption"><p class="flight-phase" role="status">${escapeHtml(t('Preparing spacecraft…'))}</p>
         <h2>${escapeHtml(site.short)}</h2>
@@ -1024,7 +1024,7 @@ export function createMission(ctx) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     let done = false, disposeFlight, lastPhase = '', countdownTimer = null;
-    const COUNTDOWN_MS = 5000;
+    const COUNTDOWN_MS = 3000;
     const deadline = performance.now() + (reduced ? 0 : COUNTDOWN_MS);
     if (!reduced) {
       // The digits are CSS animations on the compositor and the end is a wall-clock deadline, so a busy main thread (model decode, texture upload) cannot stall or skew the count.
