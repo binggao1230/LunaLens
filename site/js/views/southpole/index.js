@@ -31,6 +31,7 @@ const barRow = (label, pct, colour) => `<div class="pole-bar"><span>${escapeHtml
 const ICON = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   minus: '<path d="M5 12h14"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
   crosshair: '<circle cx="12" cy="12" r="6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
   panel: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/>',
   back: '<path d="M19 12H5M12 19l-7-7 7-7"/>',
@@ -295,7 +296,7 @@ export function createSouthPole(ctx) {
         <div class="pole-detail" id="sp-cell"></div>
       </aside>
 
-      <button type="button" class="pole-restore" id="sp-window-show" aria-haspopup="dialog" aria-controls="sp-modal" hidden>${escapeHtml(t('Search window'))}</button>
+      <button type="button" class="pole-restore" id="sp-window-show" aria-label="${escapeHtml(t('Search window'))}" title="${escapeHtml(t('Search window'))}" aria-haspopup="dialog" aria-controls="sp-modal" hidden>${icon('calendar')}</button>
       <button type="button" class="pole-panel-open" id="sp-panel-open" hidden aria-label="${escapeHtml(t('Show the study panel'))}" title="${escapeHtml(t('Show the study panel'))}">${icon('panel')}</button>
 
       <div class="pole-modal" id="sp-modal" role="dialog" aria-modal="true" aria-labelledby="sp-mtitle" hidden>
@@ -360,7 +361,7 @@ export function createSouthPole(ctx) {
     els['sp-scope'].innerHTML = `<option value="pole">${escapeHtml(t('South pole · 24 km blocks'))}</option><option value="pilot">${escapeHtml(t('Pilot · 2 km cells'))}</option>`;
     els['sp-scope'].value = ui.grid.scope;
     els['sp-atlas'].title = t('Atlas regional map');
-    for (const id of ['sp-zin', 'sp-zout', 'sp-center', 'sp-panel-toggle', 'sp-panel-open', 'sp-atlas-back']) els[id].title = els[id].getAttribute('aria-label');
+    for (const id of ['sp-zin', 'sp-zout', 'sp-center', 'sp-panel-toggle', 'sp-panel-open', 'sp-atlas-back', 'sp-window-show']) els[id].title = els[id].getAttribute('aria-label');
   }
 
   function panelDefault(stage) {
@@ -718,7 +719,7 @@ export function createSouthPole(ctx) {
     ui.popupCell = cell;
     const cl = cell.class ?? { status: 'pending' };
     const reason = (cl.failed ?? []).concat(cl.missed ?? []).map((r) => t(REASON_TEXT[r] ?? r));
-    els['sp-popup-card'].innerHTML = `<h3>${escapeHtml(t('Block {row}:{col}', { row: cell.row + 1, col: cell.col + 1 }))} · ${escapeHtml(t(cl.status ?? 'pending'))}</h3>
+    els['sp-popup-card'].innerHTML = `<h3>${escapeHtml(t('Block {row}:{col}', { row: cell.row + 1, col: cell.col + 1 }))} · ${escapeHtml(t(scoreBand(cell)))}</h3>
       <p class="sub">${escapeHtml(fmtLatLon(cell.lat, cell.lon, 3))}</p>
       <div class="pole-metrics">
         <div><b>${cell.static && Number.isFinite(cell.static.slopeDeg) ? cell.static.slopeDeg.toFixed(1) + '°' : '—'}</b><span>${escapeHtml(t('regional slope'))}</span></div>
@@ -1276,6 +1277,7 @@ export function createSouthPole(ctx) {
       if (!ui.built) return;
       localizeStatic();
       renderAll(); renderModalPicker(); renderGrid(); renderHud();
+      if (!els['sp-popup'].hidden && ui.popupCell) openCell(ui.popupCell);
       measureDock();
       if (ui.stage === 'atlas') pushAtlasCommand();
       ui.globe?.request();

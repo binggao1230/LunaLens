@@ -1,8 +1,8 @@
 # LunaLens construction map
 
-- [x] Expert Map: colour blocks by screening score bands (green 85+, yellow 70–84, red below 70 or failed hard limit); EN/FR/ZH legend.
+- [x] Expert Map: colour blocks and detail labels by screening score bands (green 85+, yellow 70–84, red below 70); EN/FR/ZH legend.
 - [x] Expert Map: right-side card bar with the Top 3 recommended blocks and saved A/B/C points (sunlight and Earth bars plus score, link hours, slope); desktop only, the left list stays on narrow screens.
-- [ ] Expert Globe: add an "Enter the South Pole" button that opens the Map; the study panel starts collapsed on the Globe and open on the Map.
+- [x] Expert Globe: add an "Enter the South Pole" button that opens the Map; the study panel starts collapsed on the Globe and open on the Map; place the compact search-window control at the top-right.
 - [ ] Top menu becomes the Expert flow: 1 · Globe, 2 · Map, 3 · Atlas, 4 · Explore (same bar style, EN/FR/ZH). The separate Atlas and Expert entries and the in-page stage switch are removed; Expert mode opens on the Globe.
 - [ ] Expert layout: remove the persistent bottom window bar; a single bottom "Search window" button opens the date, length and slider dialog in Globe and Map. Keep the entry button and readout clear of it and collapse the Globe panel before the initial dialog opens.
 - [ ] Expert Map: render detailed, higher-contrast terrain from the existing 240 m DEM at the displayed resolution after zooming or panning; keep the screening grid and coordinates aligned.
