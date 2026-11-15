@@ -681,9 +681,7 @@ export function createMission(ctx) {
           <button type="button" class="btn-ghost btn-xs lane-export" id="m-export" ${activeSites.length ? '' : 'disabled'}>${escapeHtml(t('Export CSV'))}</button>
           <span style="color:${COLORS.sun}">■ ${escapeHtml(t('Sunlit only'))}</span>
           <span style="color:${COLORS.link}">■ ${escapeHtml(t('Earth link only'))}</span>
-          <span style="color:${COLORS.both}">■ ${escapeHtml(t('Sun and Earth in view'))}</span>
-          <span style="color:${COLORS.dark}">■ ${escapeHtml(t('In shadow'))}</span>
-          <span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))} <span class="pill2">${activeSites.length} ${escapeHtml(t('compared'))}</span></span>
+          <span style="color:${COLORS.both}">■ ${escapeHtml(t('Sun and Earth in view'))}</span>          <span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))} <span class="pill2">${activeSites.length} ${escapeHtml(t('compared'))}</span></span>
         </div>
       </div>
       <div class="lane-axis lane-now-row"><span></span><div class="lane-now-track"><span class="lane-now" id="m-lane-now"></span></div></div>
