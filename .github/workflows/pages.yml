@@ -1,0 +1,63 @@
+# Publish the static site on GitHub Pages.
+# The site/data folder is not in git: download the snapshot release, build Atlas, and
+# upload site/ as the Pages artifact.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Fetch the site data from the snapshot release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/snapshot
+          gh release download lunalens-snapshot-2026-11-14 --repo "$GITHUB_REPOSITORY" \
+            --pattern 'lunalens.zip.part*' --pattern 'restore-lunalens.py' --pattern 'lunalens-files.json' \
+            --dir /tmp/snapshot
+          python3 /tmp/snapshot/restore-lunalens.py
+          mkdir -p site/data
+          cp -a /tmp/snapshot/lunalens/site/data/. site/data/
+          du -sh site/data
+      - name: Set up Node for the Atlas build
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/atlas/source/web/package-lock.json
+      - name: Build Atlas from source
+        run: site/tools/build_atlas.sh
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Add nojekyll marker
+        run: touch site/.nojekyll
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
