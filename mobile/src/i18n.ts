@@ -5,6 +5,8 @@ export type AppLanguage = 'en' | 'fr' | 'zh';
 const translations: Record<AppLanguage, Record<string, string>> = {
   en: {
     'Choose language': 'Choose language',
+    'Switch to dark mode': 'Switch to dark mode',
+    'Switch to light mode': 'Switch to light mode',
     Earth: 'Earth',
     'Lunar horizon illustration': 'Illustration of a lunar horizon',
     'Moon surface view': 'View from the lunar surface',
@@ -30,6 +32,8 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'Lunar place': 'Lunar place',
     'Day (UTC)': 'Day (UTC)',
     'Data: 2026–2030 · day starts at 00:00 UTC': 'Data: 2026–2030 · day starts at 00:00 UTC',
+    'Day of month': 'Day of month',
+    'Move through the days of this month': 'Move through the days of this month',
     'Show me this day': 'Show me this day',
     'Loading lunar data…': 'Loading lunar data…',
     'Your lunar day': 'Your lunar day',
@@ -127,6 +131,8 @@ const translations: Record<AppLanguage, Record<string, string>> = {
   },
   fr: {
     'Choose language': 'Choisir la langue',
+    'Switch to dark mode': 'Activer le mode sombre',
+    'Switch to light mode': 'Activer le mode clair',
     Earth: 'Terre',
     'Lunar horizon illustration': 'Illustration de l’horizon lunaire',
     'Moon surface view': 'Vue depuis la surface lunaire',
@@ -152,6 +158,8 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'Lunar place': 'Lieu lunaire',
     'Day (UTC)': 'Jour (UTC)',
     'Data: 2026–2030 · day starts at 00:00 UTC': 'Données : 2026–2030 · journée dès 00:00 UTC',
+    'Day of month': 'Jour du mois',
+    'Move through the days of this month': 'Parcourir les jours de ce mois',
     'Show me this day': 'Voir cette journée',
     'Loading lunar data…': 'Chargement des données lunaires…',
     'Your lunar day': 'Ta journée lunaire',
@@ -249,6 +257,8 @@ const translations: Record<AppLanguage, Record<string, string>> = {
   },
   zh: {
     'Choose language': '选择语言',
+    'Switch to dark mode': '切换到深色模式',
+    'Switch to light mode': '切换到浅色模式',
     Earth: '地球',
     'Lunar horizon illustration': '月球地平线示意图',
     'Moon surface view': '月球表面所见',
@@ -274,6 +284,8 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'Lunar place': '月球地点',
     'Day (UTC)': '日期（UTC）',
     'Data: 2026–2030 · day starts at 00:00 UTC': '数据范围：2026–2030 · 每日从 UTC 00:00 开始',
+    'Day of month': '月中的日期',
+    'Move through the days of this month': '浏览本月日期',
     'Show me this day': '查看这一天',
     'Loading lunar data…': '正在载入月球数据…',
     'Your lunar day': '月球上的这一天',

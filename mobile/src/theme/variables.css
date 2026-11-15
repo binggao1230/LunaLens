@@ -1,2 +1,157 @@
 /* For information on how to create your own theme, please refer to:
 http://ionicframework.com/docs/theming/ */
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --ion-background-color: #111720;
+  --ion-text-color: #edf2f7;
+  --ion-item-background: #202b38;
+  --ion-border-color: #3a4654;
+  --ion-toolbar-background: #171f2a;
+  --ion-color-step-50: #19222d;
+  --ion-color-step-100: #202a36;
+  --ion-color-step-150: #27313d;
+  --ion-color-step-200: #2e3844;
+}
+
+html[data-theme='dark'],
+html[data-theme='dark'] body,
+html[data-theme='dark'] ion-app {
+  background: #111720;
+  color: #edf2f7;
+}
+
+html[data-theme='dark'] .welcome-content,
+html[data-theme='dark'] .lesson-content {
+  --background: #111720;
+  --color: #edf2f7;
+}
+
+html[data-theme='dark'] .welcome-shell h1,
+html[data-theme='dark'] .welcome-shell h2,
+html[data-theme='dark'] .welcome-shell h3,
+html[data-theme='dark'] .shell h1,
+html[data-theme='dark'] .shell h2,
+html[data-theme='dark'] .shell h3,
+html[data-theme='dark'] .welcome-intro,
+html[data-theme='dark'] .welcome-caption,
+html[data-theme='dark'] .facts-body,
+html[data-theme='dark'] .facts-body p,
+html[data-theme='dark'] .shell p,
+html[data-theme='dark'] .shell label,
+html[data-theme='dark'] .shell summary,
+html[data-theme='dark'] .shell .brand,
+html[data-theme='dark'] .shell .brand-subtitle,
+html[data-theme='dark'] .shell .result-number,
+html[data-theme='dark'] .shell .timeline-key,
+html[data-theme='dark'] .shell .terrain-note,
+html[data-theme='dark'] .shell .hour-label,
+html[data-theme='dark'] .shell .date-endpoints,
+html[data-theme='dark'] .shell .time-endpoints,
+html[data-theme='dark'] .shell .globe-heading p,
+html[data-theme='dark'] .shell .globe-note {
+  color: #d4dde7;
+}
+
+html[data-theme='dark'] .welcome-shell h1,
+html[data-theme='dark'] .shell h1,
+html[data-theme='dark'] .shell h2,
+html[data-theme='dark'] .shell h3,
+html[data-theme='dark'] .shell .result-number {
+  color: #f2f5f8;
+}
+
+html[data-theme='dark'] .welcome-shell .eyebrow,
+html[data-theme='dark'] .shell .eyebrow,
+html[data-theme='dark'] .shell .result-number span,
+html[data-theme='dark'] .shell .field-hint,
+html[data-theme='dark'] .shell .globe-note {
+  color: #aebaca;
+}
+
+html[data-theme='dark'] .welcome-topbar .theme-toggle,
+html[data-theme='dark'] .topline .theme-toggle {
+  --color: #e6edf5;
+}
+
+html[data-theme='dark'] .language-select {
+  border-color: #465365;
+  background: #202b38;
+  color: #edf2f7;
+}
+
+html[data-theme='dark'] .moon-facts,
+html[data-theme='dark'] .choice-card,
+html[data-theme='dark'] .concept-card,
+html[data-theme='dark'] .results-card,
+html[data-theme='dark'] .site-details,
+html[data-theme='dark'] .reading-note,
+html[data-theme='dark'] .temperature-note {
+  border-color: #354252;
+  background: #1b2531;
+  color: #d4dde7;
+}
+
+html[data-theme='dark'] .site-details-body,
+html[data-theme='dark'] .reading-note p,
+html[data-theme='dark'] .result-more p,
+html[data-theme='dark'] .temperature-note p,
+html[data-theme='dark'] .result-item > p:not(.result-number),
+html[data-theme='dark'] .concept-copy,
+html[data-theme='dark'] .concept-list strong,
+html[data-theme='dark'] .welcome-caption {
+  color: #c1ccd8;
+}
+
+html[data-theme='dark'] .field,
+html[data-theme='dark'] .date-scrubber {
+  --background: #202b38;
+  border-color: #3a4654;
+  background: #202b38;
+}
+
+html[data-theme='dark'] .field ion-label,
+html[data-theme='dark'] .field ion-select,
+html[data-theme='dark'] .field ion-input,
+html[data-theme='dark'] .date-scrubber-heading,
+html[data-theme='dark'] .date-scrubber-heading output,
+html[data-theme='dark'] .result-date {
+  color: #e1e8f0;
+}
+
+html[data-theme='dark'] .globe-block {
+  border-color: #354252;
+  background: radial-gradient(ellipse at 50% 34%, #202b38 0, #151d27 72%);
+}
+
+html[data-theme='dark'] .globe-time,
+html[data-theme='dark'] .reflection-card,
+html[data-theme='dark'] .site-details,
+html[data-theme='dark'] .reading-note,
+html[data-theme='dark'] .temperature-note {
+  background-color: #202b38;
+}
+
+html[data-theme='dark'] .sunlight-result .result-icon,
+html[data-theme='dark'] .earth-result .result-icon,
+html[data-theme='dark'] .overlap-result .result-icon {
+  background: #283543;
+  color: #e6edf5;
+}
+
+html[data-theme='dark'] .hour-track {
+  border-color: #465365;
+  background: #202b38;
+  color: #e1e8f0;
+}
+
+html[data-theme='dark'] .page-footer a,
+html[data-theme='dark'] .facts-sources a,
+html[data-theme='dark'] .temperature-note a,
+html[data-theme='dark'] .result-more summary,
+html[data-theme='dark'] .site-details summary,
+html[data-theme='dark'] .reading-note summary,
+html[data-theme='dark'] .temperature-note summary,
+html[data-theme='dark'] .reflection-card summary {
+  color: #9fc8ff;
+}

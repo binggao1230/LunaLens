@@ -34,6 +34,7 @@ type SitesMetadata = { sites: LearningSite[] };
 const metadata = ephemerisData as EphemerisMetadata;
 const siteCatalog = sitesData as SitesMetadata;
 let ephemerisPromise: Promise<InstanceType<typeof Ephemeris>> | undefined;
+let cachedSite: { id: string; value: InstanceType<typeof Site> } | undefined;
 
 async function loadEphemeris() {
   ephemerisPromise ??= fetch(ephemerisUrl)
@@ -47,6 +48,11 @@ async function loadEphemeris() {
 
 export function getLearningSites(): LearningSite[] {
   return siteCatalog.sites;
+}
+
+export function getDateCoverage(): { start: string; end: string } {
+  const endMs = Date.parse(metadata.start) + (metadata.count - 1) * metadata.stepSeconds * 1000;
+  return { start: metadata.start.slice(0, 10), end: new Date(endMs).toISOString().slice(0, 10) };
 }
 
 export async function getDailyResult(siteId: string, date: string): Promise<DailyResult> {
@@ -68,7 +74,8 @@ export async function getDailyResult(siteId: string, date: string): Promise<Dail
   }
 
   const ephemeris = await loadEphemeris();
-  const site = new Site(rawSite, ephemeris);
+  if (!cachedSite || cachedSite.id !== siteId) cachedSite = { id: siteId, value: new Site(rawSite, ephemeris) };
+  const site = cachedSite.value;
   const firstIndex = Math.round(ephemeris.indexOf(startMs));
   const series = site.series;
   const samples = Array.from({ length: 24 }, (_, hour) => ({

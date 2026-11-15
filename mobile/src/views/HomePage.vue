@@ -4,17 +4,35 @@
       <main class="welcome-shell" aria-labelledby="welcome-title">
         <header class="welcome-topbar">
           <img class="welcome-logo" src="/lunalens-logo.svg" alt="LunaLens" />
-          <ion-select
-            class="language-select"
-            :value="language"
-            :aria-label="t('Choose language')"
-            interface="popover"
-            @ion-change="setLanguage($event.detail.value)"
-          >
-            <ion-select-option value="fr">FR</ion-select-option>
-            <ion-select-option value="en">EN</ion-select-option>
-            <ion-select-option value="zh">简中</ion-select-option>
-          </ion-select>
+          <div class="header-actions">
+            <ion-button
+              class="theme-toggle"
+              fill="clear"
+              :aria-label="t(isDarkMode ? 'Switch to light mode' : 'Switch to dark mode')"
+              @click="toggleColorMode"
+            >
+              <svg v-if="isDarkMode" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path
+                  d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"
+                ></path>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path>
+              </svg>
+            </ion-button>
+            <ion-select
+              class="language-select"
+              :value="language"
+              :aria-label="t('Choose language')"
+              interface="popover"
+              @ion-change="setLanguage($event.detail.value)"
+            >
+              <ion-select-option value="fr">FR</ion-select-option>
+              <ion-select-option value="en">EN</ion-select-option>
+              <ion-select-option value="zh">简中</ion-select-option>
+            </ion-select>
+          </div>
         </header>
 
         <section class="welcome-hero">
@@ -110,6 +128,7 @@
 <script setup lang="ts">
 import { IonButton, IonContent, IonPage, IonSelect, IonSelectOption } from '@ionic/vue';
 import { useLanguage } from '../i18n';
+import { isDarkMode, toggleColorMode } from '../theme/color-mode';
 
 const { language, setLanguage, t } = useLanguage();
 </script>
@@ -130,6 +149,29 @@ const { language, setLanguage, t } = useLanguage();
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  --color: #203b62;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+.theme-toggle svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  width: 21px;
+  height: 21px;
 }
 .welcome-logo {
   display: block;

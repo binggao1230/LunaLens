@@ -7,17 +7,35 @@
             <img class="brand-logo" src="/lunalens-logo.svg" alt="" />
             <span>LunaLens <span class="brand-subtitle">LEARN</span></span>
           </router-link>
-          <ion-select
-            class="language-select"
-            :value="language"
-            :aria-label="t('Choose language')"
-            interface="popover"
-            @ion-change="setLanguage($event.detail.value)"
-          >
-            <ion-select-option value="fr">FR</ion-select-option>
-            <ion-select-option value="en">EN</ion-select-option>
-            <ion-select-option value="zh">简中</ion-select-option>
-          </ion-select>
+          <div class="header-actions">
+            <ion-button
+              class="theme-toggle"
+              fill="clear"
+              :aria-label="t(isDarkMode ? 'Switch to light mode' : 'Switch to dark mode')"
+              @click="toggleColorMode"
+            >
+              <svg v-if="isDarkMode" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path
+                  d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"
+                ></path>
+              </svg>
+              <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"></path>
+              </svg>
+            </ion-button>
+            <ion-select
+              class="language-select"
+              :value="language"
+              :aria-label="t('Choose language')"
+              interface="popover"
+              @ion-change="setLanguage($event.detail.value)"
+            >
+              <ion-select-option value="fr">FR</ion-select-option>
+              <ion-select-option value="en">EN</ion-select-option>
+              <ion-select-option value="zh">简中</ion-select-option>
+            </ion-select>
+          </div>
         </header>
 
         <section class="hero" aria-labelledby="page-title">
@@ -66,8 +84,8 @@
                 id="landing-date"
                 v-model="selectedDate"
                 type="date"
-                min="2026-01-01"
-                max="2030-12-31"
+                :min="dateCoverage.start"
+                :max="dateCoverage.end"
                 :aria-label="t('Day (UTC)')"
               ></ion-input>
             </ion-item>
@@ -115,7 +133,7 @@
               <h2 id="results-title">{{ t(displaySiteName) }}</h2>
             </div>
           </div>
-          <p class="result-date">{{ dailyResult.date }} · 00:00–23:00 UTC</p>
+          <p class="result-date">{{ selectedDate }} · 00:00–23:00 UTC</p>
 
           <section class="globe-block" aria-labelledby="globe-title">
             <div class="globe-heading">
@@ -162,6 +180,26 @@
                 />
                 <span class="time-endpoints"><span>00:00</span><span>23:00 UTC</span></span>
               </label>
+            </div>
+            <div class="date-scrubber">
+              <div class="date-scrubber-heading">
+                <label for="date-slider">{{ t('Day of month') }}</label>
+                <output for="date-slider">{{ selectedDate }}</output>
+              </div>
+              <input
+                id="date-slider"
+                v-model.number="dateSliderValue"
+                class="date-slider"
+                type="range"
+                min="1"
+                :max="daysInSelectedMonth"
+                step="1"
+                :aria-label="t('Move through the days of this month')"
+                :aria-valuetext="selectedDate"
+              />
+              <div class="date-endpoints">
+                <span>01</span><span>{{ daysInSelectedMonth }}</span>
+              </div>
             </div>
             <p class="globe-note">{{ t('Change the date above to explore another day.') }}</p>
           </section>
@@ -327,15 +365,18 @@ import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonPage, IonSelect,
 import moonTextureUrl from '../../../site/assets/moon_1024.jpg?url';
 import {
   getDailyResult,
+  getDateCoverage,
   getLearningSites,
   getLunarFrame,
   type DailyResult,
   type LunarFrame,
 } from '../services/learning-science';
 import { useLanguage } from '../i18n';
+import { isDarkMode, toggleColorMode } from '../theme/color-mode';
 
 const { language, setLanguage, t } = useLanguage();
 const learningSites = getLearningSites();
+const dateCoverage = getDateCoverage();
 const selectedSite = ref('apollo11');
 const selectedDate = ref('2027-01-01');
 const dailyResult = ref<DailyResult | null>(null);
@@ -348,6 +389,20 @@ const lunarFrame = ref<LunarFrame>({ sunLat: 0, sunLon: 0 });
 let moonTexture: HTMLImageElement | null = null;
 let moonPixels: ImageData | null = null;
 let playbackTimer: ReturnType<typeof setInterval> | undefined;
+let resultTimer: ReturnType<typeof setTimeout> | undefined;
+let frameRequest = 0;
+let resultRequest = 0;
+const daysInSelectedMonth = computed(() => {
+  const [year, month] = selectedDate.value.split('-').map(Number);
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+});
+const dateSliderValue = computed({
+  get: () => Number(selectedDate.value.slice(-2)),
+  set: (day: number) => {
+    const [year, month] = selectedDate.value.split('-');
+    selectedDate.value = `${year}-${month}-${String(day).padStart(2, '0')}`;
+  },
+});
 
 const selectedSiteInfo = computed(() => learningSites.find((site) => site.id === selectedSite.value));
 const displaySiteName = computed(() => dailyResult.value?.site.id ?? selectedSite.value);
@@ -391,29 +446,40 @@ function getErrorMessage(error: unknown): string {
   return t(message);
 }
 
-async function openLesson(): Promise<void> {
+async function openLesson(resetHour = true): Promise<void> {
   if (!selectedDate.value) return;
+  if (resultTimer) clearTimeout(resultTimer);
+  const request = ++resultRequest;
   loading.value = true;
   errorMessage.value = '';
   try {
-    pausePlayback();
-    currentHour.value = 0;
-    dailyResult.value = await getDailyResult(selectedSite.value, selectedDate.value);
+    if (resetHour) {
+      pausePlayback();
+      currentHour.value = 0;
+    }
+    const result = await getDailyResult(selectedSite.value, selectedDate.value);
+    if (request === resultRequest) dailyResult.value = result;
   } catch (error) {
-    errorMessage.value = getErrorMessage(error);
+    if (request === resultRequest) errorMessage.value = getErrorMessage(error);
   } finally {
-    loading.value = false;
+    if (request === resultRequest) loading.value = false;
   }
 }
 
 watch([selectedDate, selectedSite], () => {
-  if (dailyResult.value) void openLesson();
+  if (!dailyResult.value) return;
+  pausePlayback();
+  if (resultTimer) clearTimeout(resultTimer);
+  resultTimer = setTimeout(() => void openLesson(false), 220);
 });
 
 watch([selectedDate, currentHour, dailyResult], async () => {
   if (!dailyResult.value) return;
+  const request = ++frameRequest;
   try {
-    lunarFrame.value = await getLunarFrame(selectedDate.value, currentHour.value);
+    const frame = await getLunarFrame(selectedDate.value, currentHour.value);
+    if (request !== frameRequest) return;
+    lunarFrame.value = frame;
     drawGlobe();
   } catch (error) {
     errorMessage.value = getErrorMessage(error);
@@ -473,11 +539,11 @@ function drawGlobe(): void {
   const y = center - radius * Math.sin(latitude);
   context.beginPath();
   context.arc(x, y, size * 0.022, 0, Math.PI * 2);
-  context.fillStyle = '#182638';
+  context.fillStyle = '#f7fbff';
   context.fill();
   context.beginPath();
   context.arc(x, y, size * 0.012, 0, Math.PI * 2);
-  context.fillStyle = '#ffcf55';
+  context.fillStyle = '#2785e8';
   context.fill();
 }
 
@@ -520,7 +586,10 @@ onMounted(() => {
   moonTexture.src = moonTextureUrl;
 });
 
-onBeforeUnmount(pausePlayback);
+onBeforeUnmount(() => {
+  pausePlayback();
+  if (resultTimer) clearTimeout(resultTimer);
+});
 </script>
 
 <style scoped>
@@ -549,6 +618,29 @@ onBeforeUnmount(pausePlayback);
   min-height: 48px;
   justify-content: space-between;
   gap: 12px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  --color: #203b62;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+.theme-toggle svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  width: 21px;
+  height: 21px;
 }
 
 .language-select {
@@ -825,6 +917,43 @@ h2 {
   line-height: 1.5;
 }
 
+.date-scrubber {
+  margin: 13px 3px 0;
+  padding: 11px 12px 9px;
+  border: 1px solid #dedfdf;
+  border-radius: 11px;
+  background: #fffefa;
+}
+.date-scrubber-heading,
+.date-endpoints {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.date-scrubber-heading {
+  color: #39475a;
+  font-size: 13px;
+  font-weight: 700;
+}
+.date-scrubber-heading output {
+  color: #172337;
+  font-variant-numeric: tabular-nums;
+}
+.date-slider {
+  display: block;
+  width: 100%;
+  min-height: 38px;
+  margin: 3px 0 0;
+  accent-color: #315c89;
+  touch-action: pan-x;
+}
+.date-endpoints {
+  color: #536071;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
 .start-button {
   min-height: 52px;
   --background: #203b62;
@@ -975,8 +1104,8 @@ h2 {
   background: #273343;
 }
 .globe-site {
-  background: #ffcf55;
-  border: 2px solid #182638;
+  background: #2785e8;
+  border: 2px solid #f7fbff;
 }
 .time-controls {
   display: flex;
