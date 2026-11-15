@@ -109,11 +109,11 @@ export function mountProbePreviews(root) {
         }[canvas.dataset.model];
         model = (await loader.loadAsync(`assets/models/${file}.glb`)).scene;
         if (cancelled) { disposeModel(model); return; }
-        if (canvas.dataset.model !== 'artemis' && canvas.dataset.model !== 'apollo') await normalizeMaterials(model);
+        if (canvas.dataset.model !== 'apollo') await normalizeMaterials(model);
         renderer = new T.WebGLRenderer({ canvas, alpha: true, antialias: true });
         renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
         renderer.toneMapping = T.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.1;
+        renderer.toneMappingExposure = canvas.dataset.model === 'artemis' ? 1.0 : 2.4;
         const scene = new T.Scene(), camera = new T.PerspectiveCamera(34, 1, .01, 100);
         const box = new T.Box3().setFromObject(model), size = box.getSize(new T.Vector3());
         model.scale.multiplyScalar(3.5 / Math.max(size.x, size.y, size.z));
@@ -122,10 +122,10 @@ export function mountProbePreviews(root) {
         box.setFromObject(model);
         const radius = box.getBoundingSphere(new T.Sphere()).radius;
         scene.environment = await getEnvironment(T, renderer);
-        scene.add(model, new T.HemisphereLight(0xe4efff, 0x615950, 1.1));
-        const light = new T.DirectionalLight(0xfff1dd, 2.4);
+        scene.add(model, new T.HemisphereLight(0xe4efff, 0x615950, 1.5));
+        const light = new T.DirectionalLight(0xfff1dd, 3.0);
         light.position.set(4, 6, 5);
-        const rim = new T.DirectionalLight(0xbbd8ff, 1.8);
+        const rim = new T.DirectionalLight(0xbbd8ff, 2.2);
         rim.position.set(-4, 3, -3);
         scene.add(light, rim);
         controls = new OrbitControls(camera, canvas);

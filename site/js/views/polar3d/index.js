@@ -388,7 +388,6 @@ export async function createPolar3d(env) {
         sunGlow.position.copy(sunBody.position);
         if (tms !== null && env.epochMs) {
           const days = (tms - env.epochMs) / 864e5;
-          moonGroup.rotation.y = (days / 27.321661) * Math.PI * 2;
           earth.rotation.y = (days / 0.99727) * Math.PI * 2;
           sunBody.material.rotation = (days / 25.38) * Math.PI * 2;
         }

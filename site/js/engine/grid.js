@@ -41,8 +41,8 @@ export const inStudy = (lat) => lat <= STUDY_LAT;
  * Cell centres for a square grid centred on REGION. `cells` 4 gives the coarse overview,
  * 8 the fine pass; both span the same bounds, so cell size is `2 * halfKm / cells`.
  */
-export function cellCenters(cells = REGION.fineCells) {
-  const c = project(REGION.centerLat, REGION.centerLon);
+export function cellCenters(cells = REGION.fineCells, center = REGION) {
+  const c = project(center.centerLat, center.centerLon);
   const step = (2 * REGION.halfKm) / cells;
   const out = [];
   for (let row = 0; row < cells; row++) {
@@ -57,8 +57,8 @@ export function cellCenters(cells = REGION.fineCells) {
 }
 
 /** Grid geometry is static; only the scenario changes. */
-export function gridGeometry(cells = REGION.fineCells) {
-  const centres = cellCenters(cells);
+export function gridGeometry(cells = REGION.fineCells, center = REGION) {
+  const centres = cellCenters(cells, center);
   const step = 2 * REGION.halfKm / cells;
   const xs = centres.map((c) => c.xKm), ys = centres.map((c) => c.yKm);
   const corners = [
@@ -127,6 +127,7 @@ export function earthStats(ephemeris, lat, lon, groundM, horizonDeg, { startInde
   const basis = siteBasis(lat, lon, groundM / 1000 + 0.002);
   const state = new Float64Array(6);
   let open = 0, run = 0, longest = 0, geometric = 0, firstBlockedH = null;
+  let sun = 0, sunRun = 0, longestSun = 0, both = 0;
   for (let h = 0; h < stayH; h++) {
     const i = startIndex + h;
     if (i < 0 || i >= ephemeris.n) return null;
@@ -137,18 +138,88 @@ export function earthStats(ephemeris, lat, lon, groundM, horizonDeg, { startInde
     const isOpen = got.el - hz > marginDeg;
     if (got.el > hz) geometric++;
     if (isOpen) { open++; run++; if (run > longest) longest = run; } else { run = 0; if (firstBlockedH === null) firstBlockedH = h; }
+    const sunGot = azEl(basis, state[1], state[0], state[2]);
+    const sunHz = horizonAt(horizonDeg, sunGot.az);
+    const sunUp = Number.isFinite(sunGot.el) && Number.isFinite(sunHz) && sunGot.el > sunHz;
+    if (sunUp) { sun++; sunRun++; if (sunRun > longestSun) longestSun = sunRun; } else sunRun = 0;
+    if (isOpen && sunUp) both++;
   }
   return {
     earthPct: (100 * open) / stayH,
     geometricPct: (100 * geometric) / stayH,
     longestH: longest,
     firstBlockedH,
+    sunPct: (100 * sun) / stayH,
+    longestSunH: longestSun,
+    bothPct: (100 * both) / stayH,
   };
 }
 
+/**
+ * Per-hour sky booleans over a window span. One trig pass per hour; the window scan
+ * (`screenCellWindow`) then reuses these arrays with prefix sums so narrowing the search
+ * window is cheap and both ends of the window actually participate.
+ */
+export function skySeries(ephemeris, lat, lon, groundM, horizonDeg, { fromIndex, toIndex, stayH, marginDeg }) {
+  if (!Number.isFinite(groundM) || !horizonDeg) return null;
+  const basis = siteBasis(lat, lon, groundM / 1000 + 0.002);
+  const from = Math.max(0, Math.round(fromIndex));
+  const spanEnd = Math.min(Math.round(toIndex) + stayH, ephemeris.n);
+  const span = spanEnd - from;
+  if (span <= 0) return null;
+  const earthOpen = new Uint8Array(span), sunOpen = new Uint8Array(span);
+  const state = new Float64Array(6);
+  for (let j = 0; j < span; j++) {
+    const i = from + j;
+    ephemeris.stateAt(i, state);
+    const e = azEl(basis, state[4], state[3], state[5]);
+    const he = horizonAt(horizonDeg, e.az);
+    earthOpen[j] = Number.isFinite(e.el) && Number.isFinite(he) && e.el - he > marginDeg ? 1 : 0;
+    const s = azEl(basis, state[1], state[0], state[2]);
+    const hs = horizonAt(horizonDeg, s.az);
+    sunOpen[j] = Number.isFinite(s.el) && Number.isFinite(hs) && s.el > hs ? 1 : 0;
+  }
+  return { from, span, earthOpen, sunOpen };
+}
+
+/**
+ * Screen one cell over a touchdown search window: sample one candidate start every
+ * `sampleStepH` hours (24 h by default), keep the candidate with the best score, and
+ * return that candidate's stay statistics and classification. Hard-limit failures never
+ * win: a failed candidate carries no score and is skipped when a scoring one exists.
+ */
+export function screenCellWindow(ephemeris, { lat, lon, groundM, slopeDeg, horizonDeg }, { startIndex, endIndex, stayH, marginDeg, sampleStepH = 24 }, limits = DEFAULT_LIMITS, targets = DEFAULT_TARGETS, weights = DEFAULT_WEIGHTS) {
+  const sky = skySeries(ephemeris, lat, lon, groundM, horizonDeg, { fromIndex: startIndex, toIndex: endIndex, stayH, marginDeg });
+  if (!sky) return null;
+  const { from, span, earthOpen, sunOpen } = sky;
+  const ePre = new Int32Array(span + 1), sPre = new Int32Array(span + 1);
+  for (let j = 0; j < span; j++) { ePre[j + 1] = ePre[j] + earthOpen[j]; sPre[j + 1] = sPre[j] + sunOpen[j]; }
+  let best = null;
+  for (let s = Math.round(startIndex); s <= Math.round(endIndex); s += sampleStepH) {
+    const off = s - from;
+    if (off < 0 || off + stayH > span) continue;
+    const earthOpenH = ePre[off + stayH] - ePre[off];
+    const sunOpenH = sPre[off + stayH] - sPre[off];
+    let runE = 0, longestE = 0, runS = 0, longestS = 0, both = 0;
+    for (let h = 0; h < stayH; h++) {
+      const e = earthOpen[off + h], su = sunOpen[off + h];
+      if (e) { runE++; if (runE > longestE) longestE = runE; } else runE = 0;
+      if (su) { runS++; if (runS > longestS) longestS = runS; } else runS = 0;
+      if (e && su) both++;
+    }
+    const stats = { earthPct: (100 * earthOpenH) / stayH, geometricPct: 0, longestH: longestE, firstBlockedH: null, sunPct: (100 * sunOpenH) / stayH, longestSunH: longestS, bothPct: (100 * both) / stayH };
+    const cls = classify({ groundM, slopeDeg, horizonDeg, stats }, limits, targets, weights);
+    const score = cls.score ?? -1;
+    if (!best || score > best.score || (score === best.score && stats.earthPct > best.stats.earthPct)) {
+      best = { startIndex: s, stats, class: cls, score };
+    }
+  }
+  return best ? { startIndex: best.startIndex, stats: best.stats, class: best.class } : null;
+}
+
 export const DEFAULT_LIMITS = Object.freeze({ maxSlopeDeg: 15, minEarthPct: 25, minWindowH: 48 });
-export const DEFAULT_TARGETS = Object.freeze({ slopeDeg: 10, earthPct: 40, windowH: 100 });
-export const DEFAULT_WEIGHTS = Object.freeze({ earth: 0.5, slope: 0.3, window: 0.2 });
+export const DEFAULT_TARGETS = Object.freeze({ slopeDeg: 10, earthPct: 40, windowH: 100, sunPct: 40 });
+export const DEFAULT_WEIGHTS = Object.freeze({ earth: 0.35, sun: 0.2, slope: 0.25, window: 0.2 });
 
 /** Validate editable thresholds; targets are clamped to their hard limit so colour cannot lie. */
 export function normalizeThresholds(limits = DEFAULT_LIMITS, targets = DEFAULT_TARGETS, weights = DEFAULT_WEIGHTS) {
@@ -163,11 +234,12 @@ export function normalizeThresholds(limits = DEFAULT_LIMITS, targets = DEFAULT_T
     slopeDeg: Math.min(num(targets.slopeDeg, 'slope target'), L.maxSlopeDeg),
     earthPct: Math.max(num(targets.earthPct, 'visibility target'), L.minEarthPct),
     windowH: Math.max(num(targets.windowH, 'window target'), L.minWindowH),
+    sunPct: Math.max(0, Math.min(100, num(targets.sunPct, 'sunlight target'))),
   };
-  const W = { earth: num(weights.earth, 'earth weight'), slope: num(weights.slope, 'slope weight'), window: num(weights.window, 'window weight') };
-  const sum = W.earth + W.slope + W.window;
+  const W = { earth: num(weights.earth, 'earth weight'), sun: num(weights.sun, 'sun weight'), slope: num(weights.slope, 'slope weight'), window: num(weights.window, 'window weight') };
+  const sum = W.earth + W.sun + W.slope + W.window;
   if (sum <= 0) errors.push('at least one weight must be positive');
-  return { ok: errors.length === 0, errors, limits: L, targets: T, weights: sum > 0 ? { earth: W.earth / sum, slope: W.slope / sum, window: W.window / sum } : DEFAULT_WEIGHTS };
+  return { ok: errors.length === 0, errors, limits: L, targets: T, weights: sum > 0 ? { earth: W.earth / sum, sun: W.sun / sum, slope: W.slope / sum, window: W.window / sum } : DEFAULT_WEIGHTS };
 }
 
 /**
@@ -188,11 +260,22 @@ export function classify(cell, limits = DEFAULT_LIMITS, targets = DEFAULT_TARGET
   if (cell.slopeDeg > T.slopeDeg) missed.push('slope');
   if (cell.stats.earthPct < T.earthPct) missed.push('earth');
   if (cell.stats.longestH < T.windowH) missed.push('window');
+  const sunPct = Number.isFinite(cell.stats.sunPct) ? cell.stats.sunPct : 0;
+  if (sunPct < T.sunPct) missed.push('sun');
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  // Each component reaches 1.0 at its target and earns a small bonus beyond it, so two
+  // cells that both meet a target still rank apart (41 % vs 95 % are not the same score).
   const cSlope = L.maxSlopeDeg > 0 ? clamp01((L.maxSlopeDeg - cell.slopeDeg) / Math.max(1e-6, L.maxSlopeDeg - T.slopeDeg)) : 1;
+  const slopeBonus = T.slopeDeg > 0 ? 0.25 * clamp01((T.slopeDeg - cell.slopeDeg) / T.slopeDeg) : 0;
   const cEarth = T.earthPct > 0 ? clamp01(cell.stats.earthPct / T.earthPct) : 1;
+  const earthBonus = T.earthPct < 100 ? 0.25 * clamp01((cell.stats.earthPct - T.earthPct) / Math.max(1e-6, 100 - T.earthPct)) : 0;
   const cWindow = T.windowH > 0 ? clamp01(cell.stats.longestH / T.windowH) : 1;
-  const score = failed.length ? null : Math.round(100 * (W.earth * cEarth + W.slope * cSlope + W.window * cWindow));
+  const windowCeil = Math.max(T.windowH * 2, 100);
+  const windowBonus = 0.25 * clamp01((cell.stats.longestH - T.windowH) / Math.max(1e-6, windowCeil - T.windowH));
+  const cSun = T.sunPct > 0 ? clamp01(sunPct / T.sunPct) : 1;
+  const sunBonus = T.sunPct < 100 ? 0.25 * clamp01((sunPct - T.sunPct) / Math.max(1e-6, 100 - T.sunPct)) : 0;
+  const weighted = W.earth * (cEarth + earthBonus) + W.sun * (cSun + sunBonus) + W.slope * (cSlope + slopeBonus) + W.window * (cWindow + windowBonus);
+  const score = failed.length ? null : Math.round(100 * weighted / 1.25);
   return { status: failed.length ? 'red' : missed.length ? 'yellow' : 'green', failed, missed, score };
 }
 
@@ -201,6 +284,7 @@ export const REASON_TEXT = Object.freeze({
   slope: 'slope above the hard limit',
   earth: 'Earth visibility below the hard limit',
   window: 'longest Earth window below the hard limit',
+  sun: 'sunlight below the preference target',
   'no-data': 'no terrain skyline at this cell',
   'invalid-thresholds': 'thresholds are invalid',
 });
