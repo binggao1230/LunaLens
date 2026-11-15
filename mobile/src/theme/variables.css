@@ -155,3 +155,98 @@ html[data-theme='dark'] .temperature-note summary,
 html[data-theme='dark'] .reflection-card summary {
   color: #9fc8ff;
 }
+
+html[data-theme='dark'] .welcome-shell .moon-facts summary,
+html[data-theme='dark'] .welcome-shell .facts-body p strong,
+html[data-theme='dark'] .shell .site-details-body,
+html[data-theme='dark'] .shell .site-details-body strong,
+html[data-theme='dark'] .shell .date-scrubber-heading,
+html[data-theme='dark'] .shell .date-scrubber-heading output,
+html[data-theme='dark'] .shell .globe-time,
+html[data-theme='dark'] .shell .globe-legend,
+html[data-theme='dark'] .shell .external-hint {
+  color: #e1e8f0;
+}
+
+html[data-theme='dark'] .welcome-shell .expand-mark,
+html[data-theme='dark'] .shell .expand-mark {
+  border-color: #536174;
+  color: #c5d0dc;
+}
+
+html[data-theme='dark'] .welcome-shell .moon-facts summary > span:first-child {
+  border-color: #74613a;
+  background: #38311f;
+  color: #f4d68e;
+}
+
+html[data-theme='dark'] .shell .step-number {
+  background: #29384a;
+  color: #d5e5f8;
+}
+
+html[data-theme='dark'] .shell .step-number-complete {
+  background: #203b32;
+  color: #a7e5c6;
+}
+
+html[data-theme='dark'] .shell .result-item,
+html[data-theme='dark'] .shell .concept-list li {
+  border-color: #354252;
+  background: #202b38;
+}
+
+html[data-theme='dark'] .shell .result-more {
+  border-color: #3a4654;
+}
+
+html[data-theme='dark'] .shell .reflection-card {
+  border-color: #354252;
+}
+
+html[data-theme='dark'] .shell .timeline-block {
+  border-color: #3a4654;
+}
+
+html[data-theme='dark'] .shell .hour-track.has-sun {
+  border-color: #8f7130;
+  background: #382f1d;
+  color: #f4d68e;
+}
+
+html[data-theme='dark'] .shell .hour-track.has-earth {
+  border-color: #3b708b;
+  background: #1d3340;
+  color: #a8d9f0;
+}
+
+html[data-theme='dark'] .shell .hour-track.has-both {
+  border-color: #54704b;
+  background: repeating-linear-gradient(135deg, #283a2b 0 6px, #304333 6px 12px);
+  color: #c0e0ad;
+}
+
+html[data-theme='dark'] .shell .error-note {
+  color: #ffaaa4;
+}
+
+html[data-theme='dark'] .shell .science-note {
+  border-left-color: #7695ba;
+  background: #202b38;
+  color: #d4dde7;
+}
+
+html[data-theme='dark'] .shell .sun-symbol {
+  background: #38311f;
+  color: #f4d68e;
+}
+
+html[data-theme='dark'] .shell .earth-symbol {
+  background: #1d3340;
+  color: #a8d9f0;
+}
+
+html[data-theme='dark'] .shell .overlap-symbol {
+  background: #283a2b;
+  color: #c0e0ad;
+}
