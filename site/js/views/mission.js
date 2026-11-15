@@ -1119,5 +1119,6 @@ export function createMission(ctx) {
       view3d.frame(list, { aim: [0, 0.1], avoid: b && b.width ? [nx(b.left), ny(b.bottom), nx(b.right), ny(b.top)] : null });
     },
     openFlag: (id) => historic?.open(id),
+    closeFlag: () => historic?.close(false),
   };
 }
