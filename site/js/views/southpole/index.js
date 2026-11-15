@@ -40,6 +40,7 @@ const ICON = {
   crosshair: '<circle cx="12" cy="12" r="6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
   panel: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/>',
   back: '<path d="M19 12H5M12 19l-7-7 7-7"/>',
+  forward: '<path d="M5 12h14M12 5l7 7-7 7"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
 };
 const icon = (name) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICON[name]}</svg>`;
@@ -264,14 +265,9 @@ export function createSouthPole(ctx) {
       </div>
 
       <aside class="pole-cards" id="sp-cards" hidden>
-        <section class="pole-selection">
-          <h3 class="pole-cards-title">${escapeHtml(t('Selected point'))}</h3>
-          <div id="sp-picked"></div>
-          <div class="pole-save-actions" id="sp-abc" role="group" aria-label="${escapeHtml(t('Selected points #1/#2/#3'))}">
-            ${['A', 'B', 'C'].map((name) => `<button type="button" data-slot="${name}" disabled>${escapeHtml(t('Save as {name}', { name: slotLabel(name) }))}</button>`).join('')}
-          </div>
-          <button type="button" class="btn-ghost btn-xs pole-pick-atlas" id="sp-pick-atlas" disabled>${escapeHtml(t('Enter Atlas'))}</button>
-        </section>
+        <div class="pole-atlas-entry">
+          <button type="button" class="btn-primary pole-pick-atlas" id="sp-pick-atlas" disabled><span>${escapeHtml(t('Enter Atlas'))}</span>${icon('forward')}</button>
+        </div>
         <h3 class="pole-cards-title">${escapeHtml(t('Top 3 recommended blocks'))}</h3>
         <ol class="pole-cardlist" id="sp-cardlist"></ol>
         <h3 class="pole-cards-title">${escapeHtml(t('Your points'))}</h3>
@@ -297,6 +293,9 @@ export function createSouthPole(ctx) {
         </div>
         <label class="pole-label">${escapeHtml(t('Map point'))}<span class="pole-point" id="sp-point">${escapeHtml(t('None selected'))}</span></label>
         <h3>${escapeHtml(t('Selected points #1/#2/#3'))}</h3>
+        <div class="pole-save-actions" id="sp-abc" role="group" aria-label="${escapeHtml(t('Selected points #1/#2/#3'))}">
+          ${['A', 'B', 'C'].map((name) => `<button type="button" data-slot="${name}" disabled>${escapeHtml(t('Save as {name}', { name: slotLabel(name) }))}</button>`).join('')}
+        </div>
         <div id="sp-slots"></div>
         <div id="sp-compare"></div>
         <h3>${escapeHtml(t('Earth link at the selected hour'))}</h3>
@@ -351,7 +350,7 @@ export function createSouthPole(ctx) {
       </div>
     </div>`;
     initTranslations();
-    for (const id of ['sp-cards', 'sp-picked', 'sp-pick-atlas', 'sp-map-context', 'sp-mlimit', 'sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-list-note', 'sp-cell', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-len', 'sp-mslider', 'sp-mrange', 'sp-mwindowinfo', 'sp-confirm', 'sp-mcancel', 'sp-mstart', 'sp-mdays', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-show', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target']) els[id] = document.getElementById(id);
+    for (const id of ['sp-cards', 'sp-pick-atlas', 'sp-map-context', 'sp-mlimit', 'sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-list-note', 'sp-cell', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-len', 'sp-mslider', 'sp-mrange', 'sp-mwindowinfo', 'sp-confirm', 'sp-mcancel', 'sp-mstart', 'sp-mdays', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-show', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target']) els[id] = document.getElementById(id);
     bind();
     initWindow();
     restoreSlots();
@@ -837,8 +836,8 @@ export function createSouthPole(ctx) {
     if (cell?.static && sameSpot(cell, point)) point.static = cell.static;
     ui.target = point;
     els['sp-popup'].hidden = true;
-    els['sp-cards'].scrollTop = 0;
     renderSelection(); renderAbc(); renderDetail(); renderSites(); renderHud(); drawMap();
+    if (ui.stage === 'map' && !els['sp-panel'].classList.contains('collapsed')) els['sp-abc'].scrollIntoView({ block: 'nearest' });
     if (point.metricsKey !== metricsKey()) measureSlot(point);
   }
 
@@ -1167,15 +1166,7 @@ export function createSouthPole(ctx) {
   function renderSelection() {
     const point = ui.draft;
     els['sp-pick-atlas'].disabled = !point;
-    if (!point) {
-      els['sp-picked'].innerHTML = `<p class="sub">${escapeHtml(t('Choose a point on the map and save it as #1, #2 or #3.'))}</p>`;
-      return;
-    }
-    const metrics = point.metrics;
-    els['sp-picked'].innerHTML = `<div class="pole-selection-head"><span>${escapeHtml(fmtLatLon(point.lat, point.lon, 3))}</span>${scoreBadge(metrics?.score)}</div>
-      ${metrics ? `${barRow(t('Sunlight'), metrics.sunPct, '#f5c542')}${barRow(t('Earth'), metrics.earthPct, '#58a6ff')}
-      <p class="sub">${escapeHtml(t('Longest link'))} ${metrics.longestH} h · ${escapeHtml(t('Slope'))} ${metrics.slopeDeg.toFixed(1)}°</p>
-      <p class="sub">${escapeHtml(t('Best touchdown in the window: {time}.', { time: fmtDateTime(metrics.touchdownMs) }))}</p>${limitNote(metrics)}` : `<p class="sub" role="status">${escapeHtml(t(point.measuringKey ? 'measuring…' : 'No terrain skyline for this point.'))}</p>`}`;
+    els['sp-pick-atlas'].title = point ? `${t('Enter Atlas')} · ${fmtLatLon(point.lat, point.lon, 3)}` : t('Choose a point on the map and save it as #1, #2 or #3.');
   }
 
   function renderList() {
