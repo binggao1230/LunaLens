@@ -12,6 +12,9 @@ import { assess, isOk, findBreakingDelay, findGoDelay, bestNearby, BATTERY_H, BA
 // Steps of the story: objective, pick a site (confirm, then Lumi reveals), the flags of past landings, launch, …
 const STEP = { objective: 1, site: 2, history: 3, launch: 4, anomaly: 5, fix: 6, done: 7 };
 const DAY = 864e5, TOTAL = 7;
+// History segments: 1 and 2 point at the Historic sites switch; 3 is the explore line; 4 opens the failed IM-2 landing
+// (segment 5 explains it).
+const HISTORY_SWITCH = [1, 2], HISTORY_FAILED = 4;
 const fmt = (s, v = {}) => String(s ?? '').replace(/\{(\w+)\}/g, (m, k) => (v[k] ?? m));
 
 /** ctx: { mission, sites, eph, landing, setLanding, margin, showView, view, language, toast } */
@@ -74,7 +77,19 @@ export function createEducation(ctx) {
 
   /* ---------- story steps ---------- */
 
-  function enterHistory() { setStep(STEP.history); say('history.intro', {}, 'happy'); render(); ctx.mission.flags?.(); }
+  /* The history step has several segments (st.sub). The switch segments point at the Historic sites switch; the failed
+     IM-2 segment opens its flag card, and the segments after it explain the failure. */
+  const historyLines = () => get('steps.history.intro') ?? [];
+  function pointAtHistory() {
+    if (st.step !== STEP.history) return;
+    if (st.sub === HISTORY_FAILED) ctx.mission.openFlag?.('im2');
+    else if (st.sub < HISTORY_FAILED) ctx.mission.closeFlag?.();
+  }
+  function moveHistory(sub) { st.sub = sub; st.focus = true; say(`history.intro.${sub}`, {}, 'happy'); pointAtHistory(); render(); }
+  function enterHistory(sub = 0) {
+    setStep(STEP.history); st.sub = sub; say(`history.intro.${sub}`, {}, 'happy');
+    ctx.mission.flags?.(); pointAtHistory(); render();
+  }
   function enterSite() {
     setStep(STEP.site); ctx.mission.flags?.();
     const o = opts(), list = ctx.sites(), ok = (ms) => list.some((s) => isOk(assess(s, idx(ms), o).verdict));
@@ -122,7 +137,10 @@ export function createEducation(ctx) {
       if (!st.revealed) { if (st.picked) reveal(); }
       else if (st.revealed === 'good') enterHistory();
       else { st.revealed = null; st.focus = true; say('site.pick', {}, 'happy'); render(); }
-    } else if (st.step === STEP.history) enterLaunch();
+    } else if (st.step === STEP.history) {
+      if (st.sub < historyLines().length - 1) moveHistory(st.sub + 1);
+      else { ctx.mission.closeFlag?.(); enterLaunch(); }
+    }
     else if (st.step === STEP.anomaly) {
       if (st.anomaly.kind !== 'contact' && st.sub === 0) { st.sub = 1; st.focus = true; say(`anomaly.${st.anomaly.kind}`, { site: st.picked.short }, 'worried'); render(); }
       else enterFix();
@@ -131,7 +149,8 @@ export function createEducation(ctx) {
   function back() {
     if (st.step === 1 && st.sub > 0) { st.sub--; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); }
     else if (st.step === STEP.site) { const last = Math.max(0, introLines().length - 1); setStep(STEP.objective, last); say(`objective.intro.${last}`, {}, 'happy'); render(); }
-    else if (st.step === STEP.history) { setStep(STEP.site); st.revealed = 'good'; say('site.good', { site: st.picked?.short ?? '' }, 'celebrating'); render(); }
+    else if (st.step === STEP.history && st.sub > 0) moveHistory(st.sub - 1);
+    else if (st.step === STEP.history) { ctx.mission.closeFlag?.(); setStep(STEP.site); st.revealed = 'good'; say('site.good', { site: st.picked?.short ?? '' }, 'celebrating'); render(); }
   }
   const canComplete = () => current()?.verdict === 'go' && (st.anomaly?.kind !== 'contact' || st.tried);
 
@@ -215,6 +234,9 @@ export function createEducation(ctx) {
   }
 
   function render() {
+    // The Historic sites switch gets a highlight ring while the history step points at it.
+    const pointing = visible() && !st.skipped && st.step === STEP.history && HISTORY_SWITCH.includes(st.sub);
+    document.getElementById('m-hist')?.classList.toggle('edu-point', pointing);
     if (!visible()) { root.innerHTML = ''; st.key = ''; return; }
     const r = st.step >= STEP.site ? current() : null;
     if (st.skipped) {

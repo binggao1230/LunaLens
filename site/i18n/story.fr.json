@@ -74,7 +74,7 @@
       ]
     },
     "history": {
-      "intro": "Des humains et des robots se sont déjà posés sur la Lune ! Touche un drapeau pour découvrir leur histoire."
+      "intro": ["Des humains et des robots se sont déjà posés sur la Lune ! Touche un drapeau pour découvrir leur histoire.", "Active les sites historiques pour voir où les missions se sont déjà posées.", "Clique ici pour voir toutes les missions qui sont allées sur la Lune avant.", "Regarde IM-2 Athena. Il a manqué sa cible de seulement environ 250 mètres.", "Il s'est posé dans un cratère froid et sombre, couché sur le côté. Sans lumière du Soleil sur ses panneaux, il n'a pas pu se recharger."]
     },
     "site": {
       "pick": "Choisis maintenant un site dans la liste ou sur la carte. Les points verts voient la Terre, les ambrés ne voient que le Soleil, les gris sont dans l'ombre.",

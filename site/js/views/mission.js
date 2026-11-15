@@ -1097,5 +1097,6 @@ export function createMission(ctx) {
     redraw: () => refresh(true),
     flags: () => historic?.place(),
     openFlag: (id) => historic?.open(id),
+    closeFlag: () => historic?.close(false),
   };
 }

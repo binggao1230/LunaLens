@@ -74,7 +74,7 @@
       ]
     },
     "history": {
-      "intro": "People have landed on the Moon before! Tap a flag to discover their stories."
+      "intro": ["People have landed on the Moon before! Tap a flag to discover their stories.", "Switch on Historic sites to see where people landed before.", "Click here to see all the missions that went to the Moon before.", "Look at IM-2 Athena. It missed its target by only about 250 meters.", "It came down inside a cold, dark crater, lying on its side. With no sunlight on its panels, it could not recharge."]
     },
     "site": {
       "pick": "Now pick a landing site in the list or on the map. Green dots see Earth, amber dots see only the Sun, grey dots sit in shadow.",
