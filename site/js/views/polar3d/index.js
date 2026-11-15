@@ -254,6 +254,30 @@ export async function createPolar3d(env) {
           return { site, normal, dotMesh, ring };
         });
       };
+      // The one shared target from Map or Atlas. It stays a separate marker so the site
+      // dots keep their own identities; identical coordinates reuse the selected-site ring.
+      const targetGroup = new T.Group();
+      moonGroup.add(targetGroup);
+      let targetKey = '';
+      const updateTargetMarker = () => {
+        const p = env.target?.();
+        const site = pickedSite();
+        const same = p && site && Math.abs(p.lat - site.lat) < 1e-4 && Math.abs(((p.lon - site.lon + 540) % 360) - 180) < 1e-4;
+        const key = !p || same ? '' : `${p.lat.toFixed(4)}:${p.lon.toFixed(4)}`;
+        if (key === targetKey) return;
+        targetKey = key;
+        targetGroup.clear();
+        if (!key) return;
+        const normal = new T.Vector3(...unit(p.lat, p.lon));
+        const ring = new T.Mesh(new T.RingGeometry(1.4, 2.1, 28), new T.MeshBasicMaterial({ color: 0xffffff, side: T.DoubleSide }));
+        ring.scale.setScalar(0.006);
+        ring.position.copy(normal).multiplyScalar(1.012);
+        ring.lookAt(normal.clone().multiplyScalar(2));
+        const dot = new T.Mesh(sphereGeometry, new T.MeshBasicMaterial({ color: 0xffffff }));
+        dot.scale.setScalar(0.006);
+        dot.position.copy(normal).multiplyScalar(1.012);
+        targetGroup.add(dot, ring);
+      };
       // Terrain at the picked site: the same generator Explore uses, heights at ×1 (no exaggeration).
       const reliefGroup = new T.Group();
       moonGroup.add(reliefGroup);
@@ -469,16 +493,14 @@ export async function createPolar3d(env) {
       };
       canvas.addEventListener('pointerdown', (event) => {
         down = [event.clientX, event.clientY];
-        if (grab) {
-          const hover = dirAt(event);
-          if (hover && Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) <= (env.studyLat ?? -90)) {
-            hoverCap.visible = true;
-            request();
-          }
+        const hover = dirAt(event);
+        if (hover && Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) <= (env.studyLat ?? -90)) {
+          hoverCap.visible = true;
+          request();
         }
       });
       canvas.addEventListener('pointermove', (event) => {
-        if (!grab || event.buttons) return;
+        if (event.buttons) return;
         const hover = dirAt(event);
         const lat = hover ? Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) : null;
         const inside = lat !== null && lat <= (env.studyLat ?? -90);
@@ -487,6 +509,7 @@ export async function createPolar3d(env) {
       });
       canvas.addEventListener('pointerleave', () => { if (hoverCap.visible) { hoverCap.visible = false; request(); } });
       const tick = () => {
+        updateTargetMarker();
         const a = env.animation?.();
         const now = performance.now();
         if (grab && controls.update()) request();

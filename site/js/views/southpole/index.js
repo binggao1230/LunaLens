@@ -489,6 +489,7 @@ export function createSouthPole(ctx) {
       studyLat: STUDY_LAT,
       onMoonTap: (point) => { if (point.lat > STUDY_LAT) { setStage('map'); setNotice(t('That point is north of 85°S; the map stays on the pole.')); centrePole(); } else { setStage('map'); ui.map.cxKm = project(point.lat, point.lon).xKm; ui.map.cyKm = project(point.lat, point.lon).yKm; ui.map.scale = 24; drawMap(); } },
       pulse: pulseState,
+      target: () => ui.target,
     });
     ui.globe?.request();
     return ui.globe;
@@ -580,16 +581,18 @@ export function createSouthPole(ctx) {
     g.fillStyle = 'rgba(210,225,245,.72)';
     g.lineWidth = 0.8;
     g.font = '10px Geist, system-ui, sans-serif';
-    for (let lat = -80; lat <= -10; lat += 10) {
+    for (let lat = -90; lat <= -10; lat += 5) {
       const r = 2 * R_KM * Math.tan((90 + lat) * D2R / 2) * k;
       if (r > Math.max(mapSize().w, mapSize().h)) continue;
       g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke();
       if (r > 24) g.fillText(`${Math.abs(lat)}°S`, cx + 4, cy - r - 3);
     }
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
     for (let lon = 0; lon < 360; lon += 30) {
       const a = lon * D2R;
       g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.sin(a) * outer, cy - Math.cos(a) * outer); g.stroke();
-      if (lon % 90 === 0) g.fillText(`${lon}°`, cx + Math.sin(a) * outer * 1.02, cy - Math.cos(a) * outer * 1.02);
+      if (lon % 90 === 0) g.fillText(`${lon}°`, cx + Math.sin(a) * outer * 0.94, cy - Math.cos(a) * outer * 0.94);
     }
     g.restore();
   }
@@ -612,7 +615,6 @@ export function createSouthPole(ctx) {
         g.beginPath(); g.setLineDash(dash); g.strokeStyle = color; g.lineWidth = 1.4; g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
       }
     } catch { /* texture missing: blocks still draw */ }
-    drawGraticule(g);
     const clipR = 2 * R_KM * Math.tan((90 + STUDY_LAT) * D2R / 2) * pxPerKm(), [pcx, pcy] = screenOf(0, 0);
     g.save(); g.beginPath(); g.arc(pcx, pcy, clipR, 0, Math.PI * 2); g.clip();
     for (const cell of ui.grid.cells) {
@@ -627,6 +629,7 @@ export function createSouthPole(ctx) {
       }
     }
     g.restore();
+    drawGraticule(g);
     for (const site of studySites()) {
       const p = project(site.lat, site.lon), [x, y] = screenOf(p.xKm, p.yKm);
       g.beginPath(); g.arc(x, y, site.id === ui.selected ? 5.5 : 4, 0, Math.PI * 2);
@@ -666,14 +669,21 @@ export function createSouthPole(ctx) {
       const sx = (e.clientX - box.left) / box.width * cv.width, sy = (e.clientY - box.top) / box.height * cv.height;
       const [xKm, yKm] = kmOf(sx, sy);
       const q = unproject(xKm, yKm);
+      const hits = ui.grid.cells.filter((c) => {
+        const p = project(c.lat, c.lon);
+        const nearRepresentative = c.representative && Math.hypot(xKm - p.xKm, yKm - p.yKm) <= c.cellKm * 0.75;
+        const inCell = Math.abs(xKm - c.xKm) <= c.cellKm / 2 && Math.abs(yKm - c.yKm) <= c.cellKm / 2;
+        return inCell || nearRepresentative;
+      }).sort((a, b) => {
+        const pa = project(a.lat, a.lon), pb = project(b.lat, b.lon);
+        return Math.hypot(xKm - pa.xKm, yKm - pa.yKm) - Math.hypot(xKm - pb.xKm, yKm - pb.yKm);
+      });
+      const hit = hits[0];
+      if (hit) { ui.cell = hit; openCell(hit); return; }
       if (q.lat > STUDY_LAT) {
         setNotice(t('Outside the 85°S study area: no screening. The map stays on the pole.'));
         return;
       }
-      const hits = ui.grid.cells.filter((c) => Math.abs(xKm - c.xKm) <= c.cellKm / 2 && Math.abs(yKm - c.yKm) <= c.cellKm / 2)
-        .sort((a, b) => Math.hypot(xKm - a.xKm, yKm - a.yKm) - Math.hypot(xKm - b.xKm, yKm - b.yKm));
-      const hit = hits[0];
-      if (hit) { ui.cell = hit; openCell(hit); return; }
       setNotice(t('Select a block inside the study circle; Atlas opens only from a valid block.'));
     });
     cv.addEventListener('wheel', (e) => {
@@ -850,8 +860,8 @@ export function createSouthPole(ctx) {
     if (!sites.length && performance.now() - ui.atlasOpenedAt < 1500) return;
     const names = ['A', 'B', 'C'];
     const next = { A: null, B: null, C: null };
-    for (const name of names) {
-      const site = sites.find((s) => String(s.label ?? '').trim() === name);
+    for (const [index, name] of names.entries()) {
+      const site = sites.find((s) => Number.isInteger(s.slot) ? s.slot === index : String(s.label ?? '').trim() === name);
       const prev = ui.slots[name];
       if (site && prev && sameSpot(prev, site)) next[name] = prev;
     }

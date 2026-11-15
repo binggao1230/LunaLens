@@ -750,8 +750,8 @@ export default function App() {
       const active = st.pins.find((p) => p.id === st.activePin)
       window.parent?.postMessage({
         type: 'lunalens:atlas-state',
-        sites: sorted.map((p) => ({ lat: p.lat, lon: p.lon, label: p.label })),
-        active: active ? { lat: active.lat, lon: active.lon, label: active.label } : null,
+        sites: sorted.map((p) => ({ lat: p.lat, lon: p.lon, label: p.label, slot: p.slot })),
+        active: active ? { lat: active.lat, lon: active.lon, label: active.label, slot: active.slot } : null,
         tMs: st.tMs,
       }, location.origin)
     }, 400)
