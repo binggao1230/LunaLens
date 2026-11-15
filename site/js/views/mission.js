@@ -52,6 +52,11 @@ const MESSAGES = {
   'Earth link available': ['Liaison Terre disponible', '可与地球通信'],
   'Sunlit, no Earth link': ['Éclairé, sans liaison Terre', '有日照，无地球通信'],
   'In shadow': ['À l’ombre', '处于阴影'],
+  'Earth link only': ['Liaison Terre seule', '仅地球通信'],
+  'Hello, explorer! I\'m Lumi, your mission guide. Today we\'re going to land on the Moon, at its south pole.': ['Bonjour, explorateur ! Je suis Lumi, ton guide de mission. Aujourd\'hui, nous allons nous poser sur la Lune, au pôle Sud.', '你好，探险家！我是 Lumi，你的任务向导。今天我们要在月球的南极着陆。'],
+  'Landed · back to the Mission page': ['Atterri · retour à la page Mission', '已着陆 · 正在返回任务页面'],
+  'Sunlit only': ['Éclairé seulement', '仅有日照'],
+  'Sun and Earth in view': ['Soleil et Terre visibles', '太阳与地球同时可见'],
   'Sunlit as well': ['Aussi éclairé', '同时有日照'],
   'Drag to rotate, scroll to zoom. Not to scale. Cyan ring: the Moon’s orbit around Earth; amber: Earth’s orbit around the Sun. Cyan line: 75°S, where the terrain model ends.': ['Faites glisser pour tourner, molette pour zoomer. Hors échelle. Anneau cyan : orbite de la Lune autour de la Terre ; ambre : orbite de la Terre autour du Soleil. Ligne cyan : 75°S, limite du modèle de relief.', '拖动旋转，滚轮缩放。未按比例。青色圈：月球绕地球轨道；琥珀色圈：地球绕太阳轨道。青色线：75°S，地形模型边界。'],
   'The Moon as seen from Earth. Tap a dot to select a site.': ['La Lune vue depuis la Terre. Touchez un point pour choisir un site.', '从地球看到的月球。点击圆点选择地点。'],
@@ -229,7 +234,7 @@ export function createMission(ctx) {
     return list.find((s) => s.id === local.picked) ?? orderedSites()[0];
   }
   function defaultCompared() {
-    if (isEducation()) return new Set(); // Education: the graph shows the sites the user picks
+    if (isEducation()) return new Set(sites().map((s) => s.id)); // Education: all three sites are graphed from the start
     const list = sites();
     const probeSites = probe()?.sites?.filter((id) => list.some((s) => s.id === id)) ?? [];
     const initial = probeSites.length >= 2 ? probeSites.slice(0, 4) : orderedSites().slice(0, 3).map((s) => s.id);
@@ -240,7 +245,8 @@ export function createMission(ctx) {
     const series = site.series;
     return { sun: series.sunVis[j] === 1, link: series.earthClr[j] > ctx.margin() };
   }
-  const colorOf = (status) => (status.link ? COLORS.link : status.sun ? COLORS.sun : COLORS.dark);
+  // Four categories: both (cyan), Earth link only (green), sunlit only (yellow), neither (grey).
+  const colorOf = (status) => (status.link && status.sun ? COLORS.both : status.link ? COLORS.link : status.sun ? COLORS.sun : COLORS.dark);
   function frame() {
     const ms = ctx.landing() + local.hour * HOUR;
     const eph = ctx.eph();
@@ -264,7 +270,7 @@ export function createMission(ctx) {
       <p class="lede">${escapeHtml(t(edu ? LEDE_SIMPLE : LEDE))}</p>
       <div class="pick">${escapeHtml(t('Choose your probe'))}</div>
       <div class="guide-row" id="guide"${edu ? '' : ' hidden'}><div class="edu-char mood-happy" aria-hidden="true">${CHARACTER_MARKUP}</div>
-        <p class="guide-bubble" role="status">${escapeHtml(t('Hi! I\'m Lumi, and I\'ll be your mission guide. Pick a lander and press Validate to go to the Moon!'))}</p></div>
+        <p class="guide-bubble" role="status">${escapeHtml(t('Hello, explorer! I\'m Lumi, your mission guide. Today we\'re going to land on the Moon, at its south pole.'))}</p></div>
       <div class="probe-grid" data-model-error="${escapeHtml(t('Model unavailable. Select another probe or continue.'))}">
         ${PROBES.map(p => {
           return `<section class="probe-choice" data-probe-card="${p.id}" data-selected="${p.id === selected.id}">
@@ -376,7 +382,7 @@ export function createMission(ctx) {
       if (event.target.closest('.srow-chk')) return;
       const row = event.target.closest('[data-id]'); if (!row) return;
       const same = local.picked === row.dataset.id;
-      local.picked = row.dataset.id; if (isEducation()) local.compared.add(row.dataset.id); ctx.onSitePick?.(local.picked);
+      local.picked = row.dataset.id; if (isEducation()) eduCompare(row.dataset.id); ctx.onSitePick?.(local.picked);
       local.open = same && local.open === row.dataset.id ? null : row.dataset.id;
       refresh(true);
       focusSite();
@@ -442,7 +448,7 @@ export function createMission(ctx) {
     historic?.relabel();
     $('m-reset').textContent = t('Reset view');
     $('m-reset').hidden = local.mode !== '3d';
-    $('m-legend').innerHTML = `<span><i style="background:${COLORS.link}"></i>${escapeHtml(t('Earth link available'))}</span><span><i style="background:${COLORS.sun}"></i>${escapeHtml(t('Sunlit, no Earth link'))}</span><span><i style="background:${COLORS.dark}"></i>${escapeHtml(t('In shadow'))}</span>`;
+    $('m-legend').innerHTML = `<span><i style="background:${COLORS.both}"></i>${escapeHtml(t('Sun and Earth in view'))}</span><span><i style="background:${COLORS.link}"></i>${escapeHtml(t('Earth link only'))}</span><span><i style="background:${COLORS.sun}"></i>${escapeHtml(t('Sunlit only'))}</span><span><i style="background:${COLORS.dark}"></i>${escapeHtml(t('In shadow'))}</span>`;
     $('m-cmp-all').textContent = t('All');
     $('m-cmp-all').title = t('Select all sites to compare');
     $('m-cmp-clear').textContent = t('Clear');
@@ -564,10 +570,18 @@ export function createMission(ctx) {
     }
   }
 
+  /** Education: the first click starts from the three sites on the graph, then the clicked site is added. */
+  function eduCompare(id) {
+    if (!local.eduTouched) { local.compared = new Set(sites().map((s) => s.id)); local.eduTouched = true; }
+    local.compared.add(id);
+  }
   function laneSites() {
     const highlighted = ctx.eduHighlight?.()?.id ?? null; // Education mode always shows the site it is talking about
     // Education mode: the timeline shows the sites the user picked (compared) and the picked one.
-    if (isEducation()) { const picked = pickedSite()?.id; return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === picked || s.id === highlighted); }
+    if (isEducation()) {
+      const picked = pickedSite()?.id, base = local.eduTouched ? local.compared : new Set(sites().map((s) => s.id));
+      return orderedSites().filter((s) => base.has(s.id) || s.id === picked || s.id === highlighted);
+    }
     return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === highlighted);
   }
   function runsOf(test, site) {
@@ -669,8 +683,7 @@ export function createMission(ctx) {
           <button type="button" class="btn-ghost btn-xs lane-export" id="m-export" ${activeSites.length ? '' : 'disabled'}>${escapeHtml(t('Export CSV'))}</button>
           <span style="color:${COLORS.sun}">■ ${escapeHtml(t('Sun'))}</span>
           <span style="color:${COLORS.link}">■ ${escapeHtml(t('Earth link'))}</span>
-          <span style="color:${COLORS.both}">■ ${escapeHtml(t('Both'))}</span>
-          <span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))} <span class="pill2">${activeSites.length} ${escapeHtml(t('compared'))}</span></span>
+          <span style="color:${COLORS.both}">■ ${escapeHtml(t('Both'))}</span>          <span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))} <span class="pill2">${activeSites.length} ${escapeHtml(t('compared'))}</span></span>
         </div>
       </div>
       <div class="lane-axis lane-now-row"><span></span><div class="lane-now-track"><span class="lane-now" id="m-lane-now"></span></div></div>
@@ -915,7 +928,7 @@ export function createMission(ctx) {
       const moved = drag?.moved; drag = null;
       if (moved) return;
       const box = canvas.getBoundingClientRect(), hit = nearest(event.clientX - box.left, event.clientY - box.top);
-      if (hit) { local.picked = hit.site.id; if (isEducation()) local.compared.add(hit.site.id); ctx.onSitePick?.(local.picked); refresh(true); }
+      if (hit) { local.picked = hit.site.id; if (isEducation()) eduCompare(hit.site.id); ctx.onSitePick?.(local.picked); refresh(true); }
     });
     canvas.addEventListener('wheel', (event) => {
       event.preventDefault();
@@ -986,10 +999,11 @@ export function createMission(ctx) {
     const site = pickedSite(); if (!site) return;
     stopPlay();
     flying = true;
+    document.body.classList.add('flight-on'); // the story bubble moves out of the flight caption's way (css/edu.css)
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const selected = PROBES.find(probe => probe.id === local.probe);
     flightEl.innerHTML = `<canvas class="flight-scene" aria-label="${escapeHtml(t(selected.name))}"></canvas>
-      <div class="flight-countdown" aria-hidden="true">${[5, 4, 3, 2, 1].map((n, i) => `<span style="animation-delay:${i}s">${n}</span>`).join('')}</div>
+      <div class="flight-countdown" aria-hidden="true">${[3, 2, 1].map((n, i) => `<span style="animation-delay:${i}s">${n}</span>`).join('')}</div>
       <div class="flight-top"><span>${escapeHtml(t(selected.name))}</span><button class="btn-ghost flight-skip">${escapeHtml(t('Exit flight'))}<span aria-hidden="true">↗</span></button></div>
       <div class="flight-caption"><p class="flight-phase" role="status">${escapeHtml(t('Preparing spacecraft…'))}</p>
         <h2>${escapeHtml(site.short)}</h2>
@@ -1010,7 +1024,7 @@ export function createMission(ctx) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     let done = false, disposeFlight, lastPhase = '', countdownTimer = null;
-    const COUNTDOWN_MS = 5000;
+    const COUNTDOWN_MS = 3000;
     const deadline = performance.now() + (reduced ? 0 : COUNTDOWN_MS);
     if (!reduced) {
       // The digits are CSS animations on the compositor and the end is a wall-clock deadline, so a busy main thread (model decode, texture upload) cannot stall or skew the count.
@@ -1020,6 +1034,7 @@ export function createMission(ctx) {
     }
     const finish = () => {
       if (done) return; done = true; flying = false;
+      document.body.classList.remove('flight-on');
       clearTimeout(countdownTimer);
       flightEl.classList.remove('is-counting');
       document.removeEventListener('keydown', handleKey);
@@ -1044,7 +1059,8 @@ export function createMission(ctx) {
       probe: selected.id, site: { lat: site.lat, lon: site.lon }, reduced,
       startAt: reduced ? 0 : deadline,
       onComplete: () => {
-        phase.textContent = t('Landed · exit when you are ready');
+        phase.textContent = t('Landed · back to the Mission page');
+        setTimeout(() => { if (!done) finish(); }, 2500); // the story takes over on the Mission page
       },
       onError: () => {
         phase.textContent = t('Model unavailable. Select another probe or continue.');
@@ -1073,7 +1089,7 @@ export function createMission(ctx) {
     ctx.onValidate?.();
     local.picked = orderedSites()[0]?.id ?? null;
     local.open = null;
-    local.hour = 0;
+    local.hour = 0; local.eduTouched = false;
     if (!local.compared || local.compared.size === 0) local.compared = defaultCompared();
     local.flat = (pickedSite()?.lat ?? 0) < -75 ? 'pole' : 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0;
     ctx.go('mission');
@@ -1119,5 +1135,6 @@ export function createMission(ctx) {
       view3d.frame(list, { aim: [0, 0.1], avoid: b && b.width ? [nx(b.left), ny(b.bottom), nx(b.right), ny(b.top)] : null });
     },
     openFlag: (id) => historic?.open(id),
+    closeFlag: () => historic?.close(false),
   };
 }

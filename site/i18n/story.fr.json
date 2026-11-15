@@ -10,6 +10,7 @@
     "skip": "Passer l'histoire",
     "replay": "Rejouer l'histoire",
     "continue": "Continuer",
+    "sendProbe": "Envoyer la sonde",
     "whatHappened": "Que s'est-il passé ?",
     "fixIt": "Réparons ça",
     "complete": "Terminer la mission",
@@ -40,6 +41,10 @@
       "night": "Nuit la plus longue",
       "days": "{n} jours",
       "underDay": "moins d'un jour",
+      "nextSteps": [
+        "Maintenant que tu connais les bases, essaie de trouver le moment parfait pour lancer une sonde vers d'autres cratères.",
+        "Ou passe au mode expert pour voir encore plus d'informations."
+      ],
       "learnedTitle": "Ce que tu as appris",
       "learned": [
         "Un atterrisseur a besoin du Soleil et de voir la Terre.",
@@ -54,7 +59,8 @@
     },
     "confirm": "Confirmer le choix",
     "tryAgain": "Essayer un autre site",
-    "choice": "Ton choix : {site}"
+    "choice": "Ton choix : {site}",
+    "pickFirst": "Choisis d'abord un site : clique sur un site dans la liste ou sur la carte."
   },
   "_nearSites": "Lines where Lumi stands high beside the Site locations list. Entries ending in '.' match every line of that step.",
   "nearSites": [
@@ -74,11 +80,17 @@
         "Règle n° 2 : la Terre. Notre atterrisseur nous parle par radio, et la radio a besoin d'un chemin dégagé jusqu'à la Terre. Depuis le pôle Sud, la Terre aussi reste basse dans le ciel, donc notre site doit pouvoir la voir au-dessus des collines.",
         "Les deux règles dépendent de la date d'atterrissage. Le Soleil et la Terre se déplacent dans le ciel, donc l'heure choisie décide quels sites passent. Fais glisser la barre du temps en haut pour voir comment cela change.",
         "Ce graphique montre les 30 prochains jours pour ce site. Le jaune indique le Soleil, le vert la Terre visible, et le cyan les deux à la fois. Un bon moment pour atterrir est en cyan.",
-        "Clique sur le graphique pour déplacer sa barre et lire l'heure exacte."
+        "Clique sur le graphique pour déplacer sa barre et lire l'heure exacte. Tu peux comparer les différents sites lunaires en même temps ici.",
+        "Ce cadre compte à rebours jusqu'au prochain lever ou coucher du Soleil, et jusqu'au prochain lever ou coucher de la Terre. « Reste visible » veut dire que cela ne change pas pendant la mission. Le Soleil recharge l'atterrisseur, et la Terre visible lui permet de nous parler : ces compte à rebours montrent quand il a de l'énergie et un contact."
       ]
     },
     "history": {
-      "intro": "Des humains et des robots se sont déjà posés sur la Lune ! Touche un drapeau pour découvrir leur histoire."
+      "intro": [
+      "Comme ta mission, tant de sondes se sont déjà posées sur la Lune, et certaines transportaient aussi des humains !",
+      "Active les sites historiques pour voir où des sondes se sont déjà posées.",
+      "Tu peux explorer les différents sites. Touche n'importe quel drapeau pour lire son histoire.",
+      "Regarde IM-2 Athena. Il a manqué sa cible de seulement environ 250 mètres, et s'est posé sur le côté dans un cratère sombre, où la lumière du Soleil ne pouvait pas recharger ses panneaux."
+    ]
     },
     "site": {
       "pick": "C'est l'heure de ta première mission ! Nous voulons nous poser sur la Lune le 16/11/2026. Choisis un site d'atterrissage dans la liste ou clique dessus sur la carte.",
@@ -89,7 +101,8 @@
       "darkWeek": "Tout est sombre cette semaine. Sautons vers une semaine plus claire."
     },
     "launch": {
-      "cheer": "C'est parti ! Accroche-toi, la Lune nous attend."
+      "cheer": "C'est parti ! Accroche-toi, la Lune nous attend.",
+      "landed": "Félicitations, tu as posé ta première mission !"
     },
     "anomaly": {
       "delay": "Oh non, une tempête sur Terre nous a retenus. Nous avons décollé avec quelques jours de retard.",

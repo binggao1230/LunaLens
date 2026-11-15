@@ -18,6 +18,11 @@ const TIME_SEGMENT = 7;
 const GRAPH_SEGMENT = 8;
 // The objective segment about the south pole in 3D or 2D: the whole Moon view (#m-stage) pulses while it shows.
 const MODE_SEGMENT = 3;
+// The objective segment about sunrise / Stays in view: the sun and Earth countdown line (#m-scenario) pulses while it shows.
+const SCENARIO_SEGMENT = 10;
+// History segments: 1 and 2 point at the Historic sites switch; 3 is the explore line; 4 opens the failed IM-2 landing
+// (segment 5 explains it).
+const HISTORY_SWITCH = [1], HISTORY_FAILED = 3;
 const fmt = (s, v = {}) => String(s ?? '').replace(/\{(\w+)\}/g, (m, k) => (v[k] ?? m));
 
 /** ctx: { mission, sites, eph, landing, setLanding, margin, showView, view, language, toast } */
@@ -56,7 +61,7 @@ export function createEducation(ctx) {
   /* ---------- mode and story lifecycle ---------- */
 
   function reset() {
-    Object.assign(st, { skipped: false, chosen: false, step: 0, sub: 0, base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, hold: false, say: null, mood: 'happy' });
+    Object.assign(st, { skipped: false, chosen: false, noPick: false, landed: false, step: 0, sub: 0, base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, hold: false, say: null, mood: 'happy' });
   }
   /** Step 1, the objective: starts whenever the Mission page opens in Education mode with no story running. */
   function startTour() {
@@ -68,6 +73,8 @@ export function createEducation(ctx) {
   function activate() {
     st.active = true;
     document.body.classList.add('edu-on');
+    // Education starts on the Mission page: the start page (probe picker) is skipped.
+    if (ctx.view() === 'start') ctx.showView('mission');
     if (ctx.view() === 'mission') startTour(); else render();
   }
   function deactivate() {
@@ -80,7 +87,19 @@ export function createEducation(ctx) {
 
   /* ---------- story steps ---------- */
 
-  function enterHistory() { ctx.mission.unframeChoices?.(); setStep(STEP.history); say('history.intro', {}, 'happy'); render(); ctx.mission.flags?.(); ctx.mission.frameFlags?.(['apollo11', 'im2']); }
+  /* The history step has several segments (st.sub). The switch segments point at the Historic sites switch; the failed
+     IM-2 segment opens its flag card, and the segments after it explain the failure. */
+  const historyLines = () => get('steps.history.intro') ?? [];
+  function pointAtHistory() {
+    if (st.step !== STEP.history) return;
+    if (st.sub === HISTORY_FAILED) ctx.mission.openFlag?.('im2');
+    else if (st.sub < HISTORY_FAILED) ctx.mission.closeFlag?.();
+  }
+  function moveHistory(sub) { st.sub = sub; st.focus = true; say(`history.intro.${sub}`, {}, 'happy'); pointAtHistory(); render(); }
+  function enterHistory(sub = 0) {
+    ctx.mission.unframeChoices?.(); setStep(STEP.history); st.sub = sub; say(`history.intro.${sub}`, {}, 'happy');
+    ctx.mission.flags?.(); pointAtHistory(); render(); ctx.mission.frameFlags?.(['apollo11', 'im2']);
+  }
   function enterSite() {
     setStep(STEP.site); ctx.mission.flags?.();
     const o = opts(), list = ctx.sites(), ok = (ms) => list.some((s) => isOk(assess(s, idx(ms), o).verdict));
@@ -96,13 +115,13 @@ export function createEducation(ctx) {
   function reveal() {
     const s = st.status ?? {}, site = st.picked?.short ?? '';
     const kind = s.sun && s.link ? 'good' : s.sun ? 'noLink' : s.link ? 'noSun' : 'neither';
-    st.revealed = kind === 'good' ? 'good' : 'bad'; st.revealedId = st.picked?.id; st.focus = true;
+    st.revealed = kind === 'good' ? 'good' : 'bad'; st.revealedId = st.picked?.id; st.focus = true; st.noPick = false;
     say(`site.${kind}`, { site }, kind === 'good' ? 'celebrating' : kind === 'neither' ? 'sleeping' : 'worried');
     render();
   }
   function enterLaunch() {
     st.base = ctx.landing();
-    setStep(STEP.launch); say('launch.cheer', {}, 'celebrating'); render();
+    st.landed = false; setStep(STEP.launch); say('launch.cheer', {}, 'celebrating'); render();
     ctx.mission.send();
   }
   function enterAnomaly() {
@@ -126,10 +145,14 @@ export function createEducation(ctx) {
     if (st.step === 1) {
       if (st.sub < introLines().length - 1) { st.sub++; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); } else enterSite();
     } else if (st.step === STEP.site) {
-      if (!st.revealed) { if (st.picked) reveal(); }
-      else if (st.revealed === 'good') enterHistory();
+      if (!st.revealed) { if (st.chosen && st.picked) reveal(); else { st.noPick = true; st.focus = true; st.key = ''; render(); } }
+      else if (st.revealed === 'good') enterLaunch(); // Send probe: the flight plays, then the story comes back to the Mission page
       else { st.revealed = null; st.focus = true; say('site.pick', {}, 'happy'); render(); }
-    } else if (st.step === STEP.history) enterLaunch();
+    } else if (st.step === STEP.history) {
+      if (st.sub < historyLines().length - 1) moveHistory(st.sub + 1);
+      else { ctx.mission.closeFlag?.(); enterDone(); } // the story ends after the history bubbles
+    }
+    else if (st.step === STEP.launch && st.landed) enterHistory(0); // after the landing: the history bubbles, then the anomaly
     else if (st.step === STEP.anomaly) {
       if (st.anomaly.kind !== 'contact' && st.sub === 0) { st.sub = 1; st.focus = true; say(`anomaly.${st.anomaly.kind}`, { site: st.picked.short }, 'worried'); render(); }
       else enterFix();
@@ -138,7 +161,8 @@ export function createEducation(ctx) {
   function back() {
     if (st.step === 1 && st.sub > 0) { st.sub--; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); }
     else if (st.step === STEP.site) { ctx.mission.unframeChoices?.(); const last = Math.max(0, introLines().length - 1); setStep(STEP.objective, last); say(`objective.intro.${last}`, {}, 'happy'); render(); }
-    else if (st.step === STEP.history) { setStep(STEP.site); st.revealed = 'good'; say('site.good', { site: st.picked?.short ?? '' }, 'celebrating'); render(); }
+    else if (st.step === STEP.history && st.sub > 0) moveHistory(st.sub - 1);
+    else if (st.step === STEP.history) { ctx.mission.closeFlag?.(); setStep(STEP.site); st.revealed = 'good'; say('site.good', { site: st.picked?.short ?? '' }, 'celebrating'); render(); }
   }
   const canComplete = () => current()?.verdict === 'go' && (st.anomaly?.kind !== 'contact' || st.tried);
 
@@ -211,11 +235,9 @@ export function createEducation(ctx) {
         <div><b>${escapeHtml(night)}</b><span>${escapeHtml(ui('final.night'))}</span></div>
       </div>
       <h3>${escapeHtml(ui('final.learnedTitle'))}</h3><ul>${learned}</ul>
-      <div class="edu-badge">
-        <div class="edu-badge-art" aria-hidden="true">★</div>
         <div><b>${escapeHtml(ui('final.badge'))}</b><span>${escapeHtml(ui('final.awarded', { name: st.name.trim() || ui('final.namePlaceholder') }))}</span></div>
       </div>
-      <label class="edu-name">${escapeHtml(ui('final.namePrompt'))}<input type="text" id="edu-name" maxlength="40" value="${escapeHtml(st.name)}" placeholder="${escapeHtml(ui('final.namePlaceholder'))}" autocomplete="given-name"></label>
+      <div class="edu-next-steps">${(get('ui.final.nextSteps') ?? []).map((item) => `<p>${escapeHtml(item)}</p>`).join('')}</div>
       <p class="edu-note">${escapeHtml(ui('final.note'))}</p>
       <div class="edu-actions"><button type="button" class="btn-primary" data-act="again">${escapeHtml(ui('playAgain'))}</button><button type="button" class="btn-ghost" data-act="expert">${escapeHtml(ui('expert'))}</button></div>
     </section></div>`;
@@ -228,6 +250,11 @@ export function createEducation(ctx) {
     document.getElementById('m-lanes')?.classList.toggle('edu-point', pointAtGraph);
     const pointAtMode = visible() && !st.skipped && st.step === STEP.objective && st.sub === MODE_SEGMENT;
     document.getElementById('m-stage')?.classList.toggle('edu-point', pointAtMode);
+    const pointAtScenario = visible() && !st.skipped && st.step === STEP.objective && st.sub === SCENARIO_SEGMENT;
+    document.getElementById('m-scenario')?.classList.toggle('edu-point', pointAtScenario);
+    // The Historic sites switch gets a highlight ring while the history step points at it.
+    const pointing = visible() && !st.skipped && st.step === STEP.history && HISTORY_SWITCH.includes(st.sub);
+    document.getElementById('m-hist')?.classList.toggle('edu-point', pointing);
     if (!visible()) { root.innerHTML = ''; st.key = ''; return; }
     const r = st.step >= STEP.site ? current() : null;
     if (st.skipped) {
@@ -246,7 +273,7 @@ export function createEducation(ctx) {
       return;
     }
     const text = line(st.say.path, st.say.values);
-    const key = [st.step, st.sub, text, st.revealed, st.mood, r?.verdict, st.relay, st.bonus, st.delay, st.moved?.to, st.waited, st.picked?.id, st.chosen, ctx.language(), st.step === STEP.fix && canComplete()].join('|');
+    const key = [st.step, st.sub, text, st.revealed, st.mood, r?.verdict, st.relay, st.bonus, st.delay, st.moved?.to, st.waited, st.picked?.id, st.chosen, st.noPick, ctx.language(), st.step === STEP.fix && canComplete()].join('|');
     if (key === st.key) return;
     st.key = key;
     // Back and Next are on every step. Next is green when the story can move on, grey and locked when not.
@@ -254,8 +281,8 @@ export function createEducation(ctx) {
     const btn = (act, label, enabled) => `<button type="button" class="${act === 'next' ? 'edu-next' : 'btn-ghost'}" data-act="${act}" ${enabled ? '' : 'disabled aria-disabled="true"'}>${act === 'next' && !enabled ? LOCK : ''}${escapeHtml(label)}</button>`;
     const canBack = (st.step === STEP.objective && st.sub > 0) || st.step === STEP.history || st.step === STEP.site;
     let nextLabel = ui('next'), canNext = true;
-    if (st.step === STEP.site) { nextLabel = !st.revealed ? ui('confirm') : st.revealed === 'good' ? ui('continue') : ui('tryAgain'); canNext = Boolean(st.picked); }
-    else if (st.step === STEP.launch) canNext = false;
+    if (st.step === STEP.site) { nextLabel = !st.revealed ? ui('confirm') : st.revealed === 'good' ? ui('sendProbe') : ui('tryAgain'); canNext = Boolean(st.picked); }
+    else if (st.step === STEP.launch) canNext = Boolean(st.landed); // after landing: Next goes on to the anomaly
     else if (st.step === STEP.anomaly) nextLabel = st.anomaly.kind !== 'contact' && st.sub === 0 ? ui('whatHappened') : ui('fixIt');
     else if (st.step === STEP.fix) { nextLabel = ui('complete'); canNext = canComplete(); }
     const actions = btn('back', ui('back'), canBack) + btn('next', nextLabel, canNext);
@@ -267,12 +294,14 @@ export function createEducation(ctx) {
       : `<div class="edu-char mood-${st.mood}">${CHARACTER_MARKUP}</div>`;
     // Some lines are about the site list: there Lumi moves next to it (story JSON, "nearSites").
     const near = !full && (get('nearSites') ?? []).some((p) => (p.endsWith('.') ? st.say?.path?.startsWith(p) : p === st.say?.path));
-    root.innerHTML = `<aside class="edu-panel step-${st.step}${full ? ' full' : ''}${near ? ' near-sites' : ''}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
+    // The graph bubbles (time, graph, click the graph) move off the bottom of the page so the graphs stay visible.
+    const offGraph = st.step === STEP.objective && [TIME_SEGMENT, GRAPH_SEGMENT, GRAPH_SEGMENT + 1].includes(st.sub) && !full && !near;
+    root.innerHTML = `<aside class="edu-panel step-${st.step}${full ? ' full' : ''}${near ? ' near-sites' : ''}${offGraph ? ' off-graph' : ''}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
       ${art}
       <div class="edu-bubble">
-        <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span></div>
         <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite"><b class="edu-speaker">${escapeHtml(get('character.name') ?? 'Lumi')}</b>${escapeHtml(text)}</p>
         ${st.step === STEP.site && !st.revealed && st.picked && st.chosen ? `<p class="edu-choice">${escapeHtml(ui('choice', { site: st.picked.short }))}</p>` : ''}
+        ${st.step === STEP.site && !st.revealed && st.noPick ? `<p class="edu-error" role="alert">${escapeHtml(ui('pickFirst'))}</p>` : ''}
         ${st.step === STEP.fix ? leversHtml(r) : ''}
         <div class="edu-actions">${actions}${skip}</div>
       </div>
@@ -293,9 +322,12 @@ export function createEducation(ctx) {
     else if (act === 'again') { reset(); ctx.showView('start'); } // choose a lander again; the story restarts on the Mission page
     else if (act === 'expert') switchMode('expert', event.target.closest('[data-act]'));
   });
-  root.addEventListener('input', (event) => { if (event.target.id === 'edu-name') { st.name = event.target.value; st.key = ''; const el = root.querySelector('.edu-badge span'); if (el) el.textContent = ui('final.awarded', { name: st.name.trim() || ui('final.namePlaceholder') }); } });
 
-  load(ctx.language()).then((story) => { st.story = story; if (st.active && st.step === 0 && ctx.view() === 'mission') startTour(); else render(); });
+  load(ctx.language()).then((story) => {
+    st.story = story;
+    if (st.active && ctx.view() === 'start') ctx.showView('mission'); // the probe picker is skipped in Education mode
+    if (st.active && st.step === 0 && ctx.view() === 'mission') startTour(); else render();
+  });
 
   return {
     get active() { return st.active; },
@@ -307,7 +339,7 @@ export function createEducation(ctx) {
     onValidate() { if (st.active) reset(); },
     onProbePick(id) { st.probe = id; },
     /** The user picked a site from the list or on the Moon (not the automatic default): the choice is shown. */
-    onSitePick() { if (st.active && !st.chosen) { st.chosen = true; st.key = ''; render(); } },
+    onSitePick() { if (st.active) { st.noPick = false; if (!st.chosen) { st.chosen = true; st.key = ''; render(); } } },
     onMissionRefresh(site, frame) {
       st.picked = site; st.status = site ? frame.status.get(site.id) ?? null : null;
       if (!st.active || st.skipped || !st.story) return;
@@ -317,7 +349,7 @@ export function createEducation(ctx) {
         render();
       } else if (st.step === STEP.anomaly || st.step === STEP.fix) render();
     },
-    onArrived() { if (st.active && !st.skipped && st.step === STEP.launch) enterAnomaly(); },
+    onArrived() { if (st.active && !st.skipped && st.step === STEP.launch && !st.landed) { st.landed = true; st.focus = true; say('launch.landed', {}, 'celebrating'); render(); } },
     highlight() {
       if (!st.active || st.skipped || st.step < STEP.anomaly || st.step > STEP.fix || !st.picked || !st.anomaly) return null;
       const r = current();

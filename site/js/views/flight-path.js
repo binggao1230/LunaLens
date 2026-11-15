@@ -1,4 +1,4 @@
-export const FLIGHT_SECONDS = 28;
+export const FLIGHT_SECONDS = 14; // shortened from 28 s: the flight phases are fractions of this
 export const clampProgress = value => Math.min(1, Math.max(0, value));
 export const smoothProgress = value => {
   const progress = clampProgress(value);
@@ -7,7 +7,8 @@ export const smoothProgress = value => {
 export const during = (start, end, progress) => smoothProgress((progress - start) / (end - start));
 
 export function flightPose(progress) {
-  const travel = smoothProgress(progress);
+  // Ease-out: the ship leaves straight after the countdown instead of sitting still at first (the landing still eases in).
+  const travel = 1 - (1 - clampProgress(progress)) ** 2;
   const range = 2200 * Math.expm1(8 * (1 - travel)) / Math.expm1(8);
   const lateral = 1 - during(.35, .68, progress);
   return {

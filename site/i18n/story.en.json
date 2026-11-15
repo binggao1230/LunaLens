@@ -10,6 +10,7 @@
     "skip": "Skip story",
     "replay": "Replay story",
     "continue": "Continue",
+    "sendProbe": "Send probe",
     "whatHappened": "What happened?",
     "fixIt": "Let's fix it",
     "complete": "Complete mission",
@@ -40,6 +41,10 @@
       "night": "Longest night",
       "days": "{n} days",
       "underDay": "under a day",
+      "nextSteps": [
+        "Now that you know the basics, try finding the perfect timing to launch a probe at other craters.",
+        "Or switch to expert mode to see even more information."
+      ],
       "learnedTitle": "What you learned",
       "learned": [
         "Landers need sunlight and a view of Earth.",
@@ -54,7 +59,8 @@
     },
     "confirm": "Confirm selection",
     "tryAgain": "Try another site",
-    "choice": "Your choice: {site}"
+    "choice": "Your choice: {site}",
+    "pickFirst": "Pick a site first: click one in the list or on the map."
   },
   "_nearSites": "Lines where Lumi stands high beside the Site locations list. Entries ending in '.' match every line of that step.",
   "nearSites": [
@@ -74,11 +80,17 @@
         "Rule 2: Earth. Our lander talks to us by radio, and radio needs a clear path to Earth. From the south pole, Earth also sits low in the sky, so our site must be able to see it over the hills.",
         "Both rules depend on when we land. The Sun and Earth move across the sky, so the time you choose decides which sites pass. Drag the time bar at the top to see how they change.",
         "This graph shows the next 30 days for this site. Yellow means Sunlight, green means Earth in view, and cyan means both at once. A good landing time is cyan.",
-        "Click on the graph to move its bar and read the exact time."
+        "Click on the graph to move its bar and read the exact time. You can compare the different lunar sites at the same time here.",
+        "This box counts down to the next sunrise or sunset, and to the next Earthrise or Earthset. Stays in view means it does not change during the stay. Sunlight charges the lander, and Earth in view lets it talk to us, so these countdowns show when it has power and contact."
       ]
     },
     "history": {
-      "intro": "People have landed on the Moon before! Tap a flag to discover their stories."
+      "intro": [
+      "Just like your mission, so many probes have landed on the Moon before, and some carried people too!",
+      "Switch on Historic sites to see where probes landed before.",
+      "You can explore the different sites. Tap any flag to read its story.",
+      "Look at IM-2 Athena. It missed its target by only about 250 meters, and came down on its side in a dark crater, where no sunlight could reach its panels to recharge."
+    ]
     },
     "site": {
       "pick": "It's time for your first mission! We want to land on the Moon on 16/11/2026. Pick a landing site in the list or click on it on the map.",
@@ -89,7 +101,8 @@
       "darkWeek": "Every spot is dark this week. Let's jump to a brighter one."
     },
     "launch": {
-      "cheer": "Up we go! Hold on tight, the Moon is waiting."
+      "cheer": "Up we go! Hold on tight, the Moon is waiting.",
+      "landed": "Congrats on landing your first mission!"
     },
     "anomaly": {
       "delay": "Oh no, a storm on Earth held us back. We lifted off some days late.",
