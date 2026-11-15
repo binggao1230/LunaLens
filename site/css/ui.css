@@ -57,3 +57,60 @@ button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,ca
 .lane-now-track{position:relative;height:22px;display:block!important}
 .lane-now{position:absolute;top:0;white-space:nowrap;font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;
   color:var(--primary-ink);background:var(--primary);border-radius:var(--r-pill);padding:2px 8px;line-height:16px;box-shadow:0 0 12px rgba(245,197,66,.35)}
+
+/* ---- mobile and small-screen control sizing & iOS zoom prevention ---- */
+@media (max-width: 768px) {
+  button, select, input {
+    min-height: 40px;
+  }
+  select, input[type=date], input[type=time], input[type=number], input[type=search], input[type=text] {
+    font-size: 16px;
+  }
+}
+@media (max-width: 480px) {
+  :root {
+    --tracking: .1em;
+  }
+  .label {
+    font-size: 10px;
+  }
+}
+
+/* ---- brand mobile badge: shown when mobile is detected ---- */
+.brand-mobile-badge {
+  display: none;
+}
+.screen-mobile .brand-mobile-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  background: #273042;
+  border: 1px solid rgba(200, 220, 240, .2);
+  color: #c6d2e6;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  line-height: 1.35;
+  vertical-align: middle;
+}
+@media (max-width: 768px) {
+  .brand-mobile-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 7px;
+    border-radius: 99px;
+    background: #273042;
+    border: 1px solid rgba(200, 220, 240, .2);
+    color: #c6d2e6;
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    line-height: 1.35;
+    vertical-align: middle;
+  }
+}
