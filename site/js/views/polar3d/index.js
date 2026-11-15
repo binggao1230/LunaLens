@@ -569,7 +569,8 @@ export async function createPolar3d(env) {
         request: () => { if (!home) { setHome(); home = true; } request(); },
         reset: () => flyTo(homeDir(), 3.6),
         zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.05, maxDist())); syncUp(); controls.update(); request(); },
-        focus: (site) => { const dir = moonGroup.localToWorld(new T.Vector3(...unit(site.lat, site.lon))).normalize(); flyTo(dir, site.lat <= -75 ? 1.07 : undefined); },
+        // The caller may choose how close to fly; 'keep' turns to the site without changing the zoom (Education).
+        focus: (site) => { const dir = moonGroup.localToWorld(new T.Vector3(...unit(site.lat, site.lon))).normalize(); const d = env.focusDistance?.(site); flyTo(dir, d === 'keep' ? undefined : d ?? (site.lat <= -75 ? 1.07 : undefined)); },
         /** Fly the camera over any point; used by the historic-site cards. */
         look: (lat, lon, distance) => flyTo(moonGroup.localToWorld(new T.Vector3(...unit(lat, lon))).normalize(), distance),
         /** Screen position of a surface point for HTML overlays: hidden on the far hemisphere, fading towards the limb. */
