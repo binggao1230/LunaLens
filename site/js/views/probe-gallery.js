@@ -109,21 +109,7 @@ export function mountProbePreviews(root) {
         }[canvas.dataset.model];
         model = (await loader.loadAsync(`assets/models/${file}.glb`)).scene;
         if (cancelled) { disposeModel(model); return; }
-        if (canvas.dataset.model === 'artemis') model.traverse(part => {
-          if (!part.isMesh) return;
-          const originals = Array.isArray(part.material) ? part.material : [part.material];
-          const materials = originals.map(original => {
-            const gold = /Gold/i.test(original.name), chrome = /Chrome/i.test(original.name);
-            original.dispose();
-            return new T.MeshStandardMaterial({
-              color: gold ? 0xcda756 : chrome ? 0x3d4956 : 0xdce2e8,
-              metalness: gold ? .65 : chrome ? .65 : .35,
-              roughness: gold ? .36 : .42,
-            });
-          });
-          part.material = Array.isArray(part.material) ? materials : materials[0];
-        });
-        await normalizeMaterials(model);
+        if (canvas.dataset.model !== 'artemis' && canvas.dataset.model !== 'apollo') await normalizeMaterials(model);
         renderer = new T.WebGLRenderer({ canvas, alpha: true, antialias: true });
         renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
         renderer.toneMapping = T.ACESFilmicToneMapping;

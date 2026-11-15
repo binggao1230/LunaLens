@@ -283,7 +283,8 @@ export function initTranslations(root = document) {
   while (walker.nextNode()) {
     const node = walker.currentNode;
     if (node.parentElement.closest('script,style,option,[data-no-translate]')) continue;
-    const original = node.textContent.trim();
+    // Collapse line breaks and indentation so a paragraph wrapped across source lines still matches its key.
+    const original = node.textContent.replace(/\s+/g, ' ').trim();
     if (hasTranslation(original)) textNodes.push({ node, original, leading: /^\s/.test(node.textContent) ? ' ' : '', trailing: /\s$/.test(node.textContent) ? ' ' : '' });
   }
   for (const element of root.querySelectorAll('[aria-label],[placeholder]')) {

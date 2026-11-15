@@ -231,17 +231,18 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 <body data-view="start">
 <div id="loading" role="status">Loading…</div>
 <header class="appbar">
-  <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span></b>
+  <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span><img src="assets/nasa-logo.svg" alt="NASA" class="nasa-mark" width="31" height="26"></b>
   <nav class="tabs" data-nav>
     <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="compare">Compare</button><button data-view="slip">Date slip</button>
   </nav>
   <div class="tray" id="tray"></div>
   <nav class="side" data-nav><button data-view="data">Data</button></nav>
   <div class="seg-pill" id="mode-toggle" role="group" aria-label="Mode">
-    <button type="button" data-mode="expert" aria-pressed="true"><span class="long">Expert mode</span><span class="short">Expert</span></button>
-    <button type="button" data-mode="education" aria-pressed="false"><span class="long">Education mode</span><span class="short">Learn</span></button>
+    <button type="button" data-mode="expert" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="long">Expert mode</span><span class="short">Expert</span></button>
+    <button type="button" data-mode="education" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5M22 9v5"/></svg><span class="long">Education mode</span><span class="short">Learn</span></button>
   </div>
   <div class="seg-pill" id="lang" role="group" aria-label="Language">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
     <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button><button type="button" data-lang="fr" lang="fr" aria-pressed="false">FR</button><button type="button" data-lang="zh" lang="zh" aria-pressed="false">中文</button>
   </div>
 </header>
