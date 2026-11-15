@@ -360,6 +360,11 @@ export async function createPolar3d(env) {
       });
       canvas.addEventListener('pointermove', (event) => {
         if (!grab) return;
+        if (!grabId) {
+          const hover = dirAt(event);
+          const lat = hover ? Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) : null;
+          canvas.style.cursor = lat !== null && lat <= (env.studyLat ?? -90) ? 'pointer' : 'grab';
+        }
         if (pointers.has(event.pointerId)) pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
         if (pointers.size >= 2) {
           const [a, b] = [...pointers.values()];
