@@ -1,4 +1,0 @@
-# Two leads review everything, so `main` never moves without one of them reading it. This is also what
-# decides who can merge: `main` requires a code-owner approval, and nobody can approve their own pull
-# request (CONTRIBUTING.md → Pull requests).
-* @binggao1230 @wangchenlin0501
