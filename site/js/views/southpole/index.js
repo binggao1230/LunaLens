@@ -45,10 +45,6 @@ export function createSouthPole(ctx) {
   };
   const staticCache = new Map();
   const els = {};
-  const fitPole = () => {
-    const bar = document.querySelector('.appbar');
-    if (bar) root.style.setProperty('--appbar-h', `${bar.getBoundingClientRect().height}px`);
-  };
   const base = { canvas: null, dem: null };
 
   const eph = () => ctx.eph();
@@ -971,7 +967,7 @@ export function createSouthPole(ctx) {
   }
 
   async function activate() {
-    build(); fitPole();
+    build();
     if (!ui.window.chosen) { els['sp-modal'].hidden = false; return; }
     await ensureGlobe();
     setStage(ui.stage);
@@ -979,7 +975,7 @@ export function createSouthPole(ctx) {
   }
 
   return {
-    mount() { build(); fitPole(); window.addEventListener('resize', fitPole); const bar = document.querySelector('.appbar'); if (bar && window.ResizeObserver) new ResizeObserver(fitPole).observe(bar); },
+    mount() { build(); },
     activate,
     onView(view) { if (view === 'pole') activate(); },
     render() { if (ui.built && ctx.view() === 'pole') { renderAll(); refreshScenario(); } },
