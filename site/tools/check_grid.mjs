@@ -26,7 +26,7 @@ const demBuf = gunzipSync(read('dem240.i16.gz'));
 const dem = new Dem(new Int16Array(demBuf.buffer, demBuf.byteOffset, demBuf.byteLength / 2), JSON.parse(read('dem240.json')));
 const ephBuf = read('ephemeris.f64');
 const eph = new Ephemeris(ephBuf.buffer.slice(ephBuf.byteOffset, ephBuf.byteOffset + ephBuf.byteLength), JSON.parse(read('ephemeris.json')));
-const startIndex = eph.indexOf(Date.parse('2030-01-01T00:00:00Z'));
+const startIndex = eph.indexOf(Date.parse('2028-01-01T00:00:00Z'));
 const scenario = { startIndex, stayH: 709, marginDeg: 2 };
 const deg = Math.PI / 180;
 
@@ -74,7 +74,7 @@ check('one cell matches a native Site with the same skyline', () => {
 });
 
 check('hard-limit failure is red and never scores; targets only make yellow', () => {
-  const base = { groundM: 1000, slopeDeg: 8, horizonDeg: new Float32Array(720), stats: { earthPct: 45, longestH: 200, geometricPct: 60 } };
+  const base = { groundM: 1000, slopeDeg: 8, horizonDeg: new Float32Array(720), stats: { earthPct: 45, longestH: 200, geometricPct: 60, sunPct: 50 } };
   assert.equal(classify(base).status, 'green');
   assert.equal(classify({ ...base, slopeDeg: 12 }).status, 'yellow');
   assert.equal(classify({ ...base, stats: { ...base.stats, earthPct: 30 } }).status, 'yellow');

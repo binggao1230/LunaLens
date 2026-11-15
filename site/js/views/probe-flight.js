@@ -2,7 +2,7 @@ import { prepareLanding } from './flight-terrain.js';
 import { buildFlightWorld, LOG_DEPTH } from './flight-world.js';
 import { FLIGHT_SECONDS, clampProgress, during, flightPose, departureShot } from './flight-path.js';
 
-export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onComplete, onError }) {
+export function playProbeFlight(canvas, { probe, site, reduced, startAt = 0, onProgress, onComplete, onError }) {
   let stopped = false, frame = 0, renderer, scene, decoder, environment, resize, render;
   const geometries = new Set(), materials = new Set(), textures = new Set();
   const release = object => object?.traverse(part => {
@@ -84,8 +84,8 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
       for (const material of Array.isArray(part.material) ? part.material : [part.material]) {
         if (!material?.isMeshStandardMaterial) continue;
         material.envMap = environment.texture;
+        material.envMapIntensity = .25;
         if (probe !== 'artemis' && probe !== 'apollo') {
-          material.envMapIntensity = .9;
           material.roughness = Math.max(.35, material.roughness);
         }
       }
@@ -239,7 +239,7 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
     const direction = new T.Vector3(), nose = new T.Quaternion(), up = new T.Vector3(0, 1, 0);
     const target = new T.Vector3(), terrainOffset = new T.Vector3();
     const side = new T.Vector3(), behind = new T.Vector3(), offsetDir = new T.Vector3();
-    const nearDir = new T.Vector3(), cameraRight = new T.Vector3();
+    const nearDir = new T.Vector3();
     const cameraTurn = new T.Quaternion(), cameraOrbit = new T.Quaternion();
     const earthMesh = world.earth;
     const earthAz = new T.Vector3(data.axes.earth[0], 0, data.axes.earth[2]);
@@ -252,7 +252,9 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
     const moonCenter = new T.Vector3(0, -data.radiusKm - data.groundKm, 0);
     let opening, openingAspect;
     let elapsed = reduced ? FLIGHT_SECONDS : 0, previous = 0, landed = false;
-    render = () => {
+    const holdUntil = startAt;
+    let holding = holdUntil > 0;
+    render = (emit = !holding) => {
       const progress = clampProgress(elapsed / FLIGHT_SECONDS);
       const pose = flightPose(progress);
       ship.position.fromArray(pose.position).add(touchdown);
@@ -307,9 +309,6 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
       const floor = world.heightAt(camera.position.x, camera.position.z);
       if (floor != null) camera.position.y = Math.max(camera.position.y, floor + height * .25);
       camera.lookAt(target);
-      cameraRight.set(1, 0, 0).applyQuaternion(camera.quaternion);
-      earthMesh.material.uniforms.sun.value.copy(camera.position).sub(earthPos).normalize()
-        .addScaledVector(cameraRight, -.35).addScaledVector(camera.up, .20).normalize();
       camera.near = Math.max(.00002, distance / 1000);
       camera.updateProjectionMatrix();
       renderer.render(scene, camera);
@@ -318,16 +317,25 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
       canvas.dataset.progress = String(progress);
       canvas.dataset.terrain = world.regional ? 'regional' : 'global';
       canvas.dataset.clearance = String(Math.max(0, ship.position.y - touchdown.y));
-      onProgress(progress, pose.phase);
-      if (progress === 1 && !landed) {
+      if (emit) onProgress(progress, pose.phase);
+      if (emit && progress === 1 && !landed) {
         landed = true;
         canvas.dataset.landed = 'true';
         onComplete();
       }
     };
-    const tick = now => {
+    const tick = () => {
       if (stopped) return;
       if (document.hidden) { previous = 0; frame = requestAnimationFrame(tick); return; }
+      const now = performance.now();
+      if (holding && now < holdUntil) {
+        previous = 0;
+        elapsed = reduced ? FLIGHT_SECONDS : 0;
+        render(false);
+        frame = requestAnimationFrame(tick);
+        return;
+      }
+      holding = false;
       if (previous) elapsed += Math.min((now - previous) / 1000, .1);
       previous = now;
       render();
