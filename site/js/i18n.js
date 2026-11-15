@@ -384,6 +384,7 @@ const messages = {
   'Pinned {pin}: {name} · {time}': ['Épinglé {pin} : {name} · {time}', '已钉选 {pin}：{name} · {time}'],
   'elapsed hours': ['heures écoulées', '已过小时'],
   'Sunlight and Earth link over the stay': ['Soleil et liaison Terre sur le séjour', '停留内日照与地球链路'],
+  'Export hourly comparison CSV': ['Exporter la comparaison horaire en CSV', '导出逐小时对比 CSV'],
   'The selected data starts {time}.': ['Les données sélectionnées commencent à {time}.', '所选数据始于 {time}。'],
   'A {stay} h stay no longer fits before the end of the data. Latest touchdown: {time}.': ['Un séjour de {stay} h ne tient plus avant la fin des données. Dernier atterrissage : {time}.', '{stay} 小时停留已无法在数据结束前完成。最晚着陆时刻：{time}。'],
   'Inspect in Explore': ['Inspecter dans Explorer', '在 Explore 中查看'],
