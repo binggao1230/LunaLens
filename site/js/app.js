@@ -879,6 +879,7 @@ async function start() {
     onHistoricClose: () => edu?.react(null),
     eduFlagHighlight: () => edu?.highlightFlags() ?? [],
     onMissionRefresh: (site, frame, hour) => edu?.onMissionRefresh(site, frame, hour),
+    onSitePick: (id) => edu?.onSitePick(id),
     eduHighlight: () => edu?.highlight() ?? null,
   });
   edu = createEducation({

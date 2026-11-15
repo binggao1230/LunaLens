@@ -376,7 +376,7 @@ export function createMission(ctx) {
       if (event.target.closest('.srow-chk')) return;
       const row = event.target.closest('[data-id]'); if (!row) return;
       const same = local.picked === row.dataset.id;
-      local.picked = row.dataset.id; if (isEducation()) local.compared.add(row.dataset.id);
+      local.picked = row.dataset.id; if (isEducation()) local.compared.add(row.dataset.id); ctx.onSitePick?.(local.picked);
       local.open = same && local.open === row.dataset.id ? null : row.dataset.id;
       refresh(true);
       focusSite();
@@ -533,7 +533,8 @@ export function createMission(ctx) {
         const hasTerr = hasModel(site);
         if (hasTerr && score.viable) viableRank++;
         const terrain = !hasTerr ? t('Reference (smooth sphere)') : site.terrain;
-        const badge = hasTerr && score.viable && viableRank <= 3 ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
+        // Nobile rim crest is not tagged Recommended (owner request); the other top viable sites keep the tag.
+        const badge = hasTerr && score.viable && viableRank <= 3 && site.id !== 'nobile-rim' ? `<span class="badge">${escapeHtml(t('Recommended'))}</span>` : '';
         return `<div class="srow${site.id === local.picked ? ' on' : ''}${open ? ' open' : ''}" data-row="${escapeHtml(site.id)}">
           <div class="srow-top">
             <label class="srow-chk" title="${escapeHtml(t('Include in comparison'))}">
