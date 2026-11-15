@@ -285,6 +285,8 @@ body.edu-on .edu-panel.full .edu-bubble{width:min(680px,100%);max-height:none;ov
 .edu-panel.full .edu-top{justify-content:center;padding-left:0;min-height:0}
 .edu-panel.full .edu-text{font-size:22px;line-height:1.5}
 .edu-panel.full .edu-actions{justify-content:center;margin-top:22px}
+/* The south-pole picture sits above the "Why the south pole?" text. */
+.edu-figure{display:block;width:100%;max-width:300px;height:auto;margin:6px auto 12px;user-select:none;-webkit-user-drag:none}
 /* First intro line: the astronaut dog picture (assets/mascot/astronaut_dog_moon.svg) replaces the mood poses. */
 .edu-panel.full .edu-hero{width:min(440px,80vw);height:auto;aspect-ratio:1383/967}
 .edu-panel.full .edu-hero img{position:static;display:block;width:100%;height:auto;animation:none}
