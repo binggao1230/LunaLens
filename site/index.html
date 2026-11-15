@@ -310,9 +310,6 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-hud #sp-windowhud{display:none}
 .pole-hud-row{display:flex;gap:10px;align-items:center;justify-content:space-between}
 .pole-hud-row button{pointer-events:auto}
-.pole-stages{display:flex;gap:4px;flex-wrap:wrap;pointer-events:auto}
-.pole-stages button{font:inherit;font-size:12px;padding:5px 9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
-.pole-stages button.on{color:var(--text);border-color:var(--accent);background:var(--surface-2)}
 .pole-side{position:absolute;left:16px;right:auto;top:16px;bottom:16px;width:360px;z-index:5;overflow:auto;padding:12px;border:1px solid var(--border);border-radius:14px;background:rgba(15,17,19,.9);backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:6px}
 .pole-side.collapsed{display:none}
 .pole-side-head{display:flex;align-items:center;justify-content:space-between}
@@ -343,21 +340,9 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-metrics div{display:flex;flex-direction:column}
 .pole-metrics b{font-size:14px}
 .pole-metrics span{color:var(--muted);font-size:11px}
-.pole-windowbar{position:absolute;left:400px;right:16px;bottom:16px;width:auto;z-index:6;display:flex;flex-direction:column;gap:5px;padding:12px 16px 9px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(24,27,32,.98),rgba(12,14,17,.98));box-shadow:0 22px 60px rgba(0,0,0,.5);backdrop-filter:blur(14px)}
-.pole-window-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.pole-window-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.pole-window-count{font-size:10.5px;font-variant-numeric:tabular-nums;padding:2px 8px;border-radius:99px;border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--text);white-space:nowrap}
-.pole-window-dates{display:flex;align-items:center;gap:7px;font-size:13px;font-variant-numeric:tabular-nums}
-.pole-window-dates b{font-weight:600}
-.pole-window-dates .arrow{color:var(--muted)}
-.pole-window-stay{margin-left:18px;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);white-space:nowrap}
-.pole-window-stay select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:11.5px}
-.pole-window-edit{font:inherit;font-size:11.5px;padding:5px 9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;white-space:nowrap}
-.pole-window-edit:hover{border-color:var(--accent);color:var(--text)}
-.pole-window-close{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:0 2px}
-.pole-window-close:hover{color:var(--text)}
-.pole-window-track{position:relative}
-.pole-window-now{position:absolute;top:20px;width:2px;height:10px;margin-left:-1px;border-radius:1px;background:var(--text);box-shadow:0 0 0 2px rgba(0,0,0,.55);pointer-events:none;z-index:2}
+.pole-corner{position:absolute;right:16px;bottom:calc(var(--dock,0px) + 16px);z-index:4;display:flex;flex-direction:column;align-items:flex-end;gap:12px;max-width:calc(100% - 32px)}
+.pole-enter{position:static;padding:9px 18px;font-size:13px}
+.pole-corner .m-readout{position:static;margin:0;max-width:100%}
 .pole-window-slider{height:58px;margin:2px 8px 0}
 .pole-window-slider.noUi-target{background:transparent;border:0;border-radius:0;box-shadow:none}
 .pole-window-slider .noUi-base{height:58px}
@@ -378,9 +363,11 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-modal-card input[type=number]{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px;min-height:30px}
 .pole-modal-row .seg{flex-wrap:wrap}
 .pole-modal-row .seg button[aria-pressed=true]{background:var(--surface-2)}
-.pole-windowbar p{margin:0;font-size:11px;line-height:1.35;color:var(--muted)}
-.pole[data-stage="atlas"] .pole-stages{display:none}
-.pole-restore{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;z-index:8;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:rgba(15,17,19,.95);color:var(--text);font:inherit;font-size:12px;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+.pole[data-stage="atlas"] .pole-hud{display:none}
+.pole-restore{position:absolute;right:16px;top:16px;z-index:8;width:38px;height:38px;padding:0;border-radius:10px;border:1px solid var(--border);background:rgba(15,17,19,.88);color:var(--text);display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.45);backdrop-filter:blur(8px)}
+.pole-restore:hover{border-color:var(--accent);background:rgba(15,17,19,.98)}
+.pole-restore:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.pole-restore .ico{width:17px;height:17px}
 .pole-restore span{color:var(--muted);font-size:10px}
 .pole-panel-open{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:7;width:38px;height:38px;padding:0;border:1px solid var(--border);border-left:0;border-radius:0 10px 10px 0;background:rgba(15,17,19,.95);color:var(--muted);display:grid;place-items:center;cursor:pointer}
 .pole-min{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:0 3px}
@@ -413,6 +400,24 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-slot{display:grid;grid-template-columns:22px 1fr auto 26px;gap:6px;align-items:center;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)}
 .pole-slot span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pole-slot button{padding:0 4px;min-height:22px}
+.pole-cards{display:none}
+@media(min-width:901px){
+.pole-top3{display:none}
+.pole-cards{display:flex;position:absolute;right:16px;top:76px;bottom:calc(var(--dock,0px) + 16px);width:272px;z-index:4;flex-direction:column;gap:8px;overflow:auto;padding:12px;border:1px solid var(--border);border-radius:14px;background:rgba(15,17,19,.9);backdrop-filter:blur(10px)}
+}
+.pole-cards-title{margin:0;font-size:12.5px;letter-spacing:.03em}
+.pole-cardlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.pole-card{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer}
+.pole-card:hover{border-color:var(--muted)}
+.pole-card-head{display:flex;align-items:center;gap:8px;font-size:12px}
+.pole-card-head span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.pole-card-head em{font-style:normal;font-weight:700}
+.pole-badge{display:grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--badge);color:#0f1113;font-size:11px;font-weight:700}
+.pole-bar{display:grid;grid-template-columns:56px 1fr 34px;gap:6px;align-items:center;font-size:11px;color:var(--muted)}
+.pole-bar i{height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+.pole-bar u{display:block;height:100%;border-radius:3px}
+.pole-bar b{text-align:right;font-weight:600;color:var(--text)}
+.pole-card-foot{font-size:11px;color:var(--muted)}
 .pole-cmp{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .pole-cmp th,.pole-cmp td{text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)}
 .pole-cmp thead th{color:var(--muted);font-weight:600}
@@ -426,26 +431,21 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-atlas-actions button[data-slot=B]{--slot:#f5c542}
 .pole-atlas-actions button[data-slot=C]{--slot:#ff9ad5}
 .pole-atlas-actions button.filled{border-style:solid;border-color:var(--slot);background:color-mix(in srgb,var(--slot) 18%,transparent);color:var(--text)}
-@media(max-width:900px){.pole-windowbar{left:8px;right:8px;bottom:62px;width:auto;padding:9px 12px 7px;gap:4px}.pole-window-head{gap:8px}.pole-window-title,.pole-window-stay,.pole-windowbar p{display:none}.pole-side{left:8px;right:8px;top:auto;bottom:200px;width:auto;max-height:38%}.pole-hud{left:8px;right:8px;top:56px;max-width:none}.pole-tabs{left:8px;top:8px;transform:none}.pole-globe-zoom{right:8px;top:8px}.pole-time{right:8px;top:52px}.pole-restore{bottom:62px}.pole-globe-hint{display:none}}
+@media(max-width:900px){.pole-side{left:8px;right:8px;top:auto;bottom:200px;width:auto;max-height:38%}.pole-hud{left:8px;right:8px;top:56px;max-width:none}.pole-tabs{left:8px;top:8px;transform:none}.pole-globe-zoom{right:8px;top:8px}.pole-time{right:8px;top:52px}.pole-globe-hint{display:none}}
 /* Expert workspace: the stage is full width; the left panel floats above it. */
 .pole{--expert-panel:360px}
 .pole-stage{left:0;right:0}
 .pole-side{left:12px;right:auto;top:12px;bottom:12px;width:var(--expert-panel);max-height:calc(100% - 24px);border:1px solid var(--border);border-radius:14px;background:rgba(15,17,19,.94);backdrop-filter:blur(10px);padding:14px 14px 18px;z-index:6;gap:8px;box-shadow:0 12px 36px rgba(0,0,0,.35)}
 .pole-hud{left:calc(var(--expert-panel) + 28px);right:16px;max-width:none}
-.pole-windowbar{left:calc(var(--expert-panel) + 28px);right:16px;width:auto}
 .pole-panel-handle{position:absolute;left:calc(var(--expert-panel) - 18px);top:50%;transform:translateY(-50%);z-index:9;width:36px;height:36px;padding:0;border:1px solid var(--border);border-radius:10px;background:#11151a;color:var(--muted);display:grid;place-items:center;cursor:pointer}
 .pole-panel-handle:hover{color:var(--text);border-color:var(--accent)}
 .pole.panel-collapsed .pole-stage{left:0}
 .pole.panel-collapsed .pole-side{display:none}
 .pole.panel-collapsed .pole-panel-handle{left:4px}
 .pole.panel-collapsed .pole-hud{left:16px}
-.pole.panel-collapsed .pole-windowbar{left:16px}
 .pole-eyebrow{margin:0 0 3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .pole-side-head h3{margin:0;font-size:16px;font-weight:550}
 .pole-task-next{margin:0 0 6px;font-size:12px;line-height:1.4;color:var(--muted)}
-.pole-side .pole-stages,.pole[data-stage="atlas"] .pole-stages{display:flex;position:static;padding:4px;border:1px solid var(--border);border-radius:10px;background:var(--page)}
-.pole-side .pole-stages button{flex:1;min-width:0;padding:6px 4px}
-.pole-stages button:disabled{opacity:.38;cursor:not-allowed}
 .pole-side h3{margin:10px 0 0;font-size:12.5px;letter-spacing:.03em}
 .pole-side .pole-label{margin-top:2px}
 .pole-clock{display:flex;flex-direction:column;gap:6px;padding:9px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025)}
@@ -475,14 +475,14 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-tabs{left:auto;right:16px;top:12px;transform:none}
 .pole-globe-hint{left:auto;right:16px;top:112px;bottom:auto;max-width:340px;text-align:right}
 .pole-hud{right:auto;width:fit-content;max-width:calc(100% - var(--expert-panel) - 44px)}
-.pole.panel-collapsed .pole-globe-hint,.pole.panel-collapsed .pole-map-rail{left:16px}
+.pole.panel-collapsed .pole-map-rail{left:16px}
 .pole.panel-collapsed .pole-hud{max-width:calc(100% - 32px)}
 .pole-hud .m-readout{position:static;margin-top:5px;max-width:none;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;line-height:1.35}
 .pole-map-key{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:10.5px;color:var(--muted)}
 .pole-map-key span{display:inline-flex;align-items:center;gap:5px}
 .pole-map-key i{width:9px;height:9px;border-radius:2px;display:inline-block}
 .pole-orbit-note{margin:4px 0 0;font-size:10px;color:var(--muted)}
-.pole button,.pole summary,.pole .pole-stages,.pole .pole-window-head{user-select:none;-webkit-user-select:none}
+.pole button,.pole summary{user-select:none;-webkit-user-select:none}
 .pole-sky{display:block;width:100%;height:auto;margin:5px 0 3px;border-radius:6px}
 .pole-sky-read{margin:0 0 8px;font-size:10.5px;line-height:1.4;color:var(--muted)}
 @media(max-width:900px){
@@ -490,11 +490,18 @@ body[data-view=pole] main{max-width:none;padding:0}
   .pole-side{left:8px;right:8px;top:auto;bottom:200px;width:auto;max-height:38%;border:1px solid var(--border);border-radius:12px;padding:10px 12px}
   .pole-panel-handle{left:auto;right:8px;top:50%}
   .pole.panel-collapsed .pole-side{display:none}
-  .pole-hud{left:8px;right:8px}
-  .pole-windowbar{left:8px;right:8px}
-  .pole.panel-collapsed .pole-hud,.pole.panel-collapsed .pole-windowbar{left:8px}
-  .pole-globe-zoom,.pole-time{right:8px;top:auto;bottom:268px}.pole-time{bottom:222px}.pole-globe-hint{display:none}.pole-map-rail{left:8px;top:150px}.pole-tabs{right:8px;top:8px}.pole-hud{width:auto;right:8px}
+  .pole{height:calc(100svh - var(--bar-h,56px) - 54px)}
+  .pole-hud{left:8px;right:8px;top:56px;max-width:calc(100% - 16px)}
+  .pole.panel-collapsed .pole-hud{max-width:calc(100% - 16px)}
+  .pole.panel-collapsed .pole-hud{left:8px}
+  .pole-restore{right:8px;top:8px}
+  .pole-corner{right:8px;bottom:calc(var(--dock,0px) + 12px);max-width:calc(100% - 16px);gap:8px}
+  .pole-corner .m-readout{display:none}
+  .pole-corner{padding-bottom:104px}
+  .pole-side{bottom:calc(var(--dock,0px) + 12px)}
+  .pole-globe-zoom,.pole-time{right:8px;top:auto;bottom:calc(var(--dock,0px) + 64px)}.pole-time{bottom:calc(var(--dock,0px) + 12px)}.pole-globe-hint{display:none}.pole-map-rail{left:8px;top:150px}.pole-tabs{right:8px;top:8px}.pole-hud{width:auto;right:8px}
 }
+@media(min-width:761px) and (max-width:900px){.pole{height:calc(100svh - var(--bar-h,56px))}}
 </style>
 <link rel="stylesheet" href="css/mission.css">
 <link rel="stylesheet" href="css/edu.css">
@@ -506,7 +513,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 <header class="appbar">
   <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span></b>
   <nav class="tabs" data-nav>
-    <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="pole">Expert</button>
+    <button data-view="mission">Mission</button><button data-view="pole" data-stage="globe">1 · Globe</button><button data-view="pole" data-stage="map">2 · Map</button><button data-view="pole" data-stage="atlas">3 · Atlas</button><button data-view="explore">4 · Explore</button>
   </nav>
   <div class="tray" id="tray"></div>
   <div class="seg-pill" id="mode-toggle" role="group" aria-label="Mode">
@@ -776,7 +783,7 @@ body[data-view=pole] main{max-width:none;padding:0}
   <div id="now"></div>
 </div>
 <nav class="tabbar" data-nav>
-  <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="pole">Expert</button>
+  <button data-view="mission">Mission</button><button data-view="pole" data-stage="globe">1 · Globe</button><button data-view="pole" data-stage="map">2 · Map</button><button data-view="pole" data-stage="atlas">3 · Atlas</button><button data-view="explore">4 · Explore</button>
 </nav>
 <div id="edu"></div>
 <div id="mode-wipe" aria-hidden="true"></div>
