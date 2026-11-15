@@ -241,7 +241,7 @@ export function createMission(ctx) {
       <p class="lede">${escapeHtml(t(edu ? LEDE_SIMPLE : LEDE))}</p>
       <div class="pick">${escapeHtml(t('Choose your probe'))}</div>
       <div class="guide-row" id="guide"${edu ? '' : ' hidden'}><div class="edu-char mood-happy" aria-hidden="true">${CHARACTER_MARKUP}</div>
-        <p class="guide-bubble" role="status">${escapeHtml(t('Hi! I\'ll be your mission guide. Pick a lander and press Validate.'))}</p></div>
+        <p class="guide-bubble" role="status">${escapeHtml(t('Hi! I\'m Lumi, and I\'ll be your mission guide. Pick a lander and press Validate to go to the Moon!'))}</p></div>
       <div class="probe-grid" data-model-error="${escapeHtml(t('Model unavailable. Select another probe or continue.'))}">
         ${PROBES.map(p => {
           return `<section class="probe-choice" data-probe-card="${p.id}" data-selected="${p.id === selected.id}">
