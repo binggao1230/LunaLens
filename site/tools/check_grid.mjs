@@ -13,7 +13,7 @@ import { Dem, computeHorizon } from '../js/engine/dem.js';
 import {
   REGION, STUDY_LAT, DEM_FOOTPRINT_LAT, project, unproject, cellCenters, gridGeometry,
   studyCellCenters, poleGeometry, POLE_CELL_KM,
-  earthStats, classify, normalizeThresholds, DEFAULT_LIMITS, DEFAULT_TARGETS, R_KM,
+  earthStats, screenCellWindow, classify, normalizeThresholds, DEFAULT_LIMITS, DEFAULT_TARGETS, R_KM,
 } from '../js/engine/grid.js';
 
 const checks = [];
@@ -81,9 +81,12 @@ check('hard-limit failure is red and never scores; targets only make yellow', ()
   const red = classify({ ...base, slopeDeg: 20 });
   assert.equal(red.status, 'red');
   assert.equal(red.score, null, 'a failed hard limit cannot carry a ranking score');
+  assert.ok(Number.isFinite(red.rawScore) && red.rawScore >= 0 && red.rawScore <= 100, 'failed limits keep a comparable reference score');
+  assert.equal(classify(base).rawScore, classify(base).score, 'qualifying scores use the same formula');
   assert.deepEqual(red.failed, ['slope']);
   const unknown = classify({ ...base, groundM: NaN });
   assert.equal(unknown.status, 'unknown');
+  assert.ok(unknown.rawScore == null, 'missing terrain must not produce a reference score');
   assert.deepEqual(unknown.failed, ['no-data']);
   const bad = normalizeThresholds({ maxSlopeDeg: -1, minEarthPct: 10, minWindowH: 10 }, DEFAULT_TARGETS);
   assert.equal(bad.ok, false);
@@ -124,6 +127,27 @@ check('date and margin change the scenario fields, not the terrain fields', () =
   const again = computeHorizon(dem, centre.lat, centre.lon, { minRangeM: 480 });
   assert.equal(again.groundM, hor.groundM, 'terrain fields stay fixed');
   assert.deepEqual(Array.from(again.horizon), Array.from(hor.horizon));
+});
+
+check('window scoring preserves eligibility and finds the best failed reference sample', () => {
+  const cell = { lat: pilot.cell.lat, lon: pilot.cell.lon, groundM: pilot.hor.groundM, slopeDeg: pilot.hor.slopeDeg, horizonDeg: pilot.hor.horizon };
+  const window = { ...scenario, endIndex: startIndex + 24 * 40 };
+  const strict = { ...DEFAULT_LIMITS, minEarthPct: 100, minWindowH: scenario.stayH };
+  const samples = [];
+  for (let index = window.startIndex; index <= window.endIndex; index += 24) {
+    samples.push(screenCellWindow(eph, cell, { ...window, startIndex: index, endIndex: index }, strict));
+  }
+  assert.ok(samples.every((sample) => sample.class.score === null), 'the fixture has no qualifying touchdown');
+  const expected = [...samples].sort((first, second) => second.class.rawScore - first.class.rawScore || second.stats.earthPct - first.stats.earthPct)[0];
+  const reference = screenCellWindow(eph, cell, { ...window, scoreFailed: true }, strict);
+  assert.equal(reference.startIndex, expected.startIndex);
+  assert.equal(reference.class.rawScore, expected.class.rawScore);
+  assert.equal(reference.class.score, null, 'reference scoring cannot admit an ineligible point');
+  const original = screenCellWindow(eph, cell, window, strict);
+  const originalExpected = [...samples].sort((first, second) => second.stats.earthPct - first.stats.earthPct)[0];
+  assert.equal(original.startIndex, originalExpected.startIndex, 'the default failure fallback remains unchanged');
+  const permissive = { ...DEFAULT_LIMITS, maxSlopeDeg: 90, minEarthPct: 0, minWindowH: 0 };
+  assert.deepEqual(screenCellWindow(eph, cell, window, permissive), screenCellWindow(eph, cell, { ...window, scoreFailed: true }, permissive), 'qualifying recommendations stay unchanged');
 });
 
 check('whole-pole blocks include clipped edge cells with representative points', () => {
