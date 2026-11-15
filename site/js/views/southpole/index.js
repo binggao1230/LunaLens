@@ -24,6 +24,7 @@ const ICON = {
   minus: '<path d="M5 12h14"/>',
   crosshair: '<circle cx="12" cy="12" r="6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
   panel: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/>',
+  back: '<path d="M19 12H5M12 19l-7-7 7-7"/>',
   close: '<path d="M6 6l12 12M18 6L6 18"/>',
 };
 const icon = (name) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICON[name]}</svg>`;
@@ -40,7 +41,7 @@ export function createSouthPole(ctx) {
     cell: null, popupCell: null,
     slots: { A: null, B: null, C: null }, target: null,
     limits: { ...DEFAULT_LIMITS }, targets: { ...DEFAULT_TARGETS }, weights: { ...DEFAULT_WEIGHTS },
-    globe: null, globeFailed: false, atlasSrc: '', atlasKey: '', atlasRev: 0, moonReady: false, syncingSliders: false,
+    globe: null, globeFailed: false, atlasSrc: '', atlasKey: '', atlasRev: 0, atlasReady: false, moonReady: false, syncingSliders: false,
     animRunning: true, animSpeed: 5,
   };
   const staticCache = new Map();
@@ -126,6 +127,12 @@ export function createSouthPole(ctx) {
     if (els['sp-windowhud']) els['sp-windowhud'].textContent = t('{days} days in the launch window', { days }) + ` · ${ctx.stayH()} h`;
     if (els['sp-win-start']) els['sp-win-start'].textContent = isoDate(start);
     if (els['sp-win-end']) els['sp-win-end'].textContent = isoDate(end);
+    if (els['sp-window-now']) {
+      const now = ctx.landing();
+      els['sp-window-now'].hidden = !ui.window.chosen;
+      els['sp-window-now'].style.left = `${latest ? clamp(dayOf(now) / latest * 100, 0, 100) : 0}%`;
+      els['sp-window-now'].title = fmtDateTime(now);
+    }
     syncSliders(source);
   }
 
@@ -147,6 +154,7 @@ export function createSouthPole(ctx) {
     ui.globe?.request();
     if (ui.stage === 'map' && ui.tab === 'moon') drawMoon();
     renderHud();
+    if (ui.stage === 'atlas') pushAtlasCommand();
   }
 
   function confirmWindow() {
@@ -250,7 +258,10 @@ export function createSouthPole(ctx) {
           <label class="pole-window-stay">${escapeHtml(t('Stay'))}<select id="sp-stay"></select></label>
           <button type="button" class="pole-window-close" id="sp-window-hide" aria-label="${escapeHtml(t('Minimize the window bar'))}" title="${escapeHtml(t('Minimize the window bar'))}">–</button>
         </div>
-        <div class="pole-window-slider" id="sp-range2"></div>
+        <div class="pole-window-track">
+          <div class="pole-window-slider" id="sp-range2"></div>
+          <span class="pole-window-now" id="sp-window-now" hidden></span>
+        </div>
         <p id="sp-windowinfo"></p>
       </div>
       <button type="button" class="pole-restore" id="sp-window-show" hidden>${escapeHtml(t('Launch window'))} <span>▲</span></button>
@@ -269,12 +280,12 @@ export function createSouthPole(ctx) {
       </div>
 
       <div class="pole-atlas-pick" id="sp-atlas-pick" hidden>
-        <p class="sub" id="sp-target"></p>
+        <p class="sr-only" id="sp-target" aria-live="polite"></p>
+        <button type="button" class="pole-atlas-nav" id="sp-atlas-back" aria-label="${escapeHtml(t('Back to the map'))}" title="${escapeHtml(t('Back to the map'))}">${icon('back')}</button>
         <div class="pole-atlas-actions">
-          <button type="button" class="btn-ghost btn-xs" id="sp-atlas-back">← ${escapeHtml(t('Map'))}</button>
-          <button type="button" class="btn-ghost btn-xs" data-slot="A">A</button>
-          <button type="button" class="btn-ghost btn-xs" data-slot="B">B</button>
-          <button type="button" class="btn-ghost btn-xs" data-slot="C">C</button>
+          <button type="button" data-slot="A">A</button>
+          <button type="button" data-slot="B">B</button>
+          <button type="button" data-slot="C">C</button>
         </div>
       </div>
 
@@ -282,9 +293,12 @@ export function createSouthPole(ctx) {
         <div class="pole-popup-card" id="sp-popup-card"></div>
       </div>
     </div>`;
-    for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-start', 'sp-end', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-range2', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-mslider', 'sp-mwindowinfo', 'sp-confirm', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-hide', 'sp-window-show', 'sp-win-start', 'sp-win-end', 'sp-window-count', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target', 'sp-back-map']) els[id] = document.getElementById(id);
+    for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-start', 'sp-end', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-range2', 'sp-window-now', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-mslider', 'sp-mwindowinfo', 'sp-confirm', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-hide', 'sp-window-show', 'sp-win-start', 'sp-win-end', 'sp-window-count', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target', 'sp-back-map']) els[id] = document.getElementById(id);
     bind();
     initWindow();
+    restoreSlots();
+    const site = selectedSite();
+    if (site && !ui.target) ui.target = { lat: site.lat, lon: site.lon, label: site.name ?? site.label ?? t('Selected point') };
     renderStaySelects();
     els['sp-modal'].hidden = false;
     els['sp-windowbar'].hidden = true;
@@ -591,7 +605,7 @@ export function createSouthPole(ctx) {
 
   function syncAtlas() {
     const { key, url } = atlasTarget();
-    if (key !== ui.atlasKey) { ui.atlasKey = key; els['sp-atlas'].src = url; }
+    if (key !== ui.atlasKey) { ui.atlasKey = key; ui.atlasReady = false; els['sp-atlas'].src = url; }
   }
 
   function enterAtlas(cell) {
@@ -628,6 +642,27 @@ export function createSouthPole(ctx) {
     return site ? { lat: site.lat, lon: site.lon, label: site.name ?? site.label ?? t('Selected point') } : null;
   }
 
+  function persistSlots() {
+    try {
+      const data = Object.fromEntries(Object.entries(ui.slots).filter(([, slot]) => slot).map(([name, slot]) => [name, { lat: slot.lat, lon: slot.lon, label: slot.label }]));
+      localStorage.setItem('lunalens:slots', JSON.stringify(data));
+    } catch { /* storage can be unavailable */ }
+  }
+
+  function restoreSlots() {
+    try {
+      const data = JSON.parse(localStorage.getItem('lunalens:slots') ?? 'null');
+      if (!data) return;
+      for (const name of ['A', 'B', 'C']) {
+        const slot = data[name];
+        if (slot && Number.isFinite(slot.lat) && Number.isFinite(slot.lon)) {
+          ui.slots[name] = { lat: slot.lat, lon: slot.lon, label: slot.label || t('Atlas point'), metrics: null };
+          measureSlot(ui.slots[name]);
+        }
+      }
+    } catch { /* ignore a damaged stored value */ }
+  }
+
   function renderAbc() {
     if (!els['sp-abc']) return;
     for (const b of els['sp-abc'].querySelectorAll('[data-slot]')) {
@@ -643,6 +678,7 @@ export function createSouthPole(ctx) {
     const p = project(slot.lat, slot.lon);
     ui.target = { lat: slot.lat, lon: slot.lon, label: t('Point {name}', { name }) };
     ui.map.cxKm = p.xKm; ui.map.cyKm = p.yKm; drawMap();
+    pushAtlasCommand();
     setNotice(t('Point {name}: {pos}.', { name, pos: fmtLatLon(slot.lat, slot.lon, 3) }));
   }
 
@@ -676,8 +712,16 @@ export function createSouthPole(ctx) {
       ui.target = { lat: state.active.lat, lon: state.active.lon, label: state.active.label || t('Atlas point') };
       if (els['sp-target']) els['sp-target'].textContent = `${ui.target.label} · ${fmtLatLon(ui.target.lat, ui.target.lon, 3)}`;
     }
+    if (Number.isFinite(state?.tMs)) {
+      const ms = clamp(state.tMs, eph().t0, eph().tEnd - ctx.stayH() * HOUR);
+      if (Math.abs(ms - ctx.landing()) > 60e3) ctx.setTouchdown(ms);
+    }
     renderSlots();
     drawMap();
+    if (!ui.atlasReady) {
+      ui.atlasReady = true;
+      setTimeout(pushAtlasCommand, 120);
+    }
   }
 
   function renderAtlasSlots() {
@@ -697,6 +741,14 @@ export function createSouthPole(ctx) {
     syncAtlas();
   }
 
+  function pushAtlasCommand() {
+    const win = els['sp-atlas']?.contentWindow;
+    if (!win || ui.stage !== 'atlas') return;
+    const sites = Object.entries(ui.slots).filter(([, slot]) => slot).map(([name, slot]) => ({ lat: slot.lat, lon: slot.lon, label: name }));
+    const active = ui.target ? { lat: ui.target.lat, lon: ui.target.lon } : null;
+    win.postMessage({ type: 'lunalens:atlas-command', sites, active, tMs: ctx.landing() }, location.origin);
+  }
+
   function saveSlot(name) {
     if (!ui.target) return;
     const existing = Object.values(ui.slots).find((s) => sameSpot(s, ui.target));
@@ -706,6 +758,8 @@ export function createSouthPole(ctx) {
     renderSlots();
     renderAbc();
     renderAtlasSlots();
+    persistSlots();
+    pushAtlasCommand();
     setNotice(t('Saved point {name}: {pos}.', { name, pos: fmtLatLon(ui.target.lat, ui.target.lon, 3) }));
   }
 
@@ -720,7 +774,7 @@ export function createSouthPole(ctx) {
     }).join('');
     const filled = names.map((n) => [n, ui.slots[n]]).filter(([, s]) => s && s.metrics);
     if (filled.length >= 2) {
-      els['sp-compare'].innerHTML = `<table class="pole-cmp"><thead><tr><th></th>${filled.map(([n]) => `<th style="color:${colors[n]}">${n}</th>`).join('')}</tr></thead><tbody>
+      els['sp-compare'].innerHTML = `<p class="sub">${escapeHtml(t('Screening values use the selected stay; Atlas shows 60-day windows.'))}</p><table class="pole-cmp"><thead><tr><th></th>${filled.map(([n]) => `<th style="color:${colors[n]}">${n}</th>`).join('')}</tr></thead><tbody>
         <tr><th>${escapeHtml(t('Earth visibility'))}</th>${filled.map(([, s]) => `<td>${Math.round(s.metrics.earthPct)}%</td>`).join('')}</tr>
         <tr><th>${escapeHtml(t('Longest link'))}</th>${filled.map(([, s]) => `<td>${s.metrics.longestH} h</td>`).join('')}</tr>
         <tr><th>${escapeHtml(t('Slope'))}</th>${filled.map(([, s]) => `<td>${s.metrics.slopeDeg.toFixed(1)}°</td>`).join('')}</tr></tbody></table>`;
@@ -950,7 +1004,11 @@ export function createSouthPole(ctx) {
       if (event.source !== els['sp-atlas'].contentWindow || event.data?.type !== 'lunalens:atlas-state') return;
       syncAtlasState(event.data);
     });
-    els['sp-slots'].addEventListener('click', (e) => { const b = e.target.closest('[data-remove]'); if (!b) return; ui.slots[b.dataset.remove] = null; renderSlots(); drawMap(); });
+    els['sp-slots'].addEventListener('click', (e) => {
+      const b = e.target.closest('[data-remove]'); if (!b) return;
+      ui.slots[b.dataset.remove] = null;
+      persistSlots(); renderSlots(); drawMap(); pushAtlasCommand();
+    });
     bindMap();
   }
 
