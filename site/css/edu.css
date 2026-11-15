@@ -430,3 +430,7 @@ body.edu-on .tabbar button[data-view=atlas],body.edu-on .tabbar button[data-view
   50%{box-shadow:0 0 0 3px rgba(67,217,138,.9),0 0 34px 10px rgba(67,217,138,.6)}
 }
 @media (prefers-reduced-motion: reduce){.datebar.edu-point{animation:none}}
+
+/* The story points at the 30-day graph while it explains the graph: the same pulsing green glow as the date bar. */
+#m-lanes.edu-point{border-radius:14px;box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 26px 6px rgba(67,217,138,.5);animation:edu-time-pulse 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){#m-lanes.edu-point{animation:none}}
