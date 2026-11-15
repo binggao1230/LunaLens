@@ -28,6 +28,31 @@
 
 /* ---- Education mode is the simpler interface: no Expert navigation, numbers, exports or comparison controls ---- */
 /* Same navigation in both modes, Data included. */
+/* Education mode is the Mission page only: no Expert navigation, no Data page, no mobile link. */
+body.edu-on .appbar .tabs,body.edu-on .appbar .side,body.edu-on .tabbar{display:none!important}
+body.edu-on{--bottom-nav-h:0px}
+body:not(.edu-on) [data-nav] button[data-view=mission]{display:none}
+body.edu-on .appbar #mode-toggle{margin-left:auto}
+/* ---- the first choice: Expert or Education, before anything else ---- */
+#mode-gate{position:fixed;inset:0;z-index:95;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:24px;overflow:auto;
+  background:radial-gradient(circle at 50% 30%,#1a1f27 0%,#0f1113 70%);color:var(--text,#f5f3fb)}
+#mode-gate[hidden]{display:none}
+#mode-gate h1{margin:0;font-size:clamp(26px,4vw,40px);font-weight:300;letter-spacing:.01em;text-align:center}
+#mode-gate p.gate-sub{margin:-16px 0 0;color:var(--muted,#a0a7b2);font-size:15px;text-align:center}
+.gate-cards{display:grid;grid-template-columns:repeat(2,minmax(0,300px));gap:18px;width:100%;justify-content:center}
+.gate-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 20px;border-radius:16px;border:1px solid var(--border,#2c313a);background:rgba(255,255,255,.03);color:inherit;font:inherit;cursor:pointer;text-align:center;min-height:200px;justify-content:flex-start;transition:border-color .2s,background .2s,transform .2s}
+.gate-card:hover{background:rgba(255,255,255,.07);transform:translateY(-2px)}
+.gate-card:focus-visible{outline:2px solid #f5c542;outline-offset:3px}
+.gate-card[data-mode=expert]:hover{border-color:#f5c542}
+.gate-card[data-mode=education]:hover{border-color:#5aa7f0}
+.gate-card b{font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:500}
+.gate-card[data-mode=expert] b{color:#f5c542}
+.gate-card[data-mode=education] b{color:#5aa7f0}
+.gate-card span{font-size:14px;color:var(--text2,#c3c7ce);line-height:1.45}
+.gate-card>div{width:92px;height:92px;display:grid;place-items:center;flex:none}
+.gate-card .wipe-icon{width:72px;height:72px}
+.gate-card .edu-char{width:92px;height:92px}
+@media (max-width:640px){.gate-cards{grid-template-columns:1fr}.gate-card{min-height:0;padding:20px 16px}}
 body.edu-on .m-readout,body.edu-on .side-head-actions,body.edu-on .pill2,body.edu-on .lane-export,body.edu-on .lane-meta,
 body.edu-on .srow-chk,body.edu-on .srow .chev,body.edu-on .srow .det{display:none!important}
 body.edu-on .srow-top>button{padding-left:12px}
