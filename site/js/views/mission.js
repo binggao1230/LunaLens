@@ -53,6 +53,7 @@ const MESSAGES = {
   'Sunlit, no Earth link': ['Éclairé, sans liaison Terre', '有日照，无地球通信'],
   'In shadow': ['À l’ombre', '处于阴影'],
   'Earth link only': ['Liaison Terre seule', '仅地球通信'],
+  'Hello, explorer! I\'m Lumi, your mission guide. Today we\'re going to land on the Moon, at its south pole.': ['Bonjour, explorateur ! Je suis Lumi, ton guide de mission. Aujourd\'hui, nous allons nous poser sur la Lune, au pôle Sud.', '你好，探险家！我是 Lumi，你的任务向导。今天我们要在月球的南极着陆。'],
   'Landed · back to the Mission page': ['Atterri · retour à la page Mission', '已着陆 · 正在返回任务页面'],
   'Sunlit only': ['Éclairé seulement', '仅有日照'],
   'Sun and Earth in view': ['Soleil et Terre visibles', '太阳与地球同时可见'],
@@ -269,7 +270,7 @@ export function createMission(ctx) {
       <p class="lede">${escapeHtml(t(edu ? LEDE_SIMPLE : LEDE))}</p>
       <div class="pick">${escapeHtml(t('Choose your probe'))}</div>
       <div class="guide-row" id="guide"${edu ? '' : ' hidden'}><div class="edu-char mood-happy" aria-hidden="true">${CHARACTER_MARKUP}</div>
-        <p class="guide-bubble" role="status">${escapeHtml(t('Hi! I\'m Lumi, and I\'ll be your mission guide. Pick a lander and press Validate to go to the Moon!'))}</p></div>
+        <p class="guide-bubble" role="status">${escapeHtml(t('Hello, explorer! I\'m Lumi, your mission guide. Today we\'re going to land on the Moon, at its south pole.'))}</p></div>
       <div class="probe-grid" data-model-error="${escapeHtml(t('Model unavailable. Select another probe or continue.'))}">
         ${PROBES.map(p => {
           return `<section class="probe-choice" data-probe-card="${p.id}" data-selected="${p.id === selected.id}">
