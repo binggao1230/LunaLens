@@ -181,7 +181,7 @@ const SIMPLE_META = {
 export function createMission(ctx) {
   const $ = (id) => document.getElementById(id);
   const startEl = $('v-start'), missionEl = $('v-mission'), flightEl = $('flight');
-  const local = { historic: true, flat: 'pole', probe: 'apollo', picked: null, mode: '3d', hour: 0, timer: null, open: null, query: '', listKey: '', laneKey: '', compared: new Set() };
+  const local = { historic: false, flat: 'pole', probe: 'apollo', picked: null, mode: '3d', hour: 0, timer: null, open: null, query: '', listKey: '', laneKey: '', compared: new Set() };
   let view3d = null, view3dLoading = false, view3dFailed = false, lastFrame = null, flying = false;
   let disposePreview = () => {};
   let historic = null, project2d = null; // Education mode: historic landing-site flags over the map and the globe
@@ -292,7 +292,7 @@ export function createMission(ctx) {
     const validate = startEl.querySelector('#validate');
     if (validate) validate.firstChild.textContent = t(edu ? 'Start the mission' : 'Validate');
   }
-  onMode(() => { if (isEducation()) { view2d.z = 1; view2d.x = 0; view2d.y = 0; } if (view() === 'start') applyStartMode(); else if (view() === 'mission') refresh(true); });
+  onMode(() => { if (isEducation()) { local.historic = false; view2d.z = 1; view2d.x = 0; view2d.y = 0; } if (view() === 'start') applyStartMode(); else if (view() === 'mission') refresh(true); });
 
   /* ---------- mission page skeleton ---------- */
 
