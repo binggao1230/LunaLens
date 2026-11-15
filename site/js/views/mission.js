@@ -567,6 +567,8 @@ export function createMission(ctx) {
   function laneSites() {
     const highlighted = ctx.eduHighlight?.()?.id ?? null; // Education mode always shows the site it is talking about
     // Education mode: the timeline shows the sites the user picked (compared) and the picked one.
+    // The three sites are graphed from the start, however the Mission page was opened (reload, mode switch, or Validate).
+    if (isEducation() && (!local.compared || local.compared.size === 0)) local.compared = defaultCompared();
     if (isEducation()) { const picked = pickedSite()?.id; return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === picked || s.id === highlighted); }
     return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === highlighted);
   }
