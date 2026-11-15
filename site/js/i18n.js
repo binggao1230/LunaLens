@@ -484,6 +484,7 @@ const messages = {
   'Visibility target (%)': ['Objectif de visibilité (%)', '可见性目标（%）'],
   'Link window target (h)': ['Objectif de fenêtre de liaison (h)', '链路窗口目标（小时）'],
   'Selected points A/B/C': ['Points sélectionnés A/B/C', '已选点 A/B/C'],
+  'Screening values use the selected stay; Atlas shows 60-day windows.': ['Les valeurs de sélection utilisent le séjour choisi ; Atlas affiche des fenêtres de 60 jours.', '筛选值按所选停留时长计算；Atlas 显示 60 天窗口。'],
   'Atlas point': ['Point Atlas', 'Atlas 选点'],
   'Point {name}': ['Point {name}', '点 {name}'],
   'Save or focus point {name}': ['Enregistrer ou centrer le point {name}', '保存或定位点 {name}'],

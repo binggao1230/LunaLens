@@ -353,6 +353,8 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-window-stay select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:11.5px}
 .pole-window-close{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:0 2px}
 .pole-window-close:hover{color:var(--text)}
+.pole-window-track{position:relative}
+.pole-window-now{position:absolute;top:20px;width:2px;height:10px;margin-left:-1px;border-radius:1px;background:var(--text);box-shadow:0 0 0 2px rgba(0,0,0,.55);pointer-events:none;z-index:2}
 .pole-window-slider{height:58px;margin:2px 8px 0}
 .pole-window-slider.noUi-target{background:transparent;border:0;border-radius:0;box-shadow:none}
 .pole-window-slider .noUi-base{height:58px}
@@ -374,8 +376,6 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-min{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:0 3px}
 .pole-min:hover{color:var(--text)}
 .pole select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%238a93a0' stroke-width='1.5' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 9px center;background-size:10px 6px;padding-right:26px}
-.pole-atlas-actions button{min-width:30px;min-height:30px;border-radius:50%;padding:0;font-weight:700}
-.pole-atlas-actions button.filled{border-color:var(--earth);color:var(--text);background:rgba(113,169,239,.14)}
 .pole-atlas-actions button[disabled]{opacity:.55;cursor:default}
 .pole-modal{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(5,7,10,.72);backdrop-filter:blur(4px)}
 .pole-modal[hidden]{display:none}
@@ -396,9 +396,16 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-cmp{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .pole-cmp th,.pole-cmp td{text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)}
 .pole-cmp thead th{color:var(--muted);font-weight:600}
-.pole-atlas-pick{position:absolute;left:16px;top:118px;z-index:8;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:rgba(15,17,19,.92);backdrop-filter:blur(10px);max-width:420px}
-.pole-atlas-pick p{margin:0 0 8px;font-size:12.5px;color:var(--muted)}
-.pole-atlas-actions{display:flex;gap:6px;flex-wrap:wrap}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.pole-atlas-pick{position:absolute;left:14px;top:50%;transform:translateY(-50%);z-index:8;display:flex;flex-direction:column;gap:6px;padding:6px;border:1px solid var(--border);border-radius:14px;background:rgba(15,17,19,.9);backdrop-filter:blur(10px)}
+.pole-atlas-actions{display:flex;flex-direction:column;gap:5px}
+.pole-atlas-nav,.pole-atlas-actions button{width:32px;height:32px;padding:0;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text2);display:grid;place-items:center;cursor:pointer}
+.pole-atlas-nav:hover,.pole-atlas-actions button:hover{border-color:var(--earth);color:var(--text)}
+.pole-atlas-actions button{font:700 12px/1 "Geist",system-ui,sans-serif}
+.pole-atlas-actions button[data-slot=A]{--slot:#58c8ff}
+.pole-atlas-actions button[data-slot=B]{--slot:#f5c542}
+.pole-atlas-actions button[data-slot=C]{--slot:#ff9ad5}
+.pole-atlas-actions button.filled{border-style:solid;border-color:var(--slot);background:color-mix(in srgb,var(--slot) 18%,transparent);color:var(--text)}
 @media(max-width:900px){.pole-windowbar{left:8px;right:8px;bottom:62px;width:auto;padding:9px 12px 7px;gap:4px}.pole-window-head{gap:8px}.pole-window-title,.pole-window-stay,.pole-windowbar p{display:none}.pole-side{left:8px;right:8px;top:auto;bottom:200px;width:auto;max-height:38%}.pole-hud{left:8px;right:8px;top:56px;max-width:none}.pole-tabs{left:8px;top:8px;transform:none}.pole-globe-zoom{right:8px;top:8px}.pole-time{right:8px;top:52px}.pole-restore{bottom:62px}.pole-globe-hint{display:none}}
 </style>
 <link rel="stylesheet" href="css/mission.css">
