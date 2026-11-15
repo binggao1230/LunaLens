@@ -3,8 +3,7 @@
 import { t } from '../i18n.js';
 import { escapeHtml, fmtDateTime, isoDate, fmtTime } from '../format.js';
 import {
-  HOUR_MS, DAY_MS, DEFAULT_CONDITIONS, STAY_CHOICES, makeRequest, availableYears,
-  normalizeRequest, latestCompleteTouchdown,
+  HOUR_MS, DAY_MS, STAY_CHOICES, makeRequest, availableYears,
 } from '../engine/scenario.js';
 import { searchTouchdowns, scanSite, displayGroups, stayStats, eligibleMask } from '../engine/search.js';
 
@@ -17,7 +16,7 @@ export function createExpert(ctx) {
   const ui = {
     mode: 'year', year: null, half: 1, dayMs: null, hourMs: null,
     startMs: null, endMs: null, ranking: 'flexibility', compareMode: null,
-    pins: { A: null, B: null }, result: null, seq: 0, ready: false,
+    pins: { A: null, B: null }, result: null, seq: 0, ready: false, searching: false,
   };
 
   function bounds() { return ctx.bounds(); }
@@ -90,7 +89,9 @@ export function createExpert(ctx) {
   }
 
   function reasonText(site, conditions, coverage) {
-    return t('Earth clears {margin}° at touchdown; {sun} h of continuous sunlight from touchdown; the whole {stay} h stay is covered by the data.', {
+    return t(conditions.requireEarthAtTouchdown
+      ? 'Earth clears {margin}° at touchdown; {sun} h of continuous sunlight from touchdown; the whole {stay} h stay is covered by the data.'
+      : 'Earth visibility at touchdown is optional; {sun} h of continuous sunlight from touchdown; the whole {stay} h stay is covered by the data.', {
       margin: conditions.marginDeg, sun: conditions.requiredSunH, stay: conditions.stayH,
     }) + (coverage?.state === 'partial' ? ` ${t('Only the evaluated part of the requested period was searched.')}` : '');
   }
@@ -147,6 +148,7 @@ export function createExpert(ctx) {
         <span>${escapeHtml(windowLabel(g, r.conditions))}</span>
         ${pinButton('A', g, site, r.request.evaluated)}${pinButton('B', g, site, r.request.evaluated)}
         <button type="button" class="ex-open" data-act="open" data-site="${escapeHtml(site.id)}" data-ms="${g.representative.ms}">${escapeHtml(t('Inspect'))}</button>
+        <button type="button" class="btn-primary ex-use" data-act="choose" data-site="${escapeHtml(site.id)}" data-ms="${g.representative.ms}" aria-label="${escapeHtml(t('Use {time} at {site} in Globe', { time: fmtDateTime(g.representative.ms), site: t(site.name) }))}">${escapeHtml(t('Use this date'))}<span aria-hidden="true"> →</span></button>
       </div>`).join('')}</div>
     </article>`).join('');
 
@@ -264,7 +266,7 @@ export function createExpert(ctx) {
     const host = $('ex-compare');
     const { A, B } = ui.pins;
     const chip = (pin, name) => pin
-      ? `<span class="ex-chip"><b>${name}</b> ${escapeHtml(t(pin.siteName))} · ${escapeHtml(pin.label)} <button type="button" data-act="clear${name}" aria-label="${escapeHtml(t('Clear pin {pin}', { pin: name }))}">×</button></span>`
+      ? `<span class="ex-chip"><b>${name}</b> ${escapeHtml(t(pin.siteName))} · ${escapeHtml(fmtDateTime(pin.ms))} <button type="button" data-act="clear${name}" aria-label="${escapeHtml(t('Clear pin {pin}', { pin: name }))}">×</button></span>`
       : `<span class="ex-chip empty">${escapeHtml(t('{pin} not pinned', { pin: name }))}</span>`;
     if (!A || !B) {
       host.innerHTML = `<h3>${escapeHtml(t('Compare A and B'))}</h3><p class="ex-pins">${chip(A, 'A')}${chip(B, 'B')}</p><p class="sub">${escapeHtml(t('Pin two windows from the results to compare them here. Nothing is retyped.'))}</p>`;
@@ -290,6 +292,10 @@ export function createExpert(ctx) {
 
   function run() {
     const seq = ++ui.seq;
+    ui.searching = true;
+    $('ex-run').disabled = true;
+    $('ex-results').setAttribute('aria-busy', 'true');
+    for (const button of $('ex-results').querySelectorAll('button')) button.disabled = true;
     $('ex-status').textContent = t('Searching {description}…', { description: t(ui.mode === 'hour' ? 'the exact hour' : ui.mode === 'day' ? 'one day' : ui.mode === 'half' ? 'half a year' : ui.mode === 'year' ? 'a full year' : 'the custom range') });
     const request = buildRequest();
     setTimeout(() => {
@@ -297,6 +303,9 @@ export function createExpert(ctx) {
       const result = searchTouchdowns({ sites: ctx.sites(), request, bounds: bounds(), conditions: ctx.conditions(), ranking: ui.ranking });
       if (seq !== ui.seq) return;
       ui.result = result;
+      ui.searching = false;
+      $('ex-run').disabled = false;
+      $('ex-results').setAttribute('aria-busy', 'false');
       renderResults();
       renderCompare();
       ctx.announce?.(result);
@@ -309,7 +318,7 @@ export function createExpert(ctx) {
     const ms = Number(el.dataset.ms);
     const label = fmtDateTime(ms);
     ui.pins[pinName] = {
-      siteId: site.id, siteName: site.name, ms, label,
+      siteId: site.id, siteName: site.name, ms,
       start: el.dataset.start ? Number(el.dataset.start) : null,
       end: el.dataset.end ? Number(el.dataset.end) : null,
     };
@@ -342,10 +351,18 @@ export function createExpert(ctx) {
       const act = e.target.closest('[data-act]');
       if (!act) return;
       const a = act.dataset.act;
+      if (ui.searching && ['pinA', 'pinB', 'open', 'choose'].includes(a)) return;
       if (a === 'pinA') pin('A', act);
       else if (a === 'pinB') pin('B', act);
       else if (a === 'clearA') { ui.pins.A = null; renderCompare(); }
       else if (a === 'clearB') { ui.pins.B = null; renderCompare(); }
+      else if (a === 'choose') {
+        const result = ui.result;
+        const candidate = result?.candidates.find((site) => site.id === act.dataset.site);
+        const touchdownMs = Number(act.dataset.ms);
+        if (!candidate?.groups.some((group) => group.representative?.ms === touchdownMs)) return;
+        ctx.chooseWindow?.({ siteId: candidate.id, touchdownMs, conditions: { ...result.conditions } });
+      }
       else if (a === 'open') {
         const site = siteById(act.dataset.site);
         if (!site) return;
@@ -363,10 +380,13 @@ export function createExpert(ctx) {
     /** Window/site changes keep the result; a condition change re-runs both consistently. */
     render() {
       if (!ui.ready) return;
+      refreshInputs();
       const c = ctx.conditions();
       const old = ui.result?.conditions;
       const changed = old && (old.stayH !== c.stayH || old.marginDeg !== c.marginDeg || old.requiredSunH !== c.requiredSunH || old.requireEarthAtTouchdown !== c.requireEarthAtTouchdown);
-      if (changed) { refreshInputs(); run(); } else renderResults();
+      if (changed) run();
+      else if (!ui.searching) renderResults();
+      renderCompare();
     },
     refreshInputs,
     run,

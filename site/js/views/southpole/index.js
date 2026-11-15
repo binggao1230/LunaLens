@@ -94,10 +94,23 @@ export function createSouthPole(ctx) {
   function syncWindowInputs(source = null) {
     const start = dayMs(ui.window.startDay);
     const days = ui.window.endDay - ui.window.startDay + 1;
-    const text = t('{days} days selected · stay {stay} h · latest complete touchdown {cutoff}.', {
+    const text = t(days === 1 ? '1 day selected · stay {stay} h · latest complete touchdown {cutoff}.' : '{days} days selected · stay {stay} h · latest complete touchdown {cutoff}.', {
       days, stay: ctx.stayH(), cutoff: fmtDateTime(eph().tEnd - ctx.stayH() * HOUR),
     });
     if (els['sp-mwindowinfo']) els['sp-mwindowinfo'].textContent = text;
+    const selection = ui.window.source;
+    if (els['sp-plan']) {
+      els['sp-plan'].hidden = !selection;
+      if (selection) {
+        const site = ctx.sites().find((entry) => entry.id === selection.siteId);
+        els['sp-plan'].textContent = t('Selected in Windows: {site} · {time}.', {
+          site: t(site?.name ?? 'Selected point'), time: fmtDateTime(selection.touchdownMs),
+        }) + ' ' + t('Carried conditions: {stay} h stay · {margin}° Earth margin · {sun} h continuous sun · Earth at touchdown {state}.', {
+          stay: selection.conditions.stayH, margin: selection.conditions.marginDeg,
+          sun: selection.conditions.requiredSunH, state: t(selection.conditions.requireEarthAtTouchdown ? 'required' : 'not required'),
+        });
+      }
+    }
     if (els['sp-windowhud']) els['sp-windowhud'].textContent = t('{days} days in the search window', { days }) + ` · ${ctx.stayH()} h`;
     if (els['sp-mstart']) els['sp-mstart'].value = isoDate(start);
     renderModalPicker(source);
@@ -117,43 +130,58 @@ export function createSouthPole(ctx) {
   function syncModalSlider(source) {
     const host = els['sp-mslider'];
     if (!host || !window.noUiSlider) return;
-    const latest = Math.max(1, latestDay());
-    const span = Math.min(548, latest);
+    const latest = Math.max(1, latestDay() + 1);
+    const length = ui.window.endDay - ui.window.startDay + 1;
+    const span = source === host && ui.window.viewSpan
+      ? ui.window.viewSpan : Math.min(latest, Math.max(30, Math.ceil(length * 1.4)));
     let viewStart = ui.window.viewStart ?? 0;
-    const outside = ui.window.startDay < viewStart || ui.window.endDay > viewStart + span;
-    if (!host.noUiSlider || (outside && source !== host)) {
-      viewStart = clamp(ui.window.startDay - 30, 0, Math.max(0, latest - span));
+    const outside = ui.window.startDay < viewStart || ui.window.endDay + 1 > viewStart + span;
+    if (!host.noUiSlider || (source !== host && (outside || span !== ui.window.viewSpan))) {
+      viewStart = clamp(ui.window.startDay - Math.floor((span - length) / 2), 0, Math.max(0, latest - span));
     }
     const viewEnd = Math.max(viewStart + 1, Math.min(latest, viewStart + span));
-    const maxLabels = Math.max(2, Math.floor((host.clientWidth || Math.min(window.innerWidth - 96, 1000)) / 52));
+    const maxLabels = Math.max(2, Math.floor((host.clientWidth || Math.min(window.innerWidth - 96, 1000)) / 74));
     const key = `${viewStart}|${viewEnd}|${locale()}|${maxLabels}`;
     ui.window.viewStart = viewStart;
+    ui.window.viewSpan = span;
     if (host.dataset.view !== key) {
       host.noUiSlider?.destroy();
       const marks = [];
-      for (let y = new Date(dayMs(viewStart)).getUTCFullYear(); y <= new Date(dayMs(viewEnd)).getUTCFullYear(); y++) {
-        for (let m = 0; m < 12; m++) {
-          const day = Math.round((Date.UTC(y, m, 1) - eph().t0) / DAY);
-          if (day >= viewStart && day <= viewEnd) marks.push({ day, label: m === 0 ? String(y) : new Date(Date.UTC(y, m, 1)).toLocaleDateString(locale(), { month: 'short', timeZone: 'UTC' }) });
+      if (span <= 62) {
+        const interval = Math.max(1, Math.ceil(span / (maxLabels - 1)));
+        for (let day = viewStart; day <= viewEnd; day += interval) {
+          marks.push({ day, label: new Date(dayMs(day)).toLocaleDateString(locale(), { day: 'numeric', month: 'short', timeZone: 'UTC' }) });
+        }
+      } else {
+        for (let y = new Date(dayMs(viewStart)).getUTCFullYear(); y <= new Date(dayMs(viewEnd)).getUTCFullYear(); y++) {
+          for (let m = 0; m < 12; m++) {
+            const day = Math.round((Date.UTC(y, m, 1) - eph().t0) / DAY);
+            if (day >= viewStart && day <= viewEnd) marks.push({ day, label: m === 0 ? String(y) : new Date(Date.UTC(y, m, 1)).toLocaleDateString(locale(), { month: 'short', timeZone: 'UTC' }) });
+          }
         }
       }
       const labelEvery = Math.max(1, Math.ceil(marks.length / maxLabels));
-      const visibleMarks = marks.filter((mark) => new Date(dayMs(mark.day)).getUTCMonth() % labelEvery === 0);
+      const visibleMarks = marks.filter((mark, index) => index % labelEvery === 0);
       const labels = new Map(visibleMarks.map((mark) => [mark.day, mark.label]));
       window.noUiSlider.create(host, {
-        start: [clamp(ui.window.startDay, viewStart, viewEnd), clamp(ui.window.endDay, viewStart, viewEnd)],
-        connect: true, step: 1, limit: MAX_WINDOW_DAYS - 1,
+        start: [clamp(ui.window.startDay, viewStart, viewEnd - 1), clamp(ui.window.endDay + 1, viewStart + 1, viewEnd)],
+        connect: true, step: 1, margin: 1, limit: Math.min(MAX_WINDOW_DAYS, span),
         range: { min: viewStart, max: viewEnd },
         pips: { mode: 'values', values: visibleMarks.map((mark) => mark.day), density: 100, format: { to: (v) => labels.get(Math.round(v)) ?? '', from: (v) => Number(v) } },
       });
       host.dataset.view = key;
+      const handles = host.querySelectorAll('[role="slider"]');
+      handles[0].setAttribute('aria-label', t('Search from (UTC)'));
+      handles[1].setAttribute('aria-label', t('Search through (UTC)'));
       host.noUiSlider.on('update', (vals) => {
+        handles[0].setAttribute('aria-valuetext', isoDate(dayMs(Number(vals[0]))));
+        handles[1].setAttribute('aria-valuetext', isoDate(dayMs(Number(vals[1]) - 1)));
         if (ui.syncingSliders) return;
-        setWindow(Number(vals[0]), Number(vals[1]), 'both', host);
+        setWindow(Number(vals[0]), Number(vals[1]) - 1, 'both', host);
       });
     } else if (source !== host) {
       ui.syncingSliders = true;
-      host.noUiSlider.set([ui.window.startDay, ui.window.endDay], false);
+      host.noUiSlider.set([ui.window.startDay, ui.window.endDay + 1], false);
       ui.syncingSliders = false;
     }
   }
@@ -171,7 +199,9 @@ export function createSouthPole(ctx) {
     ui.window.startDay = Math.min(s, e);
     ui.window.endDay = Math.max(s, e);
     syncWindowInputs(source);
-    const ms = dayMs(ui.window.startDay);
+    const landing = ctx.landing();
+    const ms = landing >= dayMs(ui.window.startDay) && landing < dayMs(ui.window.endDay + 1) && landing <= eph().tEnd - ctx.stayH() * HOUR
+      ? landing : dayMs(ui.window.startDay);
     ui.clockMs = ms;
     if (Math.abs(ms - ctx.landing()) > 60e3) ctx.setTouchdown(ms);
     ui.globe?.request();
@@ -192,6 +222,8 @@ export function createSouthPole(ctx) {
     const { startDay, endDay } = ui.window;
     setWindow(startDay, endDay);
     ui.window.chosen = true;
+    ui.window.backup = null;
+    ui.window.fromSearch = false;
     clearTimeout(windowDebounce);
     els['sp-modal'].hidden = true;
     syncWindowButton();
@@ -210,7 +242,58 @@ export function createSouthPole(ctx) {
   }
 
   function openWindowEditor() {
-    ui.window.backup = { startDay: ui.window.startDay, endDay: ui.window.endDay, stayKey: ctx.stayKey() };
+    ui.window.backup = snapshotWindow();
+    syncWindowInputs();
+    els['sp-modal'].hidden = false;
+    els['sp-mstay'].focus();
+  }
+
+  function snapshotWindow() {
+    return {
+      startDay: ui.window.startDay, endDay: ui.window.endDay, chosen: ui.window.chosen, source: ui.window.source,
+      touchdownMs: ctx.landing(), conditions: { ...ctx.conditions() }, siteId: ctx.selectedId(),
+      selected: ui.selected, target: ui.target, clockMs: ui.clockMs, previewHour: ctx.previewHour(),
+    };
+  }
+
+  function cancelWindow(navigate = true) {
+    const fromSearch = ui.window.fromSearch;
+    const back = ui.window.backup;
+    if (back) {
+      Object.assign(ui.window, { startDay: back.startDay, endDay: back.endDay, chosen: back.chosen, source: back.source });
+      ui.selected = back.selected;
+      ui.target = back.target;
+      ctx.setScenario(back);
+      ctx.setPreviewHour(back.previewHour);
+      ui.clockMs = back.clockMs;
+      syncWindowInputs();
+      refreshScenario(true);
+      ui.globe?.request();
+    }
+    ui.window.backup = null;
+    ui.window.fromSearch = false;
+    els['sp-modal'].hidden = true;
+    syncWindowButton();
+    if (navigate && (fromSearch || !ui.window.chosen)) ctx.backToWindows();
+  }
+
+  function beginWindow(selection) {
+    build();
+    ui.window.backup = snapshotWindow();
+    ui.window.source = selection;
+    ui.window.fromSearch = true;
+    ui.window.chosen = false;
+    ui.window.startDay = dayOf(selection.touchdownMs);
+    ui.window.endDay = ui.window.startDay;
+    ui.selected = selection.siteId;
+    ui.cell = null;
+    ui.popupCell = null;
+    ui.draft = null;
+    const site = selectedSite();
+    ui.target = site ? { lat: site.lat, lon: site.lon, label: site.name } : null;
+    ctx.setScenario(selection);
+    ui.clockMs = selection.touchdownMs;
+    setStage('globe');
     syncWindowInputs();
     els['sp-modal'].hidden = false;
   }
@@ -316,6 +399,7 @@ export function createSouthPole(ctx) {
       <div class="pole-modal" id="sp-modal" role="dialog" aria-modal="true" aria-labelledby="sp-mtitle" hidden>
         <div class="pole-modal-card">
           <h2 id="sp-mtitle">${escapeHtml(t('Choose the search window'))}</h2>
+          <p class="sub" id="sp-plan" hidden></p>
           <p class="sub">${escapeHtml(t('Pick the period to screen: the first and last UTC days are the first and last touchdown samples. Every block is screened at its best touchdown inside this period, one sample per UTC day.'))}</p>
           <p class="sub" id="sp-mlimit"></p>
           <label class="pole-modal-field">${escapeHtml(t('Stay'))}<select id="sp-mstay"></select></label>
@@ -349,7 +433,7 @@ export function createSouthPole(ctx) {
       </div>
     </div>`;
     initTranslations();
-    for (const id of ['sp-cards', 'sp-picked', 'sp-pick-atlas', 'sp-map-context', 'sp-mlimit', 'sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list-note', 'sp-cell', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-len', 'sp-mslider', 'sp-mrange', 'sp-mwindowinfo', 'sp-confirm', 'sp-mcancel', 'sp-mstart', 'sp-mdays', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-show', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-timeline', 'sp-compare-pane', 'sp-recommended-pane', 'sp-atlas-pick', 'sp-target']) els[id] = document.getElementById(id);
+    for (const id of ['sp-cards', 'sp-picked', 'sp-pick-atlas', 'sp-map-context', 'sp-mlimit', 'sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list-note', 'sp-cell', 'sp-abc', 'sp-modal', 'sp-plan', 'sp-mstay', 'sp-len', 'sp-mslider', 'sp-mrange', 'sp-mwindowinfo', 'sp-confirm', 'sp-mcancel', 'sp-mstart', 'sp-mdays', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-show', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-timeline', 'sp-compare-pane', 'sp-recommended-pane', 'sp-atlas-pick', 'sp-target']) els[id] = document.getElementById(id);
     bind();
     initWindow();
     restoreSlots();
@@ -1285,15 +1369,8 @@ export function createSouthPole(ctx) {
     els['sp-mstay'].onchange = (e) => { ctx.setStay(e.target.value); renderStaySelects(); setWindow(ui.window.startDay, ui.window.endDay); };
     els['sp-confirm'].onclick = confirmWindow;
     els['sp-window-show'].onclick = openWindowEditor;
-    els['sp-mcancel'].onclick = () => {
-      if (!ui.window.chosen) { confirmWindow(); return; }
-      const back = ui.window.backup;
-      if (back) {
-        if (ctx.stayKey() !== back.stayKey) ctx.setStay(back.stayKey);
-        setWindow(back.startDay, back.endDay);
-      }
-      els['sp-modal'].hidden = true;
-    };
+    els['sp-mcancel'].onclick = () => cancelWindow();
+    els['sp-modal'].addEventListener('keydown', (event) => { if (event.key === 'Escape') { event.preventDefault(); cancelWindow(); } });
     els['sp-mstart'].onchange = applyModalInputs;
     els['sp-mdays'].onchange = applyModalInputs;
     els['sp-modal'].addEventListener('click', (e) => {
@@ -1381,7 +1458,11 @@ export function createSouthPole(ctx) {
   async function activate() {
     build();
     ui.clockMs = ctx.landing() + ctx.previewHour() * HOUR;
-    if (!ui.window.chosen) { els['sp-modal'].hidden = false; return; }
+    if (!ui.window.chosen) {
+      els['sp-modal'].hidden = false;
+      els['sp-mstay'].focus();
+      return;
+    }
     await ensureGlobe();
     setStage(ui.stage);
     if (ui.stage === 'map' && !ui.grid.cells.length) buildGrid(ui.grid.scope);
@@ -1389,8 +1470,12 @@ export function createSouthPole(ctx) {
 
   return {
     mount() { build(); },
+    beginWindow,
     activate,
-    onView(view) { if (view === 'pole') activate(); },
+    onView(view) {
+      if (view === 'pole') activate();
+      else if (!els['sp-modal'].hidden && ui.window.backup) cancelWindow(false);
+    },
     showStage(stage) {
       if (!['globe', 'map', 'atlas'].includes(stage)) return;
       ui.stage = stage;

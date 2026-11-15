@@ -109,7 +109,8 @@ main{max-width:1280px;padding:12px}
   background:var(--surface);color:var(--muted);font-size:14px;line-height:1}
 .chip-x:hover{color:var(--critical);border-color:var(--critical)}
 .view{display:none}
-body[data-view=explore] #v-explore,body[data-view=data] #v-data,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=build] #v-build,body[data-view=atlas] #v-atlas,body[data-view=pole] #v-pole{display:block}
+body[data-view=windows] #v-windows,body[data-view=explore] #v-explore,body[data-view=data] #v-data,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=build] #v-build,body[data-view=atlas] #v-atlas,body[data-view=pole] #v-pole{display:block}
+body[data-view=windows] .scrub{display:none}
 /* Atlas is a full-bleed tool: it escapes the page's reading width and sits edge to edge. */
 body[data-view=atlas] main{max-width:none;padding:0}
 #v-atlas{position:relative;height:calc(100svh - var(--bar-h,56px))}
@@ -241,6 +242,16 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 }
 /* Expert search: one panel, ranked cards, in-place A/B comparison. */
 .expert{margin-bottom:14px}
+.ex-intro{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:12px 0 18px}
+.ex-intro h1{font-size:26px;letter-spacing:0}
+.ex-intro p{margin:6px 0 0;max-width:72ch;color:var(--text2)}
+.ex-intro button{flex:none}
+#v-windows .expert{padding:20px}
+#v-windows .cardhead .sub{max-width:85ch}
+#v-windows .ex-fields{margin-top:18px}
+#v-windows #ex-run{white-space:nowrap;font-size:13px;padding:8px 14px;min-height:36px}
+.ex-use{white-space:nowrap;min-height:36px;padding:6px 14px;font-size:13px}
+.ex-next{margin:18px 0 4px;color:var(--text2);font-size:13px}
 .ex-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 12px;align-items:end}
 .ex-fields label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
 .ex-fields label[hidden]{display:none}
@@ -631,7 +642,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 <header class="appbar">
   <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span><small class="brand-mobile-badge">MOBILE</small></b>
   <nav class="tabs" data-nav>
-    <button data-view="mission">Mission</button><button data-view="pole" data-stage="globe">1 · Globe</button><button data-view="pole" data-stage="map">2 · Map</button><button data-view="pole" data-stage="atlas">3 · Atlas</button><button data-view="explore">4 · Explore</button>
+    <button data-view="mission">Mission</button><button data-view="windows">1 · Windows</button><button data-view="pole" data-stage="globe">2 · Globe</button><button data-view="pole" data-stage="map">3 · Map</button><button data-view="pole" data-stage="atlas">4 · Atlas</button><button data-view="explore">5 · Explore</button>
   </nav>
   <div class="tray" id="tray"></div>
   <div class="seg-pill" id="mode-toggle" role="group" aria-label="Mode">
@@ -657,7 +668,11 @@ body[data-view=pole] main{max-width:none;padding:0}
   <section class="view" id="v-start"></section>
   <section class="view" id="v-mission"></section>
   <!-- ================= View 1: Explore ================= -->
-  <section class="view" id="v-explore">
+  <section class="view" id="v-windows">
+    <div class="ex-intro">
+      <div><h1>Touchdown windows</h1><p>Find a suitable touchdown date, confirm your search window in Globe, then compare locations on the Map.</p></div>
+      <button type="button" class="btn-ghost" data-go="data">Methods and sources</button>
+    </div>
     <section class="card expert" id="expert">
       <div class="cardhead">
         <div><h2>Find touchdown windows</h2>
@@ -678,11 +693,14 @@ body[data-view=pole] main{max-width:none;padding:0}
         <button class="btn-primary" id="ex-run" type="button">Find windows</button>
       </div>
       <p class="ex-note" id="ex-years-note"></p>
+      <p class="ex-next">Choose a representative touchdown from the results to continue to Globe. It prefills a one-day search window that you can confirm or extend.</p>
       <div id="ex-status" role="status" aria-live="polite"></div>
       <div id="ex-results"></div>
       <div id="ex-compare"></div>
       <p class="ex-note">Screening only: hourly samples of the apparent solar limb and Earth clearance against the LOLA skyline. Power output, thermal survival, radio performance and landing safety are not modelled. Near-field terrain is 40 m where available and 240 m elsewhere, so treat results as regional constraints, not a landing-point survey.</p>
     </section>
+  </section>
+  <section class="view" id="v-explore">
     <div class="explore">
       <div>
         <section class="card">
@@ -901,7 +919,7 @@ body[data-view=pole] main{max-width:none;padding:0}
   <div id="now"></div>
 </div>
 <nav class="tabbar" data-nav>
-  <button data-view="mission">Mission</button><button data-view="pole" data-stage="globe">1 · Globe</button><button data-view="pole" data-stage="map">2 · Map</button><button data-view="pole" data-stage="atlas">3 · Atlas</button><button data-view="explore">4 · Explore</button>
+  <button data-view="mission">Mission</button><button data-view="windows">1 · Windows</button><button data-view="pole" data-stage="globe">2 · Globe</button><button data-view="pole" data-stage="map">3 · Map</button><button data-view="pole" data-stage="atlas">4 · Atlas</button><button data-view="explore">5 · Explore</button>
 </nav>
 <div id="edu"></div>
 <div id="mode-wipe" aria-hidden="true"></div>
