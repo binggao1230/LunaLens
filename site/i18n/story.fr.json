@@ -1,5 +1,5 @@
 {
-  "character": { "name": "Pico" },
+  "character": { "name": "Lumi" },
   "ui": {
     "panel": "Guide de l'histoire",
     "step": "Étape {n} sur {total}",
@@ -54,6 +54,9 @@
         "Deux règles d'or gardent un atterrisseur en vie. Il lui faut le Soleil pour l'énergie, et il doit voir la Terre pour nous parler.",
         "Choisis maintenant un site dans la liste ou sur la carte. Les points verts voient la Terre, les ambrés ne voient que le Soleil, les gris sont dans l'ombre."
       ]
+    },
+    "history": {
+      "intro": "Des humains et des robots se sont déjà posés sur la Lune ! Touche un drapeau pour découvrir leur histoire."
     },
     "site": {
       "intro": "Ici, le Soleil ne monte jamais haut. Il roule le long de l'horizon comme une lente boule dorée.",

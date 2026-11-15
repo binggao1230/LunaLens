@@ -1,5 +1,5 @@
 {
-  "character": { "name": "Pico" },
+  "character": { "name": "Lumi" },
   "ui": {
     "panel": "Story guide",
     "step": "Step {n} of {total}",
@@ -54,6 +54,9 @@
         "Two golden rules keep a lander alive. It needs sunlight for power, and it must see Earth to talk to us.",
         "Now pick a landing site in the list or on the map. Green dots see Earth, amber dots see only the Sun, grey dots sit in shadow."
       ]
+    },
+    "history": {
+      "intro": "People have landed on the Moon before! Tap a flag to discover their stories."
     },
     "site": {
       "intro": "Here the Sun never climbs high. It rolls along the horizon like a slow golden ball.",

@@ -826,6 +826,9 @@ async function start() {
     inspect: (id) => { const k = SITES.findIndex((s) => s.id === id); if (k < 0) return; state.site = k; renderAll(); showView('explore'); },
     onProbePick: (id) => edu?.onProbePick(id),
     onValidate: () => edu?.onValidate(),
+    onHistoricOpen: (site) => edu?.react(site.lesson),
+    onHistoricClose: () => edu?.react(null),
+    eduFlagHighlight: () => edu?.highlightFlags() ?? [],
     onMissionRefresh: (site, frame, hour) => edu?.onMissionRefresh(site, frame, hour),
     eduHighlight: () => edu?.highlight() ?? null,
   });
