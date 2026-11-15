@@ -80,7 +80,7 @@
       "intro": "People have landed on the Moon before! Tap a flag to discover their stories."
     },
     "site": {
-      "pick": "Now pick a landing site in the list or on the map. Green dots see Earth, amber dots see only the Sun, grey dots sit in shadow.",
+      "pick": "It's time for your first mission! We want to land on the Moon on 16/11/2026. Pick a landing site in the list or click on it on the map.",
       "good": "Great choice! {site} has sunlight for the panels and Earth in view to talk to us. This lander will live.",
       "noLink": "{site} gets sunlight, but Earth is hidden behind the terrain. The lander would have power, but nobody could hear it. Try another site.",
       "noSun": "{site} can see Earth, but the Sun can't reach it. With no power, the lander would fall silent. Try another site.",
