@@ -6,7 +6,7 @@ import { escapeHtml } from '../format.js';
 import { t, getLanguage } from '../i18n.js';
 
 const FLAG = 'assets/historic-flag.svg';
-const ANCHOR_X = 119 / 500, ANCHOR_Y = 476 / 545; // centre of the base disc in the SVG
+// The flag has no base: it is anchored at the foot of its pole, (163, 805) in the 800x900 SVG (css/edu.css).
 const ICONS = {
   sun: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>',
   night: '<svg viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>',
@@ -27,8 +27,9 @@ export async function loadHistoricSites() {
 }
 
 /**
- * opts: { stage, projector(), flyTo(site), onOpen(site), onClose(), highlight() → ids, offMap() → bool, farVisible() → bool }
- * projector() returns (lat, lon) → { x, y, visible, scale } or null when nothing can be placed yet.
+ * opts: { stage, projector(), onOpen(site), onClose(), highlight() → ids, offMap() → bool }
+ * projector() returns (lat, lon) → { x, y, visible, scale, fade } or null when nothing can be placed yet;
+ * fade (0..1) lets the globe thin out flags near its limb.
  */
 export function createHistoric(opts) {
   const { stage } = opts;
@@ -65,6 +66,7 @@ export function createHistoric(opts) {
       button.style.display = '';
       button.style.left = `${p.x.toFixed(1)}px`; button.style.top = `${p.y.toFixed(1)}px`;
       button.style.setProperty('--s', String(Math.max(0.75, Math.min(1.375, p.scale ?? 1))));
+      button.style.opacity = String((p.fade ?? 1) * (site.status === 'planned' ? 0.5 : 1));
       button.classList.toggle('sel', site.id === openId);
       button.classList.toggle('hl', hl.has(site.id));
       button.classList.toggle('hover', site.id === hover);
@@ -86,12 +88,12 @@ export function createHistoric(opts) {
   function cardHtml(site) {
     const lesson = data.lessons[site.lesson];
     const chip = `<span class="hchip s-${escapeHtml(site.status)}">${escapeHtml(t(STATUS[site.status] ?? site.status))}</span>`;
-    return `<div class="hcard-top"><div><h3 id="hcard-title" tabindex="-1">${escapeHtml(site.name)}</h3><p class="hcard-meta">${escapeHtml(site.agency)} · ${site.year}${site.side === 'far' ? ` · ${escapeHtml(t('far side'))}` : ''}</p></div>${chip}</div>
+    return `<button type="button" class="hcard-x" data-act="close" aria-label="${escapeHtml(t('Close'))}">×</button>
+      <div class="hcard-top"><div><h3 id="hcard-title" tabindex="-1">${escapeHtml(site.name)}</h3><p class="hcard-meta">${escapeHtml(site.agency)} · ${site.year}${site.side === 'far' ? ` · ${escapeHtml(t('far side'))}` : ''}</p></div>${chip}</div>
       <p class="hcard-title">${escapeHtml(text(site, 'title'))}</p>
       <p class="hcard-fact">${escapeHtml(text(site, 'fact'))}</p>
       ${lesson ? `<p class="hcard-lesson"><i aria-hidden="true">${ICONS[site.lesson] ?? ''}</i>${escapeHtml(lesson[lang()] ?? lesson.en)}</p>` : ''}
-      ${site.approx ? `<p class="hcard-note">${escapeHtml(t('Position approximate'))}</p>` : ''}
-      <div class="hcard-actions"><button type="button" class="btn-primary" data-act="fly">${escapeHtml(t('Fly to'))}</button><button type="button" class="btn-ghost" data-act="close">${escapeHtml(t('Close'))}</button></div>`;
+      ${site.approx ? `<p class="hcard-note">${escapeHtml(t('Position approximate'))}</p>` : ''}`;
   }
   function positionCard(anchor) {
     const sr = stage.getBoundingClientRect(), ar = anchor.getBoundingClientRect();
@@ -126,10 +128,11 @@ export function createHistoric(opts) {
   layer.addEventListener('pointerover', (e) => { const b = e.target.closest('.hflag'); if (b) { hover = b.dataset.hid; b.classList.add('hover'); } });
   layer.addEventListener('pointerout', (e) => { const b = e.target.closest('.hflag'); if (b) { hover = null; b.classList.remove('hover'); } });
   panel.addEventListener('click', (e) => { const b = e.target.closest('[data-hid]'); if (b) open(b.dataset.hid, b); });
-  card.addEventListener('click', (e) => {
-    const act = e.target.closest('[data-act]')?.dataset.act;
-    if (act === 'close') close();
-    if (act === 'fly') { const site = byId(openId); if (site) opts.flyTo(site); }
+  card.addEventListener('click', (e) => { if (e.target.closest('[data-act=close]')) close(); });
+  // A press anywhere outside the card closes it; presses on flags and panel items are left to their own handlers.
+  document.addEventListener('pointerdown', (e) => {
+    if (!openId || card.contains(e.target) || e.target.closest('.hflag, .hpanel-list button')) return;
+    close(false);
   });
   card.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
   stage.addEventListener('keydown', (e) => { if (e.key === 'Escape' && openId) close(); });

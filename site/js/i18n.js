@@ -23,7 +23,6 @@ const messages = {
   '{n} off this map': ['{n} hors carte', '{n} 个不在本图'],
   'far side': ['face cachée', '月球背面'],
   'off map': ['hors carte', '地图外'],
-  'Fly to': ['Y aller', '飞过去'],
   'Close': ['Fermer', '关闭'],
   'Success': ['Réussi', '成功'],
   'Partial success': ['Réussite partielle', '部分成功'],

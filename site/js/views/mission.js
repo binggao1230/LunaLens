@@ -306,7 +306,6 @@ export function createMission(ctx) {
       stage: $('m-stage'),
       projector: () => (local.mode === '3d' ? (view3d ? view3d.project : null) : project2d),
       offMap: () => local.mode === '2d' && local.flat === 'pole',
-      flyTo: flyToHistoric,
       onOpen: (site) => ctx.onHistoricOpen?.(site),
       onClose: () => ctx.onHistoricClose?.(),
       highlight: () => ctx.eduFlagHighlight?.() ?? [],
@@ -843,21 +842,6 @@ export function createMission(ctx) {
     if (outside) note.textContent = t('{count} sites lie north of this map. Switch to Whole Moon.', { count: outside });
     project2d = (lat, lon) => { const [px, py, inside] = place(lat, lon); return { x: px, y: py, visible: inside, scale: Math.sqrt(z) }; };
     historic?.place();
-  }
-  /** "Fly to" on a historic card: the globe flies there; the 2D map switches to the whole Moon if needed and centres it. */
-  function flyToHistoric(site) {
-    if (local.mode === '3d') { view3d?.look(site.lat, site.lon, 1.8); return; }
-    if (local.flat === 'pole' && site.lat > -75) { local.flat = 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0; setStaticText(); }
-    view2d.z = Math.max(view2d.z, 2.5);
-    const { size, pole } = geometry2d();
-    if (pole) {
-      const kmPx = (size * view2d.z) / (2 * POLE_KM), r = 2 * MOON_KM * Math.tan(((90 + site.lat) * D2R) / 2);
-      view2d.x = -r * Math.sin(site.lon * D2R) * kmPx; view2d.y = r * Math.cos(site.lon * D2R) * kmPx;
-    } else {
-      const width = size * view2d.z, height = width / 2;
-      view2d.x = -(wrapLon(site.lon) / 360) * width; view2d.y = (site.lat / 180) * height;
-    }
-    draw2d();
   }
   function syncHistoric() { historic?.setOn(isEducation() && local.historic && view() === 'mission'); }
   function bind2d(canvas) {
