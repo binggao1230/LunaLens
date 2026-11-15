@@ -500,6 +500,11 @@ const messages = {
   'Moon': ['Lune', '月球'],
   'Launch window': ['Fenêtre de lancement', '发射窗口'],
   'Selected point': ['Point sélectionné', '已选点'],
+  'Panel': ['Panneau', '面板'],
+  'Drag to rotate, scroll or pinch to zoom. Move over the south cap: it is selectable; click opens the 2D map.': ['Faites glisser pour tourner, molette ou pincement pour zoomer. Survolez la calotte sud : elle est sélectionnable ; un clic ouvre la carte 2D.', '拖动旋转，滚轮或双指缩放。移到南极冠即可选中，点击打开 2D 地图。'],
+  'Earth link at the selected hour': ['Liaison Terre à l\u2019heure choisie', '所选时刻的地球链路'],
+  'Hide the window bar': ['Masquer la barre de fenêtre', '隐藏时间条'],
+  'Window': ['Fenêtre', '窗口'],
 };
 
 let language = 'en';

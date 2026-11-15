@@ -29,8 +29,11 @@ export async function createPolar3d(env) {
       // Hoisted so texture loads that finish before the rest of the scene is built can still request a frame.
       function request() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); }
       const controls = new OrbitControls(camera, canvas);
-      controls.enablePan = false; controls.minDistance = 1.03; controls.maxDistance = MAX_DIST; controls.rotateSpeed = 0.7;
-      camera.up.set(1, 0, 0);
+      controls.enablePan = false; controls.minDistance = 1.05; controls.maxDistance = MAX_DIST;
+      controls.enableDamping = true; controls.dampingFactor = 0.08;
+      controls.rotateSpeed = 0.5; controls.zoomSpeed = 0.8;
+      controls.minPolarAngle = 0.02; controls.maxPolarAngle = Math.PI - 0.02;
+      camera.up.set(...(grab ? [0, 1, 0] : [1, 0, 0]));
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
       // The south pole is always within about 1.5° of the terminator, so the Sun alone leaves the terrain
@@ -339,79 +342,22 @@ export async function createPolar3d(env) {
         };
         tween = requestAnimationFrame(step);
       };
-      let down = null, grabDir = null, grabId = null;
-      const pointers = new Map();
-      let pinchDist = 0;
+      let down = null;
       const dirAt = (event) => {
         const box = canvas.getBoundingClientRect(), caster = new T.Raycaster();
         caster.setFromCamera(new T.Vector2(((event.clientX - box.left) / box.width) * 2 - 1, -((event.clientY - box.top) / box.height) * 2 + 1), camera);
         return caster.intersectObject(moon)[0]?.point.clone().normalize() ?? null;
       };
-      let lastX = 0, lastY = 0;
-      canvas.addEventListener('pointerdown', (event) => {
-        down = [event.clientX, event.clientY];
-        if (!grab) return;
-        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-        if (pointers.size === 1) {
-          grabId = event.pointerId; lastX = event.clientX; lastY = event.clientY;
-          canvas.setPointerCapture?.(event.pointerId);
-        } else {
-          grabDir = null;
-          const [a, b] = [...pointers.values()];
-          pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
-        }
-      });
+      canvas.addEventListener('pointerdown', (event) => { down = [event.clientX, event.clientY]; });
       canvas.addEventListener('pointermove', (event) => {
-        if (!grab) return;
-        if (!grabId) {
-          const hover = dirAt(event);
-          const lat = hover ? Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) : null;
-          canvas.style.cursor = lat !== null && lat <= (env.studyLat ?? -90) ? 'pointer' : 'grab';
-        }
-        if (pointers.has(event.pointerId)) pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-        if (pointers.size >= 2) {
-          const [a, b] = [...pointers.values()];
-          const d = Math.hypot(a.x - b.x, a.y - b.y);
-          if (pinchDist > 0 && d > 0) {
-            camera.position.setLength(clamp(camera.position.length() * (pinchDist / d), 1.03, MAX_DIST));
-            request();
-          }
-          pinchDist = d;
-          return;
-        }
-        if (event.pointerId !== grabId) return;
-        const dx = event.clientX - lastX, dy = event.clientY - lastY;
-        lastX = event.clientX; lastY = event.clientY;
-        if (!dx && !dy) return;
-        // Screen-space orbit: the surface follows the pointer. One event is clamped so a pointer
-        // that leaves and re-enters the canvas cannot spin the view.
-        const SENS = 0.0042;
-        const ax = clamp(dx * SENS, -0.2, 0.2), ay = clamp(dy * SENS, -0.2, 0.2);
-        const upAxis = new T.Vector3().setFromMatrixColumn(camera.matrix, 1).normalize();
-        const rightAxis = new T.Vector3().setFromMatrixColumn(camera.matrix, 0).normalize();
-        // Rotate position and orientation by the same screen-axis quaternion. No lookAt/up
-        // recomputation, so the view cannot snap when the direction nears the up axis.
-        const qUp = new T.Quaternion().setFromAxisAngle(upAxis, -ax);
-        const qRight = new T.Quaternion().setFromAxisAngle(rightAxis, ay);
-        const q = qRight.multiply(qUp);
-        camera.position.applyQuaternion(q);
-        camera.quaternion.premultiply(q);
-        camera.updateMatrixWorld();
-        request();
+        if (!grab || event.buttons) return;
+        const hover = dirAt(event);
+        const lat = hover ? Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) : null;
+        canvas.style.cursor = lat !== null && lat <= (env.studyLat ?? -90) ? 'pointer' : 'grab';
       });
-      const endPointer = (event) => {
-        pointers.delete(event.pointerId);
-        if (event.pointerId === grabId) { grabDir = null; grabId = null; }
-        if (pointers.size < 2) pinchDist = 0;
-      };
-      canvas.addEventListener('pointerup', endPointer);
-      canvas.addEventListener('pointercancel', endPointer);
-      canvas.addEventListener('wheel', (event) => {
-        if (!grab) return;
-        event.preventDefault();
-        camera.position.setLength(clamp(camera.position.length() * Math.exp(event.deltaY * 0.0012), 1.03, MAX_DIST));
-        request();
-      }, { passive: false });
+      // Damping needs a frame loop; only request a draw when the camera actually moved.
+      const tick = () => { if (grab && controls.update()) request(); requestAnimationFrame(tick); };
+      tick();
       canvas.addEventListener('pointerup', (event) => {
         if (!down || Math.hypot(event.clientX - down[0], event.clientY - down[1]) > 5) return;
         const box = canvas.getBoundingClientRect(), caster = new T.Raycaster();
@@ -431,13 +377,7 @@ export async function createPolar3d(env) {
       view3d = {
         request: () => { if (!home) { setHome(); home = true; } request(); },
         reset: () => flyTo(homeDir(), 3.6),
-        zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.03, MAX_DIST)); request(); },
-        frame: (kind) => {
-          const f = getFrame(); if (!f) return;
-          if (kind === 'sun') flyTo(new T.Vector3(...f.sun), SCALE.sunD * 1.4);
-          else if (kind === 'earth') flyTo(new T.Vector3(...f.earth), SCALE.earthD * 1.8);
-          else flyTo(homeDir(), 3.6);
-        },
+        zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.05, MAX_DIST)); controls.update(); request(); },
         focus: (site) => flyTo(new T.Vector3(...unit(site.lat, site.lon)), site.lat <= -75 ? 1.07 : undefined),
       };
       resize();
