@@ -74,6 +74,28 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'Landed mission': 'Landed mission',
     'South pole': 'South pole',
     'No terrain model': 'No terrain model',
+    Apollo: 'Historic Apollo landing',
+    Landed: 'Recent landing',
+    'Polar rims': 'South-pole reference site',
+    'About this place': 'About this place',
+    Coordinates: 'Coordinates',
+    'Approximate reference point; not a certified landing coordinate.':
+      'Approximate reference point; not a certified landing coordinate.',
+    'Terrain horizon': 'Terrain horizon',
+    'LOLA terrain profile: {terrain}': 'LOLA terrain profile: {terrain}',
+    'No sampled terrain horizon is available; calculations use a smooth horizon.':
+      'No sampled terrain horizon is available; calculations use a smooth horizon.',
+    'Terrain profiles summarize regional ground shape at the source resolution. They are not precise landing-point measurements.':
+      'Terrain profiles summarize regional ground shape at the source resolution. They are not precise landing-point measurements.',
+    'How to read the hourly timeline': 'How to read the hourly timeline',
+    'Each square is one sample at the top of the hour in UTC. Sunlight counts when the Sun’s upper edge clears the modeled horizon. Earth counts when its centre clears the horizon. The totals count these 24 hourly samples.':
+      'Each square is one sample at the top of the hour in UTC. Sunlight counts when the Sun’s upper edge clears the modeled horizon. Earth counts when its centre clears the horizon. The totals count these 24 hourly samples.',
+    'These are visibility estimates. They do not calculate temperature, available power, or a complete communications link.':
+      'These are visibility estimates. They do not calculate temperature, available power, or a complete communications link.',
+    'Why the south pole has unusual light': 'Why the south pole has unusual light',
+    'Near the lunar south pole, the Sun stays close to the horizon. Ridges can receive long periods of light while nearby crater floors remain in shadow. Small changes in terrain can change the pattern.':
+      'Near the lunar south pole, the Sun stays close to the horizon. Ridges can receive long periods of light while nearby crater floors remain in shadow. Small changes in terrain can change the pattern.',
+    'NASA south-pole shadows': 'NASA: shadows near the south pole',
     sunlight: 'sunlight',
     'no sunlight': 'no sunlight',
     'Earth below the horizon': 'Earth below the horizon',
@@ -161,6 +183,28 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'Landed mission': 'Mission posée',
     'South pole': 'Pôle Sud',
     'No terrain model': 'Sans relief modélisé',
+    Apollo: 'Site historique Apollo',
+    Landed: 'Alunissage récent',
+    'Polar rims': 'Site de référence du pôle Sud',
+    'About this place': 'À propos de ce lieu',
+    Coordinates: 'Coordonnées',
+    'Approximate reference point; not a certified landing coordinate.':
+      'Point de référence approximatif ; ce n’est pas une coordonnée d’alunissage certifiée.',
+    'Terrain horizon': 'Horizon du relief',
+    'LOLA terrain profile: {terrain}': 'Profil de terrain LOLA : {terrain}',
+    'No sampled terrain horizon is available; calculations use a smooth horizon.':
+      'Aucun profil de relief échantillonné : les calculs utilisent un horizon lisse.',
+    'Terrain profiles summarize regional ground shape at the source resolution. They are not precise landing-point measurements.':
+      'Les profils décrivent le relief régional à la résolution des données source. Ils ne mesurent pas précisément un point d’alunissage.',
+    'How to read the hourly timeline': 'Comment lire la frise horaire',
+    'Each square is one sample at the top of the hour in UTC. Sunlight counts when the Sun’s upper edge clears the modeled horizon. Earth counts when its centre clears the horizon. The totals count these 24 hourly samples.':
+      'Chaque case correspond à un échantillon au début d’une heure UTC. Le Soleil compte quand son bord supérieur dépasse l’horizon modélisé. La Terre compte quand son centre le dépasse. Les totaux comptent ces 24 échantillons horaires.',
+    'These are visibility estimates. They do not calculate temperature, available power, or a complete communications link.':
+      'Ce sont des estimations de visibilité. Elles ne calculent ni la température, ni la puissance disponible, ni une liaison de communication complète.',
+    'Why the south pole has unusual light': 'Pourquoi la lumière est particulière au pôle Sud',
+    'Near the lunar south pole, the Sun stays close to the horizon. Ridges can receive long periods of light while nearby crater floors remain in shadow. Small changes in terrain can change the pattern.':
+      'Près du pôle Sud lunaire, le Soleil reste près de l’horizon. Les crêtes peuvent recevoir la lumière longtemps, tandis que des fonds de cratères voisins restent dans l’ombre. De petites différences de relief changent le motif.',
+    'NASA south-pole shadows': 'NASA : ombres près du pôle Sud',
     sunlight: 'du soleil',
     'no sunlight': 'pas de soleil',
     'Earth below the horizon': 'Terre sous l’horizon',
@@ -245,6 +289,27 @@ const translations: Record<AppLanguage, Record<string, string>> = {
     'Landed mission': '已着陆任务',
     'South pole': '南极',
     'No terrain model': '无地形模型',
+    Apollo: '阿波罗历史着陆点',
+    Landed: '近期着陆点',
+    'Polar rims': '月球南极参考点',
+    'About this place': '关于这个地点',
+    Coordinates: '坐标',
+    'Approximate reference point; not a certified landing coordinate.': '这是近似参考点，并非经认证的着陆坐标。',
+    'Terrain horizon': '地形地平线',
+    'LOLA terrain profile: {terrain}': 'LOLA 地形剖面：{terrain}',
+    'No sampled terrain horizon is available; calculations use a smooth horizon.':
+      '没有可用的地形地平线采样，计算使用平滑地平线。',
+    'Terrain profiles summarize regional ground shape at the source resolution. They are not precise landing-point measurements.':
+      '地形剖面以数据源分辨率概括区域地貌，不是精确的着陆点测量。',
+    'How to read the hourly timeline': '如何阅读逐小时图表',
+    'Each square is one sample at the top of the hour in UTC. Sunlight counts when the Sun’s upper edge clears the modeled horizon. Earth counts when its centre clears the horizon. The totals count these 24 hourly samples.':
+      '每个方格代表 UTC 整点的一个采样。当太阳上缘越过模拟地平线时计为有日照；当地球中心越过地平线时计为可见地球。总数统计这 24 个小时采样。',
+    'These are visibility estimates. They do not calculate temperature, available power, or a complete communications link.':
+      '这些是可见性估算，不计算温度、可用电量或完整通信链路。',
+    'Why the south pole has unusual light': '为什么月球南极的光照特别？',
+    'Near the lunar south pole, the Sun stays close to the horizon. Ridges can receive long periods of light while nearby crater floors remain in shadow. Small changes in terrain can change the pattern.':
+      '月球南极附近的太阳贴近地平线。山脊可能长时间受光，而附近环形山底仍处于阴影中。地形的细微变化也会改变光照。',
+    'NASA south-pole shadows': 'NASA：月球南极附近的阴影',
     sunlight: '有阳光',
     'no sunlight': '无阳光',
     'Earth below the horizon': '地球位于地平线下',

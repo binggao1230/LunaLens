@@ -77,6 +77,31 @@
             </p>
           </div>
         </details>
+
+        <details class="moon-facts">
+          <summary>
+            <span aria-hidden="true">◒</span>
+            {{ t('Why the south pole has unusual light') }}
+            <span class="expand-mark" aria-hidden="true">+</span>
+          </summary>
+          <div class="facts-body">
+            <p>
+              {{
+                t(
+                  'Near the lunar south pole, the Sun stays close to the horizon. Ridges can receive long periods of light while nearby crater floors remain in shadow. Small changes in terrain can change the pattern.',
+                )
+              }}
+            </p>
+            <p class="facts-sources">
+              <a
+                href="https://science.nasa.gov/resource/shadows-near-the-moons-south-pole/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >{{ t('NASA south-pole shadows') }} ↗</a
+              >
+            </p>
+          </div>
+        </details>
       </main>
     </ion-content>
   </ion-page>
@@ -325,6 +350,9 @@ h1 {
   border-radius: 15px;
   background: #fffefa;
   box-shadow: 0 5px 18px #28354808;
+}
+.moon-facts + .moon-facts {
+  margin-top: 10px;
 }
 .moon-facts summary {
   display: flex;

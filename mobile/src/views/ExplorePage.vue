@@ -81,6 +81,32 @@
           <p v-if="errorMessage" class="error-note" role="alert">{{ errorMessage }}</p>
         </section>
 
+        <details v-if="selectedSiteInfo" class="site-details">
+          <summary>{{ t('About this place') }} <span class="expand-mark" aria-hidden="true">+</span></summary>
+          <div class="site-details-body">
+            <p>
+              <strong>{{ t(selectedSiteInfo.group) }}</strong>
+            </p>
+            <p>
+              <strong>{{ t('Coordinates') }}:</strong> {{ siteCoordinates }}
+            </p>
+            <p>{{ t('Approximate reference point; not a certified landing coordinate.') }}</p>
+            <p>
+              <strong>{{ t('Terrain horizon') }}:</strong> {{ selectedTerrainDescription }}
+            </p>
+            <p>
+              {{
+                t(
+                  'Terrain profiles summarize regional ground shape at the source resolution. They are not precise landing-point measurements.',
+                )
+              }}
+            </p>
+            <p class="site-source">
+              <strong>{{ t('Source') }}:</strong> {{ selectedSiteInfo.source }}
+            </p>
+          </div>
+        </details>
+
         <section v-if="dailyResult" class="results-card" aria-labelledby="results-title" aria-live="polite">
           <div class="section-heading">
             <span class="step-number step-number-complete" aria-hidden="true">2</span>
@@ -178,6 +204,26 @@
             </ol>
           </div>
 
+          <details class="reading-note">
+            <summary>
+              {{ t('How to read the hourly timeline') }} <span class="expand-mark" aria-hidden="true">+</span>
+            </summary>
+            <p>
+              {{
+                t(
+                  'Each square is one sample at the top of the hour in UTC. Sunlight counts when the Sun’s upper edge clears the modeled horizon. Earth counts when its centre clears the horizon. The totals count these 24 hourly samples.',
+                )
+              }}
+            </p>
+            <p>
+              {{
+                t(
+                  'These are visibility estimates. They do not calculate temperature, available power, or a complete communications link.',
+                )
+              }}
+            </p>
+          </details>
+
           <details class="reflection-card">
             <summary>
               <span aria-hidden="true">✦</span> {{ t('Think like an explorer') }}
@@ -240,7 +286,24 @@ const dailyResult = ref<DailyResult | null>(null);
 const loading = ref(false);
 const errorMessage = ref('');
 
+const selectedSiteInfo = computed(() => learningSites.find((site) => site.id === selectedSite.value));
 const displaySiteName = computed(() => dailyResult.value?.site.id ?? selectedSite.value);
+const siteCoordinates = computed(() => {
+  const site = selectedSiteInfo.value;
+  if (!site) return '';
+  const locale = language.value === 'fr' ? 'fr-FR' : language.value === 'zh' ? 'zh-CN' : 'en-US';
+  const lat = Math.abs(site.lat).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const lonDegrees = ((site.lon % 360) + 360) % 360;
+  const lon = lonDegrees.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${lat}° ${site.lat < 0 ? 'S' : 'N'}, ${lon}° E`;
+});
+const selectedTerrainDescription = computed(() => {
+  const site = selectedSiteInfo.value;
+  if (!site) return '';
+  return site.horizon?.length
+    ? t('LOLA terrain profile: {terrain}').replace('{terrain}', site.terrain)
+    : t('No sampled terrain horizon is available; calculations use a smooth horizon.');
+});
 const terrainNote = computed(() =>
   dailyResult.value?.site.horizon
     ? t('A sampled terrain horizon is included.')
@@ -599,6 +662,54 @@ h2 {
 
 .results-card {
   margin-top: 20px;
+}
+
+.site-details,
+.reading-note {
+  margin-top: 12px;
+  padding: 0 15px;
+  border: 1px solid #d9d5cb;
+  border-radius: 13px;
+  background: #fffefa;
+}
+.site-details summary,
+.reading-note summary {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  color: #234b73;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  list-style: none;
+}
+.site-details summary::-webkit-details-marker,
+.reading-note summary::-webkit-details-marker {
+  display: none;
+}
+.site-details summary .expand-mark,
+.reading-note summary .expand-mark {
+  margin-left: auto;
+}
+.site-details-body,
+.reading-note p {
+  color: #465365;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.site-details-body {
+  padding: 0 2px 9px;
+  animation: result-reveal 0.22s ease-out;
+}
+.site-details-body p {
+  margin: 7px 0;
+}
+.site-source {
+  overflow-wrap: anywhere;
+}
+.reading-note p {
+  margin: 0 0 9px;
+  animation: result-reveal 0.22s ease-out;
 }
 
 .result-date {

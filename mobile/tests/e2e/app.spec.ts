@@ -19,4 +19,9 @@ test('shows lunar learning facts and all curated sites on a phone', async ({ pag
   await page.locator('ion-button.launch-button').click();
   await expect(page).toHaveURL(/\/explore$/);
   await expect(page.locator('#site-choice ion-select-option')).toHaveCount(12);
+  await page.locator('.site-details summary').click();
+  await expect(page.locator('.site-details-body')).toContainText('Coordonnées');
+  await page.getByRole('button', { name: 'Voir cette journée' }).click();
+  await page.locator('.reading-note summary').click();
+  await expect(page.locator('.reading-note')).toContainText('Comment lire la frise horaire');
 });
