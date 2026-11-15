@@ -153,6 +153,8 @@ function TimeBar({ ephem }: { ephem: Ephem }) {
   const { tMs, playing, rate, setTime, setPlaying, setRate } = useStore()
   // The slider scrubs a 60-day window centred where the user last jumped to.
   const [centre, setCentre] = useState(tMs)
+  // Embedded Atlas is a live scene: start its clock as soon as the time bar is mounted.
+  useEffect(() => { if (EMBEDDED) setPlaying(true) }, [setPlaying])
   const [first, last] = clockRange(ephem)
   const lo = Math.max(centre - WINDOW_MS, first)
   const hi = Math.min(centre + WINDOW_MS, last)
@@ -616,7 +618,6 @@ export default function App() {
       if (Array.isArray(raw.sites)) store.replacePins(sites, raw.active ?? null)
       if (typeof raw.layer === 'string') store.setLayer(raw.layer as LayerMode)
       if (Number.isFinite(raw.tMs)) {
-        store.setPlaying(false)
         store.setTime(raw.tMs)
       }
       if (raw.focus && Number.isFinite(raw.focus.lat) && Number.isFinite(raw.focus.lon)) {

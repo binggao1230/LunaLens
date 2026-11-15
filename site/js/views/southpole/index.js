@@ -898,6 +898,7 @@ export function createSouthPole(ctx) {
     }
     if (Number.isFinite(state?.tMs)) {
       const ms = clamp(state.tMs, eph().t0, eph().tEnd - ctx.stayH() * HOUR);
+      ui.clockMs = ms;
       if (Math.abs(ms - ctx.landing()) > 60e3) ctx.setTouchdown(ms);
     }
     renderHud();
