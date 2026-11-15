@@ -59,7 +59,7 @@ function initialQuality(): Quality {
 }
 
 /** One colour per pinned site (A, B, C), used for its 3D marker; panels use the CSS tokens --site-a/b/c. */
-export const SITE_COLORS = ['#6afbcb', '#826afb', '#cb4dcb']
+export const SITE_COLORS = ['#58c8ff', '#f5c542', '#ff9ad5']
 
 /** Phone layout: how far the bottom sheet is pulled up, and which panel it shows. */
 export type SheetState = 'peek' | 'half' | 'full'
