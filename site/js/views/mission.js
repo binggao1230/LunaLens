@@ -654,8 +654,8 @@ export function createMission(ctx) {
       const days = (SPAN / 24).toFixed(0);
       const activeSites = laneSites();
       const lanes = activeSites.length ? activeSites.map((site) => {
-        const sun = runsOf((s, i) => s.series.sunVis[i] === 1 && !(s.series.earthClr[i] > ctx.margin()), site);
-        const link = runsOf((s, i) => s.series.earthClr[i] > ctx.margin() && s.series.sunVis[i] !== 1, site);
+        const sun = runsOf((s, i) => s.series.sunVis[i] === 1, site);
+        const link = runsOf((s, i) => s.series.earthClr[i] > ctx.margin(), site);
         const both = runsOf((s, i) => s.series.sunVis[i] === 1 && s.series.earthClr[i] > ctx.margin(), site);
         const score = scoreOf(site);
         return `<div class="lane-site">
@@ -679,9 +679,9 @@ export function createMission(ctx) {
         <span></span>
         <div class="lane-legend">
           <button type="button" class="btn-ghost btn-xs lane-export" id="m-export" ${activeSites.length ? '' : 'disabled'}>${escapeHtml(t('Export CSV'))}</button>
-          <span style="color:${COLORS.sun}">■ ${escapeHtml(t('Sunlit only'))}</span>
-          <span style="color:${COLORS.link}">■ ${escapeHtml(t('Earth link only'))}</span>
-          <span style="color:${COLORS.both}">■ ${escapeHtml(t('Sun and Earth in view'))}</span>          <span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))} <span class="pill2">${activeSites.length} ${escapeHtml(t('compared'))}</span></span>
+          <span style="color:${COLORS.sun}">■ ${escapeHtml(t('Sun'))}</span>
+          <span style="color:${COLORS.link}">■ ${escapeHtml(t('Earth link'))}</span>
+          <span style="color:${COLORS.both}">■ ${escapeHtml(t('Both'))}</span>          <span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))} <span class="pill2">${activeSites.length} ${escapeHtml(t('compared'))}</span></span>
         </div>
       </div>
       <div class="lane-axis lane-now-row"><span></span><div class="lane-now-track"><span class="lane-now" id="m-lane-now"></span></div></div>
