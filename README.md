@@ -31,8 +31,7 @@ The app is a geometric screening tool. It does not calculate power output, therm
 survival, radio performance, launch windows or landing safety.
 
 **[Live app](https://binggao1230.github.io/LunaLens/)** ·
-**[30-second demo](https://drive.google.com/file/d/1ADRdtMhWl3E4a7Gwni7cMtdsIJp8bd-s/view)** ·
-**[Submission answers](doc/SUBMISSION_FORM.md)**
+**[30-second demo](https://drive.google.com/file/d/1ADRdtMhWl3E4a7Gwni7cMtdsIJp8bd-s/view)**
 
 ## Overview
 
@@ -91,6 +90,13 @@ The Expert workflow is deliberately narrow:
 The phone layout keeps the selected site, time readout, zoom, time speed and the
 `Enter the South Pole` action within thumb reach, with the five-step Expert navigation
 fixed to the bottom edge.
+
+### Education
+
+<img src="design/checks/readme-education.png" alt="LunaLens Education mode with Lumi, the mission guide" width="900">
+
+Education mode opens with Lumi, a mission guide, and a short story that explains the same
+Sun, Earth and terrain geometry with an explicitly illustrative verdict.
 
 All screenshots are English and show the current release.
 
@@ -202,11 +208,6 @@ snapshot release, builds Atlas and publishes `site/` on every push to `main`.
 The native LunaLens code and text are the team's original work. Atlas is an attributed
 upstream project and must not be presented as native LunaLens work. The native code
 licence has not yet been selected.
-
-## Submission
-
-The exact Space Apps form answers, NASA data rows, SI disclosure and demo notes are in
-[`doc/SUBMISSION_FORM.md`](doc/SUBMISSION_FORM.md).
 
 ## Contributing
 
