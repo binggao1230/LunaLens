@@ -393,6 +393,16 @@ export function createSouthPole(ctx) {
       studyLat: STUDY_LAT,
       onMoonTap: (point) => { if (point.lat > STUDY_LAT) { setStage('map'); setNotice(t('That point is north of 85°S; the map stays on the pole.')); centrePole(); } else { setStage('map'); ui.map.cxKm = project(point.lat, point.lon).xKm; ui.map.cyKm = project(point.lat, point.lon).yKm; ui.map.scale = 24; drawMap(); } },
       pulse: pulseState,
+      target: () => ui.target,
+      skyline: () => {
+        const site = selectedSite();
+        if (!site?.hasTerrain) return null;
+        const index = Math.round(eph().indexOf(clockMs()));
+        if (index < 0 || index >= eph().n) return null;
+        const sky = site.skyAt(index);
+        const horizon = sky.earth.horizon ?? site.horizonAt(sky.earth.az);
+        return { lat: site.lat, lon: site.lon, az: sky.earth.az, el: sky.earth.el, horizon, blocked: sky.earth.el <= horizon };
+      },
     });
     ui.globe?.request();
     return ui.globe;

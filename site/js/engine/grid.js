@@ -96,8 +96,14 @@ export function studyCellCenters(cellKm = POLE_CELL_KM) {
     for (let col = 0; col < n; col++) {
       const xKm = -halfKm + (col + 0.5) * step;
       const yKm = halfKm - (row + 0.5) * step;
-      const { lat, lon } = unproject(xKm, yKm);
-      if (lat <= STUDY_LAT) out.push({ row, col, xKm, yKm, lat, lon, cellKm: step });
+      const x0 = xKm - step / 2, x1 = xKm + step / 2, y0 = yKm - step / 2, y1 = yKm + step / 2;
+      const nx = Math.max(x0, Math.min(0, x1)), ny = Math.max(y0, Math.min(0, y1));
+      if (Math.hypot(nx, ny) > halfKm) continue;
+      const centreInside = Math.hypot(xKm, yKm) <= halfKm;
+      const rep = centreInside ? { x: xKm, y: yKm } : { x: nx, y: ny };
+      const centre = unproject(xKm, yKm), at = unproject(rep.x, rep.y);
+      const clipped = Math.hypot(x0, y0) > halfKm || Math.hypot(x1, y0) > halfKm || Math.hypot(x0, y1) > halfKm || Math.hypot(x1, y1) > halfKm;
+      out.push({ row, col, xKm, yKm, lat: at.lat, lon: at.lon, centreLat: centre.lat, centreLon: centre.lon, cellKm: step, clipped, representative: !centreInside });
     }
   }
   return out;
