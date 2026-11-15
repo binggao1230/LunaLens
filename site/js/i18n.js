@@ -427,6 +427,11 @@ const messages = {
   'Selected {name}.': ['{name} sélectionné.', '已选择 {name}。'],
   'Geometric line of sight; the selected {margin}° link margin is a separate condition.': ['Ligne de visée géométrique ; la marge de liaison de {margin}° est une condition distincte.', '几何视线；所选 {margin}° 链路余量是另一项条件。'],
   'No terrain-backed preset is south of 85°S.': ['Aucun site à relief au sud de 85°S.', '85°S 以南没有带地形数据的预设站点。'],
+  'Map source': ['Source de la carte', '地图来源'],
+  'Atlas map': ['Carte Atlas', 'Atlas 地图'],
+  'Native screening map': ['Carte de tri native', '原生筛选地图'],
+  'Atlas regional map': ['Carte régionale Atlas', 'Atlas 区域地图'],
+  'Atlas is a separate application with its own ephemeris and terrain; its numbers are not native LunaLens. Redistribution permission is still pending, so keep it out of a judged build until confirmed. The native screening grid is the LunaLens calculation. Atlas selections do not sync back to LunaLens.': ['Atlas est une application distincte avec ses propres éphémérides et relief ; ses chiffres ne sont pas ceux de LunaLens. L\u2019autorisation de redistribution est encore en attente : ne l\u2019incluez pas dans une version jugée avant confirmation. La grille de tri native est le calcul LunaLens. Les sélections Atlas ne reviennent pas dans LunaLens.', 'Atlas 是独立应用，使用自己的星历与地形，其数字不是 LunaLens 原生结果。再分发许可尚未确认，确认前不要放入参赛构建。原生筛选网格才是 LunaLens 的计算。Atlas 中的选择不会回传到 LunaLens。'],
 };
 
 let language = 'en';

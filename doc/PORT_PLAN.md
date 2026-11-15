@@ -27,12 +27,13 @@ landing time. A reverse helper exists in the code but is not connected to the
 running app: an Atlas selection does not update the native site automatically.
 Keep this limitation explicit when testing or demonstrating Atlas.
 
-Mission and Atlas remain separate tabs. The **South Pole** prototype now exists as a new tab
-(`#/pole/expert`): the Mission globe plus a full-width native map, a pilot screening grid and an
-Earth-link pulse. It deliberately uses the native map, not the Atlas frame, because the
-redistribution decision below is still open; it does not replace Mission or Atlas. The core native
-Explore search and comparison do not depend on Atlas. Compare, Date slip and Plan are retired as
-standalone views.
+Mission and Atlas remain separate tabs. The **South Pole** prototype is a new tab (`#/pole/expert`)
+that puts the Mission globe, an embedded Atlas map and the native screening grid on one page. It
+sends the selected point and exact UTC time into Atlas through the share hash; Atlas reads the hash
+on load, so a changed scenario reloads the frame, and Atlas selections do not return to LunaLens.
+The native map stays as the fallback and as the only screen that feeds the pilot grid. Embedding
+Atlas does not settle redistribution: keep it out of a judged build until the decision below is
+confirmed. Compare, Date slip and Plan remain retired as standalone views.
 
 ## Before using Atlas in the prototype or judged release
 

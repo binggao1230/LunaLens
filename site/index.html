@@ -281,7 +281,15 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 @media(max-width:900px){.pole-body{grid-template-columns:1fr}}
 .pole-stage-wrap{position:relative;min-height:380px}
 .pole-globe,.pole-map-wrap{position:relative;width:100%;height:min(68vh,620px);border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0b0d10}
-.pole-globe canvas,#sp-map{display:block;width:100%;height:100%}
+.pole-map-wrap{display:flex;flex-direction:column}
+.pole-map-tabs{margin:8px;align-self:flex-start}
+#sp-atlas{flex:1;width:100%;min-height:0;border:0;background:#05070a}
+.pole-map-native{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pole-atlas-note{margin:6px 10px 8px;color:var(--muted);font-size:11.5px}
+.pole-atlas-note[hidden]{display:none}
+.pole-map-native[hidden]{display:none}
+.pole-globe canvas{display:block;width:100%;height:100%}
+#sp-map{display:block;height:100%;width:auto;max-width:100%;margin:0 auto;background:#0f1113}
 #sp-map{background:#0f1113}
 .pole-globe-hint{position:absolute;left:10px;right:10px;bottom:8px;margin:0;color:var(--muted);font-size:12px;pointer-events:none}
 .pole-map-tools{position:absolute;right:10px;top:10px;display:flex;gap:6px}

@@ -23,6 +23,7 @@ export function createSouthPole(ctx) {
     grid: { level: null, cells: [], token: 0, done: false, startedMs: 0, ms: 0 },
     cell: null, limits: { ...DEFAULT_LIMITS }, targets: { ...DEFAULT_TARGETS }, weights: { ...DEFAULT_WEIGHTS },
     base: null, baseDem: null, detail: null, detailKey: '', globe: null, globeFailed: false, loadNotice: '',
+    mapApp: 'atlas', atlasRev: 0, atlasKey: '',
   };
   const staticCache = new Map();
   const els = {};
@@ -52,8 +53,16 @@ export function createSouthPole(ctx) {
             <p class="pole-globe-hint">${escapeHtml(t('Drag the globe: the point follows the pointer. Scroll or pinch to zoom. Tap the Moon to open the map.'))}<br>${escapeHtml(t('Cyan line: 75°S terrain edge. Pink line: 85°S study boundary. Cyan dashed ring: Moon around Earth. Amber dashed ring: Earth around the Sun. Rings and distances are schematic.'))}</p>
           </div>
           <div class="pole-map-wrap" id="sp-map-wrap" hidden>
-            <canvas id="sp-map" width="762" height="762" tabindex="0" role="img" aria-label="${escapeHtml(t('Detailed south-pole map with the screening grid'))}"></canvas>
-            <div class="pole-map-tools"><button type="button" class="btn-ghost" id="sp-zin" aria-label="${escapeHtml(t('Zoom in'))}">+</button><button type="button" class="btn-ghost" id="sp-zout" aria-label="${escapeHtml(t('Zoom out'))}">−</button><button type="button" class="btn-ghost" id="sp-center">${escapeHtml(t('Centre on the pole'))}</button></div>
+            <div class="pole-map-tabs seg" role="group" aria-label="${escapeHtml(t('Map source'))}">
+              <button type="button" data-mapapp="atlas" class="on">${escapeHtml(t('Atlas map'))}</button>
+              <button type="button" data-mapapp="native">${escapeHtml(t('Native screening map'))}</button>
+            </div>
+            <iframe id="sp-atlas" title="${escapeHtml(t('Atlas regional map'))}" src="atlas/index.html"></iframe>
+            <div class="pole-map-native" id="sp-native" hidden>
+              <canvas id="sp-map" width="762" height="762" tabindex="0" role="img" aria-label="${escapeHtml(t('Detailed south-pole map with the screening grid'))}"></canvas>
+              <div class="pole-map-tools"><button type="button" class="btn-ghost" id="sp-zin" aria-label="${escapeHtml(t('Zoom in'))}">+</button><button type="button" class="btn-ghost" id="sp-zout" aria-label="${escapeHtml(t('Zoom out'))}">−</button><button type="button" class="btn-ghost" id="sp-center">${escapeHtml(t('Centre on the pole'))}</button></div>
+            </div>
+            <p class="pole-atlas-note" id="sp-atlas-note">${escapeHtml(t('Atlas is a separate application with its own ephemeris and terrain; its numbers are not native LunaLens. Redistribution permission is still pending, so keep it out of a judged build until confirmed. The native screening grid is the LunaLens calculation. Atlas selections do not sync back to LunaLens.'))}</p>
           </div>
         </section>
         <aside class="card pole-side">
@@ -85,7 +94,7 @@ export function createSouthPole(ctx) {
       </div>
       <p class="ex-note">${escapeHtml(t('Regional screening only. Cells are sampled at their centres on the 240 m LOLA raster; sub-cell terrain, landing hazards and radio performance are not modelled. Atlas long-term layers are not used in this native grid.'))}</p>
     </div>`;
-    for (const id of ['sp-open', 'sp-back', 'sp-reset', 'sp-notice', 'sp-globe', 'sp-map-wrap', 'sp-map', 'sp-zin', 'sp-zout', 'sp-center', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-stage-wrap', 'sp-touchdown', 'sp-stay', 'sp-margin', 'sp-probe']) els[id] = document.getElementById(id);
+    for (const id of ['sp-open', 'sp-back', 'sp-reset', 'sp-notice', 'sp-globe', 'sp-map-wrap', 'sp-map', 'sp-zin', 'sp-zout', 'sp-center', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-stage-wrap', 'sp-touchdown', 'sp-stay', 'sp-margin', 'sp-probe', 'sp-atlas', 'sp-native', 'sp-atlas-note']) els[id] = document.getElementById(id);
     bind();
     ui.built = true;
   }
@@ -431,9 +440,36 @@ export function createSouthPole(ctx) {
     els['sp-map-wrap'].hidden = ui.mode !== 'map';
     els['sp-open'].hidden = ui.mode === 'map';
     els['sp-back'].hidden = ui.mode !== 'map';
-    if (ui.mode === 'map') drawMap();
+    const atlas = ui.mapApp === 'atlas';
+    els['sp-atlas'].hidden = !atlas;
+    els['sp-native'].hidden = atlas;
+    els['sp-atlas-note'].hidden = !atlas;
+    for (const b of els['sp-map-wrap'].querySelectorAll('[data-mapapp]')) b.classList.toggle('on', b.dataset.mapapp === ui.mapApp);
+    if (ui.mode === 'map') { if (atlas) syncAtlas(); else drawMap(); }
     else ui.globe?.request();
     renderSites(); renderLink(); renderGrid(); renderDetail(); renderPreviewRange(); renderScenarioInputs();
+  }
+
+  /**
+   * Atlas is a separate app: pass the pinned point and the exact UTC time through its share hash.
+   * Atlas reads the hash on load and clears it, so a changed scenario needs a fresh document; the
+   * counter forces that while keeping the app bundle cached.
+   */
+  function atlasTarget() {
+    const site = selectedSite();
+    const q = new URLSearchParams();
+    if (site) {
+      const lon = site.lon > 180 ? site.lon - 360 : site.lon;
+      q.set('s', `${site.lat.toFixed(4)},${lon.toFixed(4)},${String(site.short || site.name).replace(/,/g, ' ')}`);
+    }
+    q.set('t', `${new Date(ctx.landing()).toISOString().slice(0, 16)}Z`);
+    const key = q.toString();
+    return { key, url: `atlas/index.html?sp=${++ui.atlasRev}#${key}` };
+  }
+
+  function syncAtlas() {
+    const { key, url } = atlasTarget();
+    if (key !== ui.atlasKey) { ui.atlasKey = key; els['sp-atlas'].src = url; }
   }
 
   function renderScenarioInputs() {
@@ -534,6 +570,13 @@ export function createSouthPole(ctx) {
 
   function bind() {
     els['sp-open'].onclick = () => showMap(null);
+    els['sp-map-wrap'].addEventListener('click', (e) => {
+      const b = e.target.closest('[data-mapapp]');
+      if (!b) return;
+      ui.mapApp = b.dataset.mapapp;
+      renderAll();
+      if (ui.mapApp === 'native' && !ui.grid.cells.length) buildGrid('coarse');
+    });
     els['sp-back'].onclick = () => { ui.mode = 'globe'; renderAll(); ui.globe?.request(); };
     els['sp-reset'].onclick = () => { ui.globe?.reset(); };
     els['sp-zin'].onclick = () => { ui.map.scale = clamp(ui.map.scale * 1.5, 1.5, 60); drawMap(); maybeRefine(); };
@@ -594,8 +637,8 @@ export function createSouthPole(ctx) {
       ui.map.scale = Math.max(ui.map.scale, 10);
     } else if (ui.map.scale < 18) ui.map.scale = 36;
     renderAll();
-    if (!ui.grid.cells.length) buildGrid('coarse');
-    els['sp-map'].focus?.();
+    if (ui.mapApp === 'native' && !ui.grid.cells.length) buildGrid('coarse');
+    if (ui.mapApp === 'native') els['sp-map'].focus?.();
   }
 
   function openFromGlobe(point) {
