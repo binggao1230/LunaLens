@@ -1,5 +1,5 @@
 import { t, getLanguage, registerMessages, hasTranslation } from '../i18n.js';
-import { escapeHtml, fmtDeg, fmtLatLon, fmtDateTime, fmtDayMonth } from '../format.js';
+import { escapeHtml, fmtDeg, fmtLatLon, fmtDateTime, fmtDayMonth, fmtTime } from '../format.js';
 import { nextTransition, nextMarginTransition, evaluateSiteMcda } from '../engine/metrics.js';
 import { createPolar3d } from './polar3d/index.js';
 import { mountProbePreviews } from './probe-gallery.js';
@@ -654,7 +654,8 @@ export function createMission(ctx) {
             <rect x="0" y="0" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="20" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/><rect x="0" y="40" width="${SPAN}" height="14" rx="2" fill="rgba(255,255,255,.07)"/>
             ${rect(sun, 0, COLORS.sun)}${rect(link, 20, COLORS.link)}${rect(both, 40, COLORS.both)}
             ${hl && hl.id === site.id ? `<rect class="edu-hl" x="${hl.from}" y="-1" width="${Math.max(1, hl.to - hl.from)}" height="56" rx="3" fill="rgba(255,107,107,.18)" stroke="#ff6b6b" stroke-width="1.5" vector-effect="non-scaling-stroke"/>` : ''}
-            <line class="cur" x1="0" x2="0" y1="0" y2="54" stroke="#fff" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+            <rect class="cur-day" x="0" y="-2" width="24" height="58" fill="rgba(245,197,66,.12)"/>
+            <line class="cur" x1="0" x2="0" y1="-2" y2="56" stroke="#f5c542" stroke-width="2" vector-effect="non-scaling-stroke"/>
           </svg>
         </div>`;
       }).join('') : `<div class="empty" style="text-align:center;padding:18px;color:var(--muted);font-size:13px">${escapeHtml(t('No sites selected for comparison. Tick checkboxes in Site locations to compare.'))}</div>`;
@@ -669,6 +670,7 @@ export function createMission(ctx) {
           <span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))} <span class="pill2">${activeSites.length} ${escapeHtml(t('compared'))}</span></span>
         </div>
       </div>
+      <div class="lane-axis lane-now-row"><span></span><div class="lane-now-track"><span class="lane-now" id="m-lane-now"></span></div></div>
       ${lanes}
       <div class="lane-axis">
         <span></span>
@@ -679,7 +681,17 @@ export function createMission(ctx) {
         </div>
       </div>`;
     }
+    // Where we are looking: the cursor line, the day around it, and a date chip above the lanes.
     for (const line of el.querySelectorAll('.cur')) { line.setAttribute('x1', local.hour); line.setAttribute('x2', local.hour); }
+    const dayStart = Math.floor(local.hour / 24) * 24;
+    for (const day of el.querySelectorAll('.cur-day')) { day.setAttribute('x', dayStart); day.setAttribute('width', Math.min(24, SPAN - dayStart)); }
+    const chip = el.querySelector('#m-lane-now');
+    if (chip) {
+      const ms = ctx.landing() + local.hour * HOUR, f = local.hour / SPAN;
+      chip.textContent = `${fmtDayMonth(ms)} · ${fmtTime(ms)}`;
+      chip.style.left = `${(f * 100).toFixed(2)}%`;
+      chip.style.transform = `translateX(${f < 0.08 ? 0 : f > 0.92 ? -100 : -50}%)`;
+    }
   }
   function renderTime() {
     $('m-time').value = local.hour;

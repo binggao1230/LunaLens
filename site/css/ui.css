@@ -51,3 +51,9 @@ button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,ca
 
 /* ---- the small wide-tracked label ---- */
 .label{font-size:11px;letter-spacing:var(--tracking);text-transform:uppercase;color:var(--muted);font-weight:500}
+
+/* ---- timeline: where we are looking (date chip above the lanes, amber line and day band in each lane) ---- */
+.lane-now-row{margin-bottom:-8px}
+.lane-now-track{position:relative;height:22px;display:block!important}
+.lane-now{position:absolute;top:0;white-space:nowrap;font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;
+  color:var(--primary-ink);background:var(--primary);border-radius:var(--r-pill);padding:2px 8px;line-height:16px;box-shadow:0 0 12px rgba(245,197,66,.35)}
