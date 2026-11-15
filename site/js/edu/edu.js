@@ -16,6 +16,8 @@ const DAY = 864e5, TOTAL = 7;
 const TIME_SEGMENT = 6;
 // The objective segment that explains the 30-day graph: the graph (#m-lanes) pulses while it shows.
 const GRAPH_SEGMENT = 7;
+// The objective segment about the 2D Moon view: the 3D / 2D switch (#m-seg) pulses while it shows.
+const MODE_SEGMENT = 9;
 const fmt = (s, v = {}) => String(s ?? '').replace(/\{(\w+)\}/g, (m, k) => (v[k] ?? m));
 
 /** ctx: { mission, sites, eph, landing, setLanding, margin, showView, view, language, toast } */
@@ -223,6 +225,8 @@ export function createEducation(ctx) {
     document.querySelector('.datebar')?.classList.toggle('edu-point', pointAtTime);
     const pointAtGraph = visible() && !st.skipped && st.step === STEP.objective && st.sub === GRAPH_SEGMENT;
     document.getElementById('m-lanes')?.classList.toggle('edu-point', pointAtGraph);
+    const pointAtMode = visible() && !st.skipped && st.step === STEP.objective && st.sub === MODE_SEGMENT;
+    document.getElementById('m-seg')?.classList.toggle('edu-point', pointAtMode);
     if (!visible()) { root.innerHTML = ''; st.key = ''; return; }
     const r = st.step >= STEP.site ? current() : null;
     if (st.skipped) {

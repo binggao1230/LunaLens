@@ -73,7 +73,8 @@
         "Règle n° 2 : la Terre. Notre atterrisseur nous parle par radio, et la radio a besoin d'un chemin dégagé jusqu'à la Terre. Depuis le pôle Sud, la Terre aussi reste basse dans le ciel, donc notre site doit pouvoir la voir au-dessus des collines.",
         "Les deux règles dépendent de la date d'atterrissage. Le Soleil et la Terre se déplacent dans le ciel, donc l'heure choisie décide quels sites passent. Fais glisser la barre du temps en haut pour voir comment cela change.",
         "Ce graphique montre les 30 prochains jours pour ce site. Le jaune indique le Soleil, le vert la Terre visible, et le cyan les deux à la fois. Un bon moment pour atterrir est en cyan.",
-        "Clique sur le graphique pour déplacer sa barre et lire l'heure exacte."
+        "Clique sur le graphique pour déplacer sa barre et lire l'heure exacte.",
+        "Il existe aussi une Lune 2D à visualiser. Passe de 3D à 2D en haut à droite de la vue de la Lune pour la voir à plat."
       ]
     },
     "history": {
