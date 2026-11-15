@@ -414,3 +414,5 @@ demo passes.
   login and check submission separately from deployment. After the workflow is stable,
   remove the hidden markup, styles and handlers for Compare/Date slip and keep old
   hashes redirecting. Defer new flight effects, orbit mechanics and additional mobile work.
+
+- [ ] Launch countdown: show the digits over the Mission page (translucent backdrop) while the flight scene loads and renders in the background, keep the count on a wall-clock deadline with compositor-only animation so heavy loading cannot stall it, and start the flight the moment the count ends.
