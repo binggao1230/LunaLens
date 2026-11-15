@@ -349,14 +349,16 @@ export function createSouthPole(ctx) {
 
       <aside class="pole-cards" id="sp-cards" hidden>
         <div class="pole-compare-head">
+          <p class="pole-cards-kicker">${escapeHtml(t('Current point'))}</p>
           <div class="pole-selected" id="sp-picked"></div>
+          <p class="pole-cards-kicker">${escapeHtml(t('Save to compare'))}</p>
           <div class="pole-save-actions" id="sp-abc" role="group" aria-label="${escapeHtml(t('Selected points #1/#2/#3'))}">
             ${['A', 'B', 'C'].map((name) => `<button type="button" data-slot="${name}" disabled>${escapeHtml(t('Save as {name}', { name: slotLabel(name) }))}</button>`).join('')}
           </div>
-          <button type="button" class="btn-primary pole-pick-atlas" id="sp-pick-atlas" disabled><span>${escapeHtml(t('Enter Atlas'))}</span>${icon('forward')}</button>
+          <button type="button" class="btn-ghost pole-pick-atlas" id="sp-pick-atlas" disabled><span>${escapeHtml(t('Enter Atlas'))}</span>${icon('forward')}</button>
         </div>
         <div class="pole-cards-tabs" role="tablist" aria-label="${escapeHtml(t('Compare views'))}">
-          <button type="button" data-cards-tab="compare" class="on" role="tab" aria-selected="true">${escapeHtml(t('Compare'))}</button>
+          <button type="button" data-cards-tab="compare" class="on" role="tab" aria-selected="true">${escapeHtml(t('Saved points'))}</button>
           <button type="button" data-cards-tab="recommended" role="tab" aria-selected="false">${escapeHtml(t('Recommended'))}</button>
         </div>
         <section class="pole-cards-pane" id="sp-compare-pane">
@@ -381,6 +383,7 @@ export function createSouthPole(ctx) {
         </div>
         <div id="sp-sites"></div>
         <label class="pole-label">${escapeHtml(t('Map point'))}<span class="pole-point" id="sp-point">${escapeHtml(t('None selected'))}</span></label>
+        <p class="pole-window-note" id="sp-window-note"></p>
         <details class="pole-advanced">
           <summary>${escapeHtml(t('Screening grid'))}</summary>
           <p class="sub" id="sp-geom"></p>
@@ -471,7 +474,7 @@ export function createSouthPole(ctx) {
   }
 
   function syncWindowButton() {
-    els['sp-window-show'].hidden = !ui.window.chosen || ui.stage === 'atlas';
+    els['sp-window-show'].hidden = !ui.window.chosen || ui.stage === 'atlas' || ui.stage === 'map';
     measureDock();
   }
 
@@ -1028,6 +1031,7 @@ export function createSouthPole(ctx) {
     ui.slots[name] = ui.target;
     if (ui.slots[name].metricsKey !== metricsKey()) measureSlot(ui.slots[name]);
     renderSlots();
+    setCardsTab('compare');
     renderAbc();
     renderAtlasSlots();
     persistSlots();
@@ -1217,6 +1221,8 @@ export function createSouthPole(ctx) {
       els['sp-hud'].textContent = `${site ? site.label ?? site.name : t('No site selected')} · ${fmtDateTime(clockMs())}`;
     }
     els['sp-windowhud'].textContent = t('{days} days in the search window', { days: ui.window.endDay - ui.window.startDay + 1 }) + ` · ${ctx.stayH()} h`;
+    const winNote = document.getElementById('sp-window-note');
+    if (winNote) winNote.textContent = `${isoDate(dayMs(ui.window.startDay))} → ${isoDate(dayMs(ui.window.endDay))} · ${ui.window.endDay - ui.window.startDay + 1} d`;
     els['sp-map-context'].textContent = ui.draft ? `${t('Selected point')} · ${fmtLatLon(ui.draft.lat, ui.draft.lon, 3)} · ${fmtDateTime(clockMs())}` : els['sp-hud'].textContent;
     updateTimelineCursor();
   }
@@ -1313,7 +1319,9 @@ export function createSouthPole(ctx) {
       return;
     }
     const metrics = point.metrics;
-    els['sp-picked'].innerHTML = `<div class="pole-selected-head"><span>${escapeHtml(fmtLatLon(point.lat, point.lon, 3))}</span>${scoreBadge(metrics?.score)}</div>
+    const saved = Object.entries(ui.slots).find(([, slot]) => sameSpot(slot, point));
+    const state = saved ? t('Saved as {name}', { name: slotLabel(saved[0]) }) : t('Not saved');
+    els['sp-picked'].innerHTML = `<div class="pole-selected-head"><span>${escapeHtml(fmtLatLon(point.lat, point.lon, 3))}</span><span class="pole-state">${escapeHtml(state)}</span>${scoreBadge(metrics?.score)}</div>
       ${metrics ? `${barRow(t('Sunlight'), metrics.sunPct, '#f5c542')}${barRow(t('Earth'), metrics.earthPct, '#58a6ff')}
       <p class="pole-selected-meta">${escapeHtml(t('Longest link'))} ${metrics.longestH} h · ${escapeHtml(t('Slope'))} ${metrics.slopeDeg.toFixed(1)}°</p>${limitNote(metrics)}` : `<p class="sub" role="status">${escapeHtml(t(point.measuringKey ? 'measuring…' : 'No terrain skyline for this point.'))}</p>`}`;
   }
