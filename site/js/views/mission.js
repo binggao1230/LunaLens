@@ -428,7 +428,7 @@ export function createMission(ctx) {
     const [fp, fm] = $('m-flat').children;
     fp.textContent = t('South pole'); fm.textContent = t('Whole Moon');
     fp.classList.toggle('on', local.flat === 'pole'); fm.classList.toggle('on', local.flat === 'moon');
-    $('m-flat').hidden = local.mode !== '2d'; $('m-zoom').hidden = local.mode !== '2d' || isEducation();
+    $('m-flat').hidden = local.mode !== '2d'; $('m-zoom').hidden = local.mode !== '2d';
     $('m-readout').hidden = local.mode !== '3d';
     if (local.mode !== '2d') $('m-note').hidden = true;
     const [b3, b2] = $('m-seg').children;
@@ -893,14 +893,13 @@ export function createMission(ctx) {
       if (hit) { local.picked = hit.site.id; refresh(true); }
     });
     canvas.addEventListener('wheel', (event) => {
-      if (isEducation()) return; // Education: no zoom on the 2D map; the page scrolls as usual
       event.preventDefault();
       const box = canvas.getBoundingClientRect();
       zoomAt(event.clientX - box.left, event.clientY - box.top, event.deltaY < 0 ? 1.18 : 1 / 1.18);
     }, { passive: false });
   }
   function zoomAt(x, y, factor) {
-    if (!layout2d || isEducation()) return;
+    if (!layout2d) return;
     const next = clamp(view2d.z * factor, 1, 12), ratio = next / view2d.z;
     const relX = x - layout2d.baseX - view2d.x, relY = y - layout2d.baseY - view2d.y;
     view2d.x = x - layout2d.baseX - relX * ratio; view2d.y = y - layout2d.baseY - relY * ratio; view2d.z = next;
