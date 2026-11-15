@@ -62,6 +62,8 @@ The Expert workflow is deliberately narrow:
 - **3D Moon** with real Sun and Earth directions, local relief and a movable time clock.
 - **Point comparison** with a shared Sun/Earth timeline, longest-night bracket and
   all-points-sunlit row.
+- **Responsive mobile layout** with touch-sized controls, safe-area-aware navigation and
+  the same Expert flow down to 390 px.
 - **Detailed comparison** in a two- or three-column modal for saved points.
 - **Floating Atlas panel** with a collapsible comparison sidebar and a back-to-Map action.
 - **Mission view** for terrain-backed sites, with a 3D local scene and CSV export.
@@ -81,6 +83,14 @@ The Expert workflow is deliberately narrow:
 ### Detailed comparison
 
 <img src="design/checks/readme-compare.png" alt="Detailed comparison modal with two saved points" width="900">
+
+### Mobile
+
+<p align="center"><img src="design/checks/readme-mobile.png" alt="LunaLens mobile Globe at 390 px" width="390"></p>
+
+The phone layout keeps the selected site, time readout, zoom, time speed and the
+`Enter the South Pole` action within thumb reach, with the five-step Expert navigation
+fixed to the bottom edge.
 
 All screenshots are English and show the current release.
 
