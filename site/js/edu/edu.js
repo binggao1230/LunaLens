@@ -74,7 +74,7 @@ export function createEducation(ctx) {
 
   /* ---------- story steps ---------- */
 
-  function enterHistory() { setStep(STEP.history); say('history.intro', {}, 'happy'); render(); ctx.mission.flags?.(); }
+  function enterHistory() { ctx.mission.unframeChoices?.(); setStep(STEP.history); say('history.intro', {}, 'happy'); render(); ctx.mission.flags?.(); ctx.mission.frameFlags?.(['apollo11', 'im2']); }
   function enterSite() {
     setStep(STEP.site); ctx.mission.flags?.();
     const o = opts(), list = ctx.sites(), ok = (ms) => list.some((s) => isOk(assess(s, idx(ms), o).verdict));
@@ -84,6 +84,7 @@ export function createEducation(ctx) {
       }
     }
     st.revealed = null; say('site.pick', {}, 'happy'); render();
+    ctx.mission.frameChoices?.(); // zoom to where the possible choices are
   }
   // Confirm selection: Lumi says whether the picked site has the Sun and Earth at touchdown.
   function reveal() {
@@ -130,7 +131,7 @@ export function createEducation(ctx) {
   }
   function back() {
     if (st.step === 1 && st.sub > 0) { st.sub--; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); }
-    else if (st.step === STEP.site) { const last = Math.max(0, introLines().length - 1); setStep(STEP.objective, last); say(`objective.intro.${last}`, {}, 'happy'); render(); }
+    else if (st.step === STEP.site) { ctx.mission.unframeChoices?.(); const last = Math.max(0, introLines().length - 1); setStep(STEP.objective, last); say(`objective.intro.${last}`, {}, 'happy'); render(); }
     else if (st.step === STEP.history) { setStep(STEP.site); st.revealed = 'good'; say('site.good', { site: st.picked?.short ?? '' }, 'celebrating'); render(); }
   }
   const canComplete = () => current()?.verdict === 'go' && (st.anomaly?.kind !== 'contact' || st.tried);
@@ -275,7 +276,7 @@ export function createEducation(ctx) {
     if (!act) return;
     if (act === 'next') next();
     else if (act === 'back') back();
-    else if (act === 'skip') { st.skipped = true; render(); }
+    else if (act === 'skip') { st.skipped = true; ctx.mission.unframeChoices?.(); render(); }
     else if (act === 'replay') startTour();
     else if (act === 'again') { reset(); ctx.showView('start'); } // choose a lander again; the story restarts on the Mission page
     else if (act === 'expert') switchMode('expert', event.target.closest('[data-act]'));
