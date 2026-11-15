@@ -103,6 +103,20 @@ export async function createPolar3d(env) {
         for (let i = 0; i <= 90; i++) points.push(new T.Vector3(...unit(-90 + i, lon)).multiplyScalar(1.0015));
         graticule.add(new T.Line(new T.BufferGeometry().setFromPoints(points), gridLine(0x93a7bd, lon % 90 === 0 ? 0.3 : 0.12)));
       }
+
+      // Hover/touch highlight for the south-cap study area. It uses the same study latitude as the click
+      // test, so the visible highlight and the accepted tap can never disagree.
+      const capLat = Number.isFinite(env.studyLat) ? env.studyLat : -85;
+      const capColat = (90 + capLat) * Math.PI / 180;
+      const capR = Math.sin(capColat) * 1.004;
+      const hoverCap = new T.Mesh(
+        new T.CircleGeometry(capR, 64),
+        new T.MeshBasicMaterial({ color: env.studyColor ?? 0x58c8ff, transparent: true, opacity: 0.16, side: T.DoubleSide, depthWrite: false }),
+      );
+      hoverCap.position.set(0, -Math.cos(capColat) * 1.004, 0);
+      hoverCap.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), new T.Vector3(0, -1, 0));
+      hoverCap.visible = false;
+      moonGroup.add(hoverCap);
       moonGroup.add(graticule);
 
       const glowTexture = (inner) => {
@@ -240,6 +254,56 @@ export async function createPolar3d(env) {
           return { site, normal, dotMesh, ring };
         });
       };
+      // The one shared target from Map or Atlas. It stays a separate marker so the site
+      // dots keep their own identities; identical coordinates reuse the selected-site ring.
+      const targetGroup = new T.Group();
+      moonGroup.add(targetGroup);
+      let targetKey = '';
+      const updateTargetMarker = () => {
+        const p = env.target?.();
+        const site = pickedSite();
+        const same = p && site && Math.abs(p.lat - site.lat) < 1e-4 && Math.abs(((p.lon - site.lon + 540) % 360) - 180) < 1e-4;
+        const key = !p || same ? '' : `${p.lat.toFixed(4)}:${p.lon.toFixed(4)}`;
+        if (key === targetKey) return;
+        targetKey = key;
+        targetGroup.clear();
+        if (!key) return;
+        const normal = new T.Vector3(...unit(p.lat, p.lon));
+        const ring = new T.Mesh(new T.RingGeometry(1.4, 2.1, 28), new T.MeshBasicMaterial({ color: 0xffffff, side: T.DoubleSide }));
+        ring.scale.setScalar(0.006);
+        ring.position.copy(normal).multiplyScalar(1.012);
+        ring.lookAt(normal.clone().multiplyScalar(2));
+        const dot = new T.Mesh(sphereGeometry, new T.MeshBasicMaterial({ color: 0xffffff }));
+        dot.scale.setScalar(0.006);
+        dot.position.copy(normal).multiplyScalar(1.012);
+        targetGroup.add(dot, ring);
+      };
+      // A short region-to-horizon ray at the selected site: the same azimuth and
+      // terrain angle as the 2D profile, so a blocked event has one direction on both.
+      const skyGroup = new T.Group();
+      moonGroup.add(skyGroup);
+      let skyKey = '';
+      const updateSkylineMarker = () => {
+        const s = env.skyline?.();
+        const key = !s ? '' : `${s.lat.toFixed(4)}:${s.lon.toFixed(4)}:${s.az.toFixed(2)}:${s.horizon.toFixed(2)}:${s.blocked}`;
+        if (key === skyKey) return;
+        skyKey = key;
+        skyGroup.clear();
+        if (!key) return;
+        const basis = siteBasis(s.lat, s.lon);
+        const up = new T.Vector3(...basis.up), north = new T.Vector3(...basis.north), east = new T.Vector3(...basis.east);
+        const az = s.az * Math.PI / 180, hz = s.horizon * Math.PI / 180;
+        const tangent = new T.Vector3().addScaledVector(north, Math.cos(az)).addScaledVector(east, Math.sin(az)).normalize();
+        const origin = up.clone().multiplyScalar(1.008);
+        const dir = tangent.multiplyScalar(Math.cos(hz)).addScaledVector(up, Math.sin(hz));
+        const end = origin.clone().addScaledVector(dir, 0.18);
+        const color = s.blocked ? 0xef6b5b : 0x58c8ff;
+        skyGroup.add(new T.Line(new T.BufferGeometry().setFromPoints([origin, end]), new T.LineBasicMaterial({ color, transparent: true, opacity: 0.95 })));
+        const dot = new T.Mesh(sphereGeometry, new T.MeshBasicMaterial({ color }));
+        dot.scale.setScalar(0.004);
+        dot.position.copy(origin);
+        skyGroup.add(dot);
+      };
       // Terrain at the picked site: the same generator Explore uses, heights at ×1 (no exaggeration).
       const reliefGroup = new T.Group();
       moonGroup.add(reliefGroup);
@@ -324,7 +388,6 @@ export async function createPolar3d(env) {
         sunGlow.position.copy(sunBody.position);
         if (tms !== null && env.epochMs) {
           const days = (tms - env.epochMs) / 864e5;
-          moonGroup.rotation.y = (days / 27.321661) * Math.PI * 2;
           earth.rotation.y = (days / 0.99727) * Math.PI * 2;
           sunBody.material.rotation = (days / 25.38) * Math.PI * 2;
         }
@@ -463,15 +526,26 @@ export async function createPolar3d(env) {
         const hit = caster.intersectObject(moon)[0];
         return hit ? moonGroup.worldToLocal(hit.point.clone()).normalize() : null;
       };
-      canvas.addEventListener('pointerdown', (event) => { down = [event.clientX, event.clientY]; });
+      canvas.addEventListener('pointerdown', (event) => {
+        down = [event.clientX, event.clientY];
+        const hover = dirAt(event);
+        if (hover && Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) <= (env.studyLat ?? -90)) {
+          hoverCap.visible = true;
+          request();
+        }
+      });
       canvas.addEventListener('pointermove', (event) => {
-        if (!grab || event.buttons) return;
+        if (event.buttons) return;
         const hover = dirAt(event);
         const lat = hover ? Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) : null;
-        canvas.style.cursor = lat !== null && lat <= (env.studyLat ?? -90) ? 'pointer' : 'grab';
+        const inside = lat !== null && lat <= (env.studyLat ?? -90);
+        if (hoverCap.visible !== inside) { hoverCap.visible = inside; request(); }
+        canvas.style.cursor = inside ? 'pointer' : 'grab';
       });
-      // Damping needs a frame loop; only request a draw when the camera actually moved.
+      canvas.addEventListener('pointerleave', () => { if (hoverCap.visible) { hoverCap.visible = false; request(); } });
       const tick = () => {
+        updateTargetMarker();
+        updateSkylineMarker();
         const a = env.animation?.();
         const now = performance.now();
         if (grab && controls.update()) request();

@@ -6,6 +6,8 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0f1113">
 <title>LunaLens · Lunar landing site navigator</title>
+<link rel="icon" type="image/svg+xml" sizes="any" href="assets/favicon-light.svg">
+<link rel="icon" type="image/svg+xml" sizes="any" media="(prefers-color-scheme: dark)" href="assets/favicon-dark.svg">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="vendor/noUiSlider/nouislider.min.css">
 <style>
@@ -99,10 +101,16 @@ main{max-width:1280px;padding:12px}
   background:var(--surface);color:var(--muted);font-size:14px;line-height:1}
 .chip-x:hover{color:var(--critical);border-color:var(--critical)}
 .view{display:none}
-body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=data] #v-data,body[data-view=build] #v-build,body[data-view=atlas] #v-atlas,body[data-view=pole] #v-pole{display:block}
+body[data-view=explore] #v-explore,body[data-view=data] #v-data,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=build] #v-build,body[data-view=atlas] #v-atlas,body[data-view=pole] #v-pole{display:block}
 /* Atlas is a full-bleed tool: it escapes the page's reading width and sits edge to edge. */
 body[data-view=atlas] main{max-width:none;padding:0}
-#v-atlas{height:calc(100svh - var(--bar-h,56px))}
+#v-atlas{position:relative;height:calc(100svh - var(--bar-h,56px))}
+.atlas-explore{position:absolute;right:16px;bottom:18px;z-index:3;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 18px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.page-link{margin:14px 0 4px}
+.btn-link{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 18px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.btn-link:hover{border-color:var(--earth)}
+.atlas-explore:hover{border-color:var(--earth)}
+.atlas-explore:focus-visible{outline:2px solid #f5c542;outline-offset:2px}
 #v-atlas iframe{display:block;width:100%;height:100%;border:0;background:#05070a}
 /* The scenario tray is the compare workspace, not global chrome: it only appears where scenarios are
    compared or slipped. */
@@ -142,7 +150,7 @@ body[data-view=pole] .scrub{display:none}
   .explore,.grid2{grid-template-columns:1fr}
   body{padding-bottom:54px}
   .scrub{bottom:54px;padding:6px 10px}
-  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;height:54px;z-index:7;
+  .tabbar{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:fixed;left:0;right:0;bottom:0;height:54px;z-index:7;
     background:var(--surface);border-top:1px solid var(--border);padding:4px}
   .tabbar button{padding:4px;font-size:12px}
   .fields{grid-template-columns:1fr 1fr}
@@ -290,7 +298,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-map-tools button{width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:var(--text2);display:grid;place-items:center;cursor:pointer}
 .pole-map-tools button:hover{background:var(--surface-2);color:var(--text)}
 .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-#sp-map{height:100%;width:auto;max-width:100%;background:#0f1113;cursor:crosshair}
+#sp-map{width:auto;height:auto;max-width:100%;max-height:100%;background:#0f1113;cursor:crosshair}
 #sp-moon{width:auto;height:auto;max-width:100%;max-height:100%;margin:auto;object-fit:contain;background:#05070a}
 .pole-globe-hint{position:absolute;left:16px;bottom:96px;max-width:420px;margin:0;color:var(--muted);font-size:12px;pointer-events:none;z-index:3}
 .pole-globe-zoom{position:absolute;right:392px;top:16px;display:flex;gap:6px;z-index:4}
@@ -299,7 +307,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-time button{min-width:30px;min-height:26px;font:inherit;font-size:11.5px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer}
 .pole-time button.on{color:var(--text);border-color:var(--accent);background:var(--surface-2)}
 .pole-time span{font-size:10px;color:var(--muted);margin-left:4px}
-.pole-hud{position:absolute;left:16px;top:16px;z-index:4;max-width:calc(100% - 420px);padding:10px 12px;border-radius:12px;background:rgba(15,17,19,.72);border:1px solid var(--border);backdrop-filter:blur(8px);pointer-events:none}
+.pole-hud{position:absolute;left:400px;top:16px;z-index:4;max-width:calc(100% - 420px);padding:10px 12px;border-radius:12px;background:rgba(15,17,19,.72);border:1px solid var(--border);backdrop-filter:blur(8px);pointer-events:none}
 .pole-hud p{margin:0;font-size:12.5px;color:var(--muted)}
 .pole-hud #sp-windowhud{display:none}
 .pole-hud-row{display:flex;gap:10px;align-items:center;justify-content:space-between}
@@ -307,7 +315,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-stages{display:flex;gap:4px;flex-wrap:wrap;pointer-events:auto}
 .pole-stages button{font:inherit;font-size:12px;padding:5px 9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
 .pole-stages button.on{color:var(--text);border-color:var(--accent);background:var(--surface-2)}
-.pole-side{position:absolute;right:16px;top:16px;bottom:132px;width:360px;z-index:5;overflow:auto;padding:12px;border:1px solid var(--border);border-radius:14px;background:rgba(15,17,19,.9);backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:6px}
+.pole-side{position:absolute;left:16px;right:auto;top:16px;bottom:16px;width:360px;z-index:5;overflow:auto;padding:12px;border:1px solid var(--border);border-radius:14px;background:rgba(15,17,19,.9);backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:6px}
 .pole-side.collapsed{display:none}
 .pole-side-head{display:flex;align-items:center;justify-content:space-between}
 .pole-side h3{margin:8px 0 0;font-size:13.5px}
@@ -337,7 +345,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-metrics div{display:flex;flex-direction:column}
 .pole-metrics b{font-size:14px}
 .pole-metrics span{color:var(--muted);font-size:11px}
-.pole-windowbar{position:absolute;left:16px;right:400px;bottom:16px;width:auto;z-index:6;display:flex;flex-direction:column;gap:5px;padding:12px 16px 9px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(24,27,32,.98),rgba(12,14,17,.98));box-shadow:0 22px 60px rgba(0,0,0,.5);backdrop-filter:blur(14px)}
+.pole-windowbar{position:absolute;left:400px;right:16px;bottom:16px;width:auto;z-index:6;display:flex;flex-direction:column;gap:5px;padding:12px 16px 9px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(24,27,32,.98),rgba(12,14,17,.98));box-shadow:0 22px 60px rgba(0,0,0,.5);backdrop-filter:blur(14px)}
 .pole-window-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pole-window-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .pole-window-count{font-size:10.5px;font-variant-numeric:tabular-nums;padding:2px 8px;border-radius:99px;border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--text);white-space:nowrap}
@@ -346,6 +354,8 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-window-dates .arrow{color:var(--muted)}
 .pole-window-stay{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
 .pole-window-stay select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:11.5px}
+.pole-window-edit{font:inherit;font-size:11.5px;padding:5px 9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;white-space:nowrap}
+.pole-window-edit:hover{border-color:var(--accent);color:var(--text)}
 .pole-window-close{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:0 2px}
 .pole-window-close:hover{color:var(--text)}
 .pole-window-track{position:relative}
@@ -367,7 +377,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole[data-stage="atlas"] .pole-stages{display:none}
 .pole-restore{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;z-index:8;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:rgba(15,17,19,.95);color:var(--text);font:inherit;font-size:12px;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.45)}
 .pole-restore span{color:var(--muted);font-size:10px}
-.pole-panel-open{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:7;width:38px;height:38px;padding:0;border:1px solid var(--border);border-right:0;border-radius:10px 0 0 10px;background:rgba(15,17,19,.95);color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.pole-panel-open{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:7;width:38px;height:38px;padding:0;border:1px solid var(--border);border-left:0;border-radius:0 10px 10px 0;background:rgba(15,17,19,.95);color:var(--muted);display:grid;place-items:center;cursor:pointer}
 .pole-min{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:0 3px}
 .pole-min:hover{color:var(--text)}
 .pole select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%238a93a0' stroke-width='1.5' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 9px center;background-size:10px 6px;padding-right:26px}
@@ -378,7 +388,10 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-modal-card h2{margin:0;font-size:18px}
 .pole-modal-card label{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
 .pole-modal-card input[type=range]{flex:1;accent-color:var(--accent)}
+.pole-modal-card input[type=date]{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px;min-height:30px}
 .pole-modal-card select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px}
+.pole-modal-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.pole-modal-dates label{display:flex;flex-direction:column;align-items:stretch;gap:4px;font-size:11.5px;color:var(--muted)}
 .pole-modal-actions{display:flex;justify-content:flex-end;margin-top:4px}
 .pole-popup{position:absolute;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;background:rgba(5,7,10,.45)}
 .pole-popup[hidden]{display:none}
@@ -402,6 +415,65 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-atlas-actions button[data-slot=C]{--slot:#ff9ad5}
 .pole-atlas-actions button.filled{border-style:solid;border-color:var(--slot);background:color-mix(in srgb,var(--slot) 18%,transparent);color:var(--text)}
 @media(max-width:900px){.pole-windowbar{left:8px;right:8px;bottom:62px;width:auto;padding:9px 12px 7px;gap:4px}.pole-window-head{gap:8px}.pole-window-title,.pole-window-stay,.pole-windowbar p{display:none}.pole-side{left:8px;right:8px;top:auto;bottom:200px;width:auto;max-height:38%}.pole-hud{left:8px;right:8px;top:56px;max-width:none}.pole-tabs{left:8px;top:8px;transform:none}.pole-globe-zoom{right:8px;top:8px}.pole-time{right:8px;top:52px}.pole-restore{bottom:62px}.pole-globe-hint{display:none}}
+/* Expert workspace: the stage is full width; the left panel floats above it. */
+.pole{--expert-panel:360px}
+.pole-stage{left:0;right:0}
+.pole-side{left:12px;right:auto;top:12px;bottom:12px;width:var(--expert-panel);max-height:calc(100% - 24px);border:1px solid var(--border);border-radius:14px;background:rgba(15,17,19,.94);backdrop-filter:blur(10px);padding:14px 14px 18px;z-index:6;gap:8px;box-shadow:0 12px 36px rgba(0,0,0,.35)}
+.pole-hud{left:calc(var(--expert-panel) + 28px);right:16px;max-width:none}
+.pole-windowbar{left:calc(var(--expert-panel) + 28px);right:16px;width:auto}
+.pole-panel-handle{position:absolute;left:calc(var(--expert-panel) - 18px);top:50%;transform:translateY(-50%);z-index:9;width:36px;height:36px;padding:0;border:1px solid var(--border);border-radius:10px;background:#11151a;color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.pole-panel-handle:hover{color:var(--text);border-color:var(--accent)}
+.pole.panel-collapsed .pole-stage{left:0}
+.pole.panel-collapsed .pole-side{display:none}
+.pole.panel-collapsed .pole-panel-handle{left:4px}
+.pole.panel-collapsed .pole-hud{left:16px}
+.pole.panel-collapsed .pole-windowbar{left:16px}
+.pole-eyebrow{margin:0 0 3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pole-side-head h3{margin:0;font-size:16px;font-weight:550}
+.pole-task-next{margin:0 0 6px;font-size:12px;line-height:1.4;color:var(--muted)}
+.pole-side .pole-stages,.pole[data-stage="atlas"] .pole-stages{display:flex;position:static;padding:4px;border:1px solid var(--border);border-radius:10px;background:var(--page)}
+.pole-side .pole-stages button{flex:1;min-width:0;padding:6px 4px}
+.pole-stages button:disabled{opacity:.38;cursor:not-allowed}
+.pole-side h3{margin:10px 0 0;font-size:12.5px;letter-spacing:.03em}
+.pole-side .pole-label{margin-top:2px}
+.pole-clock{display:flex;flex-direction:column;gap:6px;padding:9px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025)}
+.pole-clock label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted)}
+.pole-clock input{font:inherit;font-size:12px;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:6px 7px}
+.pole-clock-row{display:flex;align-items:center;gap:8px}
+.pole-clock-value{flex:1;font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
+.pole-rates{display:flex;gap:4px}
+.pole-rates button{flex:1;min-height:28px;font:inherit;font-size:11px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer}
+.pole-rates button.on{color:var(--text);border-color:var(--accent);background:var(--surface-2)}
+.pole-panel-tools{display:flex;gap:6px;margin-top:2px}
+.pole-panel-tools button{flex:1;min-height:34px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);display:grid;place-items:center;cursor:pointer}
+.pole-panel-tools button:hover{background:var(--surface-2);color:var(--text)}
+.pole-save-slots{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px;border:1px solid var(--border);border-radius:9px;background:rgba(255,255,255,.025)}
+.pole-save-slots p{width:100%;margin:0 0 2px;font-size:11px;color:var(--muted)}
+.pole-save-slots button{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text2);font-weight:700;cursor:pointer}
+.pole-save-slots button.filled{border-color:var(--good);color:var(--text)}
+.pole-technical{display:flex;flex-direction:column;gap:6px;padding-top:8px;border-top:1px solid var(--border)}
+.pole-technical summary{cursor:pointer;font-size:11.5px;color:var(--muted)}
+.pole-technical[open] summary{color:var(--text2)}
+.pole-map-native{width:100%;height:100%}
+#sp-map{width:100%;height:100%;max-width:none;object-fit:fill}
+.pole-map-rail,.pole-abc,.pole-map-tools,.pole-globe-zoom,.pole-time,.pole-globe-hint,.pole-atlas-pick,.pole-panel-open{display:none!important}
+.pole-hud .m-readout{position:static;margin-top:5px;max-width:none;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;line-height:1.35}
+.pole-map-key{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:10.5px;color:var(--muted)}
+.pole-map-key span{display:inline-flex;align-items:center;gap:5px}
+.pole-map-key i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.pole-orbit-note{margin:4px 0 0;font-size:10px;color:var(--muted)}
+.pole button,.pole summary,.pole .pole-stages,.pole .pole-window-head{user-select:none;-webkit-user-select:none}
+.pole-sky{display:block;width:100%;height:auto;margin:5px 0 3px;border-radius:6px}
+.pole-sky-read{margin:0 0 8px;font-size:10.5px;line-height:1.4;color:var(--muted)}
+@media(max-width:900px){
+  .pole-stage{left:0}
+  .pole-side{left:8px;right:8px;top:auto;bottom:200px;width:auto;max-height:38%;border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+  .pole-panel-handle{left:auto;right:8px;top:50%}
+  .pole.panel-collapsed .pole-side{display:none}
+  .pole-hud{left:8px;right:8px}
+  .pole-windowbar{left:8px;right:8px}
+  .pole.panel-collapsed .pole-hud,.pole.panel-collapsed .pole-windowbar{left:8px}
+}
 </style>
 <link rel="stylesheet" href="css/mission.css">
 <link rel="stylesheet" href="css/edu.css">
@@ -409,13 +481,14 @@ body[data-view=pole] main{max-width:none;padding:0}
 </head>
 <body data-view="start">
 <div id="loading" role="status">Loading…</div>
+<div id="mode-gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" hidden></div>
 <header class="appbar">
   <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span></b>
   <nav class="tabs" data-nav>
-    <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="pole">South Pole</button>
+    <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="pole">Expert</button>
   </nav>
   <div class="tray" id="tray"></div>
-  <nav class="side" data-nav><button data-view="data">Data</button><a class="mobile-entry" href="mobile/">Mobile</a></nav>
+  <nav class="side" data-nav><a class="mobile-entry" href="mobile/">Mobile</a></nav>
   <div class="seg-pill" id="mode-toggle" role="group" aria-label="Mode">
     <button type="button" data-mode="expert" aria-pressed="true" aria-label="Expert mode"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="long">Expert mode</span><span class="short">Expert</span></button>
     <button type="button" data-mode="education" aria-pressed="false" aria-label="Education mode"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5M22 9v5"/></svg><span class="long">Education mode</span><span class="short">Learn</span></button>
@@ -532,13 +605,16 @@ body[data-view=pole] main{max-width:none;padding:0}
         </section>
       </div>
     </div>
+  
+  <!-- ================= View 4: Data & accuracy ================= -->
+    <div class="page-link"><button type="button" class="btn-link" data-go="data">Data and accuracy<span aria-hidden="true">→</span></button></div>
   </section>
 
   <!-- ================= South Pole prototype: 3D globe plus detailed map ================= -->
   <section class="view" id="v-pole"></section>
 
   <!-- ================= Atlas: the layer map page, in its own frame ================= -->
-  <section class="view" id="v-atlas"></section>
+  <section class="view" id="v-atlas"><button type="button" class="atlas-explore" data-go="explore">Explore<span aria-hidden="true">→</span></button></section>
 
 
   <!-- ================= View 2: Compare ================= -->
@@ -587,6 +663,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 
   <!-- ================= View 4: Data & accuracy ================= -->
   <section class="view" id="v-data">
+    <div class="page-link"><button type="button" class="btn-link" data-go="explore"><span aria-hidden="true">←</span>Explore</button></div>
     <section class="card">
       <h2>What is computed</h2>
       <p>For every hour from 2026 to 2030, LunaLens takes the points on the Moon directly beneath the Sun and Earth from JPL Horizons and converts them to azimuth and elevation at each site. A site's skyline is the highest terrain in each direction, sampled every 0.5° out to 460 km over LOLA elevation data, seen from 2 m above the ground on a curved Moon. The Sun counts as in view when its upper limb clears the skyline, and Earth when its centre does. Positions between hourly samples are interpolated, and rise and set times are refined by bisection.</p>
@@ -679,8 +756,7 @@ body[data-view=pole] main{max-width:none;padding:0}
   <div id="now"></div>
 </div>
 <nav class="tabbar" data-nav>
-  <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="pole">South Pole</button>
-  <button data-view="data">Data</button>
+  <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="pole">Expert</button>
 </nav>
 <div id="edu"></div>
 <div id="mode-wipe" aria-hidden="true"></div>

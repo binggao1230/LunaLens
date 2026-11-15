@@ -32,6 +32,14 @@ jobs:
           mkdir -p site/data
           cp -a /tmp/snapshot/lunalens/site/data/. site/data/
           du -sh site/data
+      - name: Set up Node for the Atlas build
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/atlas/source/web/package-lock.json
+      - name: Build Atlas from source
+        run: site/tools/build_atlas.sh
       - name: Deploy with Wrangler
         uses: cloudflare/wrangler-action@v4
         with:

@@ -94,6 +94,7 @@ const RATES: readonly (readonly [number, string, string])[] = [
   [5 * 3600, '5×', 'Five hours of Moon time per second'],
   [10 * 3600, '10×', 'Ten hours of Moon time per second'],
 ]
+const EMBEDDED = new URLSearchParams(location.search).has('embed')
 /** `hint` is the one-line description in the phone's layer list; `legend` the full note with sources. */
 const LAYERS: { label: string; full?: string; value: LayerMode; hint: string; legend: string; ramp?: string; ends?: [string, string] }[] = [
   {
@@ -621,7 +622,7 @@ export default function App() {
         .slice(0, 3)
         .map((s: { lat: number; lon: number; label?: string }) => ({ lat: s.lat, lon: s.lon, label: String(s.label ?? ''), hM: elevation(s.lat, s.lon) }))
       const store = useStore.getState()
-      store.replacePins(sites, raw.active ?? null)
+      if (Array.isArray(raw.sites)) store.replacePins(sites, raw.active ?? null)
       if (Number.isFinite(raw.tMs)) {
         store.setPlaying(false)
         store.setTime(raw.tMs)
@@ -749,8 +750,8 @@ export default function App() {
       const active = st.pins.find((p) => p.id === st.activePin)
       window.parent?.postMessage({
         type: 'lunalens:atlas-state',
-        sites: sorted.map((p) => ({ lat: p.lat, lon: p.lon, label: p.label })),
-        active: active ? { lat: active.lat, lon: active.lon, label: active.label } : null,
+        sites: sorted.map((p) => ({ lat: p.lat, lon: p.lon, label: p.label, slot: p.slot })),
+        active: active ? { lat: active.lat, lon: active.lon, label: active.label, slot: active.slot } : null,
         tMs: st.tMs,
       }, location.origin)
     }, 400)
@@ -872,7 +873,7 @@ export default function App() {
   }
 
   return (
-    <div className="app" data-mode={mode} data-welcome={welcome ? 'on' : 'off'} data-sheet={sheet} data-tab={finderOn && tab === 'find' ? 'find' : 'sites'} data-finder={finderOn ? 'on' : 'off'} data-showcase={showcased ? 'on' : 'off'}>
+    <div className="app" data-embed={EMBEDDED ? 'on' : 'off'} data-mode={mode} data-welcome={welcome ? 'on' : 'off'} data-sheet={sheet} data-tab={finderOn && tab === 'find' ? 'find' : 'sites'} data-finder={finderOn ? 'on' : 'off'} data-showcase={showcased ? 'on' : 'off'}>
       <div className="viewport">
         <MoonCanvas quality={quality}>
           <color attach="background" args={['#000']} />
@@ -1114,7 +1115,7 @@ export default function App() {
                     <span>{current.ends![1]}</span>
                   </div>
                 )}
-                <p>{current.legend}</p>
+                <p className="layer-note">{current.legend}</p>
                 {viewKind === 'globe' && (
                   <p className="marker-key">
                     <i className="mk ok" /> landed <i className="mk lost" /> lost on landing <i className="mk planned" /> planned
@@ -1143,8 +1144,8 @@ export default function App() {
         {ephem && <TimeBar ephem={ephem} />}
       </div>
 
-      {ephem && terrain && !welcome && <Tutorial />}
-      {welcome && <Welcome ready={!!ephem && !!terrain} error={error} />}
+      {!EMBEDDED && ephem && terrain && !welcome && <Tutorial />}
+      {!EMBEDDED && welcome && <Welcome ready={!!ephem && !!terrain} error={error} />}
       {about && <DataMethod onClose={closeAbout} />}
 
       {hover && (

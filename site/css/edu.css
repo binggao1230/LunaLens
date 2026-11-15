@@ -28,6 +28,31 @@
 
 /* ---- Education mode is the simpler interface: no Expert navigation, numbers, exports or comparison controls ---- */
 /* Same navigation in both modes, Data included. */
+/* Education mode is the Mission page only: no Expert navigation, no Data page, no mobile link. */
+body.edu-on .appbar .tabs,body.edu-on .appbar .side,body.edu-on .tabbar{display:none!important}
+body.edu-on{--bottom-nav-h:0px}
+body:not(.edu-on) [data-nav] button[data-view=mission]{display:none}
+body.edu-on .appbar #mode-toggle{margin-left:auto}
+/* ---- the first choice: Expert or Education, before anything else ---- */
+#mode-gate{position:fixed;inset:0;z-index:95;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:24px;overflow:auto;
+  background:radial-gradient(circle at 50% 30%,#1a1f27 0%,#0f1113 70%);color:var(--text,#f5f3fb)}
+#mode-gate[hidden]{display:none}
+#mode-gate h1{margin:0;font-size:clamp(26px,4vw,40px);font-weight:300;letter-spacing:.01em;text-align:center}
+#mode-gate p.gate-sub{margin:-16px 0 0;color:var(--muted,#a0a7b2);font-size:15px;text-align:center}
+.gate-cards{display:grid;grid-template-columns:repeat(2,minmax(0,300px));gap:18px;width:100%;justify-content:center}
+.gate-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 20px;border-radius:16px;border:1px solid var(--border,#2c313a);background:rgba(255,255,255,.03);color:inherit;font:inherit;cursor:pointer;text-align:center;min-height:200px;justify-content:flex-start;transition:border-color .2s,background .2s,transform .2s}
+.gate-card:hover{background:rgba(255,255,255,.07);transform:translateY(-2px)}
+.gate-card:focus-visible{outline:2px solid #f5c542;outline-offset:3px}
+.gate-card[data-mode=expert]:hover{border-color:#f5c542}
+.gate-card[data-mode=education]:hover{border-color:#5aa7f0}
+.gate-card b{font-size:13px;letter-spacing:.18em;text-transform:uppercase;font-weight:500}
+.gate-card[data-mode=expert] b{color:#f5c542}
+.gate-card[data-mode=education] b{color:#5aa7f0}
+.gate-card span{font-size:14px;color:var(--text2,#c3c7ce);line-height:1.45}
+.gate-card>div{width:92px;height:92px;display:grid;place-items:center;flex:none}
+.gate-card .wipe-icon{width:72px;height:72px}
+.gate-card .edu-char{width:92px;height:92px}
+@media (max-width:640px){.gate-cards{grid-template-columns:1fr}.gate-card{min-height:0;padding:20px 16px}}
 body.edu-on .m-readout,body.edu-on .side-head-actions,body.edu-on .pill2,body.edu-on .lane-export,body.edu-on .lane-meta,
 body.edu-on .srow-chk,body.edu-on .srow .chev,body.edu-on .srow .det{display:none!important}
 body.edu-on .srow-top>button{padding-left:12px}
@@ -141,6 +166,7 @@ body.edu-on[data-view=mission]{--page:#070b14;--surface:#0b111c;--border:rgba(20
 body.edu-on[data-view=mission]::before{background:radial-gradient(120% 80% at 20% 0%,#0d1626 0%,#070b14 55%,#05080f 100%)}
 body.edu-on[data-view=mission] main{max-width:1600px;padding:0 28px 56px}
 body.edu-on[data-view=mission] .mission{grid-template-columns:minmax(0,1fr) 420px;gap:0}
+body.edu-on[data-view=mission] .side-panel{height:min(74svh,720px);min-height:420px;align-self:start}
 body.edu-on[data-view=mission] .glass{background:transparent;border:0;border-radius:0;box-shadow:none}
 body.edu-on[data-view=mission] button:focus-visible,body.edu-on[data-view=mission] input:focus-visible{outline-color:#5aa7f0}
 /* date bar */
@@ -201,11 +227,14 @@ body.edu-on .edu-final{background:#0b111c;border-color:rgba(90,167,240,.35)}
 body.edu-on .edu-final .btn-primary{background:#5aa7f0;color:#07111c;border-radius:99px;letter-spacing:.14em;text-transform:uppercase;font-size:12px}
 @media (max-width:1060px){
   body.edu-on[data-view=mission] .mission{grid-template-columns:1fr}
+  body.edu-on[data-view=mission] .side-panel{height:min(68svh,560px);min-height:360px}
   body.edu-on[data-view=mission] .stage{border-right:0;border-bottom:1px solid var(--border)}
   body.edu-on[data-view=mission] .side-panel{padding-left:0;padding-top:18px}
 }
 @media (max-width:760px){
   body.edu-on[data-view=mission] main{padding:0 14px 260px}
+  body.edu-on[data-view=mission] .side-panel{height:min(54svh,460px);min-height:320px;margin-bottom:0}
+  body.edu-on[data-view=mission] #m-send{position:sticky;bottom:64px;z-index:56}
   body.edu-on[data-view=mission] .datebar{padding:14px 4px 16px}
   body.edu-on[data-view=mission] .stage h2{font-size:20px}
   body.edu-on[data-view=mission] .side-head h3{font-size:24px}
@@ -387,3 +416,17 @@ body.edu-on,body.edu-on *{cursor:url("../assets/cursor/glove-point.svg") 5 3,poi
 body.edu-on canvas:active,body.edu-on .stage:active{cursor:url("../assets/cursor/glove-grab.svg") 16 14,grabbing!important}
 body.edu-on input[type=text],body.edu-on input[type=search],body.edu-on textarea{cursor:text!important}
 body.edu-on :disabled,body.edu-on [aria-disabled=true]{cursor:not-allowed!important}
+
+/* Mode switch: icons only, names stay in aria-label. */
+.seg-pill .long,.seg-pill .short{display:none!important}
+.appbar .seg-pill{height:32px;padding:2px;gap:2px;border-radius:9px}
+.seg-pill button,.seg-pill button[aria-pressed]{width:28px;min-height:0;height:26px;padding:0;justify-content:center;border-radius:7px}
+.seg-pill svg{width:16px;height:16px}
+@media (max-width:760px){
+  :root{--bar-h:56px}
+  .appbar{flex-wrap:nowrap}
+  .appbar .brand{order:1}
+  .appbar #mode-toggle{order:2;flex:none;margin-left:auto}
+  .appbar .lang-menu{order:3}
+  .appbar #mode-toggle button{flex:none}
+}
