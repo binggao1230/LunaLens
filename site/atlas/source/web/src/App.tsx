@@ -211,13 +211,14 @@ function TimeBar({ ephem }: { ephem: Ephem }) {
 function PinMarkers({ elevation }: { elevation: (lat: number, lon: number) => number }) {
   const pins = useStore((s) => s.pins)
   const active = useStore((s) => s.activePin)
+  const maps = useMemo(() => SITE_COLORS.map((c) => dotTexture(c)), [])
   return (
     <>
       {pins.map((p) => (
-        <mesh
+        <sprite
           key={p.id}
           position={sitePosKm(p.lat, p.lon, elevation(p.lat, p.lon) + 250)}
-          scale={p.id === active ? 1.25 : 1}
+          scale={p.id === active ? [0.06, 0.06, 1] : [0.05, 0.05, 1]}
           renderOrder={6}
           userData={MARKER}
           onClick={(e) => {
@@ -226,12 +227,26 @@ function PinMarkers({ elevation }: { elevation: (lat: number, lon: number) => nu
             useStore.getState().setActivePin(p.id)
           }}
         >
-          <sphereGeometry args={[0.018, 16, 12]} />
-          <meshBasicMaterial color={SITE_COLORS[p.slot]} depthTest={false} transparent opacity={p.id === active ? 1 : 0.8} />
-        </mesh>
+          <spriteMaterial map={maps[p.slot]} sizeAttenuation={false} depthTest={false} transparent opacity={p.id === active ? 1 : 0.8} />
+        </sprite>
       ))}
     </>
   )
+}
+
+/** A letterless waypoint marker: a coloured disc with a dark centre. */
+function dotTexture(color: string): THREE.Texture {
+  const c = document.createElement('canvas')
+  c.width = c.height = 96
+  const g = c.getContext('2d')!
+  g.beginPath()
+  g.arc(48, 48, 32, 0, Math.PI * 2)
+  g.fillStyle = color
+  g.fill()
+  g.lineWidth = 7
+  g.strokeStyle = ON_ACCENT
+  g.stroke()
+  return new THREE.CanvasTexture(c)
 }
 
 /** Latitude and longitude of the highest cell within `radiusM` of a patch's centre. */
@@ -604,6 +619,9 @@ export default function App() {
         store.setPlaying(false)
         store.setTime(raw.tMs)
       }
+      if (raw.focus && Number.isFinite(raw.focus.lat) && Number.isFinite(raw.focus.lon)) {
+        store.goTo({ kind: 'site', lat: raw.focus.lat, lon: raw.focus.lon, hM: elevation(raw.focus.lat, raw.focus.lon) })
+      }
     }
     window.addEventListener('message', onCommand)
     return () => window.removeEventListener('message', onCommand)
@@ -611,6 +629,11 @@ export default function App() {
   const pick = useCallback(
     (lat: number, lon: number, label?: string) => addPin({ lat, lon, hM: elevation(lat, lon), label }),
     [addPin, elevation],
+  )
+  // The embedded Atlas is a fixed viewport; point selection belongs to Map.
+  const pickScene = useCallback(
+    (lat: number, lon: number) => { if (!EMBEDDED) pick(lat, lon) },
+    [pick],
   )
   // A pick made while a mission view is open first closes it (the same way out as its close
   // button), and goes ahead when the camera is back up; see store.whenShowcaseClosed.
@@ -789,6 +812,7 @@ export default function App() {
   const mainMenu = useRef<HTMLDetailsElement>(null)
   const mode = useStore((s) => s.mode)
   const setMode = useStore((s) => s.setMode)
+  useEffect(() => { if (EMBEDDED) setMode('plan') }, [setMode])
   const welcome = useStore((s) => s.welcome)
   const closeMenus = () => {
     if (mainMenu.current) mainMenu.current.open = false
@@ -854,12 +878,12 @@ export default function App() {
       <div className="viewport">
         <MoonCanvas quality={quality}>
           <color attach="background" args={['#000']} />
-          <Globe sunDir={sun.dir} cuts={cuts} map={globeMap} relief={globeRelief} segments={detail.globe} onPick={pick} />
+          <Globe sunDir={sun.dir} cuts={cuts} map={globeMap} relief={globeRelief} segments={detail.globe} onPick={pickScene} />
           {terrain && (
-            <MoonTerrain terrain={terrain} sunDir={sun.dir} sunRad={sun.rad} layer={layer} score={score} dataBase={BASE} map={globeMap} relief={globeRelief} overlays cuts={patchCuts} detail={detail} onPick={pick} />
+            <MoonTerrain terrain={terrain} sunDir={sun.dir} sunRad={sun.rad} layer={layer} score={score} dataBase={BASE} map={globeMap} relief={globeRelief} overlays cuts={patchCuts} detail={detail} onPick={pickScene} />
           )}
           {shownPatches.map((t) => (
-            <MoonTerrain key={t.id} terrain={t} sunDir={sun.dir} sunRad={sun.rad} layer={layer} dataBase={BASE} map={globeMap} relief={globeRelief} overlays={false} detail={detail} onPick={pick} />
+            <MoonTerrain key={t.id} terrain={t} sunDir={sun.dir} sunRad={sun.rad} layer={layer} dataBase={BASE} map={globeMap} relief={globeRelief} overlays={false} detail={detail} onPick={pickScene} />
           ))}
           <Missions missions={missions} heights={missionHeights} onSelect={selectMission} onHover={onHover} />
           {bodies && <SkyBodies sun={bodies.sun} earth={bodies.earth} tMs={tMs} />}
