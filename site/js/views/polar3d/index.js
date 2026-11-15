@@ -337,6 +337,7 @@ export async function createPolar3d(env) {
         }
         updatePulse();
         renderer.render(scene, camera);
+        env.onFrame?.();
       }
       const resize = () => {
         const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
@@ -411,6 +412,16 @@ export async function createPolar3d(env) {
         reset: () => flyTo(homeDir(), 3.6),
         zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.05, MAX_DIST)); controls.update(); request(); },
         focus: (site) => flyTo(new T.Vector3(...unit(site.lat, site.lon)), site.lat <= -75 ? 1.07 : undefined),
+        /** Fly the camera over any point; used by the historic-site cards. */
+        look: (lat, lon, distance) => flyTo(new T.Vector3(...unit(lat, lon)), distance),
+        /** Screen position of a surface point for HTML overlays: hidden on the far hemisphere. */
+        project: (lat, lon) => {
+          const normal = new T.Vector3(...unit(lat, lon));
+          const facing = normal.dot(camera.position.clone().normalize()) > 0.08;
+          const p = normal.clone().multiplyScalar(1.004).project(camera);
+          const dist = camera.position.length();
+          return { x: (p.x * 0.5 + 0.5) * stage.clientWidth, y: (-p.y * 0.5 + 0.5) * stage.clientHeight, visible: facing && p.z < 1, scale: Math.sqrt(3.6 / Math.max(1.05, dist)) };
+        },
       };
       resize();
     } catch (error) {

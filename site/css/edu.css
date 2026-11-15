@@ -221,3 +221,55 @@ body.edu-on .edu-final .btn-primary{border-radius:99px;letter-spacing:.14em;text
   body.edu-on[data-view=mission] .side-head h3{font-size:24px}
   body.edu-on[data-view=mission] .stage .hint{font-size:9px}
 }
+
+/* ---- Education mode: historic landing-site flags, their cards and the off-map list ---- */
+.hflags{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hflag{position:absolute;left:0;top:0;width:29px;height:32px;padding:0;margin:0;border:0;background:none;cursor:pointer;pointer-events:auto;min-height:0;border-radius:0;
+  transform:translate(-23.8%,-87.3%) scale(var(--s,1));transform-origin:23.8% 87.3%;transition:transform .15s ease,filter .15s ease,opacity .2s ease}
+.hflag img{display:block;width:100%;height:100%;pointer-events:none}
+.hflag::after{content:"";position:absolute;left:23.8%;top:87.3%;width:26px;height:11px;border-radius:50%;transform:translate(-50%,-50%);border:1.5px solid transparent;pointer-events:none}
+.hflag.hover,.hflag:hover{transform:translate(-23.8%,-87.3%) scale(calc(var(--s,1) * 1.15));filter:drop-shadow(0 0 8px rgba(115,168,203,.75))}
+.hflag.sel{transform:translate(-23.8%,-87.3%) scale(calc(var(--s,1) * 1.25));filter:drop-shadow(0 0 10px rgba(255,255,255,.55))}
+.hflag.sel::after{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.6)}
+.hflag.planned{opacity:.5}
+.hflag.planned::after{border:1.5px dashed rgba(255,255,255,.7)}
+.hflag.hl::after{border-color:var(--primary);animation:hflag-pulse 1.4s ease-in-out infinite}
+.hflag:focus-visible{outline:2px solid var(--primary);outline-offset:4px;border-radius:6px}
+@keyframes hflag-pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,197,66,.6)}50%{box-shadow:0 0 0 8px rgba(245,197,66,0)}}
+.hcard{position:absolute;z-index:4;width:min(320px,calc(100% - 24px));background:rgba(11,17,28,.97);border:1px solid var(--accent-line);border-radius:16px;padding:14px 16px;color:var(--text);box-shadow:0 0 30px rgba(90,167,240,.15),0 18px 50px -20px rgba(0,0,0,.8)}
+.hcard[hidden]{display:none}
+.hcard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.hcard h3{margin:0;font-size:17px;font-weight:600;outline:none}
+.hcard-meta{margin:2px 0 0;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.hchip{flex:none;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;border-radius:99px;padding:3px 9px;border:1px solid transparent}
+.hchip.s-success{background:rgba(67,217,138,.18);color:var(--good);border-color:rgba(67,217,138,.45)}
+.hchip.s-partial{background:rgba(245,197,66,.16);color:var(--sun);border-color:rgba(245,197,66,.45)}
+.hchip.s-failed{background:rgba(255,107,107,.16);color:var(--critical);border-color:rgba(255,107,107,.45)}
+.hchip.s-planned{background:transparent;color:var(--muted);border:1px dashed var(--muted)}
+.hcard-title{margin:10px 0 4px;font-size:15px;font-weight:600}
+.hcard-fact{margin:0;font-size:13px;line-height:1.5;color:var(--text2)}
+.hcard-lesson{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;padding:8px 10px;border-radius:10px;background:var(--accent-soft);font-size:12px;line-height:1.45;color:var(--text)}
+.hcard-lesson i{flex:none;width:18px;height:18px;color:var(--accent)}
+.hcard-lesson svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.hcard-note{margin:8px 0 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hcard-actions{display:flex;gap:8px;margin-top:12px}
+.hcard-actions .btn-primary{min-height:36px;padding:6px 16px;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.hcard-actions .btn-ghost{min-height:36px;padding:6px 14px;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.hpanel{position:absolute;right:16px;bottom:64px;z-index:3;width:min(260px,calc(100% - 32px));max-height:46%;overflow:auto;background:rgba(7,11,20,.85);border:1px solid var(--border);border-radius:12px;padding:10px 10px 6px}
+.hpanel[hidden]{display:none}
+.hpanel-head{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 2px 6px;display:flex;justify-content:space-between;gap:8px}
+.hpanel-list{display:grid;gap:2px}
+.hpanel-list button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:none;color:var(--text);padding:6px 6px;min-height:0;border-radius:8px;font-size:13px;cursor:pointer}
+.hpanel-list button:hover,.hpanel-list button.on{background:rgba(255,255,255,.06)}
+.hpanel-list img{width:14px;height:15px;flex:none}
+.hpanel-list span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hpanel-list small{color:var(--muted);margin-left:4px}
+.hpanel-list i{font-style:normal;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:1px 7px;flex:none}
+#m-hist{display:none}
+body.edu-on #m-hist{display:inline-flex;align-items:center;gap:6px}
+#m-hist img{width:12px;height:13px}
+#m-hist[aria-pressed=true]{color:var(--text);background:rgba(255,255,255,.1)}
+@media (max-width:760px){
+  .hpanel{right:10px;bottom:120px;max-height:38%}
+  .hcard{width:min(300px,calc(100% - 20px))}
+}
