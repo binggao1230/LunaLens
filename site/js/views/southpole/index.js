@@ -1,7 +1,7 @@
 // South Pole prototype: one full-screen stage with three ordered views.
 // Globe -> 2D map (South Pole blocks / Whole Moon) -> Atlas for the chosen cell.
 // The search window is chosen in a dialog, then kept in a persistent bottom bar.
-import { t } from '../../i18n.js';
+import { t, locale, initTranslations } from '../../i18n.js';
 import { escapeHtml, fmtLatLon, fmtDateTime, fmtTime, isoDate } from '../../format.js';
 import { createPolar3d } from '../polar3d/index.js';
 import { computeHorizon } from '../../engine/dem.js';
@@ -108,7 +108,7 @@ export function createSouthPole(ctx) {
 
   function syncSliders(source) {
     const latest = Math.max(1, latestDay());
-    for (const host of [els['sp-range2'], els['sp-mslider']]) {
+    for (const host of [els['sp-range2']]) {
       const slider = initWindowSlider(host);
       if (!slider) continue;
       if (host.dataset.max !== String(latest)) {
@@ -136,7 +136,6 @@ export function createSouthPole(ctx) {
     if (els['sp-win-start']) els['sp-win-start'].textContent = isoDate(start);
     if (els['sp-win-end']) els['sp-win-end'].textContent = isoDate(end);
     if (els['sp-mstart']) els['sp-mstart'].value = isoDate(start);
-    if (els['sp-mend']) els['sp-mend'].value = isoDate(end);
     if (els['sp-window-now']) {
       const now = ctx.landing();
       els['sp-window-now'].hidden = !ui.window.chosen;
@@ -144,6 +143,59 @@ export function createSouthPole(ctx) {
       els['sp-window-now'].title = fmtDateTime(now);
     }
     syncSliders(source);
+    renderModalPicker(source);
+  }
+
+  const MONTH_LEN = [7, 30, 90, MAX_WINDOW_DAYS];
+
+  function renderModalPicker(source = null) {
+    if (!els['sp-len']) return;
+    const length = ui.window.endDay - ui.window.startDay + 1;
+    els['sp-len'].innerHTML = MONTH_LEN.map((n) => `<button type="button" data-len="${n}" aria-pressed="${n === length}" class="${n === length ? 'on' : ''}">${escapeHtml(t('{n} days', { n }))}</button>`).join('');
+    if (els['sp-mdays'] && document.activeElement !== els['sp-mdays']) els['sp-mdays'].value = String(length);
+    if (els['sp-mrange']) els['sp-mrange'].textContent = t('{from} → {to} (UTC)', { from: isoDate(dayMs(ui.window.startDay)), to: isoDate(dayMs(ui.window.endDay)) });
+    syncModalSlider(source);
+  }
+
+  function syncModalSlider(source) {
+    const host = els['sp-mslider'];
+    if (!host || !window.noUiSlider) return;
+    const latest = Math.max(1, latestDay());
+    const span = Math.min(548, latest);
+    let viewStart = ui.window.viewStart ?? 0;
+    const outside = ui.window.startDay < viewStart || ui.window.endDay > viewStart + span;
+    if (!host.noUiSlider || (outside && source !== host)) {
+      viewStart = clamp(ui.window.startDay - 30, 0, Math.max(0, latest - span));
+    }
+    const viewEnd = Math.max(viewStart + 1, Math.min(latest, viewStart + span));
+    const key = `${viewStart}|${viewEnd}`;
+    ui.window.viewStart = viewStart;
+    if (host.dataset.view !== key) {
+      host.noUiSlider?.destroy();
+      const marks = [];
+      for (let y = new Date(dayMs(viewStart)).getUTCFullYear(); y <= new Date(dayMs(viewEnd)).getUTCFullYear(); y++) {
+        for (let m = 0; m < 12; m++) {
+          const day = Math.round((Date.UTC(y, m, 1) - eph().t0) / DAY);
+          if (day >= viewStart && day <= viewEnd) marks.push({ day, label: m === 0 ? String(y) : new Date(Date.UTC(y, m, 1)).toLocaleDateString(locale(), { month: 'short', timeZone: 'UTC' }) });
+        }
+      }
+      const labels = new Map(marks.map((mark) => [mark.day, mark.label]));
+      window.noUiSlider.create(host, {
+        start: [clamp(ui.window.startDay, viewStart, viewEnd), clamp(ui.window.endDay, viewStart, viewEnd)],
+        connect: true, step: 1, limit: MAX_WINDOW_DAYS - 1,
+        range: { min: viewStart, max: viewEnd },
+        pips: { mode: 'values', values: marks.map((mark) => mark.day), density: 100, format: { to: (v) => labels.get(Math.round(v)) ?? '', from: (v) => Number(v) } },
+      });
+      host.dataset.view = key;
+      host.noUiSlider.on('update', (vals) => {
+        if (ui.syncingSliders) return;
+        setWindow(Number(vals[0]), Number(vals[1]), 'both', host);
+      });
+    } else if (source !== host) {
+      ui.syncingSliders = true;
+      host.noUiSlider.set([ui.window.startDay, ui.window.endDay], false);
+      ui.syncingSliders = false;
+    }
   }
 
   function setWindow(startDay, endDay, anchor = 'both', source = null) {
@@ -176,16 +228,11 @@ export function createSouthPole(ctx) {
   }
 
   function confirmWindow() {
-    const from = els['sp-mstart']?.value;
-    const through = els['sp-mend']?.value;
-    let startDay = ui.window.startDay, endDay = ui.window.endDay;
-    if (from && through) {
-      const s = dayOf(Date.parse(`${from}T00:00:00Z`));
-      const e = dayOf(Date.parse(`${through}T00:00:00Z`));
-      if (Number.isFinite(s) && Number.isFinite(e)) { startDay = s; endDay = e; }
-    }
+    applyModalInputs();
+    const { startDay, endDay } = ui.window;
     setWindow(startDay, endDay);
     ui.window.chosen = true;
+    clearTimeout(windowDebounce);
     els['sp-modal'].hidden = true;
     ui.window.collapsed = false;
     els['sp-windowbar'].hidden = false;
@@ -195,10 +242,19 @@ export function createSouthPole(ctx) {
     renderAll();
   }
 
+  function applyModalInputs() {
+    const from = els['sp-mstart']?.value;
+    const days = Math.round(Number(els['sp-mdays']?.value));
+    if (!from || !Number.isFinite(days) || days < 1) { renderModalPicker(); return; }
+    const startDay = dayOf(Date.parse(`${from}T00:00:00Z`));
+    if (!Number.isFinite(startDay)) { renderModalPicker(); return; }
+    setWindow(startDay, startDay + clamp(days, 1, MAX_WINDOW_DAYS) - 1, 'start');
+  }
+
   function openWindowEditor() {
+    ui.window.backup = { startDay: ui.window.startDay, endDay: ui.window.endDay };
     syncWindowInputs();
     els['sp-modal'].hidden = false;
-    if (els['sp-mcancel']) els['sp-mcancel'].hidden = !ui.window.chosen;
   }
 
   /* ---------- DOM ---------- */
@@ -306,14 +362,19 @@ export function createSouthPole(ctx) {
           <h2 id="sp-mtitle">${escapeHtml(t('Choose the search window'))}</h2>
           <p class="sub">${escapeHtml(t('Pick the period to screen: the first and last UTC days are the first and last touchdown samples. Every block is screened at its best touchdown inside this period, one sample per UTC day.'))}</p>
           <p class="sub">${escapeHtml(t('Windows are limited to {max} days (about half a year).', { max: MAX_WINDOW_DAYS }))}</p>
-          <div class="pole-window-slider pole-modal-slider" id="sp-mslider"></div>
-          <label>${escapeHtml(t('Stay'))}<select id="sp-mstay"></select></label>
+          <label class="pole-modal-field">${escapeHtml(t('Stay'))}<select id="sp-mstay"></select></label>
           <div class="pole-modal-dates">
             <label>${escapeHtml(t('Search from (UTC)'))}<input id="sp-mstart" type="date"></label>
-            <label>${escapeHtml(t('Search through (UTC)'))}<input id="sp-mend" type="date"></label>
           </div>
+          <div class="pole-window-slider pole-modal-slider" id="sp-mslider"></div>
+          <div class="pole-modal-row pole-length-row">
+            <span>${escapeHtml(t('Length'))}</span>
+            <span class="pole-days"><input id="sp-mdays" type="number" min="1" max="${MAX_WINDOW_DAYS}" step="1"><em>${escapeHtml(t('days'))}</em></span>
+            <div class="seg" id="sp-len" role="group" aria-label="${escapeHtml(t('Quick length'))}"></div>
+          </div>
+          <p class="sub" id="sp-mrange"></p>
           <p id="sp-mwindowinfo" class="sub"></p>
-          <div class="pole-modal-actions"><button type="button" class="btn-ghost" id="sp-mcancel" hidden>${escapeHtml(t('Cancel'))}</button><button type="button" class="btn-primary" id="sp-confirm">${escapeHtml(t('Use this window'))}</button></div>
+          <div class="pole-modal-actions"><button type="button" class="btn-ghost" id="sp-mcancel">${escapeHtml(t('Cancel'))}</button><button type="button" class="btn-primary" id="sp-confirm">${escapeHtml(t('Use this window'))}</button></div>
         </div>
       </div>
 
@@ -331,7 +392,8 @@ export function createSouthPole(ctx) {
         <div class="pole-popup-card" id="sp-popup-card"></div>
       </div>
     </div>`;
-    for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-start', 'sp-end', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-range2', 'sp-window-now', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-mslider', 'sp-mwindowinfo', 'sp-confirm', 'sp-mcancel', 'sp-mstart', 'sp-mend', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-hide', 'sp-window-show', 'sp-win-start', 'sp-win-end', 'sp-window-count', 'sp-window-edit', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target', 'sp-back-map']) els[id] = document.getElementById(id);
+    initTranslations();
+    for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-range2', 'sp-window-now', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-len', 'sp-mslider', 'sp-mrange', 'sp-mwindowinfo', 'sp-confirm', 'sp-mcancel', 'sp-mstart', 'sp-mdays', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-hide', 'sp-window-show', 'sp-win-start', 'sp-win-end', 'sp-window-count', 'sp-window-edit', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target']) els[id] = document.getElementById(id);
     bind();
     initWindow();
     restoreSlots();
@@ -456,12 +518,22 @@ export function createSouthPole(ctx) {
     return shadeCanvas(heights, N, kmPerPx);
   }
 
+  let drawSeq = 0, drawQueued = false;
+  function requestDraw() {
+    if (drawQueued) return;
+    drawQueued = true;
+    requestAnimationFrame(() => { drawQueued = false; drawMap(); });
+  }
+
   async function drawMap() {
     const cv = els['sp-map']; if (!cv) return;
+    const seq = ++drawSeq;
     const g = cv.getContext('2d');
     g.clearRect(0, 0, 762, 762); g.fillStyle = '#0f1113'; g.fillRect(0, 0, 762, 762);
     try {
-      const b = await ensureBase(), k = pxPerKm(), size = b.halfKm * 2 * k, [left, top] = screenOf(-b.halfKm, b.halfKm);
+      const b = await ensureBase();
+      if (seq !== drawSeq) return;
+      const k = pxPerKm(), size = b.halfKm * 2 * k, [left, top] = screenOf(-b.halfKm, b.halfKm);
       g.drawImage(b.canvas, left, top, size, size);
       if (ui.map.scale >= 12 && !ui.map.dragging) {
         const key = `${ui.map.cxKm.toFixed(3)}|${ui.map.cyKm.toFixed(3)}|${ui.map.scale.toFixed(2)}`;
@@ -502,6 +574,11 @@ export function createSouthPole(ctx) {
     }
   }
 
+  function canvasPoint(e) {
+    const box = els['sp-map'].getBoundingClientRect(), side = Math.min(box.width, box.height);
+    return [(e.clientX - box.left - (box.width - side) / 2) / side * 762, (e.clientY - box.top - (box.height - side) / 2) / side * 762];
+  }
+
   function bindMap() {
     const cv = els['sp-map'];
     cv.addEventListener('pointerdown', (e) => { cv.setPointerCapture?.(e.pointerId); ui.map.dragging = { x: e.clientX, y: e.clientY, moved: 0 }; });
@@ -509,13 +586,12 @@ export function createSouthPole(ctx) {
       if (!ui.map.dragging) return;
       const dx = e.clientX - ui.map.dragging.x, dy = e.clientY - ui.map.dragging.y;
       ui.map.dragging.x = e.clientX; ui.map.dragging.y = e.clientY; ui.map.dragging.moved += Math.hypot(dx, dy);
-      const k = pxPerKm(); ui.map.cxKm -= dx / k; ui.map.cyKm += dy / k; drawMap();
+      const k = pxPerKm(); ui.map.cxKm -= dx / k; ui.map.cyKm += dy / k; requestDraw();
     });
     cv.addEventListener('pointerup', (e) => {
       const drag = ui.map.dragging; ui.map.dragging = null;
       if (!drag || drag.moved > 6) { drawMap(); return; }
-      const box = cv.getBoundingClientRect();
-      const sx = (e.clientX - box.left) / box.width * 762, sy = (e.clientY - box.top) / box.height * 762;
+      const [sx, sy] = canvasPoint(e);
       const [xKm, yKm] = kmOf(sx, sy);
       const hit = ui.grid.cells.find((c) => Math.abs(xKm - c.xKm) <= c.cellKm / 2 && Math.abs(yKm - c.yKm) <= c.cellKm / 2);
       if (hit) { ui.cell = hit; openCell(hit); return; }
@@ -525,7 +601,7 @@ export function createSouthPole(ctx) {
     });
     cv.addEventListener('wheel', (e) => {
       e.preventDefault();
-      const box = cv.getBoundingClientRect(), sx = (e.clientX - box.left) / box.width * 762, sy = (e.clientY - box.top) / box.height * 762;
+      const [sx, sy] = canvasPoint(e);
       const [bx, by] = kmOf(sx, sy); ui.map.scale = clamp(ui.map.scale * Math.exp(-e.deltaY * 0.0015), 1.5, 60);
       const [ax, ay] = kmOf(sx, sy); ui.map.cxKm += bx - ax; ui.map.cyKm += by - ay; drawMap();
     }, { passive: false });
@@ -604,7 +680,7 @@ export function createSouthPole(ctx) {
     const step = (idx) => {
       if (token !== ui.grid.token) return;
       if (idx >= ui.grid.cells.length) { ui.grid.done = true; ui.grid.ms = performance.now() - ui.grid.startedMs; renderGrid(); drawMap(); return; }
-      const c = ui.grid.cells[idx], key = `${scope}:${c.cellKm}:${c.row}:${c.col}`;
+      const c = ui.grid.cells[idx], key = `${scope}:${c.cellKm}:${c.lat.toFixed(3)}:${c.lon.toFixed(3)}`;
       let st = staticCache.get(key);
       if (!st) {
         const ground = dem.height(c.lat * D2R, c.lon * D2R);
@@ -617,14 +693,14 @@ export function createSouthPole(ctx) {
             if (token !== ui.grid.token) return;
             const h = computeHorizon(dem, c.lat, c.lon, { minRangeM: 480, azStepDeg: azStep });
             st.horizon = h?.horizon ?? null; st.groundM = h?.groundM ?? ground; st.slopeDeg = h?.slopeDeg ?? r;
-            if (token === ui.grid.token) { ui.grid.cells[idx] = applyScenario({ ...c, static: st }); renderProgress(); drawMap(); step(idx + 1); }
+            if (token === ui.grid.token) { ui.grid.cells[idx] = applyScenario({ ...c, static: st }); renderProgress(); requestDraw(); step(idx + 1); }
           }, 0);
           return;
         }
         staticCache.set(key, st);
       }
       ui.grid.cells[idx] = applyScenario({ ...c, static: { ...st } });
-      renderProgress(); drawMap();
+      renderProgress(); requestDraw();
       setTimeout(() => step(idx + 1), 0);
     };
     step(0);
@@ -635,7 +711,7 @@ export function createSouthPole(ctx) {
   function openCell(cell) {
     ui.popupCell = cell;
     const cl = cell.class ?? { status: 'pending' };
-    const reason = (cl.failed ?? []).concat(cl.missed ?? []).map((r) => REASON_TEXT[r] ?? r);
+    const reason = (cl.failed ?? []).concat(cl.missed ?? []).map((r) => t(REASON_TEXT[r] ?? r));
     els['sp-popup-card'].innerHTML = `<h3>${escapeHtml(t('Block {row}:{col}', { row: cell.row + 1, col: cell.col + 1 }))} · ${escapeHtml(t(cl.status ?? 'pending'))}</h3>
       <p class="sub">${escapeHtml(fmtLatLon(cell.lat, cell.lon, 3))}</p>
       <div class="pole-metrics">
@@ -975,8 +1051,14 @@ export function createSouthPole(ctx) {
 
   function renderProgress() {
     const cells = ui.grid.cells;
-    const done = cells.filter((c) => c.class?.status && c.class.status !== 'pending').length;
-    const count = (s) => cells.filter((c) => c.class?.status === s).length;
+    const tally = { green: 0, yellow: 0, red: 0, unknown: 0 };
+    let done = 0;
+    for (const c of cells) {
+      const status = c.class?.status;
+      if (status && status !== 'pending') done++;
+      if (status in tally) tally[status]++;
+    }
+    const count = (s) => tally[s];
     els['sp-progress'].textContent = cells.length ? t('{level}: {done}/{total} blocks ({green} green, {yellow} yellow, {red} red, {unknown} unknown). Built in {ms} ms; scenario {s} ms.', {
       level: t(ui.grid.scope === 'pole' ? 'South pole blocks' : 'Pilot cells'), done, total: cells.length,
       green: count('green'), yellow: count('yellow'), red: count('red'), unknown: count('unknown'),
@@ -1043,16 +1125,19 @@ export function createSouthPole(ctx) {
     for (const id of ['sp-stay', 'sp-mstay']) els[id].onchange = (e) => { ctx.setStay(e.target.value); renderStaySelects(); setWindow(ui.window.startDay, ui.window.endDay); };
     els['sp-confirm'].onclick = confirmWindow;
     els['sp-window-edit'].onclick = openWindowEditor;
-    els['sp-mcancel'].onclick = () => { if (ui.window.chosen) els['sp-modal'].hidden = true; };
-    const applyModalDates = () => {
-      const from = els['sp-mstart']?.value, through = els['sp-mend']?.value;
-      if (!from || !through) return;
-      const startDay = dayOf(Date.parse(`${from}T00:00:00Z`)), endDay = dayOf(Date.parse(`${through}T00:00:00Z`));
-      if (Number.isFinite(startDay) && Number.isFinite(endDay)) setWindow(startDay, endDay);
+    els['sp-mcancel'].onclick = () => {
+      if (!ui.window.chosen) { confirmWindow(); return; }
+      const back = ui.window.backup;
+      if (back) setWindow(back.startDay, back.endDay);
+      els['sp-modal'].hidden = true;
     };
-    els['sp-mstart'].onchange = applyModalDates;
-    els['sp-mend'].onchange = applyModalDates;
-    const syncPanel = () => { const collapsed = els['sp-panel'].classList.contains('collapsed'); if (els['sp-panel-open']) els['sp-panel-open'].hidden = !collapsed; };
+    els['sp-mstart'].onchange = applyModalInputs;
+    els['sp-mdays'].onchange = applyModalInputs;
+    els['sp-modal'].addEventListener('click', (e) => {
+      const length = e.target.closest('[data-len]');
+      if (length) setWindow(ui.window.startDay, ui.window.startDay + Number(length.dataset.len) - 1, 'start');
+    });
+    const syncPanel = () => { const collapsed = els['sp-panel'].classList.contains('collapsed'); if (els['sp-panel-open']) els['sp-panel-open'].hidden = !collapsed; root.firstElementChild?.classList.toggle('panel-collapsed', collapsed); };
     els['sp-panel-toggle'].onclick = () => { els['sp-panel'].classList.add('collapsed'); syncPanel(); };
     els['sp-panel-open'].onclick = () => { els['sp-panel'].classList.remove('collapsed'); syncPanel(); };
     syncPanel();
@@ -1142,6 +1227,12 @@ export function createSouthPole(ctx) {
     activate,
     onView(view) { if (view === 'pole') activate(); },
     render() { if (ui.built && ctx.view() === 'pole') { renderAll(); refreshScenario(); } },
+    relocalize() {
+      if (!ui.built) return;
+      renderAll(); renderModalPicker(); renderGrid(); renderHud();
+      if (ui.stage === 'atlas') pushAtlasCommand();
+      ui.globe?.request();
+    },
     state: ui,
   };
 }

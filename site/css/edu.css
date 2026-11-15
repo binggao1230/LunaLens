@@ -345,7 +345,7 @@ body[data-view=start] .tabbar{display:none}
 .appbar .tabs button.on,.appbar .side button.on{background:none;color:var(--text);font-weight:500;box-shadow:inset 0 -2px 0 var(--text)}
 .appbar .tabs button:focus-visible,.appbar .side button:focus-visible{outline-offset:-4px}
 .appbar #mode-toggle,.appbar .lang-menu{flex:none;margin:0}
-.appbar .seg-pill,.lang-btn{height:36px;min-height:0;box-sizing:border-box}
+.appbar .seg-pill,.lang-btn{height:32px;min-height:0;box-sizing:border-box}
 
 body[data-view=start] .appbar{background:transparent;border-bottom-color:transparent}
 
@@ -435,6 +435,7 @@ body.edu-on .tabbar button[data-view=atlas],body.edu-on .tabbar button[data-view
 /* Mode switch: icons only, names stay in aria-label. */
 .seg-pill .long,.seg-pill .short{display:none!important}
 .appbar .seg-pill{height:32px;padding:2px;gap:2px;border-radius:9px}
+.appbar .lang-btn{height:32px;border-radius:9px}
 .seg-pill button,.seg-pill button[aria-pressed]{width:28px;min-height:0;height:26px;padding:0;justify-content:center;border-radius:7px}
 .seg-pill svg{width:16px;height:16px}
 @media (max-width:760px){
