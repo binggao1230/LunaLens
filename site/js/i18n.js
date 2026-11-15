@@ -483,9 +483,10 @@ const messages = {
   'Enter the South Pole': ['Entrer au pôle Sud', '进入南极'],
   'No points saved yet. Use A, B or C on the map.': ['Aucun point enregistré. Utilisez A, B ou C sur la carte.', '还没有保存的点位。在地图上点 A、B 或 C 保存。'],
   'Score ≥ {n}': ['Score ≥ {n}', '评分 ≥ {n}'],
+  'Score < {n}': ['Score < {n}', '评分 < {n}'],
   'Score {a}–{b}': ['Score {a}–{b}', '评分 {a}–{b}'],
   'Score < {n} or hard limit failed': ['Score < {n} ou limite stricte échouée', '评分 < {n}，或未通过硬性限制'],
-  'Colours follow the screening score: green 85 and above, yellow 70–84, red below 70 or a failed hard limit.': ['Les couleurs suivent le score de criblage : vert à partir de 85, jaune 70–84, rouge sous 70 ou limite stricte échouée.', '颜色按筛选评分划分：85 分及以上为绿，70–84 分为黄，70 分以下或未通过硬性限制为红。'],
+  'Colours follow the screening score: green 85 and above, yellow 70–84, red below 70.': ['Les couleurs suivent le score de criblage : vert à partir de 85, jaune 70–84, rouge sous 70.', '颜色按筛选评分划分：85 分及以上为绿，70–84 分为黄，70 分以下为红。'],
   'Earth visibility over the stay': ['Visibilité Terre sur le séjour', '停留内地球可见性'],
   'longest continuous Earth link': ['plus longue liaison Terre continue', '最长连续地球链路'],
   'Whole study area: {n} blocks of {km} km south of 85°S. Centre samples on the {res} m raster.': ['Toute la zone d\u2019étude : {n} blocs de {km} km au sud de 85°S. Échantillons au centre sur le raster {res} m.', '整个研究区：85°S 以南 {n} 个 {km} km 分块。按 {res} m 栅格中心采样。'],
@@ -598,6 +599,16 @@ const messages = {
   'Computing… {n} blocks left.': ['Calcul en cours… {n} blocs restants.', '计算中…还剩 {n} 个区块。'],
   'Best touchdown per block in the search window, ranked by screening score.': ['Meilleur alunissage par bloc dans la fenêtre, classé par score de criblage.', '按筛选得分排序，每个区块取搜索窗口内的最佳着陆时刻。'],
   'sun': ['soleil', '日照'],
+  'Screening score: {score} out of 100': ['Score de criblage : {score} sur 100', '筛选评分：{score} 分，满分 100 分'],
+  'Click the map to choose a point, then save it as A, B or C.': ['Cliquez sur la carte pour choisir un point, puis enregistrez-le en A, B ou C.', '点击地图选择点位，再保存为 A、B 或 C。'],
+  'Save as {name}': ['Enregistrer en {name}', '保存为 {name}'],
+  'Replace {name}': ['Remplacer {name}', '替换 {name}'],
+  'Saved as {name}': ['Enregistré en {name}', '已保存为 {name}'],
+  'Point scores: red → yellow → green, from 0 to 100.': ['Scores des points : rouge → jaune → vert, de 0 à 100.', '点位评分：0–100 分，由红到黄再到绿。'],
+  'Choose a point inside the 85°S study area.': ['Choisissez un point dans la zone d’étude au sud de 85°S.', '请选择南纬 85° 以南研究区内的点位。'],
+  'Choose a point on the map and save it as A, B or C.': ['Choisissez un point sur la carte et enregistrez-le en A, B ou C.', '在地图上选择点位，保存为 A、B 或 C。'],
+  'Outside screening limits: {rules}.': ['Limites de criblage non respectées : {rules}.', '未通过筛选限制：{rules}。'],
+  'Scores describe preferences; recommended blocks must also meet every screening limit.': ['Les scores reflètent les préférences ; les blocs recommandés doivent aussi respecter toutes les limites de criblage.', '评分反映偏好；推荐区块还须通过全部筛选限制。'],
 };
 
 let language = 'en';
