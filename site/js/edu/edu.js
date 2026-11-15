@@ -12,6 +12,12 @@ import { assess, isOk, findBreakingDelay, findGoDelay, bestNearby, BATTERY_H, BA
 // Steps of the story: objective, pick a site (confirm, then Lumi reveals), the flags of past landings, launch, …
 const STEP = { objective: 1, site: 2, history: 3, launch: 4, anomaly: 5, fix: 6, done: 7 };
 const DAY = 864e5, TOTAL = 7;
+// The objective segment about the time of landing: the date bar on top of the Mission page pulses while it shows.
+const TIME_SEGMENT = 7;
+// The objective segment that explains the 30-day graph: the graph (#m-lanes) pulses while it shows.
+const GRAPH_SEGMENT = 8;
+// The objective segment about the south pole in 3D or 2D: the whole Moon view (#m-stage) pulses while it shows.
+const MODE_SEGMENT = 3;
 const fmt = (s, v = {}) => String(s ?? '').replace(/\{(\w+)\}/g, (m, k) => (v[k] ?? m));
 
 /** ctx: { mission, sites, eph, landing, setLanding, margin, showView, view, language, toast } */
@@ -215,6 +221,12 @@ export function createEducation(ctx) {
   }
 
   function render() {
+    const pointAtTime = visible() && !st.skipped && st.step === STEP.objective && st.sub === TIME_SEGMENT;
+    document.querySelector('.datebar')?.classList.toggle('edu-point', pointAtTime);
+    const pointAtGraph = visible() && !st.skipped && st.step === STEP.objective && st.sub === GRAPH_SEGMENT;
+    document.getElementById('m-lanes')?.classList.toggle('edu-point', pointAtGraph);
+    const pointAtMode = visible() && !st.skipped && st.step === STEP.objective && st.sub === MODE_SEGMENT;
+    document.getElementById('m-stage')?.classList.toggle('edu-point', pointAtMode);
     if (!visible()) { root.innerHTML = ''; st.key = ''; return; }
     const r = st.step >= STEP.site ? current() : null;
     if (st.skipped) {
