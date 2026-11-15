@@ -3450,3 +3450,8 @@ body[data-over='marker'] .viewport canvas {
 .app[data-embed='on'] .status {
   display: none !important;
 }
+
+/* Atlas is only the scene inside LunaLens; the parent owns every control and readout. */
+.app[data-embed='on'] .chrome {
+  display: none !important;
+}

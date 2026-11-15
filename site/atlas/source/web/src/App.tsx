@@ -35,7 +35,7 @@ import { AddByCoords } from './ui/AddByCoords'
 import { AssumptionsHead, AssumptionsPanel, useAssumptionsChanged } from './ui/Assumptions'
 import { Compare } from './ui/Compare'
 import { DateEditor } from './ui/DateEditor'
-import { INK, ON_ACCENT, Segmented, SITE_LETTERS } from './ui/controls'
+import { INK, ON_ACCENT, Segmented } from './ui/controls'
 import { ErrorBoundary } from './ui/ErrorBoundary'
 import { FinderPanel } from './ui/FinderPanel'
 import { PRESET_IDS } from './ui/CopyLink'
@@ -211,7 +211,7 @@ function TimeBar({ ephem }: { ephem: Ephem }) {
 function PinMarkers({ elevation }: { elevation: (lat: number, lon: number) => number }) {
   const pins = useStore((s) => s.pins)
   const active = useStore((s) => s.activePin)
-  const maps = useMemo(() => SITE_COLORS.map((c, i) => badgeTexture(SITE_LETTERS[i], c)), [])
+  const maps = useMemo(() => SITE_COLORS.map((c) => badgeTexture(c)), [])
   return (
     <>
       {pins.map((p) => (
@@ -435,23 +435,22 @@ function SitesPanel({ pins, activePin, ephem, terrain, patchOf, pending, global,
   )
 }
 
-/** A pinned site's marker: its letter on its colour, with a dark outline so it reads on any ground. */
-function badgeTexture(letter: string, color: string): THREE.Texture {
+/** A pinned site's marker: a coloured diamond with a dark outline, without a slot letter. */
+function badgeTexture(color: string): THREE.Texture {
   const c = document.createElement('canvas')
   c.width = c.height = 96
   const g = c.getContext('2d')!
-  g.beginPath()
-  g.arc(48, 48, 38, 0, Math.PI * 2)
+  g.translate(48, 48)
+  g.rotate(Math.PI / 4)
   g.fillStyle = color
-  g.fill()
+  g.fillRect(-28, -28, 56, 56)
   g.lineWidth = 8
   g.strokeStyle = ON_ACCENT
-  g.stroke()
+  g.strokeRect(-28, -28, 56, 56)
   g.fillStyle = ON_ACCENT
-  g.font = '600 50px system-ui, sans-serif'
-  g.textAlign = 'center'
-  g.textBaseline = 'middle'
-  g.fillText(letter, 48, 51)
+  g.beginPath()
+  g.arc(0, 0, 9, 0, Math.PI * 2)
+  g.fill()
   return new THREE.CanvasTexture(c)
 }
 
@@ -623,6 +622,7 @@ export default function App() {
         .map((s: { lat: number; lon: number; label?: string }) => ({ lat: s.lat, lon: s.lon, label: String(s.label ?? ''), hM: elevation(s.lat, s.lon) }))
       const store = useStore.getState()
       if (Array.isArray(raw.sites)) store.replacePins(sites, raw.active ?? null)
+      if (typeof raw.layer === 'string') store.setLayer(raw.layer as LayerMode)
       if (Number.isFinite(raw.tMs)) {
         store.setPlaying(false)
         store.setTime(raw.tMs)
