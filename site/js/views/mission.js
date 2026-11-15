@@ -375,7 +375,7 @@ export function createMission(ctx) {
       if (event.target.closest('.srow-chk')) return;
       const row = event.target.closest('[data-id]'); if (!row) return;
       const same = local.picked === row.dataset.id;
-      local.picked = row.dataset.id;
+      local.picked = row.dataset.id; ctx.onSitePick?.(local.picked);
       local.open = same && local.open === row.dataset.id ? null : row.dataset.id;
       refresh(true);
       focusSite();
@@ -904,7 +904,7 @@ export function createMission(ctx) {
       const moved = drag?.moved; drag = null;
       if (moved) return;
       const box = canvas.getBoundingClientRect(), hit = nearest(event.clientX - box.left, event.clientY - box.top);
-      if (hit) { local.picked = hit.site.id; refresh(true); }
+      if (hit) { local.picked = hit.site.id; ctx.onSitePick?.(local.picked); refresh(true); }
     });
     canvas.addEventListener('wheel', (event) => {
       event.preventDefault();

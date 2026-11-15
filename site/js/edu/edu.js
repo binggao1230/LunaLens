@@ -20,7 +20,7 @@ export function createEducation(ctx) {
   const stories = new Map();
   const st = {
     active: isEducation(), skipped: false, story: null, step: 0, sub: 0, hold: false, focus: false, key: '',
-    probe: 'apollo', picked: null, status: null, say: null, mood: 'happy',
+    probe: 'apollo', picked: null, chosen: false, status: null, say: null, mood: 'happy',
     base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, name: '',
   };
 
@@ -50,7 +50,7 @@ export function createEducation(ctx) {
   /* ---------- mode and story lifecycle ---------- */
 
   function reset() {
-    Object.assign(st, { skipped: false, step: 0, sub: 0, base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, hold: false, say: null, mood: 'happy' });
+    Object.assign(st, { skipped: false, chosen: false, step: 0, sub: 0, base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, hold: false, say: null, mood: 'happy' });
   }
   /** Step 1, the objective: starts whenever the Mission page opens in Education mode with no story running. */
   function startTour() {
@@ -233,7 +233,7 @@ export function createEducation(ctx) {
       return;
     }
     const text = line(st.say.path, st.say.values);
-    const key = [st.step, st.sub, text, st.revealed, st.mood, r?.verdict, st.relay, st.bonus, st.delay, st.moved?.to, st.waited, st.picked?.id, ctx.language(), st.step === STEP.fix && canComplete()].join('|');
+    const key = [st.step, st.sub, text, st.revealed, st.mood, r?.verdict, st.relay, st.bonus, st.delay, st.moved?.to, st.waited, st.picked?.id, st.chosen, ctx.language(), st.step === STEP.fix && canComplete()].join('|');
     if (key === st.key) return;
     st.key = key;
     // Back and Next are on every step. Next is green when the story can move on, grey and locked when not.
@@ -259,7 +259,7 @@ export function createEducation(ctx) {
       <div class="edu-bubble">
         <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span></div>
         <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite"><b class="edu-speaker">${escapeHtml(get('character.name') ?? 'Lumi')}</b>${escapeHtml(text)}</p>
-        ${st.step === STEP.site && !st.revealed && st.picked ? `<p class="edu-choice">${escapeHtml(ui('choice', { site: st.picked.short }))}</p>` : ''}
+        ${st.step === STEP.site && !st.revealed && st.picked && st.chosen ? `<p class="edu-choice">${escapeHtml(ui('choice', { site: st.picked.short }))}</p>` : ''}
         ${st.step === STEP.fix ? leversHtml(r) : ''}
         <div class="edu-actions">${actions}${skip}</div>
       </div>
@@ -293,6 +293,8 @@ export function createEducation(ctx) {
     /** Validate / "Start the mission" on the start page: the story always restarts at step 1. */
     onValidate() { if (st.active) reset(); },
     onProbePick(id) { st.probe = id; },
+    /** The user picked a site from the list or on the Moon (not the automatic default): the choice is shown. */
+    onSitePick() { if (st.active && !st.chosen) { st.chosen = true; st.key = ''; render(); } },
     onMissionRefresh(site, frame) {
       st.picked = site; st.status = site ? frame.status.get(site.id) ?? null : null;
       if (!st.active || st.skipped || !st.story) return;
