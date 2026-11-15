@@ -1,7 +1,7 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { invalidate } from '@react-three/fiber'
 import * as THREE from 'three'
-import { fmtDateTime, fmtLat, fmtLon, fmtTick } from './lib/format'
+import { fmtDate, fmtDateTime, fmtLat, fmtLon, fmtTick } from './lib/format'
 import { bodyVectors, clockRange, loadEphem, type Ephem } from './lib/ephem'
 import { loadFinderGrid, PRESETS, runFinder, type Candidate, type FinderGrid } from './lib/finder'
 import { latLonOf, sitePosKm, SUN_RADIUS_KM, unit, type Vec3 } from './lib/geo'
@@ -150,14 +150,23 @@ const LAYERS: { label: string; full?: string; value: LayerMode; hint: string; le
 const WINDOW_MS = 30 * 86400 * 1000
 
 function TimeBar({ ephem }: { ephem: Ephem }) {
-  const { tMs, playing, rate, setTime, setPlaying, setRate } = useStore()
-  // The slider scrubs a 60-day window centred where the user last jumped to.
+  const { tMs, playing, rate, setTime, setPlaying, setRate, windowRange, setWindowRange } = useStore()
+  // The slider scrubs the Map touchdown window when one is carried in; otherwise a 60-day view.
   const [centre, setCentre] = useState(tMs)
   // Embedded Atlas is a live scene: start its clock as soon as the time bar is mounted.
   useEffect(() => { if (EMBEDDED) setPlaying(true) }, [setPlaying])
-  const [first, last] = clockRange(ephem)
-  const lo = Math.max(centre - WINDOW_MS, first)
-  const hi = Math.min(centre + WINDOW_MS, last)
+  // The URL carries the initial Map window; later changes arrive through the command channel.
+  useEffect(() => {
+    if (windowRange) return
+    const params = new URLSearchParams(location.search)
+    const start = Number(params.get('w0')), end = Number(params.get('w1'))
+    if (Number.isFinite(start) && Number.isFinite(end) && end > start) setWindowRange([start, end])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const [dataFirst, dataLast] = clockRange(ephem)
+  const first = Math.max(dataFirst, windowRange?.[0] ?? dataFirst)
+  const last = Math.min(dataLast, windowRange?.[1] ?? dataLast)
+  const lo = windowRange ? first : Math.max(centre - WINDOW_MS, first)
+  const hi = windowRange ? last : Math.min(centre + WINDOW_MS, last)
   useEffect(() => {
     if (tMs < lo || tMs > hi) setCentre(tMs)
   }, [tMs, lo, hi])
@@ -179,6 +188,7 @@ function TimeBar({ ephem }: { ephem: Ephem }) {
           </svg>
         </button>
         <Segmented className="rates" label="Playback speed" options={RATES} value={rate} onChange={setRate} />
+        {windowRange && <span className="timebar-window" title="Touchdown search window"><b>Window</b>{fmtDate(first)} → {fmtDate(last)}</span>}
         <input
           className="slider scrub"
           type="range"
@@ -617,6 +627,9 @@ export default function App() {
       const store = useStore.getState()
       if (Array.isArray(raw.sites)) store.replacePins(sites, raw.active ?? null)
       if (typeof raw.layer === 'string') store.setLayer(raw.layer as LayerMode)
+      if (raw.window && Number.isFinite(raw.window.startMs) && Number.isFinite(raw.window.endMs)) {
+        store.setWindowRange([raw.window.startMs, raw.window.endMs])
+      }
       if (Number.isFinite(raw.tMs)) {
         store.setTime(raw.tMs)
       }
@@ -1065,19 +1078,21 @@ export default function App() {
 
           <i className="brk" />
           <div className="layerbar" data-open={menu === 'layers'}>
-            <button className="btn find-btn" aria-pressed={layer === 'finder'} title={`${LAYERS[0].label}. ${LAYERS[0].legend}`} onClick={() => chooseLayer(layer === 'finder' ? 'natural' : 'finder')}>
-              {/* Sliders, not a magnifying glass: this ranks ground against limits, it is not a search box. */}
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
-                <circle cx="15" cy="7" r="2" />
-                <circle cx="9" cy="17" r="2" />
-              </svg>
-              <span>{LAYERS[0].label}</span>
-              <small>{LAYERS[0].hint}</small>
-            </button>
+            {!EMBEDDED && (
+              <button className="btn find-btn" aria-pressed={layer === 'finder'} title={`${LAYERS[0].label}. ${LAYERS[0].legend}`} onClick={() => chooseLayer(layer === 'finder' ? 'natural' : 'finder')}>
+                {/* Sliders, not a magnifying glass: this ranks ground against limits, it is not a search box. */}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+                  <circle cx="15" cy="7" r="2" />
+                  <circle cx="9" cy="17" r="2" />
+                </svg>
+                <span>{LAYERS[0].label}</span>
+                <small>{LAYERS[0].hint}</small>
+              </button>
+            )}
             <span className="bar-label">Map layers</span>
             <div className="seg" role="group" aria-label="Map layer">
-              {LAYERS.slice(1).map((l) => (
+              {LAYERS.slice(1).filter((l) => !EMBEDDED || ['natural', 'sunavg', 'earthavg', 'psr'].includes(l.value)).map((l) => (
                 <button
                   key={l.value}
                   className={l.value === 'elevation' || l.value === 'slope' ? 'pro-only' : undefined}

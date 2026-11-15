@@ -614,9 +614,47 @@
   height: 0;
 }
 .layerbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   max-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(15, 17, 19, 0.86);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(10px);
   overflow-x: auto;
   scrollbar-width: none;
+}
+.layerbar .bar-label {
+  margin: 0 2px 0 4px;
+  font-size: 9px;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.layerbar .seg {
+  padding: 0;
+  gap: 2px;
+  background: transparent;
+}
+.layerbar .seg button {
+  min-height: 28px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: var(--fw-medium);
+}
+.layerbar .seg button:not([aria-pressed='true']):hover {
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+.layerbar .seg button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .layerbar small,
 .layerbar .ramp {
@@ -745,6 +783,8 @@ h2.panel-head {
   padding: 0 var(--sp-3);
   pointer-events: auto;
 }
+.timebar-window{display:flex;flex-direction:column;gap:1px;flex:none;font-size:10px;line-height:1.2;color:var(--text-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.timebar-window b{font-size:8.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase}
 .timebar .scrub {
   flex: 1 1 0;
   width: auto;
@@ -3449,8 +3489,7 @@ body[data-over='marker'] .viewport canvas {
   display: none !important;
 }
 
-/* Embedded Atlas keeps only Sun now and the time bar; the dock cards belong to Map. */
-.app[data-embed='on'] .layerbar,
+/* Embedded Atlas keeps its four layer choices and the time bar; the dock cards belong to Map. */
 .app[data-embed='on'] .chrome > .stage {
   display: none !important;
 }
