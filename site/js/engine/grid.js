@@ -215,7 +215,7 @@ export function screenCellWindow(ephemeris, { lat, lon, groundM, slopeDeg, horiz
       best = { startIndex: s, stats, class: cls, score, qualifies };
     }
   }
-  return best ? { startIndex: best.startIndex, stats: best.stats, class: best.class } : null;
+  return best ? { startIndex: best.startIndex, stats: best.stats, class: best.class, sky } : null;
 }
 
 export const DEFAULT_LIMITS = Object.freeze({ maxSlopeDeg: 15, minEarthPct: 25, minWindowH: 48 });
