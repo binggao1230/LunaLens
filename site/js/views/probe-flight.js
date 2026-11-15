@@ -65,15 +65,6 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
     }
     const world = buildFlightWorld(T, renderer, data, colour, earth, compact);
     scene = world.scene;
-    if (probe === 'artemis') model.traverse(part => {
-      if (!part.isMesh) return;
-      const originals = Array.isArray(part.material) ? part.material : [part.material];
-      const replacements = originals.map(original => new T.MeshStandardMaterial({
-        color: /Gold/i.test(original.name) ? 0xcda756 : /Chrome/i.test(original.name) ? 0x3d4956 : 0xdce2e8,
-        metalness: .5, roughness: .42,
-      }));
-      part.material = Array.isArray(part.material) ? replacements : replacements[0];
-    });
     const box = new T.Box3().setFromObject(model);
     const size = box.getSize(new T.Vector3());
     model.scale.multiplyScalar(2.7 / Math.max(size.x, size.y, size.z));
@@ -93,8 +84,10 @@ export function playProbeFlight(canvas, { probe, site, reduced, onProgress, onCo
       for (const material of Array.isArray(part.material) ? part.material : [part.material]) {
         if (!material?.isMeshStandardMaterial) continue;
         material.envMap = environment.texture;
-        material.envMapIntensity = .9;
-        material.roughness = Math.max(.35, material.roughness);
+        if (probe !== 'artemis' && probe !== 'apollo') {
+          material.envMapIntensity = .9;
+          material.roughness = Math.max(.35, material.roughness);
+        }
       }
     });
     const hit = world.groundAt(0, 0);

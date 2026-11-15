@@ -1,15 +1,18 @@
 /* Education mode: the guide panel, the character, the levers and the final card. */
-/* ---- top bar: mode and language pills, shared by the start page and the mission view ---- */
-.seg-pill{display:inline-flex;align-items:center;flex:none;padding:3px;border-radius:99px;border:1px solid rgba(200,220,240,.13);background:rgba(255,255,255,.04)}
-.seg-pill button{border:0;background:none;color:var(--muted);border-radius:99px;min-height:28px;padding:4px 12px;font:inherit;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;white-space:nowrap;cursor:pointer;transition:color .15s ease,background-color .15s ease,box-shadow .15s ease}
+/* ---- top bar: mode and language switches, the same on every page including the start page ---- */
+.seg-pill{display:inline-flex;align-items:center;gap:2px;flex:none;padding:3px;border-radius:10px;border:1px solid var(--border);background:transparent}
+.seg-pill button{display:inline-flex;align-items:center;gap:5px;border:0;background:none;color:var(--muted);border-radius:7px;min-height:28px;padding:4px 9px;font:inherit;font-size:12.5px;font-weight:500;white-space:nowrap;cursor:pointer;transition:color .15s ease,background-color .15s ease}
 .seg-pill button:hover{color:var(--text)}
-.seg-pill button[aria-pressed=true]{color:#5aa7f0;background:rgba(90,167,240,.14);box-shadow:0 0 16px rgba(90,167,240,.25)}
-.seg-pill button:focus-visible{outline:2px solid #5aa7f0;outline-offset:2px}
+.seg-pill button[aria-pressed=true]{color:var(--text);background:rgba(255,255,255,.1);font-weight:600}
+.seg-pill button:focus-visible{outline:2px solid #f5c542;outline-offset:2px}
 .seg-pill .short{display:none}
-#lang button{letter-spacing:.08em;padding:4px 10px}
+.seg-pill svg{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#lang{padding-left:8px}
+#lang>svg{color:var(--muted);margin-right:3px}
+#lang button{padding:4px 8px}
 .appbar #mode-toggle{margin-left:auto}
 body[data-view=start] .appbar .side{margin-left:auto}
-body[data-view=start] .appbar #mode-toggle,body[data-view=mission] .appbar #mode-toggle{margin-left:0}
+body[data-view=start] .appbar #mode-toggle,body:not([data-view=start]) .appbar #mode-toggle{margin-left:0}
 
 /* ---- the mode switch: a circle wipes out from the pressed control, holds, then fades ---- */
 #mode-wipe{position:fixed;inset:0;z-index:90;pointer-events:none;display:none;place-items:center;
@@ -129,14 +132,14 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
   .seg-pill .short{display:inline}
   .seg-pill button{padding:4px 10px}
   .appbar{flex-wrap:wrap;row-gap:8px}
-  body[data-view=start] .appbar,body[data-view=mission] .appbar{padding-top:10px;padding-bottom:10px;min-height:0}
-  body[data-view=start] .appbar .brand,body[data-view=mission] .appbar .brand{flex:1 1 100%}
-  body[data-view=mission] .appbar #lang{margin-left:0}
+  body[data-view=start] .appbar,body:not([data-view=start]) .appbar{padding-top:10px;padding-bottom:10px;min-height:0}
+  body[data-view=start] .appbar .brand,body:not([data-view=start]) .appbar .brand{flex:1 1 100%}
+  body:not([data-view=start]) .appbar #lang{margin-left:0}
   .guide-row{gap:8px;margin-bottom:10px}
   .guide-row .edu-char{width:56px;height:56px}
   .guide-bubble{font-size:13px;padding:10px 12px}
   body.edu-on[data-view=mission] main{padding-bottom:52vh}
-  body.edu-on .tabbar{grid-template-columns:repeat(4,1fr)}
+  body.edu-on .tabbar{grid-template-columns:repeat(3,1fr)}
   .edu-panel{left:0;right:0;bottom:54px;width:auto;grid-template-columns:1fr;gap:0;max-height:50vh}
   .edu-panel .edu-char{position:absolute;left:12px;bottom:calc(100% - 14px);width:64px;height:64px;z-index:1}
   .edu-panel{padding-top:0}
