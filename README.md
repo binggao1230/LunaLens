@@ -79,6 +79,8 @@ for the second). Records for the current run are in `TODO.md` under `Run log`.
 
 https://luna-lens.gaobing1230.workers.dev
 
+GitHub Pages mirror: https://binggao1230.github.io/LunaLens/ (public; deployed by `.github/workflows/pages.yml`).
+
 This URL serves the deployed `site/`. Verify anonymous access before sharing a release with
 judges: `node site/tools/preflight.mjs` checks the public entry and submission draft without deploying.
 
