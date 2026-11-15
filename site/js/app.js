@@ -9,6 +9,9 @@ import { createEducation } from './edu/edu.js';
 import { getMode, setMode, onMode, initMode, parseHash, formatHash } from './mode.js';
 import { switchMode } from './mode-transition.js';
 import { evaluateSiteMcda } from './engine/metrics.js';
+import { createExpert } from './views/expert.js';
+import { createSouthPole } from './views/southpole/index.js';
+import { dataBounds, latestCompleteTouchdown } from './engine/scenario.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, DAY = 864e5, HOUR = 36e5;
 // A site has a terrain model when its horizon came from LOLA rather than from a smooth sphere.
@@ -36,13 +39,17 @@ const SITE_SOURCES = {
 const $ = (id) => document.getElementById(id);
 const state = {
   site: 0, landing: 0, hour: 0, timer: null, stayKey: 'lunar1', margin: 2,
+  requiredSunH: 156, requireEarth: true,
   slipMinDays: 6.5, slipNeedLink: true, slipMetric: 'sun', mcdaPreset: 'balanced', version: 0,
   // A scenario is one site on one landing date. Compare rows and the header tray both read this
   // list, so "the same site nine days later" is a row like any other.
   scenarios: [], scenario: 0,
 };
 const layout = { pano: null, tl: null, slip: null };
-let eph, SITES = [], sims = [], mission = null, edu = null;
+let eph, SITES = [], sims = [], mission = null, edu = null, expert = null, pole = null;
+/** One shared Expert scenario: data bounds, touchdown and screening conditions. */
+const bounds = () => dataBounds(eph);
+const conditions = () => ({ stayH: stayH(), marginDeg: state.margin, requiredSunH: state.requiredSunH, requireEarthAtTouchdown: state.requireEarth });
 const stayH = () => STAYS[state.stayKey];
 
 /* ---------- sites and the real engine ---------- */
@@ -80,8 +87,11 @@ function diskFrac(h) {
 }
 
 function simulate(site, landingMs = state.landing) {
-  const series = site.series, base = Math.round(eph.indexOf(landingMs)), n = SIM_H + 1;
+  const series = site.series, base = Math.round(eph.indexOf(landingMs));
+  // Lookahead is cosmetic: cap it at the loaded data, never at the stay, which validation enforces.
+  const n = Math.max(1, Math.min(SIM_H + 1, eph.n - base));
   const r = {
+    n,
     sAz: new Float32Array(n), sEl: new Float32Array(n), frac: new Float32Array(n),
     eAz: new Float32Array(n), eEl: new Float32Array(n), comm: new Uint8Array(n),
   };
@@ -101,8 +111,8 @@ function simulate(site, landingMs = state.landing) {
   const mcda = evaluateSiteMcda(site, base, base + hours, {
     marginDeg: state.margin,
     preset: state.mcdaPreset,
-    minSunDays: state.slipMinDays,
-    needLinkAtTouchdown: state.slipNeedLink,
+    minSunDays: state.requiredSunH / 24,
+    needLinkAtTouchdown: state.requireEarth,
   });
   r.litPct = 100 * lit / hours; r.commPct = 100 * comm / hours; r.longest = best;
   r.longestDark = mcda.longestDarkH; r.score = mcda.score; r.viable = mcda.viable;
@@ -117,7 +127,7 @@ function subEarth(ms) { const s = eph.stateAt(eph.indexOf(ms)); return { lat: s[
 function fmtDur(h) { return h < 48 ? `${h} ${t('h')}` : `${Math.floor(h / 24)} ${t('d')} ${h % 24} ${t('h')}`; }
 function fmtDeg(v) { return `${v < 0 ? '−' : ''}${Math.abs(v).toFixed(1)}°`; }
 function fmtUTC(ms) { return `${new Date(ms).toISOString().slice(0, 16).replace('T', ' ')} UTC`; }
-function nextChange(test, from) { const v = test(from); for (let i = from + 1; i <= SIM_H; i++) if (test(i) !== v) return i - from; return null; }
+function nextChange(test, from, limit = SIM_H) { if (from >= limit) return null; const v = test(from); for (let i = from + 1; i <= limit; i++) if (test(i) !== v) return i - from; return null; }
 function runs(n, cat) { const out = []; let s = 0, c = cat(0); for (let i = 1; i <= n; i++) { const k = i < n ? cat(i) : -1; if (k !== c) { out.push([s, i, c]); s = i; c = k; } } return out; }
 const sunCat = (r) => (i) => (r.frac[i] >= 0.5 ? 2 : r.frac[i] > 0 ? 1 : 0);
 
@@ -126,8 +136,8 @@ const sunCat = (r) => (i) => (r.frac[i] >= 0.5 ? 2 : r.frac[i] > 0 ? 1 : 0);
 function renderTiles() {
   const r = sims[state.site], s = SITES[state.site], i = state.hour;
   const above = r.sEl[i] - hzAt(s, r.sAz[i]), lit = r.frac[i] > 0, link = !!r.comm[i];
-  const ns = nextChange((k) => r.frac[k] > 0, i), ne = nextChange((k) => r.comm[k] === 1, i);
-  const dur = (h) => (h == null ? `> ${Math.floor((SIM_H - i) / 24)} ${t('d')}` : fmtDur(h));
+  const ns = nextChange((k) => r.frac[k] > 0, i, r.n - 1), ne = nextChange((k) => r.comm[k] === 1, i, r.n - 1);
+  const dur = (h) => (h == null ? `> ${Math.floor((r.n - 1 - i) / 24)} ${t('d')}` : fmtDur(h));
   const tile = (k, v, d, c) => `<div class="tile"><div class="k">${c ? `<i class="dot" style="background:var(--${c})"></i>` : ''}${t(k)}</div><div class="v">${v}</div><div class="d">${d}</div></div>`;
   $('tiles').innerHTML =
     tile('Sun elevation', fmtDeg(r.sEl[i]), t('{deg} vs. terrain', { deg: `${above >= 0 ? '+' : '−'}${Math.abs(above).toFixed(1)}°` }), 'sun') +
@@ -135,7 +145,7 @@ function renderTiles() {
     tile(lit ? 'Sunset in' : 'Sunrise in', dur(ns), t(lit ? 'Until the disk is fully hidden' : 'Until first light'), 'sun') +
     tile('Earth elevation', fmtDeg(r.eEl[i]), t('Link needs terrain + {margin}° margin', { margin: state.margin }), 'earth') +
     tile('Direct-to-Earth link', `<span style="color:var(--${link ? 'good' : 'critical'})">${link ? '✓' : '✕'}</span> ${t(link ? 'Available' : 'Blocked')}`, t(link ? 'Earth clears the margin' : 'Earth below the margin'), 'earth') +
-    tile(link ? 'Earthset in' : 'Link returns in', dur(ne), t('From the current time'), 'earth');
+    tile(link ? 'Link margin ends in' : 'Link margin returns in', dur(ne), t('From the current time'), 'earth');
   $('now').textContent = t('Landing + {dur} · {time} · over the stay: sunlit {lit}%, Earth link {link}%', { dur: fmtDur(i), time: fmtUTC(state.landing + i * HOUR), lit: r.litPct.toFixed(0), link: r.commPct.toFixed(0) });
 }
 
@@ -448,7 +458,8 @@ function syncFromAtlas() {
 }
 
 function showView(v) {
-  if (!['start', 'mission', 'explore', 'compare', 'slip', 'data', 'build', 'atlas'].includes(v)) v = 'start';
+  if (v === 'compare' || v === 'slip' || v === 'plan') v = 'explore';
+  if (!['start', 'mission', 'explore', 'data', 'build', 'atlas', 'pole'].includes(v)) v = 'start';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}${formatHash(v)}`);
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
@@ -456,10 +467,11 @@ function showView(v) {
   if (v === 'atlas') showAtlas();
   renderAll();
   edu?.onView(v);
+  pole?.onView(v);
 }
 
 function jump(test, what) {
-  const n = nextChange(test, state.hour);
+  const n = nextChange(test, state.hour, Math.min(stayH(), (sims[state.site]?.n ?? SIM_H + 1) - 1));
   if (n != null && state.hour + n <= stayH()) setHour(state.hour + n); else toast(t('No {what} event left in this stay', { what: t(what) }));
 }
 function selectSite(k) { state.site = k; renderAll(); }
@@ -469,22 +481,24 @@ function ensureDem() {
   if (!demPromise) demPromise = loadDem('data/dem240').catch((error) => { demPromise = null; throw error; });
   return demPromise;
 }
+/** A picked point keeps its identity: the same coordinates reuse their site, a new point is added. */
 async function setCustom(lat, lon) {
-  const raw = { id: `c${lat.toFixed(4)}_${lon.toFixed(4)}`, name: 'Custom point', group: 'Picked on map', lat, lon: ((lon + 180) % 360 + 360) % 360 - 180, kind: 'custom', terrain: 'none', horizon: null, groundM: null, source: 'Coordinates entered by the user' };
-  const site = makeSite(raw, true);
-  let k = SITES.findIndex((s) => s.custom);
-  if (k < 0) { k = SITES.length; SITES.push(site); } else SITES[k] = site;
-  sims[k] = simulate(site); state.site = k; state.version++; renderAll();
-  if (lat <= -75) {
+  const id = `c${lat.toFixed(4)}_${lon.toFixed(4)}`;
+  const raw = { id, name: 'Custom point', group: 'Picked on map', lat, lon: ((lon + 180) % 360 + 360) % 360 - 180, kind: 'custom', terrain: 'none', horizon: null, groundM: null, source: 'Coordinates entered by the user' };
+  const existing = SITES.findIndex((s) => s.id === id);
+  const k = existing >= 0 ? existing : SITES.length;
+  if (existing < 0) SITES.push(makeSite(raw, true));
+  sims[k] = simulate(SITES[k]); state.site = k; state.version++; renderAll();
+  if (lat <= -75 && !SITES[k].hasTerrain) {
     toast(t('Loading terrain…'), 8000);
     try {
       const dem = await ensureDem();
       await new Promise((resolve) => requestAnimationFrame(resolve));
-      const result = computeHorizon(dem, lat, site.lon, { minRangeM: 480 });
-      if (result && SITES[k] === site) {
-        site.setHorizon(result.horizon, result.groundM, 'LOLA 240 m, computed in your browser', 480);
-        site.slopeDeg = result.slopeDeg;
-        sims[k] = simulate(site); state.version++; renderAll();
+      const result = computeHorizon(dem, lat, SITES[k].lon, { minRangeM: 480 });
+      if (result && SITES[k].id === id) {
+        SITES[k].setHorizon(result.horizon, result.groundM, 'LOLA 240 m, computed in your browser', 480);
+        SITES[k].slopeDeg = result.slopeDeg;
+        sims[k] = simulate(SITES[k]); state.version++; renderAll();
       }
       $('toast').style.display = 'none';
     } catch (error) {
@@ -492,6 +506,7 @@ async function setCustom(lat, lon) {
       toast(t('Terrain data could not be loaded. This site uses a smooth-sphere horizon.'), 4000);
     }
   }
+  return SITES[k].id;
 }
 function mapPick(id, vbW, vbH, toXY, toLL, filter) {
   const el = $(id), pos = (e) => { const b = el.getBoundingClientRect(); return [(e.clientX - b.left) / b.width * vbW, (e.clientY - b.top) / b.height * vbH, vbW / b.width]; };
@@ -564,7 +579,7 @@ function renderSources() {
 /* ---------- wiring ---------- */
 
 function renderTime() { renderMaps(); renderTiles(); renderPano(); renderTimeline(); renderCompare(); render3d(); }
-function renderAll() { fillSelect(); renderSettings(); renderTime(); renderSlip(); mission?.render(); }
+function renderAll() { fillSelect(); renderSettings(); renderTime(); renderSlip(); mission?.render(); expert?.render(); pole?.render(); }
 // map() passes the index as the second argument, which simulate() would read as a landing date.
 function recompute() { sims = SITES.map((s) => simulate(s)); renderAll(); }
 
@@ -617,13 +632,23 @@ function showTip(e, html) {
 }
 function hideTip() { tip.style.display = 'none'; $('crosshair').style.display = 'none'; }
 
+/**
+ * Set the UTC touchdown. The old fixed 88-day reservation is gone: only the selected stay has to
+ * fit before the last sample. The preview hour is separate and never moves the touchdown.
+ */
 function setLanding(ms) {
-  const latest = utcMidnight(eph.tEnd - SIM_H * HOUR);
-  state.landing = Math.min(latest, Math.max(utcMidnight(eph.t0), utcMidnight(ms)));
+  const latest = latestCompleteTouchdown(bounds(), stayH());
+  const first = bounds().firstMs;
+  const snapped = Math.floor(ms / HOUR) * HOUR;
+  if (snapped < first) toast(t('The selected data starts {time}.', { time: fmtUTC(first) }));
+  if (snapped > latest) toast(t('A {stay} h stay no longer fits before the end of the data. Latest touchdown: {time}.', { stay: stayH(), time: fmtUTC(latest) }), 5000);
+  state.landing = Math.min(latest, Math.max(first, snapped));
   state.hour = Math.min(state.hour, stayH());
-  $('date').min = new Date(utcMidnight(eph.t0)).toISOString().slice(0, 10);
+  const iso = new Date(state.landing).toISOString();
+  $('date').min = new Date(first).toISOString().slice(0, 10);
   $('date').max = new Date(latest).toISOString().slice(0, 10);
-  $('date').value = new Date(state.landing).toISOString().slice(0, 10);
+  $('date').value = iso.slice(0, 10);
+  if ($('time')) $('time').value = iso.slice(11, 16);
   recompute();
 }
 
@@ -669,9 +694,10 @@ function bind() {
   };
   $('jsun').onclick = () => jump((k) => sims[state.site].frac[k] > 0, 'Sun');
   $('jearth').onclick = () => jump((k) => sims[state.site].comm[k] === 1, 'Earth');
-  $('date').onchange = (e) => { const ms = Date.parse(`${e.target.value}T00:00:00Z`); if (!Number.isNaN(ms)) setLanding(ms); };
-  $('stay').onchange = (e) => { state.stayKey = e.target.value; state.hour = 0; recompute(); };
-  $('margin').onchange = (e) => { state.margin = Number(e.target.value); recompute(); };
+  $('date').onchange = (e) => { const ms = Date.parse(`${e.target.value}T${$('time').value || '00:00'}:00Z`); if (!Number.isNaN(ms)) setLanding(ms); };
+  $('time').onchange = (e) => { const ms = Date.parse(`${$('date').value}T${e.target.value || '00:00'}:00Z`); if (!Number.isNaN(ms)) setLanding(ms); };
+  $('stay').onchange = (e) => { state.stayKey = e.target.value; state.hour = 0; recompute(); expert?.refreshInputs(); };
+  $('margin').onchange = (e) => { state.margin = Number(e.target.value); recompute(); expert?.refreshInputs(); };
   $('slipApply').onclick = () => { state.slipMinDays = Number($('slipMin').value); state.slipNeedLink = $('slipLink').value === 'yes'; recompute(); };
   $('slipMetricBtn').onclick = () => { state.slipMetric = state.slipMetric === 'sun' ? 'link' : 'sun'; renderSlip(); };
   $('play').onclick = () => {
@@ -763,10 +789,12 @@ async function start() {
   state.site = first >= 0 ? first : 0;
   mission = createMission({
     sites: () => SITES, eph: () => eph, landing: () => state.landing, margin: () => state.margin,
+    conditions: () => conditions(),
     go: (view) => showView(view), toast, setLanding,
-    range: () => ({ min: utcMidnight(eph.t0), max: utcMidnight(eph.tEnd - SIM_H * HOUR) }),
+    range: () => ({ min: eph.t0, max: latestCompleteTouchdown(bounds(), 709) }),
     // In Education mode the story continues on the Mission page after the flight; Expert mode opens Explore.
     arrive: (k) => { state.site = k; if (edu?.active) { showView('mission'); edu.onArrived(); } else showView('explore'); },
+    inspect: (id) => { const k = SITES.findIndex((s) => s.id === id); if (k < 0) return; state.site = k; renderAll(); showView('explore'); },
     onProbePick: (id) => edu?.onProbePick(id),
     onValidate: () => edu?.onValidate(),
     onMissionRefresh: (site, frame, hour) => edu?.onMissionRefresh(site, frame, hour),
@@ -780,6 +808,34 @@ async function start() {
   bind();
   renderChrome();
   setLanding(Date.now());
+  expert = createExpert({
+    sites: () => SITES, bounds, landing: () => state.landing,
+    stayKey: () => state.stayKey, margin: () => state.margin, conditions,
+    setStay: (key) => { state.stayKey = key; state.hour = 0; recompute(); expert?.refreshInputs(); },
+    setMargin: (v) => { state.margin = v; recompute(); expert?.refreshInputs(); },
+    setSunHours: (n) => { state.requiredSunH = n; recompute(); expert?.refreshInputs(); },
+    setRequireEarth: (b) => { state.requireEarth = b; recompute(); expert?.refreshInputs(); },
+    setTouchdown: (ms) => setLanding(ms),
+    selectSite: (id) => { const k = SITES.findIndex((s) => s.id === id); if (k >= 0) { state.site = k; renderAll(); } },
+    scrollToPanorama: () => document.getElementById('pano')?.scrollIntoView({ block: 'center', behavior: 'smooth' }),
+    toast,
+  });
+  expert.mount();
+  pole = createSouthPole({
+    sites: () => SITES, eph: () => eph, landing: () => state.landing,
+    previewHour: () => state.hour, setPreviewHour: (h) => setHour(h),
+    stayH: () => stayH(), stayKey: () => state.stayKey, margin: () => state.margin,
+    setStay: (key) => { state.stayKey = key; state.hour = 0; recompute(); expert?.refreshInputs(); },
+    setMargin: (v) => { state.margin = v; recompute(); expert?.refreshInputs(); },
+    selectedId: () => SITES[state.site]?.id ?? null,
+    setTouchdown: (ms) => setLanding(ms),
+    selectSite: (id) => { const k = SITES.findIndex((s) => s.id === id); if (k >= 0) { state.site = k; renderAll(); } },
+    addPoint: (lat, lon) => setCustom(lat, lon),
+    dem: () => ensureDem(),
+    view: () => document.body.dataset.view,
+    toast,
+  });
+  pole.mount();
   seedScenario();
   renderSources();
   showView(parseHash(location.hash).view);

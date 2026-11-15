@@ -1,6 +1,6 @@
 import { t, getLanguage, registerMessages, hasTranslation } from '../i18n.js';
 import { escapeHtml, fmtDeg, fmtLatLon, fmtDateTime, fmtDayMonth } from '../format.js';
-import { nextTransition, evaluateSiteMcda } from '../engine/metrics.js';
+import { nextTransition, nextMarginTransition, evaluateSiteMcda } from '../engine/metrics.js';
 import { createPolar3d } from './polar3d/index.js';
 import { mountProbePreviews } from './probe-gallery.js';
 import { playProbeFlight } from './probe-flight.js';
@@ -327,6 +327,8 @@ export function createMission(ctx) {
       updateHeaderCount();
     };
     $('m-list').onclick = (event) => {
+      const inspect = event.target.closest('[data-inspect]');
+      if (inspect) { event.stopPropagation(); ctx.inspect?.(inspect.dataset.inspect); return; }
       const chk = event.target.closest('.site-chk');
       if (chk) {
         event.stopPropagation();
@@ -419,7 +421,13 @@ export function createMission(ctx) {
   // Multi-criteria evaluation over the stay (simultaneous window, longest sun, eclipse survival, terrain horizon).
   function scoreOf(site) {
     const start = Math.round(ctx.eph().indexOf(ctx.landing())), margin = ctx.margin();
-    return evaluateSiteMcda(site, start, start + SPAN + 1, { marginDeg: margin, preset: 'balanced', minSunDays: 6.5 });
+    const cond = ctx.conditions?.();
+    return evaluateSiteMcda(site, start, start + SPAN + 1, {
+      marginDeg: margin,
+      preset: 'balanced',
+      minSunDays: (cond?.requiredSunH ?? 156) / 24,
+      needLinkAtTouchdown: cond?.requireEarthAtTouchdown ?? true,
+    });
   }
 
   function detailsHtml(site, f) {
@@ -429,9 +437,15 @@ export function createMission(ctx) {
     if (sunNext.kind === 'none') sunLine = [t('Sun'), t(sunNext.state ? 'Stays in view' : 'Does not rise')];
     else sunLine = [t('{event} in', { event: t(sunNext.kind === 'set' ? 'Sunset' : 'Sunrise') }), dur(sunNext.timeMs - f.ms)];
     const earthNext = nextTransition(site, 'earth', f.index);
-    let earthLine;
-    if (earthNext.kind === 'none') earthLine = [t('Earth'), t(earthNext.state ? 'Stays in view' : 'Does not rise')];
-    else earthLine = [t('{event} in', { event: t(earthNext.kind === 'set' ? 'Earthset' : 'Earthrise') }), dur(earthNext.timeMs - f.ms)];
+    // Geometric Earthset uses the terrain horizon only. The link margin is a separate, stricter event.
+    const geometric = earthNext.kind === 'none'
+      ? [t('Geometric horizon'), t(earthNext.state ? 'Stays above the terrain' : 'Stays below the terrain')]
+      : [t('{event} in', { event: t(earthNext.kind === 'set' ? 'Geometric Earthset' : 'Geometric Earthrise') }), dur(earthNext.timeMs - f.ms)];
+    const marginNext = nextMarginTransition(site, ctx.margin(), f.index);
+    const marginName = t('Link margin {margin}°', { margin: ctx.margin() });
+    const marginLine = marginNext.kind === 'none'
+      ? [marginName, t(marginNext.state ? 'Stays above the margin' : 'Stays below the margin')]
+      : [marginName, `${t(marginNext.state ? 'Closes in' : 'Opens in')} ${dur(marginNext.timeMs - f.ms)}`];
     const score = scoreOf(site), bothPct = Math.round(score.bothPct);
     const litPct = Math.round(score.litPct), linkPct = Math.round(score.linkPct);
     const rows = [
@@ -446,9 +460,11 @@ export function createMission(ctx) {
       sunLine,
       [t('Earth elevation'), fmtDeg(series.earthEl[j])],
       [t('Direct-to-Earth link'), t(status.link ? 'Available' : 'Blocked')],
-      earthLine,
+      geometric,
+      marginLine,
     ];
-    return rows.map(([k, v]) => `<span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b>`).join('');
+    return rows.map(([k, v]) => `<span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b>`).join('')
+      + `<div class="det-actions"><button type="button" class="btn-ghost btn-xs" data-inspect="${escapeHtml(site.id)}">${escapeHtml(t('Inspect in Explore'))}</button></div>`;
   }
 
   // Education mode: one plain phrase for the current sky, in place of hours, coordinates and terrain.

@@ -129,6 +129,27 @@ export function nextTransition(site, which, from) {
   return { kind: now ? 'set' : 'rise', timeMs: eph.timeOf(hi), state: now };
 }
 
+/**
+ * Next change of Earth clearance relative to an explicit link margin. This is a different event
+ * from the geometric Earthset: a 5° requirement can close the link while Earth is still above the terrain.
+ */
+export function nextMarginTransition(site, marginDeg, from) {
+  const eph = site.eph;
+  const start = eph.clampIndex(from);
+  const open = (i) => site.skyAt(i).earth.el - site.skyAt(i).earth.horizon > marginDeg;
+  const now = open(start);
+  let j = Math.floor(start) + 1;
+  while (j < eph.n - 0.0001 && open(j) === now) j++;
+  if (j >= eph.n - 0.0001) return { kind: 'none', state: now };
+  let lo = Math.max(start, j - 1), hi = j;
+  if (open(lo) !== now) { hi = lo; lo = start; }
+  for (let k = 0; k < 24; k++) {
+    const mid = (lo + hi) / 2;
+    if (open(mid) === now) lo = mid; else hi = mid;
+  }
+  return { kind: now ? 'margin-set' : 'margin-rise', timeMs: eph.timeOf(hi), state: now };
+}
+
 /** Previous change (for "since sunrise" style context). */
 export function previousTransition(site, which, from) {
   const eph = site.eph;

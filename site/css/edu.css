@@ -139,7 +139,7 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
   .guide-row .edu-char{width:56px;height:56px}
   .guide-bubble{font-size:13px;padding:10px 12px}
   body.edu-on[data-view=mission] main{padding-bottom:52vh}
-  body.edu-on .tabbar{grid-template-columns:repeat(4,1fr)}
+  body.edu-on .tabbar{grid-template-columns:repeat(3,1fr)}
   .edu-panel{left:0;right:0;bottom:54px;width:auto;grid-template-columns:1fr;gap:0;max-height:50vh}
   .edu-panel .edu-char{position:absolute;left:12px;bottom:calc(100% - 14px);width:64px;height:64px;z-index:1}
   .edu-panel{padding-top:0}

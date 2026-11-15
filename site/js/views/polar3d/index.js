@@ -7,18 +7,33 @@ import { loadDem } from '../../engine/dem.js';
 import { terrainPatch } from '../terrain-mesh.js';
 export async function createPolar3d(env) {
   const { $, view, local, sites, pickedSite, labelText, colorOf, refresh, ctx, t, escapeHtml, fmtLatLon, unit, dot3, clamp, COLORS, getFrame, setFailed } = env;
+  // The same scene also serves the South Pole prototype: an explicit activity gate, a deliberate
+  // Moon tap, an optional grab control and an optional Earth-link pulse.
+  const active = env.active ?? (() => view() === 'mission');
+  const grab = env.controlsMode === 'grab';
+  const reducedMotion = Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
   let view3d = null;
   try {
       const T = await import('../../vendor/three/three.module.js');
       const { OrbitControls } = await import('../../vendor/three/OrbitControls.js');
       const canvas = $('m-3d'), stage = $('m-stage');
       const renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setPixelRatio(Math.min(devicePixelRatio, env.maxPixelRatio ?? 2));
       const scene = new T.Scene();
-      const camera = new T.PerspectiveCamera(42, 1, 0.01, 200);
+      // One scene unit = one Moon radius. All sizes and distances use that same scale.
+      const MOON_R_KM = 1737.4;
+      const SCALE = { earthR: 6371 / MOON_R_KM, earthD: 384400 / MOON_R_KM, sunR: 695700 / MOON_R_KM, sunD: 149.6e6 / MOON_R_KM };
+      const MAX_DIST = SCALE.sunD * 1.8;
+      const camera = new T.PerspectiveCamera(42, 1, 0.02, MAX_DIST * 4);
+      let pending = false;
+      // Hoisted so texture loads that finish before the rest of the scene is built can still request a frame.
+      function request() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); }
       const controls = new OrbitControls(camera, canvas);
-      controls.enablePan = false; controls.minDistance = 1.03; controls.maxDistance = 14; controls.rotateSpeed = 0.7;
-      camera.up.set(1, 0, 0);
+      controls.enablePan = false; controls.minDistance = 1.05; controls.maxDistance = MAX_DIST;
+      controls.enableDamping = true; controls.dampingFactor = 0.08;
+      controls.rotateSpeed = 0.5; controls.zoomSpeed = 0.8;
+      controls.minPolarAngle = 0.02; controls.maxPolarAngle = Math.PI - 0.02;
+      camera.up.set(...(grab ? [0, 1, 0] : [1, 0, 0]));
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
       // The south pole is always within about 1.5° of the terminator, so the Sun alone leaves the terrain
@@ -40,6 +55,12 @@ export async function createPolar3d(env) {
       const moonMap = loadMap('assets/moon_color_4k.webp');
       const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: moonMap, roughness: 1, metalness: 0 }));
       scene.add(moon);
+      // The lunar rotation axis: a thin line through both poles.
+      const axis = new T.Line(
+        new T.BufferGeometry().setFromPoints([new T.Vector3(0, -1.45, 0), new T.Vector3(0, 1.45, 0)]),
+        new T.LineBasicMaterial({ color: 0x9be7ff, transparent: true, opacity: 0.85 }),
+      );
+      scene.add(axis);
 
       // Graticule: parallels every 10° and meridians every 30°, with 75°S — where the terrain model ends —
       // picked out in cyan so the polar cap has a reference instead of being an anonymous patch.
@@ -53,6 +74,7 @@ export async function createPolar3d(env) {
       for (let lat = 0; lat >= -80; lat -= 10) graticule.add(parallel(lat, 0x93a7bd, lat === 0 ? 0.34 : 0.15));
       graticule.add(parallel(-85, 0x93a7bd, 0.15));
       graticule.add(parallel(-75, 0x58c8ff, 0.62, 1.0022));
+      if (Number.isFinite(env.studyLat)) graticule.add(parallel(env.studyLat, env.studyColor ?? 0xff9ad5, 0.85, 1.0026));
       for (let lon = 0; lon < 360; lon += 30) {
         const points = [];
         for (let i = 0; i <= 90; i++) points.push(new T.Vector3(...unit(-90 + i, lon)).multiplyScalar(1.0015));
@@ -70,17 +92,17 @@ export async function createPolar3d(env) {
       // Earth keeps its own face to the Moon, so a lit sphere with the Blue Marble map shows the phase the
       // Moon actually sees, and the continents line up with the sub-Earth point instead of a painted blob.
       const earthMap = loadMap('assets/earth_day_4k.webp');
-      const earth = new T.Mesh(new T.SphereGeometry(0.36, 48, 32),
+      const earth = new T.Mesh(new T.SphereGeometry(SCALE.earthR, 64, 48),
         new T.MeshStandardMaterial({ map: earthMap, roughness: 1, metalness: 0 }));
       const sunMap = loadMap('assets/sun_disk_1k.webp');
       const sunBody = new T.Sprite(new T.SpriteMaterial({ map: sunMap, blending: T.AdditiveBlending, transparent: true, depthWrite: false }));
-      sunBody.scale.set(0.42, 0.42, 1);
+      sunBody.scale.set(2 * SCALE.sunR, 2 * SCALE.sunR, 1);
       const sunGlow = new T.Sprite(new T.SpriteMaterial({ map: glowTexture('rgba(255,205,90,.7)'), blending: T.AdditiveBlending, depthWrite: false }));
-      sunGlow.scale.set(2.8, 2.8, 1);
+      sunGlow.scale.set(3.2 * SCALE.sunR, 3.2 * SCALE.sunR, 1);
       scene.add(earth, sunBody, sunGlow);
       const starPositions = [];
       for (let i = 0; i < 900; i++) {
-        const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = Math.sqrt(1 - u * u), d = 40 + Math.random() * 30;
+        const u = Math.random() * 2 - 1, a = Math.random() * 6.283, r = Math.sqrt(1 - u * u), d = 300000 + Math.random() * 300000;
         starPositions.push(r * Math.cos(a) * d, u * d, r * Math.sin(a) * d);
       }
       const starGeometry = new T.BufferGeometry();
@@ -116,12 +138,65 @@ export async function createPolar3d(env) {
 
       const markerGroup = new T.Group();
       scene.add(markerGroup);
+      // Earth-link pulse (prototype only): a dashed path from the selected site toward Earth.
+      const pulseGroup = new T.Group();
+      scene.add(pulseGroup);
+      const pulseGeometry = new T.BufferGeometry().setFromPoints([new T.Vector3(), new T.Vector3()]);
+      const pulseLine = new T.Line(pulseGeometry, new T.LineDashedMaterial({ color: 0x9be7ff, dashSize: 0.12, gapSize: 0.08, transparent: true, opacity: 0.9, depthWrite: false }));
+      const pulseDot = new T.Mesh(new T.SphereGeometry(0.018, 12, 8), new T.MeshBasicMaterial({ color: 0xd8f6ff }));
+      pulseLine.visible = pulseDot.visible = false;
+      pulseGroup.add(pulseLine, pulseDot);
+      let pulseState = null, pulsePhase = 0, pulseLoop = 0;
+      let pulseKey = '';
+      const stopPulse = () => { if (pulseLoop) cancelAnimationFrame(pulseLoop); pulseLoop = 0; };
+      let lastPulse = 0;
+      const updatePulse = () => {
+        const info = env.pulse?.();
+        const site = pickedSite();
+        const state = info && site ? info.state : null;
+        if (!state || state === 'unknown') {
+          pulseState = null; pulseLine.visible = pulseDot.visible = false; stopPulse(); return;
+        }
+        pulseStart.set(...unit(site.lat, site.lon)).multiplyScalar(1.01);
+        pulseEnd.copy(earth.position);
+        const attr = pulseGeometry.attributes.position;
+        attr.setXYZ(0, pulseStart.x, pulseStart.y, pulseStart.z);
+        attr.setXYZ(1, pulseEnd.x, pulseEnd.y, pulseEnd.z);
+        attr.needsUpdate = true;
+        pulseGeometry.computeBoundingSphere();
+        pulseLine.computeLineDistances();
+        pulseLine.visible = true;
+        const key = `${site.id}:${state}`;
+        if (key !== pulseKey) { pulseKey = key; pulsePhase = 0; stopPulse(); }
+        pulseState = state;
+        if (state !== 'visible' || reducedMotion) {
+          pulseDot.visible = false;
+          pulseLine.material.opacity = state === 'blocked' ? 0.4 : 0.85;
+          stopPulse();
+          return;
+        }
+        pulseLine.material.opacity = 0.9;
+        pulseDot.visible = true;
+        if (!pulseLoop) {
+          const step = (now) => {
+            if (pulseState !== 'visible' || reducedMotion) { pulseLoop = 0; return; }
+            pulseLoop = requestAnimationFrame(step);
+            if (now - lastPulse < 40) return;
+            lastPulse = now;
+            pulsePhase = (pulsePhase + 0.008) % 1;
+            pulseDot.position.lerpVectors(pulseStart, pulseEnd, pulsePhase);
+            renderer.render(scene, camera);
+          };
+          pulseLoop = requestAnimationFrame(step);
+        }
+      };
+      const pulseStart = new T.Vector3(), pulseEnd = new T.Vector3();
       const selectRing = new T.Mesh(new T.RingGeometry(1.7, 2.1, 32), new T.MeshBasicMaterial({ color: 0xffffff, side: T.DoubleSide }));
       scene.add(selectRing);
       const sunSpot = new T.Mesh(new T.SphereGeometry(1, 12, 8), new T.MeshBasicMaterial({ color: 0xffe066 }));
       sunSpot.scale.setScalar(0.018);
       scene.add(sunSpot);
-      let markers = [], markerKey = '', pending = false, tween = 0, home = null;
+      let markers = [], markerKey = '', tween = 0, home = null;
       const sphereGeometry = new T.SphereGeometry(1, 16, 12), ringGeometry = new T.RingGeometry(1.5, 2, 24);
 
       const buildMarkers = () => {
@@ -141,7 +216,6 @@ export async function createPolar3d(env) {
           return { site, normal, dotMesh, ring };
         });
       };
-      const request = () => { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); };
       // Terrain at the picked site: the same generator Explore uses, heights at ×1 (no exaggeration).
       const reliefGroup = new T.Group();
       scene.add(reliefGroup);
@@ -202,9 +276,14 @@ export async function createPolar3d(env) {
         label.style.top = `${(-p.y * 0.5 + 0.5) * stage.clientHeight}px`;
         label.textContent = labelText(site);
       };
+      let animBase = null, animOffset = 0, lastAnim = 0;
       function draw() {
-        const f = getFrame();
-        if (view() !== 'mission' || local.mode !== '3d' || !f) return;
+        const base = env.baseMs ? env.baseMs() : null;
+        if (base !== null && animBase !== null && base !== animBase) { animBase = base; animOffset = 0; lastAnim = 0; }
+        if (base !== null && animBase === null) animBase = base;
+        const tms = animBase !== null ? animBase + animOffset : null;
+        const f = tms !== null && env.frameAt ? env.frameAt(tms) : getFrame();
+        if (!active() || local.mode !== '3d' || !f) return;
         buildMarkers();
         buildRelief();
         reliefLight.position.copy(camera.position);
@@ -212,12 +291,16 @@ export async function createPolar3d(env) {
         // appears once the camera is close enough for the relief to mean something.
         reliefGroup.visible = camera.position.length() < 1.5;
         sunLight.position.set(...f.sun).multiplyScalar(10);
-        earth.position.set(...f.earth).multiplyScalar(3.0);
+        earth.position.set(...f.earth).multiplyScalar(SCALE.earthD);
         earth.lookAt(0, 0, 0);
-        sunBody.position.set(...f.sun).multiplyScalar(8);
+        sunBody.position.set(...f.sun).multiplyScalar(SCALE.sunD);
         sunGlow.position.copy(sunBody.position);
-        sunSpot.position.set(...f.sun).multiplyScalar(1.004);
-        // Ecliptic normal from the two directions the scene already has; fall back to the pole if they align.
+        if (tms !== null && env.epochMs) {
+          const days = (tms - env.epochMs) / 864e5;
+          moon.rotation.y = (days / 27.321661) * Math.PI * 2;
+          earth.rotation.y = (days / 0.99727) * Math.PI * 2;
+          sunBody.material.rotation = (days / 25.38) * Math.PI * 2;
+        }
         const earthDir = new T.Vector3(...f.earth).normalize(), sunDir = new T.Vector3(...f.sun).normalize();
         const ecliptic = new T.Vector3().crossVectors(earthDir, sunDir);
         if (ecliptic.lengthSq() < 1e-8) ecliptic.set(0, 0, 1); else ecliptic.normalize();
@@ -249,6 +332,7 @@ export async function createPolar3d(env) {
           selectRing.scale.setScalar(Math.max(0.0016, camera.position.length() * 0.0016));
           placeLabel(picked.normal.clone().multiplyScalar(1.01), picked.normal);
         }
+        updatePulse();
         renderer.render(scene, camera);
       }
       const resize = () => {
@@ -276,20 +360,53 @@ export async function createPolar3d(env) {
         tween = requestAnimationFrame(step);
       };
       let down = null;
+      const dirAt = (event) => {
+        const box = canvas.getBoundingClientRect(), caster = new T.Raycaster();
+        caster.setFromCamera(new T.Vector2(((event.clientX - box.left) / box.width) * 2 - 1, -((event.clientY - box.top) / box.height) * 2 + 1), camera);
+        return caster.intersectObject(moon)[0]?.point.clone().normalize() ?? null;
+      };
       canvas.addEventListener('pointerdown', (event) => { down = [event.clientX, event.clientY]; });
+      canvas.addEventListener('pointermove', (event) => {
+        if (!grab || event.buttons) return;
+        const hover = dirAt(event);
+        const lat = hover ? Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) : null;
+        canvas.style.cursor = lat !== null && lat <= (env.studyLat ?? -90) ? 'pointer' : 'grab';
+      });
+      // Damping needs a frame loop; only request a draw when the camera actually moved.
+      const tick = () => {
+        const a = env.animation?.();
+        const now = performance.now();
+        if (grab && controls.update()) request();
+        if (a?.running) {
+          if (animBase === null) animBase = env.baseMs?.() ?? null;
+          if (lastAnim) animOffset += ((now - lastAnim) / 1000) * 3600e3 * a.speed;
+          lastAnim = now;
+          if (animBase !== null) env.onTime?.(animBase + animOffset);
+          request();
+        } else lastAnim = 0;
+        requestAnimationFrame(tick);
+      };
+      tick();
       canvas.addEventListener('pointerup', (event) => {
         if (!down || Math.hypot(event.clientX - down[0], event.clientY - down[1]) > 5) return;
         const box = canvas.getBoundingClientRect(), caster = new T.Raycaster();
         caster.setFromCamera(new T.Vector2(((event.clientX - box.left) / box.width) * 2 - 1, -((event.clientY - box.top) / box.height) * 2 + 1), camera);
         const hits = caster.intersectObjects([moon, ...markers.map((m) => m.dotMesh)]);
         const first = hits[0];
-        if (!first || first.object === moon) return;
+        if (!first) return;
+        if (first.object === moon) {
+          if (!env.onMoonTap) return;
+          const p = first.point.clone().normalize();
+          env.onMoonTap({ lat: Math.asin(clamp(p.y, -1, 1)) / (Math.PI / 180), lon: ((Math.atan2(-p.z, p.x) / (Math.PI / 180)) + 360) % 360 });
+          return;
+        }
         const hit = markers.find((m) => m.dotMesh === first.object);
         if (hit) { local.picked = hit.site.id; refresh(true); }
       });
       view3d = {
         request: () => { if (!home) { setHome(); home = true; } request(); },
         reset: () => flyTo(homeDir(), 3.6),
+        zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.05, MAX_DIST)); controls.update(); request(); },
         focus: (site) => flyTo(new T.Vector3(...unit(site.lat, site.lon)), site.lat <= -75 ? 1.07 : undefined),
       };
       resize();
