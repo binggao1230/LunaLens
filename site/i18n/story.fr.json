@@ -91,7 +91,8 @@
       "darkWeek": "Tout est sombre cette semaine. Sautons vers une semaine plus claire."
     },
     "launch": {
-      "cheer": "C'est parti ! Accroche-toi, la Lune nous attend."
+      "cheer": "C'est parti ! Accroche-toi, la Lune nous attend.",
+      "landed": "Félicitations, tu as posé ta première mission !"
     },
     "anomaly": {
       "delay": "Oh non, une tempête sur Terre nous a retenus. Nous avons décollé avec quelques jours de retard.",

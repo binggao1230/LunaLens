@@ -61,7 +61,7 @@ export function createEducation(ctx) {
   /* ---------- mode and story lifecycle ---------- */
 
   function reset() {
-    Object.assign(st, { skipped: false, chosen: false, noPick: false, step: 0, sub: 0, base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, hold: false, say: null, mood: 'happy' });
+    Object.assign(st, { skipped: false, chosen: false, noPick: false, landed: false, step: 0, sub: 0, base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, hold: false, say: null, mood: 'happy' });
   }
   /** Step 1, the objective: starts whenever the Mission page opens in Education mode with no story running. */
   function startTour() {
@@ -119,7 +119,7 @@ export function createEducation(ctx) {
   }
   function enterLaunch() {
     st.base = ctx.landing();
-    setStep(STEP.launch); say('launch.cheer', {}, 'celebrating'); render();
+    st.landed = false; setStep(STEP.launch); say('launch.cheer', {}, 'celebrating'); render();
     ctx.mission.send();
   }
   function enterAnomaly() {
@@ -150,6 +150,7 @@ export function createEducation(ctx) {
       if (st.sub < historyLines().length - 1) moveHistory(st.sub + 1);
       else { ctx.mission.closeFlag?.(); enterLaunch(); }
     }
+    else if (st.step === STEP.launch && st.landed) enterAnomaly();
     else if (st.step === STEP.anomaly) {
       if (st.anomaly.kind !== 'contact' && st.sub === 0) { st.sub = 1; st.focus = true; say(`anomaly.${st.anomaly.kind}`, { site: st.picked.short }, 'worried'); render(); }
       else enterFix();
@@ -281,7 +282,7 @@ export function createEducation(ctx) {
     const canBack = (st.step === STEP.objective && st.sub > 0) || st.step === STEP.history || st.step === STEP.site;
     let nextLabel = ui('next'), canNext = true;
     if (st.step === STEP.site) { nextLabel = !st.revealed ? ui('confirm') : st.revealed === 'good' ? ui('continue') : ui('tryAgain'); canNext = Boolean(st.picked); }
-    else if (st.step === STEP.launch) canNext = false;
+    else if (st.step === STEP.launch) canNext = Boolean(st.landed); // after landing: Next goes on to the anomaly
     else if (st.step === STEP.anomaly) nextLabel = st.anomaly.kind !== 'contact' && st.sub === 0 ? ui('whatHappened') : ui('fixIt');
     else if (st.step === STEP.fix) { nextLabel = ui('complete'); canNext = canComplete(); }
     const actions = btn('back', ui('back'), canBack) + btn('next', nextLabel, canNext);
@@ -344,7 +345,7 @@ export function createEducation(ctx) {
         render();
       } else if (st.step === STEP.anomaly || st.step === STEP.fix) render();
     },
-    onArrived() { if (st.active && !st.skipped && st.step === STEP.launch) enterAnomaly(); },
+    onArrived() { if (st.active && !st.skipped && st.step === STEP.launch && !st.landed) { st.landed = true; st.focus = true; say('launch.landed', {}, 'celebrating'); render(); } },
     highlight() {
       if (!st.active || st.skipped || st.step < STEP.anomaly || st.step > STEP.fix || !st.picked || !st.anomaly) return null;
       const r = current();
