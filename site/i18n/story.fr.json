@@ -1,5 +1,7 @@
 {
-  "character": { "name": "Lumi" },
+  "character": {
+    "name": "Lumi"
+  },
   "ui": {
     "panel": "Guide de l'histoire",
     "step": "Étape {n} sur {total}",
@@ -13,7 +15,11 @@
     "complete": "Terminer la mission",
     "playAgain": "Rejouer",
     "expert": "Passer en mode expert",
-    "verdict": { "go": "Prêt à partir", "risky": "Risqué", "nogo": "Pas sûr" },
+    "verdict": {
+      "go": "Prêt à partir",
+      "risky": "Risqué",
+      "nogo": "Pas sûr"
+    },
     "levers": {
       "move": "Monter sur les hauteurs",
       "moveTo": "Essayer {site}",
@@ -45,10 +51,17 @@
       "namePlaceholder": "Explorateur",
       "awarded": "Décerné à {name}",
       "note": "Simplifié pour apprendre : les batteries et le relais sont illustratifs."
-    }
+    },
+    "confirm": "Confirmer le choix",
+    "tryAgain": "Essayer un autre site",
+    "choice": "Ton choix : {site}"
   },
-  "_nearSites": "Lines where Lumi stands next to the Site locations list (step path.index).",
-  "nearSites": ["objective.intro.4"],
+  "_nearSites": "Lines where Lumi stands high beside the Site locations list. Entries ending in '.' match every line of that step.",
+  "nearSites": [
+    "objective.intro.4",
+    "objective.intro.5",
+    "site."
+  ],
   "steps": {
     "objective": {
       "intro": [
@@ -57,23 +70,23 @@
         "Pourquoi le pôle Sud ? Là-bas, certains cratères profonds ne voient jamais le Soleil, et ils cachent de la glace. Cette glace peut devenir de l'eau à boire, de l'air à respirer et du carburant pour les fusées.",
         "Deux règles d'or gardent un atterrisseur en vie. Il lui faut le Soleil pour l'énergie, et il doit voir la Terre pour nous parler.",
         "Règle n° 1 : le Soleil. Au pôle Sud, le Soleil reste bas, près de l'horizon, alors les collines et les bords des cratères peuvent le cacher. Notre site doit être un endroit que les rayons du Soleil peuvent atteindre.",
-        "Règle n° 2 : la Terre. Notre atterrisseur nous parle par radio, et la radio a besoin d'un chemin dégagé jusqu'à la Terre. Depuis le pôle Sud, la Terre aussi reste basse dans le ciel, donc notre site doit pouvoir la voir au-dessus des collines.",
-        "Choisis maintenant un site dans la liste ou sur la carte. Les points verts voient la Terre, les ambrés ne voient que le Soleil, les gris sont dans l'ombre."
+        "Règle n° 2 : la Terre. Notre atterrisseur nous parle par radio, et la radio a besoin d'un chemin dégagé jusqu'à la Terre. Depuis le pôle Sud, la Terre aussi reste basse dans le ciel, donc notre site doit pouvoir la voir au-dessus des collines."
       ]
     },
     "history": {
       "intro": "Des humains et des robots se sont déjà posés sur la Lune ! Touche un drapeau pour découvrir leur histoire."
     },
     "site": {
-      "intro": "Ici, le Soleil ne monte jamais haut. Il roule le long de l'horizon comme une lente boule dorée.",
-      "happy": "Du soleil sur les panneaux et la Terre dans le ciel. Cet endroit semble parfait.",
-      "worried": "Une seule de nos deux règles est vraie ici. Regardons encore un peu.",
-      "sleeping": "Sombre et silencieux. L'atterrisseur dormirait ici, peut-être pour toujours.",
-      "shadow": "Ce fond de cratère n'a pas vu le Soleil depuis des âges. Essaie les hauteurs d'un rebord.",
-      "ready": "{site} pourrait convenir. Appuie sur Continuer quand tu es sûr.",
+      "pick": "Choisis maintenant un site dans la liste ou sur la carte. Les points verts voient la Terre, les ambrés ne voient que le Soleil, les gris sont dans l'ombre.",
+      "good": "Excellent choix ! {site} reçoit le Soleil pour les panneaux et voit la Terre pour nous parler. Cet atterrisseur va vivre.",
+      "noLink": "{site} reçoit le Soleil, mais la Terre est cachée par le relief. L'atterrisseur aurait de l'énergie, mais personne ne l'entendrait. Essaie un autre site.",
+      "noSun": "{site} voit la Terre, mais le Soleil ne l'atteint pas. Sans énergie, l'atterrisseur se tairait. Essaie un autre site.",
+      "neither": "{site} est dans l'ombre et ne voit pas la Terre. L'atterrisseur serait dans le noir et le silence. Essaie un autre site.",
       "darkWeek": "Tout est sombre cette semaine. Sautons vers une semaine plus claire."
     },
-    "launch": { "cheer": "C'est parti ! Accroche-toi, la Lune nous attend." },
+    "launch": {
+      "cheer": "C'est parti ! Accroche-toi, la Lune nous attend."
+    },
     "anomaly": {
       "delay": "Oh non, une tempête sur Terre nous a retenus. Nous avons décollé avec quelques jours de retard.",
       "night": "Le Soleil a déjà quitté {site}. La nuit qui vient est plus longue que notre batterie.",
@@ -90,6 +103,8 @@
       "go": "Enfin vert ! Tu as changé une mauvaise journée en bon plan.",
       "notyet": "Pas encore. Essaie un autre levier, ou combine-en deux."
     },
-    "done": { "cheer": "Tu as réussi, planificateur spatial. La Lune se souvient des choix courageux." }
+    "done": {
+      "cheer": "Tu as réussi, planificateur spatial. La Lune se souvient des choix courageux."
+    }
   }
 }

@@ -376,3 +376,6 @@ body.edu-on .tabbar button[data-view=atlas],body.edu-on .tabbar button[data-view
 .edu-panel.near-sites .edu-char{order:2}
 .edu-panel.near-sites .edu-bubble{order:1;border-radius:18px 18px 4px 18px}
 @media (prefers-reduced-motion:reduce){.edu-panel.near-sites{transition:none}}
+
+.edu-choice{margin:8px 0 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#f5c542;font-weight:600}
+.edu-panel.near-sites{bottom:auto}
