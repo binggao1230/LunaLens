@@ -367,3 +367,8 @@ body.edu-on .edu-panel.full .edu-bubble{width:min(680px,100%);max-height:none;ov
 .edu-next svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .edu-next:focus-visible{outline:2px solid #f5c542;outline-offset:3px}
 .edu-actions .btn-ghost:disabled{opacity:.4;cursor:not-allowed}
+
+/* ---- Education mode: Mission and Data only; Atlas, Explore and South Pole stay in Expert mode ---- */
+body.edu-on .appbar .tabs button[data-view=atlas],body.edu-on .appbar .tabs button[data-view=explore],body.edu-on .appbar .tabs button[data-view=pole],
+body.edu-on .tabbar button[data-view=atlas],body.edu-on .tabbar button[data-view=explore],body.edu-on .tabbar button[data-view=pole]{display:none}
+@media (max-width:760px){body.edu-on .tabbar{grid-template-columns:repeat(2,1fr)}}

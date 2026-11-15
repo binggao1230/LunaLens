@@ -462,6 +462,8 @@ function syncFromAtlas() {
 function showView(v) {
   if (v === 'compare' || v === 'slip' || v === 'plan') v = 'explore';
   if (!['start', 'mission', 'explore', 'data', 'build', 'atlas', 'pole'].includes(v)) v = 'start';
+  // Education mode has the Mission and Data pages only; Atlas, Explore and South Pole are Expert tools.
+  if (getMode() === 'education' && ['atlas', 'explore', 'pole'].includes(v)) v = 'mission';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}${formatHash(v)}`);
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
@@ -671,7 +673,11 @@ function bind() {
   };
   document.querySelectorAll('[data-nav] button').forEach((b) => { b.onclick = () => showView(b.dataset.view); });
   $('mode-toggle').onclick = (e) => { const b = e.target.closest('button[data-mode]'); if (b) switchMode(b.dataset.mode, b); };
-  onMode(() => { renderChrome(); history.replaceState(null, '', `${location.search}${formatHash(document.body.dataset.view)}`); });
+  onMode((m) => {
+    renderChrome();
+    if (m === 'education' && ['atlas', 'explore', 'pole'].includes(document.body.dataset.view)) { showView('mission'); return; }
+    history.replaceState(null, '', `${location.search}${formatHash(document.body.dataset.view)}`);
+  });
   // A pasted or edited hash on the open page: apply its mode and view (showView uses replaceState, so no loop).
   window.addEventListener('hashchange', () => {
     const { view, mode } = parseHash(location.hash);
@@ -826,7 +832,8 @@ async function start() {
     inspect: (id) => { const k = SITES.findIndex((s) => s.id === id); if (k < 0) return; state.site = k; renderAll(); showView('explore'); },
     onProbePick: (id) => edu?.onProbePick(id),
     onValidate: () => edu?.onValidate(),
-    onHistoricOpen: (site) => edu?.react(site.lesson),
+    // Lumi reacts to a card's lesson, except for failed missions, where the expression stays as it is.
+    onHistoricOpen: (site) => { if (site.status !== 'failed') edu?.react(site.lesson); },
     onHistoricClose: () => edu?.react(null),
     eduFlagHighlight: () => edu?.highlightFlags() ?? [],
     onMissionRefresh: (site, frame, hour) => edu?.onMissionRefresh(site, frame, hour),
