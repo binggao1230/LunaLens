@@ -446,6 +446,10 @@ body.edu-on .tabbar button[data-view=atlas],body.edu-on .tabbar button[data-view
   .appbar .lang-menu{order:3}
   .appbar #mode-toggle button{flex:none}
 }
+@media (max-width:400px){
+  .appbar .brand span{display:none}
+  .appbar .brand img{margin:0}
+}
 
 /* The story points at the date bar and its time slider while it explains the time of landing: a pulsing green glow. */
 .datebar.edu-point{box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 26px 6px rgba(67,217,138,.5);border-radius:14px;animation:edu-time-pulse 1.4s ease-in-out infinite}
