@@ -1,6 +1,6 @@
 # Mascot artwork
 
-The LunaLens guide, an astronaut dog. Three poses, the team's own illustration vector-traced into editable
+The LunaLens guide, Lumi, an astronaut dog. Three poses, the team's own illustration vector-traced into editable
 colour shapes with a transparent background, supplied by the team on 14 November 2026. Not from a stock
 library; no third-party licence applies.
 

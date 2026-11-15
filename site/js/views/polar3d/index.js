@@ -338,6 +338,7 @@ export async function createPolar3d(env) {
         }
         updatePulse();
         renderer.render(scene, camera);
+        env.onFrame?.();
       }
       const resize = () => {
         const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
@@ -413,6 +414,17 @@ export async function createPolar3d(env) {
         reset: () => flyTo(homeDir(), 3.6),
         zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.05, MAX_DIST)); controls.update(); request(); },
         focus: (site) => { const dir = moonGroup.localToWorld(new T.Vector3(...unit(site.lat, site.lon))).normalize(); flyTo(dir, site.lat <= -75 ? 1.07 : undefined); },
+        /** Fly the camera over any point; used by the historic-site cards. */
+        look: (lat, lon, distance) => flyTo(moonGroup.localToWorld(new T.Vector3(...unit(lat, lon))).normalize(), distance),
+        /** Screen position of a surface point for HTML overlays: hidden on the far hemisphere, fading towards the limb. */
+        project: (lat, lon) => {
+          const normal = moonGroup.localToWorld(new T.Vector3(...unit(lat, lon))).normalize();
+          const toward = normal.dot(camera.position.clone().normalize()); // 1 at the centre of the disc, 0 at the limb
+          const p = normal.clone().multiplyScalar(1.004).project(camera);
+          const dist = camera.position.length();
+          return { x: (p.x * 0.5 + 0.5) * stage.clientWidth, y: (-p.y * 0.5 + 0.5) * stage.clientHeight, visible: toward > 0.08 && p.z < 1,
+            scale: Math.sqrt(3.6 / Math.max(1.05, dist)), fade: clamp(0.35 + (toward - 0.08) / 0.5, 0.35, 1) };
+        },
       };
       resize();
     } catch (error) {

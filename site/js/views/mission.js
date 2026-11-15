@@ -6,6 +6,7 @@ import { mountProbePreviews } from './probe-gallery.js';
 import { playProbeFlight } from './probe-flight.js';
 import { onMode, isEducation } from '../mode.js';
 import { CHARACTER_MARKUP } from '../edu/character.js';
+import { createHistoric } from '../edu/historic.js';
 
 const D2R = Math.PI / 180, HOUR = 36e5, SPAN = 709;
 const COLORS = { link: '#43d98a', sun: '#f5c542', dark: '#7d7993', both: '#9be7ff' };
@@ -180,9 +181,10 @@ const SIMPLE_META = {
 export function createMission(ctx) {
   const $ = (id) => document.getElementById(id);
   const startEl = $('v-start'), missionEl = $('v-mission'), flightEl = $('flight');
-  const local = { flat: 'pole', probe: 'apollo', picked: null, mode: '3d', hour: 0, timer: null, open: null, query: '', listKey: '', laneKey: '', compared: new Set() };
+  const local = { historic: true, flat: 'pole', probe: 'apollo', picked: null, mode: '3d', hour: 0, timer: null, open: null, query: '', listKey: '', laneKey: '', compared: new Set() };
   let view3d = null, view3dLoading = false, view3dFailed = false, lastFrame = null, flying = false;
   let disposePreview = () => {};
+  let historic = null, project2d = null; // Education mode: historic landing-site flags over the map and the globe
 
   const probe = () => PROBES.find((p) => p.id === local.probe);
   const sites = () => ctx.sites();
@@ -281,7 +283,7 @@ export function createMission(ctx) {
         <section class="glass stage" id="m-stage">
           <canvas id="m-3d" aria-label="3D Moon"></canvas><canvas id="m-2d" aria-label="2D Moon" hidden></canvas>
           <div class="overlay-tl"><div><h2 id="m-title"></h2><div class="hint" id="m-hint"></div><div class="mseg" id="m-flat" style="margin-top:10px"><button data-flat="pole"></button><button data-flat="moon"></button></div></div>
-            <div style="display:flex;gap:8px;align-items:center"><button class="btn-ghost" id="m-reset"></button><div class="mseg" id="m-seg"><button data-mode="3d"></button><button data-mode="2d"></button></div></div></div>
+            <div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn-ghost" id="m-hist" aria-pressed="true"></button><button class="btn-ghost" id="m-reset"></button><div class="mseg" id="m-seg"><button data-mode="3d"></button><button data-mode="2d"></button></div></div></div>
           <div class="legend2" id="m-legend"></div><div class="m-readout" id="m-readout"></div><div class="note2" id="m-note" hidden></div><div class="zoom2" id="m-zoom"><button id="m-zout" aria-label="−">−</button><button id="m-zin" aria-label="+">+</button></div><div class="site-label" id="m-label"></div>
         </section>
         <section class="glass lanes" id="m-lanes"></section>
@@ -300,6 +302,15 @@ export function createMission(ctx) {
         <button class="btn-primary" id="m-send"></button>
       </aside>
     </div>`;
+    historic = createHistoric({
+      stage: $('m-stage'),
+      projector: () => (local.mode === '3d' ? (view3d ? view3d.project : null) : project2d),
+      offMap: () => local.mode === '2d' && local.flat === 'pole',
+      onOpen: (site) => ctx.onHistoricOpen?.(site),
+      onClose: () => ctx.onHistoricClose?.(),
+      highlight: () => ctx.eduFlagHighlight?.() ?? [],
+    });
+    $('m-hist').onclick = () => { local.historic = !local.historic; syncHistoric(); setStaticText(); };
     $('m-seg').onclick = (event) => { const b = event.target.closest('button'); if (b) setMode(b.dataset.mode); };
     $('m-reset').onclick = () => view3d?.reset();
     $('m-flat').onclick = (event) => { const b = event.target.closest('button'); if (b) setFlat(b.dataset.flat); };
@@ -402,6 +413,10 @@ export function createMission(ctx) {
     b3.textContent = t('3D'); b2.textContent = t('2D');
     b3.classList.toggle('on', local.mode === '3d'); b2.classList.toggle('on', local.mode === '2d');
     b3.disabled = view3dFailed;
+    $('m-hist').innerHTML = `<img src="assets/historic-flag.svg" alt="">${escapeHtml(t('Historic sites'))}`;
+    $('m-hist').title = t('Show historic landing sites');
+    $('m-hist').setAttribute('aria-pressed', String(local.historic));
+    historic?.relabel();
     $('m-reset').textContent = t('Reset view');
     $('m-reset').hidden = local.mode !== '3d';
     $('m-legend').innerHTML = `<span><i style="background:${COLORS.link}"></i>${escapeHtml(t('Earth link available'))}</span><span><i style="background:${COLORS.sun}"></i>${escapeHtml(t('Sunlit, no Earth link'))}</span><span><i style="background:${COLORS.dark}"></i>${escapeHtml(t('In shadow'))}</span>`;
@@ -664,6 +679,7 @@ export function createMission(ctx) {
       unit, dot3, clamp, COLORS,
       getFrame: () => lastFrame,
       setFailed: (value) => { view3dFailed = value; },
+      onFrame: () => historic?.place(),
     });
     view3dLoading = false;
     refresh(true);
@@ -741,6 +757,12 @@ export function createMission(ctx) {
     return `${site.short} · ${t(status.link ? (status.sun ? 'Sunlit as well' : 'Earth link available') : status.sun ? 'Sunlit, no Earth link' : 'In shadow')}`;
   }
   const wrapLon = (lon) => ((((lon + 180) % 360) + 360) % 360) - 180;
+  // Where the 2D map sits in the stage: the same numbers for drawing and for centring a point.
+  function geometry2d() {
+    const stage = $('m-stage'), w = stage.clientWidth, h = stage.clientHeight, pole = local.flat === 'pole';
+    const size = pole ? Math.max(120, Math.min(w - 40, h - 90)) : Math.max(160, Math.min(w - 40, (h - 110) * 2));
+    return { w, h, baseX: w / 2, baseY: h / 2 + 34, size, pole };
+  }
   function draw2d() {
     const canvas = $('m-2d'), stage = $('m-stage');
     const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h || !lastFrame) return;
@@ -751,8 +773,7 @@ export function createMission(ctx) {
     const f = lastFrame, pole = local.flat === 'pole', table = pole ? poleTable : moonTable;
     $('m-label').style.display = 'none'; hits2d = [];
     if (!table) { loadImages(); return; }
-    const baseX = w / 2, baseY = h / 2 + 34;
-    const size = pole ? Math.max(120, Math.min(w - 40, h - 90)) : Math.max(160, Math.min(w - 40, (h - 110) * 2));
+    const { baseX, baseY, size } = geometry2d();
     const cx = baseX + view2d.x, cy = baseY + view2d.y, z = view2d.z;
     layout2d = { baseX, baseY };
     let place, kmPx = 0;
@@ -819,7 +840,10 @@ export function createMission(ctx) {
     const outside = pole ? sites().filter((s) => s.lat >= -75).length : 0, note = $('m-note');
     note.hidden = !outside;
     if (outside) note.textContent = t('{count} sites lie north of this map. Switch to Whole Moon.', { count: outside });
+    project2d = (lat, lon) => { const [px, py, inside] = place(lat, lon); return { x: px, y: py, visible: inside, scale: Math.sqrt(z) }; };
+    historic?.place();
   }
+  function syncHistoric() { historic?.setOn(isEducation() && local.historic && view() === 'mission'); }
   function bind2d(canvas) {
     let drag = null;
     const nearest = (x, y) => { let best = null, bestDistance = 16; for (const hit of hits2d) { const d = Math.hypot(hit.x - x, hit.y - y); if (d < bestDistance) { best = hit; bestDistance = d; } } return best; };
@@ -857,6 +881,7 @@ export function createMission(ctx) {
     draw2d();
   }
   function setFlat(kind) {
+    historic?.close(false);
     local.flat = kind; view2d.z = 1; view2d.x = 0; view2d.y = 0; hoverId = null;
     refresh(true);
   }
@@ -865,6 +890,7 @@ export function createMission(ctx) {
 
   function setMode(mode) {
     if (mode === '3d' && view3dFailed) return;
+    historic?.close(false);
     local.mode = mode;
     $('m-3d').hidden = mode !== '3d'; $('m-2d').hidden = mode !== '2d';
     $('m-label').style.display = 'none';
@@ -878,6 +904,7 @@ export function createMission(ctx) {
     if (full && local.mode === '2d' && local.flat === 'pole' && chosenSite && chosenSite.lat >= -75 && local.autoPick !== local.picked) { local.autoPick = local.picked; local.flat = 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0; }
     lastFrame = frame();
     if (full) setStaticText();
+    syncHistoric();
     $('m-3d').hidden = local.mode !== '3d'; $('m-2d').hidden = local.mode !== '2d';
     renderTime();
     renderDate();
@@ -1007,5 +1034,7 @@ export function createMission(ctx) {
     pick(id) { if (!sites().some((s) => s.id === id)) return; local.picked = id; local.open = null; refresh(true); focusSite(); },
     setHour(h) { local.hour = clamp(Math.round(h), 0, SPAN); refresh(); },
     redraw: () => refresh(true),
+    flags: () => historic?.place(),
+    openFlag: (id) => historic?.open(id),
   };
 }
