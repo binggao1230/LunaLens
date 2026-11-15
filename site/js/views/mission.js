@@ -283,7 +283,7 @@ export function createMission(ctx) {
         <section class="glass stage" id="m-stage">
           <canvas id="m-3d" aria-label="3D Moon"></canvas><canvas id="m-2d" aria-label="2D Moon" hidden></canvas>
           <div class="overlay-tl"><div><h2 id="m-title"></h2><div class="hint" id="m-hint"></div><div class="mseg" id="m-flat" style="margin-top:10px"><button data-flat="pole"></button><button data-flat="moon"></button></div></div>
-            <div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn-ghost" id="m-hist" aria-pressed="true"></button><button class="btn-ghost" id="m-reset"></button><div class="mseg" id="m-seg"><button data-mode="3d"></button><button data-mode="2d"></button></div></div></div>
+            <div style="display:flex;gap:8px;align-items:center"><button type="button" class="hswitch" id="m-hist" role="switch" aria-checked="true"></button><button class="btn-ghost" id="m-reset"></button><div class="mseg" id="m-seg"><button data-mode="3d"></button><button data-mode="2d"></button></div></div></div>
           <div class="legend2" id="m-legend"></div><div class="m-readout" id="m-readout"></div><div class="note2" id="m-note" hidden></div><div class="zoom2" id="m-zoom"><button id="m-zout" aria-label="−">−</button><button id="m-zin" aria-label="+">+</button></div><div class="site-label" id="m-label"></div>
         </section>
         <section class="glass lanes" id="m-lanes"></section>
@@ -413,9 +413,9 @@ export function createMission(ctx) {
     b3.textContent = t('3D'); b2.textContent = t('2D');
     b3.classList.toggle('on', local.mode === '3d'); b2.classList.toggle('on', local.mode === '2d');
     b3.disabled = view3dFailed;
-    $('m-hist').innerHTML = `<img src="assets/historic-flag.svg" alt="">${escapeHtml(t('Historic sites'))}`;
+    $('m-hist').innerHTML = `<img src="assets/historic-flag.svg" alt=""><span class="hswitch-label">${escapeHtml(t('Historic sites'))}</span><span class="hswitch-track" aria-hidden="true"><span class="hswitch-knob"></span></span>`;
     $('m-hist').title = t('Show historic landing sites');
-    $('m-hist').setAttribute('aria-pressed', String(local.historic));
+    $('m-hist').setAttribute('aria-checked', String(local.historic));
     historic?.relabel();
     $('m-reset').textContent = t('Reset view');
     $('m-reset').hidden = local.mode !== '3d';
