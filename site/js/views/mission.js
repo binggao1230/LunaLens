@@ -413,7 +413,7 @@ export function createMission(ctx) {
     b3.textContent = t('3D'); b2.textContent = t('2D');
     b3.classList.toggle('on', local.mode === '3d'); b2.classList.toggle('on', local.mode === '2d');
     b3.disabled = view3dFailed;
-    $('m-hist').innerHTML = `<img src="assets/historic-flag.svg" alt=""><span class="hswitch-label">${escapeHtml(t('Historic sites'))}</span><span class="hswitch-track" aria-hidden="true"><span class="hswitch-knob"></span></span>`;
+    $('m-hist').innerHTML = `<span class="hswitch-label">${escapeHtml(t('Historic sites'))}</span><span class="hswitch-track" aria-hidden="true"><span class="hswitch-knob"></span></span>`;
     $('m-hist').title = t('Show historic landing sites');
     $('m-hist').setAttribute('aria-checked', String(local.historic));
     historic?.relabel();
@@ -680,6 +680,8 @@ export function createMission(ctx) {
       getFrame: () => lastFrame,
       setFailed: (value) => { view3dFailed = value; },
       onFrame: () => historic?.place(),
+      // Education mode: zoom out at most to 6 Moon radii, so the Moon stays the subject instead of the Earth-Moon system.
+      maxDistance: () => (isEducation() ? 6 : null),
     });
     view3dLoading = false;
     refresh(true);
