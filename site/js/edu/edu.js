@@ -59,7 +59,7 @@ export function createEducation(ctx) {
   /* ---------- mode and story lifecycle ---------- */
 
   function reset() {
-    Object.assign(st, { skipped: false, chosen: false, step: 0, sub: 0, base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, hold: false, say: null, mood: 'happy' });
+    Object.assign(st, { skipped: false, chosen: false, noPick: false, step: 0, sub: 0, base: null, delay: 0, relay: false, bonus: 0, waited: null, moved: null, anomaly: null, tried: false, hold: false, say: null, mood: 'happy' });
   }
   /** Step 1, the objective: starts whenever the Mission page opens in Education mode with no story running. */
   function startTour() {
@@ -111,7 +111,7 @@ export function createEducation(ctx) {
   function reveal() {
     const s = st.status ?? {}, site = st.picked?.short ?? '';
     const kind = s.sun && s.link ? 'good' : s.sun ? 'noLink' : s.link ? 'noSun' : 'neither';
-    st.revealed = kind === 'good' ? 'good' : 'bad'; st.revealedId = st.picked?.id; st.focus = true;
+    st.revealed = kind === 'good' ? 'good' : 'bad'; st.revealedId = st.picked?.id; st.focus = true; st.noPick = false;
     say(`site.${kind}`, { site }, kind === 'good' ? 'celebrating' : kind === 'neither' ? 'sleeping' : 'worried');
     render();
   }
@@ -141,7 +141,7 @@ export function createEducation(ctx) {
     if (st.step === 1) {
       if (st.sub < introLines().length - 1) { st.sub++; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); } else enterSite();
     } else if (st.step === STEP.site) {
-      if (!st.revealed) { if (st.picked) reveal(); }
+      if (!st.revealed) { if (st.chosen && st.picked) reveal(); else { st.noPick = true; st.focus = true; st.key = ''; render(); } }
       else if (st.revealed === 'good') enterHistory();
       else { st.revealed = null; st.focus = true; say('site.pick', {}, 'happy'); render(); }
     } else if (st.step === STEP.history) {
@@ -268,7 +268,7 @@ export function createEducation(ctx) {
       return;
     }
     const text = line(st.say.path, st.say.values);
-    const key = [st.step, st.sub, text, st.revealed, st.mood, r?.verdict, st.relay, st.bonus, st.delay, st.moved?.to, st.waited, st.picked?.id, st.chosen, ctx.language(), st.step === STEP.fix && canComplete()].join('|');
+    const key = [st.step, st.sub, text, st.revealed, st.mood, r?.verdict, st.relay, st.bonus, st.delay, st.moved?.to, st.waited, st.picked?.id, st.chosen, st.noPick, ctx.language(), st.step === STEP.fix && canComplete()].join('|');
     if (key === st.key) return;
     st.key = key;
     // Back and Next are on every step. Next is green when the story can move on, grey and locked when not.
@@ -295,6 +295,7 @@ export function createEducation(ctx) {
         <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span></div>
         <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite"><b class="edu-speaker">${escapeHtml(get('character.name') ?? 'Lumi')}</b>${escapeHtml(text)}</p>
         ${st.step === STEP.site && !st.revealed && st.picked && st.chosen ? `<p class="edu-choice">${escapeHtml(ui('choice', { site: st.picked.short }))}</p>` : ''}
+        ${st.step === STEP.site && !st.revealed && st.noPick ? `<p class="edu-error" role="alert">${escapeHtml(ui('pickFirst'))}</p>` : ''}
         ${st.step === STEP.fix ? leversHtml(r) : ''}
         <div class="edu-actions">${actions}${skip}</div>
       </div>
@@ -329,7 +330,7 @@ export function createEducation(ctx) {
     onValidate() { if (st.active) reset(); },
     onProbePick(id) { st.probe = id; },
     /** The user picked a site from the list or on the Moon (not the automatic default): the choice is shown. */
-    onSitePick() { if (st.active && !st.chosen) { st.chosen = true; st.key = ''; render(); } },
+    onSitePick() { if (st.active) { st.noPick = false; if (!st.chosen) { st.chosen = true; st.key = ''; render(); } } },
     onMissionRefresh(site, frame) {
       st.picked = site; st.status = site ? frame.status.get(site.id) ?? null : null;
       if (!st.active || st.skipped || !st.story) return;

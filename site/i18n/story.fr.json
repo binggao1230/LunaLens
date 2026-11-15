@@ -54,7 +54,8 @@
     },
     "confirm": "Confirmer le choix",
     "tryAgain": "Essayer un autre site",
-    "choice": "Ton choix : {site}"
+    "choice": "Ton choix : {site}",
+    "pickFirst": "Choisis d'abord un site : clique sur un site dans la liste ou sur la carte."
   },
   "_nearSites": "Lines where Lumi stands high beside the Site locations list. Entries ending in '.' match every line of that step.",
   "nearSites": [

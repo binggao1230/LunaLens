@@ -54,7 +54,8 @@
     },
     "confirm": "确认选择",
     "tryAgain": "换一个地点",
-    "choice": "你的选择：{site}"
+    "choice": "你的选择：{site}",
+    "pickFirst": "请先选一个站点：在列表中点击，或在地图上点击。"
   },
   "_nearSites": "Lines where Lumi stands high beside the Site locations list. Entries ending in '.' match every line of that step.",
   "nearSites": [
