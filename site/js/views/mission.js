@@ -718,6 +718,8 @@ export function createMission(ctx) {
       onFrame: () => historic?.place(),
       // Education mode: zoom out at most to 6 Moon radii, so the Moon stays the subject instead of the Earth-Moon system.
       maxDistance: () => (isEducation() ? 6 : null),
+      // Education: selecting a site turns the globe towards it and keeps the zoom, instead of diving onto it.
+      focusDistance: () => (isEducation() ? 'keep' : null),
     });
     view3dLoading = false;
     refresh(true);
