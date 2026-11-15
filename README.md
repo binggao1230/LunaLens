@@ -131,8 +131,7 @@ for rapid screening and explanation, not for certifying a landing site.
   grids; a Python reference implementation checks the browser visibility rules.
 - **Atlas:** React/Vite build of the upstream `daniel27-space/lunar-navigator`, served in a
   same-origin frame.
-- **Delivery:** GitHub Actions builds Atlas and publishes `site/` to GitHub Pages; the older
-  Cloudflare Workers deployment remains available.
+- **Delivery:** GitHub Actions builds Atlas and publishes `site/` to GitHub Pages.
 - **Testing:** `check_js.mjs`, `check_team.mjs`, `check_grid.mjs`, `check_search.mjs` and a
   Python ephemeris/SVS check.
 
@@ -256,10 +255,8 @@ venv). Records for the current run are in `TODO.md` under `Run log`.
 
 - **GitHub Pages:** https://binggao1230.github.io/LunaLens/ — public, built by
   `.github/workflows/pages.yml` on every push to `main`.
-- **Cloudflare Workers:** https://luna-lens.gaobing1230.workers.dev — built by
-  `.github/workflows/deploy.yml`.
 
-Both workflows download the snapshot release, build Atlas and publish `site/`.
+The workflow downloads the snapshot release, builds Atlas and publishes `site/`.
 
 ## Repository Map
 
