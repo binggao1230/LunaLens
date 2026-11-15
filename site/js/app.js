@@ -384,10 +384,12 @@ function renderSettings() {
   $('jearth').textContent = `${t('Earth')} ⏭`;
 }
 
+const LANG_LABEL = { en: 'EN', fr: 'FR', zh: '中文' };
 /** The top bar's two pill groups reflect the global mode and the language. */
 function renderChrome() {
   for (const b of $('mode-toggle').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.mode === getMode()));
-  for (const b of $('lang').querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.lang === getLanguage()));
+  for (const b of $('lang-list').querySelectorAll('button')) b.setAttribute('aria-checked', String(b.dataset.lang === getLanguage()));
+  $('lang-cur').textContent = LANG_LABEL[getLanguage()] || getLanguage().toUpperCase();
 }
 function toast(msg, ms) { const el = $('toast'); el.textContent = msg; el.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => { el.style.display = 'none'; }, ms || 1800); }
 // The Atlas page is its own application, framed inside this one. It reads a share hash holding the
@@ -720,8 +722,31 @@ function bind() {
     $('mcda-preset').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
     recompute();
   });
-  $('lang').onclick = (e) => {
-    const b = e.target.closest('button[data-lang]'); if (!b || b.dataset.lang === getLanguage()) return;
+  const langBtn = $('lang-btn'), langList = $('lang-list');
+  const langItems = () => [...langList.querySelectorAll('button[data-lang]')];
+  const setLangOpen = (open, focusTarget) => {
+    langList.hidden = !open;
+    langBtn.setAttribute('aria-expanded', String(open));
+    if (open) (focusTarget || langItems().find((b) => b.dataset.lang === getLanguage()) || langItems()[0]).focus();
+  };
+  langBtn.onclick = () => setLangOpen(langList.hidden);
+  langBtn.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); setLangOpen(true); }
+  });
+  langList.addEventListener('keydown', (e) => {
+    const items = langItems(), i = items.indexOf(document.activeElement);
+    if (e.key === 'Escape') { e.preventDefault(); setLangOpen(false); langBtn.focus(); }
+    else if (e.key === 'Tab') setLangOpen(false);
+    else if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    else if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
+    else if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
+  });
+  document.addEventListener('pointerdown', (e) => { if (!langList.hidden && !$('lang').contains(e.target)) setLangOpen(false); });
+  langList.onclick = (e) => {
+    const b = e.target.closest('button[data-lang]'); if (!b) return;
+    setLangOpen(false); langBtn.focus();
+    if (b.dataset.lang === getLanguage()) return;
     setLanguage(b.dataset.lang); applyTranslations(); hideTip(); renderChrome(); renderAll(); renderSources();
     edu?.setLanguage(getLanguage());
     if (scene3d) render3d();
