@@ -272,6 +272,48 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 @media (max-width:520px){.ex-pin,.ex-open{min-height:36px;padding:6px 12px}.ex-window{gap:10px}}
 .ex-empty{color:var(--muted);margin:10px 0 0}
 .det-actions{display:flex;gap:6px;margin-top:6px}
+/* South Pole prototype */
+.pole{display:flex;flex-direction:column;gap:12px}
+.pole-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:640px){.pole-head .cardhead{flex-direction:column;align-items:stretch}.pole-actions{justify-content:flex-start}.pole-globe,.pole-map-wrap{height:min(56vh,520px)}}
+.pole-notice{margin:8px 0 0;color:var(--muted);font-size:12.5px;min-height:16px}
+.pole-body{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:12px;align-items:start}
+@media(max-width:900px){.pole-body{grid-template-columns:1fr}}
+.pole-stage-wrap{position:relative;min-height:380px}
+.pole-globe,.pole-map-wrap{position:relative;width:100%;height:min(68vh,620px);border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0b0d10}
+.pole-globe canvas,#sp-map{display:block;width:100%;height:100%}
+#sp-map{background:#0f1113}
+.pole-globe-hint{position:absolute;left:10px;right:10px;bottom:8px;margin:0;color:var(--muted);font-size:12px;pointer-events:none}
+.pole-map-tools{position:absolute;right:10px;top:10px;display:flex;gap:6px}
+.pole-map-tools .btn-ghost{background:rgba(15,17,19,.78)}
+.pole-side{display:flex;flex-direction:column;gap:8px}
+.pole-side h3{margin:6px 0 0;font-size:14px}
+.pole-site{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;padding:7px 9px;margin:4px 0;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);color:var(--text);font:inherit;font-size:12.5px;cursor:pointer}
+.pole-site span{color:var(--muted);font-size:11.5px}
+.pole-site.sel{border-color:var(--accent)}
+.pole-label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);margin-top:6px}
+.pole-point{color:var(--text);font-size:12.5px}
+.pole-link{font-size:13px;margin:6px 0}
+.pole-link b{font-size:15px}
+.pole-visible{color:var(--good)}
+.pole-blocked{color:var(--critical)}
+.pole-unknown{color:var(--warning)}
+.pole-thresholds{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px}
+.pole-thresholds p{grid-column:1/-1;margin:0}
+.pole-thresholds label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--muted)}
+.pole-thresholds input{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px;min-height:30px}
+.pole-grid-actions{display:flex;gap:6px;flex-wrap:wrap}
+.pole-progress{font-size:12px;color:var(--muted);margin:4px 0}
+.pole-legend{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);margin:4px 0}
+.pole-sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.pole-list{margin:4px 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.pole-cell-btn{display:grid;grid-template-columns:1fr auto;gap:2px 8px;width:100%;text-align:left;font:inherit;font-size:12px;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px;cursor:pointer}
+.pole-cell-btn span:last-child{grid-column:1/-1;color:var(--muted);font-size:11px}
+.pole-detail{border-top:1px solid var(--border);padding-top:8px;margin-top:4px;font-size:12.5px}
+.pole-metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0}
+.pole-metrics div{display:flex;flex-direction:column}
+.pole-metrics b{font-size:14px}
+.pole-metrics span{color:var(--muted);font-size:11px}
 </style>
 <link rel="stylesheet" href="css/mission.css">
 <link rel="stylesheet" href="css/edu.css">
@@ -281,7 +323,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 <header class="appbar">
   <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span></b>
   <nav class="tabs" data-nav>
-    <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button>
+    <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="pole">South Pole</button>
   </nav>
   <div class="tray" id="tray"></div>
   <nav class="side" data-nav><button data-view="data">Data</button></nav>
@@ -392,6 +434,9 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
       </div>
     </div>
   </section>
+
+  <!-- ================= South Pole prototype: 3D globe plus detailed map ================= -->
+  <section class="view" id="v-pole"></section>
 
   <!-- ================= Atlas: the layer map page, in its own frame ================= -->
   <section class="view" id="v-atlas"></section>
@@ -534,7 +579,7 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
   <div id="now"></div>
 </div>
 <nav class="tabbar" data-nav>
-  <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button>
+  <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="pole">South Pole</button>
   <button data-view="data">Data</button>
 </nav>
 <div id="edu"></div>

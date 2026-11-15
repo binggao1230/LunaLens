@@ -10,6 +10,7 @@ import { getMode, setMode, onMode, initMode, parseHash, formatHash } from './mod
 import { switchMode } from './mode-transition.js';
 import { evaluateSiteMcda } from './engine/metrics.js';
 import { createExpert } from './views/expert.js';
+import { createSouthPole } from './views/southpole/index.js';
 import { dataBounds, latestCompleteTouchdown } from './engine/scenario.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, DAY = 864e5, HOUR = 36e5;
@@ -45,7 +46,7 @@ const state = {
   scenarios: [], scenario: 0,
 };
 const layout = { pano: null, tl: null, slip: null };
-let eph, SITES = [], sims = [], mission = null, edu = null, expert = null;
+let eph, SITES = [], sims = [], mission = null, edu = null, expert = null, pole = null;
 /** One shared Expert scenario: data bounds, touchdown and screening conditions. */
 const bounds = () => dataBounds(eph);
 const conditions = () => ({ stayH: stayH(), marginDeg: state.margin, requiredSunH: state.requiredSunH, requireEarthAtTouchdown: state.requireEarth });
@@ -458,7 +459,7 @@ function syncFromAtlas() {
 
 function showView(v) {
   if (v === 'compare' || v === 'slip' || v === 'plan') v = 'explore';
-  if (!['start', 'mission', 'explore', 'data', 'build', 'atlas'].includes(v)) v = 'start';
+  if (!['start', 'mission', 'explore', 'data', 'build', 'atlas', 'pole'].includes(v)) v = 'start';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}${formatHash(v)}`);
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
@@ -466,6 +467,7 @@ function showView(v) {
   if (v === 'atlas') showAtlas();
   renderAll();
   edu?.onView(v);
+  pole?.onView(v);
 }
 
 function jump(test, what) {
@@ -504,6 +506,7 @@ async function setCustom(lat, lon) {
       toast(t('Terrain data could not be loaded. This site uses a smooth-sphere horizon.'), 4000);
     }
   }
+  return SITES[k].id;
 }
 function mapPick(id, vbW, vbH, toXY, toLL, filter) {
   const el = $(id), pos = (e) => { const b = el.getBoundingClientRect(); return [(e.clientX - b.left) / b.width * vbW, (e.clientY - b.top) / b.height * vbH, vbW / b.width]; };
@@ -576,7 +579,7 @@ function renderSources() {
 /* ---------- wiring ---------- */
 
 function renderTime() { renderMaps(); renderTiles(); renderPano(); renderTimeline(); renderCompare(); render3d(); }
-function renderAll() { fillSelect(); renderSettings(); renderTime(); renderSlip(); mission?.render(); expert?.render(); }
+function renderAll() { fillSelect(); renderSettings(); renderTime(); renderSlip(); mission?.render(); expert?.render(); pole?.render(); }
 // map() passes the index as the second argument, which simulate() would read as a landing date.
 function recompute() { sims = SITES.map((s) => simulate(s)); renderAll(); }
 
@@ -818,6 +821,21 @@ async function start() {
     toast,
   });
   expert.mount();
+  pole = createSouthPole({
+    sites: () => SITES, eph: () => eph, landing: () => state.landing,
+    previewHour: () => state.hour, setPreviewHour: (h) => setHour(h),
+    stayH: () => stayH(), stayKey: () => state.stayKey, margin: () => state.margin,
+    setStay: (key) => { state.stayKey = key; state.hour = 0; recompute(); expert?.refreshInputs(); },
+    setMargin: (v) => { state.margin = v; recompute(); expert?.refreshInputs(); },
+    selectedId: () => SITES[state.site]?.id ?? null,
+    setTouchdown: (ms) => setLanding(ms),
+    selectSite: (id) => { const k = SITES.findIndex((s) => s.id === id); if (k >= 0) { state.site = k; renderAll(); } },
+    addPoint: (lat, lon) => setCustom(lat, lon),
+    dem: () => ensureDem(),
+    view: () => document.body.dataset.view,
+    toast,
+  });
+  pole.mount();
   seedScenario();
   renderSources();
   showView(parseHash(location.hash).view);

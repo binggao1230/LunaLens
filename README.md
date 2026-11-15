@@ -49,10 +49,11 @@ own address instead of `localhost` — `ipconfig getifaddr en0` on macOS, `hostn
 by your network settings. The server listens on `0.0.0.0`, so both work.
 
 In this checkout, Mission provides 3D and an optional Education story, Explore provides native point
-and time inspection plus the Expert touchdown search, Atlas is a separate regional map, and Data
+and time inspection plus the Expert touchdown search, South Pole is the prototype that joins the 3D
+globe to a detailed native map with a screening grid, Atlas is a separate regional map, and Data
 explains sources and accuracy. Standalone Compare and Date slip are retired; their old links go to
-Explore. The period search is implemented in `site/js/engine/search.js`; the combined South Pole tab
-is still planned in TODO. The public release can lag a local branch.
+Explore. Atlas is not embedded in the prototype because its redistribution rights are still
+unverified; the native polar map is the documented fallback. The public release can lag a local branch.
 
 Inside Explore, `Find touchdown windows` takes an exact UTC hour, a day, a half-year, a year, or a
 custom range, ranks terrain-backed sites under one set of conditions, and lets two pinned windows be
@@ -64,6 +65,7 @@ the touchdown Earth requirement are editable screening assumptions, not mission 
 
 ```sh
 node site/tools/check_search.mjs        # search rules, H1 2030 fixture, cross-year fixture, runtime
+node site/tools/check_grid.mjs          # projection, grid classes, cell vs native Site, runtime
 node site/tools/check_js.mjs            # browser engine vs the Python reference (needs NumPy)
 node site/tools/check_team.mjs          # browser windows vs backend/lunalens/windows
 python3 site/tools/check_ephemeris_svs.py

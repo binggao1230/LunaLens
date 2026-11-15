@@ -7,6 +7,11 @@ import { loadDem } from '../../engine/dem.js';
 import { terrainPatch } from '../terrain-mesh.js';
 export async function createPolar3d(env) {
   const { $, view, local, sites, pickedSite, labelText, colorOf, refresh, ctx, t, escapeHtml, fmtLatLon, unit, dot3, clamp, COLORS, getFrame, setFailed } = env;
+  // The same scene also serves the South Pole prototype: an explicit activity gate, a deliberate
+  // Moon tap, an optional grab control and an optional Earth-link pulse.
+  const active = env.active ?? (() => view() === 'mission');
+  const grab = env.controlsMode === 'grab';
+  const reducedMotion = Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
   let view3d = null;
   try {
       const T = await import('../../vendor/three/three.module.js');
@@ -18,6 +23,7 @@ export async function createPolar3d(env) {
       const camera = new T.PerspectiveCamera(42, 1, 0.01, 200);
       const controls = new OrbitControls(camera, canvas);
       controls.enablePan = false; controls.minDistance = 1.03; controls.maxDistance = 14; controls.rotateSpeed = 0.7;
+      if (grab) controls.enabled = false;
       camera.up.set(1, 0, 0);
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
@@ -53,6 +59,7 @@ export async function createPolar3d(env) {
       for (let lat = 0; lat >= -80; lat -= 10) graticule.add(parallel(lat, 0x93a7bd, lat === 0 ? 0.34 : 0.15));
       graticule.add(parallel(-85, 0x93a7bd, 0.15));
       graticule.add(parallel(-75, 0x58c8ff, 0.62, 1.0022));
+      if (Number.isFinite(env.studyLat)) graticule.add(parallel(env.studyLat, env.studyColor ?? 0xff9ad5, 0.85, 1.0026));
       for (let lon = 0; lon < 360; lon += 30) {
         const points = [];
         for (let i = 0; i <= 90; i++) points.push(new T.Vector3(...unit(-90 + i, lon)).multiplyScalar(1.0015));
@@ -116,6 +123,56 @@ export async function createPolar3d(env) {
 
       const markerGroup = new T.Group();
       scene.add(markerGroup);
+      // Earth-link pulse (prototype only): a dashed path from the selected site toward Earth.
+      const pulseGroup = new T.Group();
+      scene.add(pulseGroup);
+      const pulseGeometry = new T.BufferGeometry().setFromPoints([new T.Vector3(), new T.Vector3()]);
+      const pulseLine = new T.Line(pulseGeometry, new T.LineDashedMaterial({ color: 0x9be7ff, dashSize: 0.12, gapSize: 0.08, transparent: true, opacity: 0.9, depthWrite: false }));
+      const pulseDot = new T.Mesh(new T.SphereGeometry(0.018, 12, 8), new T.MeshBasicMaterial({ color: 0xd8f6ff }));
+      pulseLine.visible = pulseDot.visible = false;
+      pulseGroup.add(pulseLine, pulseDot);
+      let pulseState = null, pulsePhase = 0, pulseLoop = 0;
+      let pulseKey = '';
+      const stopPulse = () => { if (pulseLoop) cancelAnimationFrame(pulseLoop); pulseLoop = 0; };
+      const updatePulse = () => {
+        const info = env.pulse?.();
+        const site = pickedSite();
+        const state = info && site ? info.state : null;
+        if (!state || state === 'unknown') {
+          pulseState = null; pulseLine.visible = pulseDot.visible = false; stopPulse(); return;
+        }
+        pulseStart.set(...unit(site.lat, site.lon)).multiplyScalar(1.01);
+        pulseEnd.copy(earth.position);
+        const attr = pulseGeometry.attributes.position;
+        attr.setXYZ(0, pulseStart.x, pulseStart.y, pulseStart.z);
+        attr.setXYZ(1, pulseEnd.x, pulseEnd.y, pulseEnd.z);
+        attr.needsUpdate = true;
+        pulseGeometry.computeBoundingSphere();
+        pulseLine.computeLineDistances();
+        pulseLine.visible = true;
+        const key = `${site.id}:${state}`;
+        if (key !== pulseKey) { pulseKey = key; pulsePhase = 0; stopPulse(); }
+        pulseState = state;
+        if (state !== 'visible' || reducedMotion) {
+          pulseDot.visible = false;
+          pulseLine.material.opacity = state === 'blocked' ? 0.4 : 0.85;
+          stopPulse();
+          return;
+        }
+        pulseLine.material.opacity = 0.9;
+        pulseDot.visible = true;
+        if (!pulseLoop) {
+          const step = () => {
+            if (pulseState !== 'visible' || reducedMotion) { pulseLoop = 0; return; }
+            pulsePhase = (pulsePhase + 0.008) % 1;
+            pulseDot.position.lerpVectors(pulseStart, pulseEnd, pulsePhase);
+            renderer.render(scene, camera);
+            pulseLoop = requestAnimationFrame(step);
+          };
+          pulseLoop = requestAnimationFrame(step);
+        }
+      };
+      const pulseStart = new T.Vector3(), pulseEnd = new T.Vector3();
       const selectRing = new T.Mesh(new T.RingGeometry(1.7, 2.1, 32), new T.MeshBasicMaterial({ color: 0xffffff, side: T.DoubleSide }));
       scene.add(selectRing);
       const sunSpot = new T.Mesh(new T.SphereGeometry(1, 12, 8), new T.MeshBasicMaterial({ color: 0xffe066 }));
@@ -204,7 +261,7 @@ export async function createPolar3d(env) {
       };
       function draw() {
         const f = getFrame();
-        if (view() !== 'mission' || local.mode !== '3d' || !f) return;
+        if (!active() || local.mode !== '3d' || !f) return;
         buildMarkers();
         buildRelief();
         reliefLight.position.copy(camera.position);
@@ -249,6 +306,7 @@ export async function createPolar3d(env) {
           selectRing.scale.setScalar(Math.max(0.0016, camera.position.length() * 0.0016));
           placeLabel(picked.normal.clone().multiplyScalar(1.01), picked.normal);
         }
+        updatePulse();
         renderer.render(scene, camera);
       }
       const resize = () => {
@@ -275,15 +333,76 @@ export async function createPolar3d(env) {
         };
         tween = requestAnimationFrame(step);
       };
-      let down = null;
-      canvas.addEventListener('pointerdown', (event) => { down = [event.clientX, event.clientY]; });
+      let down = null, grabDir = null, grabId = null;
+      const pointers = new Map();
+      let pinchDist = 0;
+      const dirAt = (event) => {
+        const box = canvas.getBoundingClientRect(), caster = new T.Raycaster();
+        caster.setFromCamera(new T.Vector2(((event.clientX - box.left) / box.width) * 2 - 1, -((event.clientY - box.top) / box.height) * 2 + 1), camera);
+        return caster.intersectObject(moon)[0]?.point.clone().normalize() ?? null;
+      };
+      canvas.addEventListener('pointerdown', (event) => {
+        down = [event.clientX, event.clientY];
+        if (!grab) return;
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (pointers.size === 1) {
+          grabId = event.pointerId; grabDir = dirAt(event);
+          canvas.setPointerCapture?.(event.pointerId);
+        } else {
+          grabDir = null;
+          const [a, b] = [...pointers.values()];
+          pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
+        }
+      });
+      canvas.addEventListener('pointermove', (event) => {
+        if (!grab) return;
+        if (pointers.has(event.pointerId)) pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (pointers.size >= 2) {
+          const [a, b] = [...pointers.values()];
+          const d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (pinchDist > 0 && d > 0) {
+            camera.position.setLength(clamp(camera.position.length() * (pinchDist / d), 1.03, 14));
+            request();
+          }
+          pinchDist = d;
+          return;
+        }
+        if (!grabDir || event.pointerId !== grabId) return;
+        const dir = dirAt(event);
+        if (!dir) return;
+        const q = new T.Quaternion().setFromUnitVectors(grabDir, dir);
+        camera.position.applyQuaternion(q);
+        camera.up.applyQuaternion(q).normalize();
+        camera.lookAt(0, 0, 0);
+        grabDir = dir;
+        request();
+      });
+      const endPointer = (event) => {
+        pointers.delete(event.pointerId);
+        if (event.pointerId === grabId) { grabDir = null; grabId = null; }
+        if (pointers.size < 2) pinchDist = 0;
+      };
+      canvas.addEventListener('pointerup', endPointer);
+      canvas.addEventListener('pointercancel', endPointer);
+      canvas.addEventListener('wheel', (event) => {
+        if (!grab) return;
+        event.preventDefault();
+        camera.position.setLength(clamp(camera.position.length() * Math.exp(event.deltaY * 0.0012), 1.03, 14));
+        request();
+      }, { passive: false });
       canvas.addEventListener('pointerup', (event) => {
         if (!down || Math.hypot(event.clientX - down[0], event.clientY - down[1]) > 5) return;
         const box = canvas.getBoundingClientRect(), caster = new T.Raycaster();
         caster.setFromCamera(new T.Vector2(((event.clientX - box.left) / box.width) * 2 - 1, -((event.clientY - box.top) / box.height) * 2 + 1), camera);
         const hits = caster.intersectObjects([moon, ...markers.map((m) => m.dotMesh)]);
         const first = hits[0];
-        if (!first || first.object === moon) return;
+        if (!first) return;
+        if (first.object === moon) {
+          if (!env.onMoonTap) return;
+          const p = first.point.clone().normalize();
+          env.onMoonTap({ lat: Math.asin(clamp(p.y, -1, 1)) / (Math.PI / 180), lon: ((Math.atan2(-p.z, p.x) / (Math.PI / 180)) + 360) % 360 });
+          return;
+        }
         const hit = markers.find((m) => m.dotMesh === first.object);
         if (hit) { local.picked = hit.site.id; refresh(true); }
       });

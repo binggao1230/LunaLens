@@ -230,6 +230,11 @@ this document.
 | 2026-11-15T00:17Z | W4 done | same branch | Pins A/B from ranked windows without retyping; hourly A/B with signed B−A deltas and two elapsed-hour timelines; period comparison with each range's own denominator, shared-denominator common starts, and non-intersecting message. Verified: de Gerlache vs Nobile (366/327 h overlap, −39 h), 828 of 3,707 common UTC starts in H2 2030, Nobile vs Shackleton rim H1 common = 0, de Gerlache two same-site windows (26 May/15 Jun, −4 h overlap, +55 h sunlight), de Gerlache H1 vs Nobile year (8.1% vs 29.1%, no common start). Global condition change re-runs the search and both comparisons. | “Same site, two periods of different lengths” is reachable by re-running a period and re-pinning; the automatic default for same-site pins stays hourly. | W5 checks. |
 | 2026-11-15T00:17Z | W5 done | same branch | Automated browser walkthrough at 1440 and 390 px: user-entered cross-year search, rank switch, pin and compare, Inspect, return to Mission. H1 re-run separately. Old hashes `#/compare/expert`, `#/slip/expert` → Explore with expert; `#/plan/education` → Explore with education. Mission CSV present and enabled. Orbit rings visible at 2026-11-15 and 2027-05-14, desktop and 390. WebGL disabled by init script: search, 2D map and tiles remain usable; the 3D card says “3D is unavailable on this device…”. Education start page shows Validate and no retired tabs; expert settings (200 h sun, 5° margin) survived a mode toggle. Results show terrain, assumptions and the screening/geometry limit note. Legacy 14→28 Nov clue: Earth +11 h matches; sunlight −65 h instead of −52 h because the canonical rule uses the hourly apparent solar limb (`sunVis`) while the retired Compare used a fixed 0.265° disk fraction. **Still open:** C7.3 newcomer and physical-phone tests, six-step Education walk in three languages, C5.3 skyline segment. | none | W6 close-out. |
 | 2026-11-15T00:35Z | W6 done — checkpoint | `bing/omp-touchdown-windows` at `6c6e6f75` (this log entry is the following commit) | Final pass: `check_search.mjs` 13/13; `check_js.mjs` PASS including the margin-vs-geometry assertion; `check_team.mjs` PASS; `check_ephemeris_svs.py` PASS; `git diff --check` clean. Browser: Explore loads with no page errors, 5 ranked terrain sites, same-site pins open the hourly comparison by default. Evidence screens: `design/baseline/`, `design/w3-expert-*.png`, `design/w4-compare-*.png`, `design/w5-*.png`. | Nothing pushed, deployed or submitted. `backend/.venv` is local-only. WebKit screenshots at 390 px occasionally need a scroll nudge to repaint text; the page itself is correct. | Restart point: reopen `#/explore/expert`, run the half-year 2030 fixture, then start the separate Mission/Atlas goal at M1, or close C5.3 and C7.3 first. |
+| 2026-11-15T07:44Z | M1 done | `bing/omp-touchdown-windows` + working tree | New **South Pole** tab (`#/pole/expert`) with the Mission globe and a full-width native 2D map (no Atlas frame: redistribution rights are still unverified; M1 allows the native fallback). Reused `createPolar3d` with an activity gate, Moon-tap callback, study ring and optional pulse instead of copying the scene. Moon tap opens the map at the tapped point; a point north of 85°S opens it centred on the pole with an explanation and is not a candidate. Keyboard button opens the map; WebGL failure switches to the 2D map with a message. Map point at 89.568°S 150.481°E kept its identity and time after returning to the globe; nonpolar IM-1 is absent from the study list. | Atlas not embedded on purpose (see Atlas release decision); the native map is the documented fallback. | M2 drag. |
+| 2026-11-15T07:44Z | M2 done | same | Chose grab-the-globe: the dragged surface point follows the pointer (`Quaternion.setFromUnitVectors` on the camera basis), no damped turntable. Wheel and two-pointer pinch zoom; camera state is separate from body positions; Reset returns to the south-pole home. Evidence: element screenshots hash 8463453… before, ebb93c9… after a 140 px drag; two resets produce the same hash when the pulse is static. Study boundary pink at 85°S, terrain edge cyan at 75°S, cyan/amber orbit rings kept and named in the on-screen legend. | Pinch not exercised on a touch device; wheel + two-pointer code path shares the same clamp. | M3 grid. |
+| 2026-11-15T07:44Z | M3 done | same | Pilot grid in the documented stereographic projection: bounds 16 × 16 km centred at 89.6°S 200°E, 4 km coarse / 2 km fine cells, values sampled at cell centres on the 240 m raster; slope from central differences, Earth visibility over the whole selected stay, longest continuous window. Hard limits 15° / 25% / 48 h, targets 10° / 40% / 100 h, weights 0.5 / 0.3 / 0.2, all editable and shown. 2030-01-01, 709 h, 2°: **2 green, 15 yellow, 47 red**; changing margin to 5° gives 0 green, 0 yellow, 64 red; recompute 4–6 ms with geometry fixed. A green cell at 89.584°S 145.492°W shows 8.8° slope, 41%, 288 h. Probe at 74.9°S is unknown (hatched, no score, no candidate action). `check_grid.mjs` matches one cell against a native `Site` series (Earth share and longest window equal). | Deep cells can read 0% Earth because the terrain horizon blocks the low Earth; that is a real result, not missing data. | M4 tiling. |
+| 2026-11-15T07:44Z | M4 done | same | Coarse 16-cell grid first (2.4 s), fine 64-cell grid after zoom/refine (7.9 s), static skyline cached per cell; scenario-only recompute 4–6 ms and separate from geometry. Fine relief is regenerated for the visible bounds and zoom (384² samples, cached by centre + scale, skipped while dragging) over the coarse 512² overview. Date changed twice during the first build: the final grid matched the last date (0 green at 2026-11-15), selection survived, no stale score. Missing rasters are grey/hatched and explained, never red. Interaction (zoom, site select) worked during loading at desktop; phone layout checked at 390 px. | Pilot bounds stay fixed by design; expanding them needs the profiling step this pilot replaces. | M5 pulse. |
+| 2026-11-15T07:44Z | M5 done | same | Dashed site→Earth path plus a moving pulse in the 3D scene, driven by the native sample: Visible at 2026-11-18 02:00 (67 h into the stay), Blocked at touchdown and no pulse; Unknown hides line and pulse. Label states Visible/Blocked/Unknown with the UTC time in the panel. Reduced motion (Chromium, `prefers-reduced-motion: reduce`) keeps the line static: two frames 900 ms apart hash equal. Paris/station wording is not claimed; the path is the geometric direction only. | Pulse visibility is the geometric skyline state; the link margin remains a separate condition and is stated in the panel. | Final checks and commit. |
 
 Evidence note (2026-11-15T01:20Z): the WebKit harness returned screenshots as temporary files and did not write the earlier `design/baseline/`, `design/w3-*`, `design/w4-*`, `design/w5-*` paths; those images exist in the session transcript. The final evidence set was saved explicitly and is committed under `design/checks/w6-*.webp` (H1 desktop, A/B comparison, 390 px panel).
 
@@ -259,7 +264,7 @@ site catalogue and CSV intact.
 | M4. Scale map loading and add data | M3, plus verified source and coverage | Coarse overview with detailed tiles loaded on demand |
 | M5. Show Earth visibility with a signal pulse | W1.3, M1 and M2 | A point-to-Earth illustration driven by the selected site's geometric state |
 
-- [ ] **M1 — Open the detailed map from the Moon.** Add the prototype as one new tab with
+- [x] **M1 — Open the detailed map from the Moon.** Add the prototype as one new tab with
   two views: the existing Mission 3D scene and a full-width 2D south-pole map. Reuse the
   [current globe hit test](site/js/views/polar3d/index.js#L278). Show the study area and
   current selection in 3D; leave the default site list and candidate markers to the 2D
@@ -280,7 +285,7 @@ site catalogue and CSV intact.
   can be selected; a polar point without usable data is marked unknown and never enters
   the shortlist. Adding a new nonpolar preset must not change the result. The old tabs
   still work.
-- [ ] **M2 — Make globe dragging predictable.** Reproduce the current discomfort at an
+- [x] **M2 — Make globe dragging predictable.** Reproduce the current discomfort at an
   overview zoom and near the pole. Compare a damped, north-aligned orbit with a
   grab-the-globe control in which the point follows the pointer. Choose by which is
   easier to track on mouse and touch. Keep the camera interaction separate from the
@@ -291,7 +296,7 @@ site catalogue and CSV intact.
   **Accept:** record before/after at desktop and 390 px. At both zooms, the view follows
   a horizontal and vertical drag without jumping or flipping, pinch does not navigate,
   and reset returns to a repeatable view. Check both rings at two UTC times.
-- [ ] **M3 — Add a color-coded candidate grid.** Start with a small covered region and
+- [x] **M3 — Add a color-coded candidate grid.** Start with a small covered region and
   a regular grid in the documented south-polar projection. Record its bounds, nominal
   cell size and native DEM resolution; do not imply sub-cell accuracy. At one selected
   UTC touchdown and stay, calculate regional slope, total Earth visibility above the
@@ -308,7 +313,7 @@ site catalogue and CSV intact.
   **Accept:** demonstrate a green, yellow, red and unknown cell with known inputs.
   Changing the date or Earth margin updates the correct fields while the grid geometry
   stays fixed. Confirm at least one sampled cell against native point inspection.
-- [ ] **M4 — Scale the detailed map and data without freezing interaction.** Load a
+- [x] **M4 — Scale the detailed map and data without freezing interaction.** Load a
   coarse overview first, then request fine relief and scoring data for the visible
   bounds and zoom. Cache by data version and separate static slope tiles from
   scenario-dependent visibility results; cancel or ignore old queries after a time or
@@ -319,7 +324,7 @@ site catalogue and CSV intact.
   **Accept:** drag, zoom and select during loading on desktop and at 390 px. The correct
   tile appears after a rapid date change, no stale score is reused for a different
   scenario, and the map explains missing data instead of coloring it red.
-- [ ] **M5 — Animate the selected point's Earth visibility.** Add a dashed path from the
+- [x] **M5 — Animate the selected point's Earth visibility.** Add a dashed path from the
   selected lunar site in 3D toward Earth. Move a pulse along it while the native Earth
   visibility state is available and stop it on the first blocked sample at the selected
   time, including terrain or the local horizon. Show “Visible”, “Blocked” or “Unknown”

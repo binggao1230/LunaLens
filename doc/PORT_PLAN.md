@@ -27,10 +27,12 @@ landing time. A reverse helper exists in the code but is not connected to the
 running app: an Atlas selection does not update the native site automatically.
 Keep this limitation explicit when testing or demonstrating Atlas.
 
-Mission and Atlas remain separate tabs. The planned **South Pole** tab will
-prototype a click from the 3D Moon to a detailed map without replacing either
-current tab. The core native Explore search and comparison do not depend on
-Atlas. Compare, Date slip and Plan are retired as standalone views.
+Mission and Atlas remain separate tabs. The **South Pole** prototype now exists as a new tab
+(`#/pole/expert`): the Mission globe plus a full-width native map, a pilot screening grid and an
+Earth-link pulse. It deliberately uses the native map, not the Atlas frame, because the
+redistribution decision below is still open; it does not replace Mission or Atlas. The core native
+Explore search and comparison do not depend on Atlas. Compare, Date slip and Plan are retired as
+standalone views.
 
 ## Before using Atlas in the prototype or judged release
 
