@@ -13,29 +13,42 @@ import {
 import { STAY_CHOICES } from '../../engine/scenario.js';
 
 const DAY = 864e5, HOUR = 36e5, D2R = Math.PI / 180;
+const MAX_WINDOW_DAYS = 183;
 const unit = (lat, lon) => [Math.cos(lat * D2R) * Math.cos(lon * D2R), Math.sin(lat * D2R), -Math.cos(lat * D2R) * Math.sin(lon * D2R)];
 const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const COLORS = { link: '#43d98a', sun: '#f5c542', dark: '#7d7993', both: '#9be7ff' };
 const STATUS = { green: '#7bdc8e', yellow: '#f5c542', red: '#e4635a', unknown: '#7d7993', pending: '#3a3f46' };
+const ICON = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  crosshair: '<circle cx="12" cy="12" r="6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+  panel: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+};
+const icon = (name) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICON[name]}</svg>`;
 const globeLocal = { mode: '3d', picked: null };
 
 export function createSouthPole(ctx) {
   const root = document.getElementById('v-pole');
   const ui = {
     built: false, stage: 'globe', tab: 'southpole', selected: null,
-    window: { startDay: 0, endDay: 0, chosen: false },
+    window: { startDay: 0, endDay: 0, chosen: false, collapsed: false },
     map: { scale: 8, cxKm: 0, cyKm: 0, dragging: null, opened: false, detail: null, detailKey: '' },
     grid: { scope: 'pole', cells: [], token: 0, done: false, startedMs: 0, ms: 0, scenarioMs: 0 },
     rangeHandle: null,
     cell: null, popupCell: null,
     slots: { A: null, B: null, C: null }, target: null,
     limits: { ...DEFAULT_LIMITS }, targets: { ...DEFAULT_TARGETS }, weights: { ...DEFAULT_WEIGHTS },
-    globe: null, globeFailed: false, atlasSrc: '', atlasKey: '', atlasRev: 0, moonReady: false,
+    globe: null, globeFailed: false, atlasSrc: '', atlasKey: '', atlasRev: 0, moonReady: false, syncingSliders: false,
     animRunning: true, animSpeed: 5,
   };
   const staticCache = new Map();
   const els = {};
+  const fitPole = () => {
+    const bar = document.querySelector('.appbar');
+    if (bar) root.style.setProperty('--appbar-h', `${bar.getBoundingClientRect().height}px`);
+  };
   const base = { canvas: null, dem: null };
 
   const eph = () => ctx.eph();
@@ -52,41 +65,87 @@ export function createSouthPole(ctx) {
   function initWindow() {
     const latest = Math.max(0, latestDay());
     ui.window.startDay = clamp(dayOf(ctx.landing()), 0, latest);
-    ui.window.endDay = latest;
+    ui.window.endDay = Math.min(latest, ui.window.startDay + MAX_WINDOW_DAYS - 1);
     syncWindowInputs();
   }
 
-  function syncWindowInputs() {
+  function yearMarks(latest) {
+    const y0 = new Date(eph().t0).getUTCFullYear(), y1 = new Date(dayMs(latest)).getUTCFullYear();
+    const values = [];
+    for (let y = y0; y <= y1; y++) {
+      const day = (Date.UTC(y, 0, 1) - eph().t0) / DAY;
+      if (day >= 0 && day <= latest) values.push(day / Math.max(1, latest) * 100);
+    }
+    return values.length ? values : [0];
+  }
+
+  function pipsFor(latest) {
+    return { mode: 'positions', values: yearMarks(latest), density: 1, format: { to: (v) => String(new Date(dayMs(v)).getUTCFullYear()), from: (v) => Number(v) } };
+  }
+
+  function initWindowSlider(host) {
+    if (!host || !window.noUiSlider) return null;
+    if (host.noUiSlider) return host.noUiSlider;
+    const latest = Math.max(1, latestDay());
+    window.noUiSlider.create(host, {
+      start: [clamp(ui.window.startDay, 0, latest), clamp(ui.window.endDay, 0, latest)],
+      connect: true, step: 1, limit: MAX_WINDOW_DAYS - 1,
+      range: { min: 0, max: latest },
+      pips: pipsFor(latest),
+    });
+    host.dataset.max = String(latest);
+    host.noUiSlider.on('update', (vals) => {
+      if (ui.syncingSliders) return;
+      setWindow(Number(vals[0]), Number(vals[1]), 'both', host);
+    });
+    return host.noUiSlider;
+  }
+
+  function syncSliders(source) {
+    const latest = Math.max(1, latestDay());
+    for (const host of [els['sp-range2'], els['sp-mslider']]) {
+      const slider = initWindowSlider(host);
+      if (!slider) continue;
+      if (host.dataset.max !== String(latest)) {
+        host.dataset.max = String(latest);
+        slider.updateOptions({ range: { min: 0, max: latest }, limit: MAX_WINDOW_DAYS - 1, pips: pipsFor(latest) }, false);
+      }
+      if (host !== source) {
+        ui.syncingSliders = true;
+        slider.set([ui.window.startDay, ui.window.endDay], false);
+        ui.syncingSliders = false;
+      }
+    }
+  }
+
+  function syncWindowInputs(source = null) {
     const latest = Math.max(0, latestDay());
-    for (const id of ['sp-mstart']) { const el = els[id]; if (el) { el.min = '0'; el.max = String(latest); el.value = String(ui.window.startDay); } }
-    for (const id of ['sp-mend']) { const el = els[id]; if (el) { el.min = '0'; el.max = String(latest); el.value = String(ui.window.endDay); } }
-    const pct = (d) => (latest ? (d / latest) * 100 : 0);
-    const s = pct(ui.window.startDay), e = pct(ui.window.endDay);
-    if (els['sp-thumb-start']) { els['sp-thumb-start'].style.left = `${s}%`; els['sp-thumb-start'].setAttribute('aria-valuenow', String(ui.window.startDay)); els['sp-thumb-start'].setAttribute('aria-valuemax', String(latest)); }
-    if (els['sp-thumb-end']) { els['sp-thumb-end'].style.left = `${e}%`; els['sp-thumb-end'].setAttribute('aria-valuenow', String(ui.window.endDay)); els['sp-thumb-end'].setAttribute('aria-valuemax', String(latest)); }
-    if (els['sp-range2-fill']) { els['sp-range2-fill'].style.left = `${s}%`; els['sp-range2-fill'].style.width = `${Math.max(0, e - s)}%`; }
     const start = dayMs(ui.window.startDay), end = dayMs(ui.window.endDay);
     const days = ui.window.endDay - ui.window.startDay + 1;
     const text = t('{days} days selected · stay {stay} h · latest complete touchdown {cutoff}.', {
       days, stay: ctx.stayH(), cutoff: fmtDateTime(eph().tEnd - ctx.stayH() * HOUR),
     });
     for (const id of ['sp-windowinfo', 'sp-mwindowinfo']) if (els[id]) els[id].textContent = text;
+    if (els['sp-window-count']) els['sp-window-count'].textContent = t('{days} / {max} days', { days, max: MAX_WINDOW_DAYS });
     if (els['sp-windowhud']) els['sp-windowhud'].textContent = t('{days} days in the launch window', { days }) + ` · ${ctx.stayH()} h`;
     if (els['sp-win-start']) els['sp-win-start'].textContent = isoDate(start);
     if (els['sp-win-end']) els['sp-win-end'].textContent = isoDate(end);
-    if (els['sp-range2-ticks'] && !els['sp-range2-ticks'].childElementCount) {
-      const y0 = new Date(eph().t0).getUTCFullYear(), y1 = new Date(dayMs(latest)).getUTCFullYear();
-      els['sp-range2-ticks'].innerHTML = Array.from({ length: y1 - y0 + 1 }, (_, i) => y0 + i)
-        .map((y) => `<span style="left:${Math.min(100, Math.max(0, ((Date.UTC(y, 0, 1) - eph().t0) / DAY) / Math.max(1, latest) * 100))}%">${y}</span>`).join('');
-    }
+    syncSliders(source);
   }
 
-  function setWindow(startDay, endDay) {
+  function setWindow(startDay, endDay, anchor = 'both', source = null) {
     const latest = Math.max(0, latestDay());
-    const s = clamp(Math.round(startDay), 0, latest), e = clamp(Math.round(endDay), 0, latest);
+    let s = clamp(Math.round(startDay), 0, latest), e = clamp(Math.round(endDay), 0, latest);
+    if (anchor === 'start') {
+      e = Math.max(e, s);
+      if (e - s + 1 > MAX_WINDOW_DAYS) e = Math.min(latest, s + MAX_WINDOW_DAYS - 1);
+    } else if (anchor === 'end') {
+      s = Math.min(s, e);
+      if (e - s + 1 > MAX_WINDOW_DAYS) s = Math.max(0, e - MAX_WINDOW_DAYS + 1);
+    } else if (e - s + 1 > MAX_WINDOW_DAYS) e = Math.min(latest, s + MAX_WINDOW_DAYS - 1);
     ui.window.startDay = Math.min(s, e);
     ui.window.endDay = Math.max(s, e);
-    syncWindowInputs();
+    syncWindowInputs(source);
     const ms = dayMs(ui.window.startDay);
     if (Math.abs(ms - ctx.landing()) > 60e3) ctx.setTouchdown(ms);
     ui.globe?.request();
@@ -97,7 +156,9 @@ export function createSouthPole(ctx) {
   function confirmWindow() {
     ui.window.chosen = true;
     els['sp-modal'].hidden = true;
+    ui.window.collapsed = false;
     els['sp-windowbar'].hidden = false;
+    els['sp-window-show'].hidden = true;
     setWindow(ui.window.startDay, ui.window.endDay);
     ensureGlobe().then(() => setStage('globe'));
     renderAll();
@@ -132,7 +193,18 @@ export function createSouthPole(ctx) {
           </div>
           <div class="pole-map-native" id="sp-native">
             <canvas id="sp-map" width="762" height="762" tabindex="0" role="img" aria-label="${escapeHtml(t('South-pole blocks with screening colours'))}"></canvas>
-            <div class="pole-map-tools"><button type="button" class="btn-ghost" id="sp-zin" aria-label="${escapeHtml(t('Zoom in'))}">+</button><button type="button" class="btn-ghost" id="sp-zout" aria-label="${escapeHtml(t('Zoom out'))}">−</button><button type="button" class="btn-ghost" id="sp-center">${escapeHtml(t('Centre on the pole'))}</button></div>
+            <div class="pole-map-rail">
+              <div class="pole-abc" id="sp-abc" role="group" aria-label="${escapeHtml(t('Selected points A/B/C'))}">
+                <button type="button" data-slot="A" style="--slot:#58c8ff" aria-label="${escapeHtml(t('Save or focus point {name}', { name: 'A' }))}">A</button>
+                <button type="button" data-slot="B" style="--slot:#f5c542" aria-label="${escapeHtml(t('Save or focus point {name}', { name: 'B' }))}">B</button>
+                <button type="button" data-slot="C" style="--slot:#ff9ad5" aria-label="${escapeHtml(t('Save or focus point {name}', { name: 'C' }))}">C</button>
+              </div>
+              <div class="pole-map-tools" role="group" aria-label="${escapeHtml(t('Map controls'))}">
+                <button type="button" id="sp-zin" aria-label="${escapeHtml(t('Zoom in'))}" title="${escapeHtml(t('Zoom in'))}">${icon('plus')}</button>
+                <button type="button" id="sp-zout" aria-label="${escapeHtml(t('Zoom out'))}" title="${escapeHtml(t('Zoom out'))}">${icon('minus')}</button>
+                <button type="button" id="sp-center" aria-label="${escapeHtml(t('Centre on the pole'))}" title="${escapeHtml(t('Centre on the pole'))}">${icon('crosshair')}</button>
+              </div>
+            </div>
           </div>
           <canvas id="sp-moon" width="2048" height="1024" hidden aria-label="${escapeHtml(t('Whole Moon with the night side and landing sites'))}"></canvas>
         </div>
@@ -145,14 +217,14 @@ export function createSouthPole(ctx) {
           <button type="button" data-stage="map">2 · ${escapeHtml(t('Map'))}</button>
           <button type="button" data-stage="atlas">3 · ${escapeHtml(t('Atlas'))}</button>
         </nav>
-        <div class="pole-hud-row"><p id="sp-hud"></p><button type="button" class="btn-ghost btn-xs" id="sp-panel-show">${escapeHtml(t('Panel'))}</button></div>
+        <div class="pole-hud-row"><p id="sp-hud"></p></div>
         <p id="sp-windowhud" class="sub"></p>
       </div>
 
       <aside class="pole-side" id="sp-panel">
         <div class="pole-side-head">
           <h3>${escapeHtml(t('Study area'))}</h3>
-          <button type="button" class="pole-min" id="sp-panel-toggle" aria-label="${escapeHtml(t('Minimize panel'))}" title="${escapeHtml(t('Minimize panel'))}">–</button>
+          <button type="button" class="pole-min" id="sp-panel-toggle" aria-label="${escapeHtml(t('Minimize panel'))}" title="${escapeHtml(t('Minimize panel'))}">${icon('close')}</button>
         </div>
         <div id="sp-sites"></div>
         <label class="pole-label">${escapeHtml(t('Map point'))}<span class="pole-point" id="sp-point">${escapeHtml(t('None selected'))}</span></label>
@@ -177,28 +249,23 @@ export function createSouthPole(ctx) {
       <div class="pole-windowbar" id="sp-windowbar" hidden>
         <div class="pole-window-head">
           <span class="pole-window-title">${escapeHtml(t('Launch window'))}</span>
+          <span class="pole-window-count" id="sp-window-count"></span>
           <span class="pole-window-dates"><b id="sp-win-start"></b><span class="arrow">→</span><b id="sp-win-end"></b></span>
           <label class="pole-window-stay">${escapeHtml(t('Stay'))}<select id="sp-stay"></select></label>
           <button type="button" class="pole-window-close" id="sp-window-hide" aria-label="${escapeHtml(t('Minimize the window bar'))}" title="${escapeHtml(t('Minimize the window bar'))}">–</button>
         </div>
-        <div class="pole-range2" id="sp-range2" role="group" aria-label="${escapeHtml(t('Launch window'))}">
-          <div class="pole-range2-track"></div>
-          <div class="pole-range2-fill" id="sp-range2-fill"></div>
-          <button type="button" class="pole-range2-thumb" data-handle="start" id="sp-thumb-start" aria-label="${escapeHtml(t('Window start'))}"></button>
-          <button type="button" class="pole-range2-thumb" data-handle="end" id="sp-thumb-end" aria-label="${escapeHtml(t('Window end'))}"></button>
-          <div class="pole-range2-ticks" id="sp-range2-ticks"></div>
-        </div>
+        <div class="pole-window-slider" id="sp-range2"></div>
         <p id="sp-windowinfo"></p>
       </div>
       <button type="button" class="pole-restore" id="sp-window-show" hidden>${escapeHtml(t('Launch window'))} <span>▲</span></button>
-      <button type="button" class="pole-panel-open" id="sp-panel-open" hidden aria-label="${escapeHtml(t('Show the study panel'))}">${escapeHtml(t('Study'))}</button>
+      <button type="button" class="pole-panel-open" id="sp-panel-open" hidden aria-label="${escapeHtml(t('Show the study panel'))}" title="${escapeHtml(t('Show the study panel'))}">${icon('panel')}</button>
 
       <div class="pole-modal" id="sp-modal" role="dialog" aria-modal="true" aria-labelledby="sp-mtitle" hidden>
         <div class="pole-modal-card">
           <h2 id="sp-mtitle">${escapeHtml(t('Choose the launch window'))}</h2>
           <p class="sub">${escapeHtml(t('Pick the period to screen. The left handle is the first touchdown sample; the right handle is the cutoff. Data coverage and the latest complete touchdown update with the selection.'))}</p>
-          <label>${escapeHtml(t('Window start'))}<input type="range" id="sp-mstart" step="1"></label>
-          <label>${escapeHtml(t('Window end'))}<input type="range" id="sp-mend" step="1"></label>
+          <p class="sub">${escapeHtml(t('Windows are limited to {max} days (about half a year).', { max: MAX_WINDOW_DAYS }))}</p>
+          <div class="pole-window-slider pole-modal-slider" id="sp-mslider"></div>
           <label>${escapeHtml(t('Stay'))}<select id="sp-mstay"></select></label>
           <p id="sp-mwindowinfo" class="sub"></p>
           <div class="pole-modal-actions"><button type="button" class="btn-primary" id="sp-confirm">${escapeHtml(t('Use this window'))}</button></div>
@@ -208,6 +275,7 @@ export function createSouthPole(ctx) {
       <div class="pole-atlas-pick" id="sp-atlas-pick" hidden>
         <p class="sub" id="sp-target"></p>
         <div class="pole-atlas-actions">
+          <button type="button" class="btn-ghost btn-xs" id="sp-atlas-back">← ${escapeHtml(t('Map'))}</button>
           <button type="button" class="btn-ghost btn-xs" data-slot="A">A</button>
           <button type="button" class="btn-ghost btn-xs" data-slot="B">B</button>
           <button type="button" class="btn-ghost btn-xs" data-slot="C">C</button>
@@ -218,8 +286,7 @@ export function createSouthPole(ctx) {
         <div class="pole-popup-card" id="sp-popup-card"></div>
       </div>
     </div>`;
-    for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-start', 'sp-end', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-modal', 'sp-mstart', 'sp-mend', 'sp-mstay', 'sp-mwindowinfo', 'sp-confirm', 'sp-popup', 'sp-popup-card', 'sp-panel-show', 'sp-panel-open', 'sp-window-hide', 'sp-window-show', 'sp-win-start', 'sp-win-end', 'sp-range2-ticks', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target', 'sp-back-map']) els[id] = document.getElementById(id);
-    for (const id of ['sp-range2', 'sp-range2-fill', 'sp-thumb-start', 'sp-thumb-end']) els[id] = document.getElementById(id);
+    for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-start', 'sp-end', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-range2', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-mslider', 'sp-mwindowinfo', 'sp-confirm', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-hide', 'sp-window-show', 'sp-win-start', 'sp-win-end', 'sp-window-count', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target', 'sp-back-map']) els[id] = document.getElementById(id);
     bind();
     initWindow();
     renderStaySelects();
@@ -516,9 +583,11 @@ export function createSouthPole(ctx) {
 
   function atlasTarget() {
     const q = new URLSearchParams();
+    const slots = Object.entries(ui.slots).filter(([, s]) => s).map(([name, s]) => ({ ...s, name }));
     const tgt = ui.target;
-    const lat = tgt ? tgt.lat : selectedSite()?.lat, lon = tgt ? tgt.lon : selectedSite()?.lon;
-    if (Number.isFinite(lat) && Number.isFinite(lon)) q.set('s', `${lat.toFixed(4)},${(((lon + 180) % 360 + 360) % 360 - 180).toFixed(4)},${tgt?.label ?? t('Selected point')}`);
+    const sites = slots.slice(0, 3);
+    if (sites.length < 3 && tgt && !slots.some((s) => sameSpot(s, tgt))) sites.push({ ...tgt, name: t('Selected point') });
+    for (const s of sites) q.append('s', `${s.lat.toFixed(4)},${(((s.lon + 180) % 360 + 360) % 360 - 180).toFixed(4)},${s.name}`);
     q.set('t', `${new Date(ctx.landing()).toISOString().slice(0, 16)}Z`);
     const key = q.toString();
     return { key, url: `atlas/index.html?sp=${++ui.atlasRev}#${key}` };
@@ -556,6 +625,71 @@ export function createSouthPole(ctx) {
     renderSlots(); drawMap();
   }
 
+  function mapSlotPoint() {
+    if (ui.cell) return { lat: ui.cell.lat, lon: ui.cell.lon, label: t('Screened block') };
+    if (ui.target) return { ...ui.target };
+    const site = selectedSite();
+    return site ? { lat: site.lat, lon: site.lon, label: site.name ?? site.label ?? t('Selected point') } : null;
+  }
+
+  function renderAbc() {
+    if (!els['sp-abc']) return;
+    for (const b of els['sp-abc'].querySelectorAll('[data-slot]')) {
+      const name = b.dataset.slot, slot = ui.slots[name];
+      b.classList.toggle('filled', Boolean(slot));
+      b.title = slot ? `${name} · ${fmtLatLon(slot.lat, slot.lon, 3)}` : t('Save or focus point {name}', { name });
+      b.setAttribute('aria-pressed', slot ? 'true' : 'false');
+    }
+  }
+
+  function focusSlot(name) {
+    const slot = ui.slots[name]; if (!slot) return;
+    const p = project(slot.lat, slot.lon);
+    ui.target = { lat: slot.lat, lon: slot.lon, label: t('Point {name}', { name }) };
+    ui.map.cxKm = p.xKm; ui.map.cyKm = p.yKm; drawMap();
+    setNotice(t('Point {name}: {pos}.', { name, pos: fmtLatLon(slot.lat, slot.lon, 3) }));
+  }
+
+  function assignMapSlot(name) {
+    if (ui.slots[name]) { focusSlot(name); return; }
+    const point = mapSlotPoint();
+    if (!point) { setNotice(t('Select a block or site first.')); return; }
+    ui.target = point;
+    saveSlot(name);
+  }
+
+  function atlasSelection() {
+    const doc = els['sp-atlas']?.contentDocument;
+    const where = doc?.querySelector('.site.active .where')?.textContent ?? '';
+    const m = where.match(/(\d+(?:\.\d+)?)°\s*([NS]).*?(\d+(?:\.\d+)?)°\s*([EW])/);
+    if (!m) return null;
+    return { lat: Number(m[1]) * (m[2] === 'S' ? -1 : 1), lon: Number(m[3]) * (m[4] === 'E' ? 1 : -1), label: t('Atlas point') };
+  }
+
+  function syncAtlasTarget() {
+    const point = atlasSelection(); if (!point) return;
+    ui.target = point;
+    if (els['sp-target']) els['sp-target'].textContent = `${t('Atlas point')} · ${fmtLatLon(point.lat, point.lon, 3)}`;
+    renderAtlasSlots();
+  }
+
+  function renderAtlasSlots() {
+    for (const b of document.querySelectorAll('.pole-atlas-actions [data-slot]')) {
+      const used = Boolean(ui.slots[b.dataset.slot]);
+      b.disabled = used; b.textContent = used ? `${b.dataset.slot} ✓` : b.dataset.slot;
+      b.classList.toggle('filled', used);
+    }
+  }
+
+  function assignAtlasSlot(name) {
+    const point = atlasSelection() ?? ui.target;
+    if (!point) { setNotice(t('Select a point in Atlas first.')); return; }
+    ui.target = point;
+    saveSlot(name);
+    ui.atlasKey = '';
+    syncAtlas();
+  }
+
   function saveSlot(name) {
     if (!ui.target) return;
     const existing = Object.values(ui.slots).find((s) => sameSpot(s, ui.target));
@@ -563,10 +697,8 @@ export function createSouthPole(ctx) {
     ui.slots[name] = { ...ui.target, metrics: null };
     measureSlot(ui.slots[name]);
     renderSlots();
-    for (const b of document.querySelectorAll('.pole-atlas-actions [data-slot]')) {
-      const used = Boolean(ui.slots[b.dataset.slot]);
-      b.disabled = used; b.textContent = used ? `${b.dataset.slot} ✓` : b.dataset.slot;
-    }
+    renderAbc();
+    renderAtlasSlots();
     setNotice(t('Saved point {name}: {pos}.', { name, pos: fmtLatLon(ui.target.lat, ui.target.lon, 3) }));
   }
 
@@ -588,6 +720,8 @@ export function createSouthPole(ctx) {
     } else {
       els['sp-compare'].innerHTML = `<p class="sub">${escapeHtml(t('Save at least two points to compare them.'))}</p>`;
     }
+    renderAbc();
+    renderAtlasSlots();
   }
 
   /* ---------- render ---------- */
@@ -600,7 +734,17 @@ export function createSouthPole(ctx) {
     els['sp-atlas'].hidden = stage !== 'atlas';
     els['sp-panel'].hidden = stage === 'atlas';
     els['sp-atlas-pick'].hidden = stage !== 'atlas';
-    if (stage === 'atlas') {
+    const atlas = stage === 'atlas';
+    els['sp-hud'].hidden = atlas;
+    els['sp-windowhud'].hidden = atlas;
+    if (atlas) {
+      els['sp-windowbar'].hidden = true;
+      els['sp-window-show'].hidden = true;
+    } else if (ui.window.chosen) {
+      els['sp-windowbar'].hidden = ui.window.collapsed;
+      els['sp-window-show'].hidden = !ui.window.collapsed;
+    }
+    if (atlas) {
       const tgt = ui.target;
       els['sp-target'].textContent = tgt ? `${t(tgt.label)} · ${fmtLatLon(tgt.lat, tgt.lon, 3)} · ${fmtDateTime(ctx.landing())}` : '';
       for (const b of document.querySelectorAll('.pole-atlas-actions [data-slot]')) {
@@ -734,41 +878,6 @@ export function createSouthPole(ctx) {
 
   /* ---------- events ---------- */
 
-  function bindRange() {
-    const host = els['sp-range2'];
-    if (!host) return;
-    const latest = () => Math.max(0, latestDay());
-    const dayAt = (clientX) => {
-      const b = host.getBoundingClientRect();
-      return Math.round(clamp((clientX - b.left) / Math.max(1, b.width), 0, 1) * latest());
-    };
-    const move = (e) => {
-      if (!ui.rangeHandle) return;
-      const day = dayAt(e.clientX);
-      if (ui.rangeHandle === 'start') setWindow(Math.min(day, ui.window.endDay), ui.window.endDay);
-      else setWindow(ui.window.startDay, Math.max(day, ui.window.startDay));
-    };
-    host.addEventListener('pointerdown', (e) => {
-      const day = dayAt(e.clientX);
-      ui.rangeHandle = Math.abs(day - ui.window.startDay) <= Math.abs(day - ui.window.endDay) ? 'start' : 'end';
-      host.setPointerCapture?.(e.pointerId);
-      move(e);
-    });
-    host.addEventListener('pointermove', move);
-    const stop = () => { ui.rangeHandle = null; };
-    host.addEventListener('pointerup', stop);
-    host.addEventListener('pointercancel', stop);
-    const key = (handle) => (e) => {
-      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-      e.preventDefault();
-      const step = e.shiftKey ? 7 : 1;
-      const d = e.key === 'ArrowLeft' ? -step : step;
-      if (handle === 'start') setWindow(clamp(ui.window.startDay + d, 0, ui.window.endDay), ui.window.endDay);
-      else setWindow(ui.window.startDay, clamp(ui.window.endDay + d, ui.window.startDay, latest()));
-    };
-    els['sp-thumb-start'].addEventListener('keydown', key('start'));
-    els['sp-thumb-end'].addEventListener('keydown', key('end'));
-  }
   function bind() {
     els['sp-gzin'].onclick = () => ui.globe?.zoom?.(0.8);
     els['sp-gzout'].onclick = () => ui.globe?.zoom?.(1.25);
@@ -781,20 +890,22 @@ export function createSouthPole(ctx) {
     els['sp-zin'].onclick = () => { ui.map.scale = clamp(ui.map.scale * 1.5, 1.5, 60); drawMap(); };
     els['sp-zout'].onclick = () => { ui.map.scale = clamp(ui.map.scale / 1.5, 1.5, 60); drawMap(); };
     els['sp-center'].onclick = centrePole;
-    els['sp-sites'].onclick = (e) => { const b = e.target.closest('[data-site]'); if (!b) return; ui.selected = b.dataset.site; ctx.selectSite(ui.selected); renderAll(); };
+    els['sp-sites'].onclick = (e) => {
+      const b = e.target.closest('[data-site]'); if (!b) return;
+      ui.selected = b.dataset.site; ui.cell = null; ctx.selectSite(ui.selected);
+      const site = selectedSite(); if (site) ui.target = { lat: site.lat, lon: site.lon, label: site.name ?? site.label ?? t('Selected point') };
+      renderAll();
+    };
     els['sp-preview'].oninput = (e) => { ctx.setPreviewHour(Number(e.target.value)); renderLink(); renderHud(); ui.globe?.request(); };
-    els['sp-mstart'].oninput = (e) => setWindow(Number(e.target.value), ui.window.endDay);
-    els['sp-mend'].oninput = (e) => setWindow(ui.window.startDay, Number(e.target.value));
-    bindRange();
     for (const id of ['sp-stay', 'sp-mstay']) els[id].onchange = (e) => { ctx.setStay(e.target.value); renderStaySelects(); setWindow(ui.window.startDay, ui.window.endDay); };
     els['sp-confirm'].onclick = confirmWindow;
     const syncPanel = () => { const collapsed = els['sp-panel'].classList.contains('collapsed'); if (els['sp-panel-open']) els['sp-panel-open'].hidden = !collapsed; };
-    els['sp-panel-toggle'].onclick = () => { els['sp-panel'].classList.toggle('collapsed'); syncPanel(); };
-    els['sp-panel-show'].onclick = () => { els['sp-panel'].classList.toggle('collapsed'); syncPanel(); };
+    els['sp-panel-toggle'].onclick = () => { els['sp-panel'].classList.add('collapsed'); syncPanel(); };
     els['sp-panel-open'].onclick = () => { els['sp-panel'].classList.remove('collapsed'); syncPanel(); };
     syncPanel();
-    els['sp-window-hide'].onclick = () => { els['sp-windowbar'].hidden = true; els['sp-window-show'].hidden = false; };
-    els['sp-window-show'].onclick = () => { els['sp-windowbar'].hidden = false; els['sp-window-show'].hidden = true; };
+    els['sp-window-hide'].onclick = () => { ui.window.collapsed = true; els['sp-windowbar'].hidden = true; els['sp-window-show'].hidden = false; };
+    els['sp-window-show'].onclick = () => { ui.window.collapsed = false; els['sp-windowbar'].hidden = false; els['sp-window-show'].hidden = true; };
+    els['sp-atlas-back'].onclick = () => setStage('map');
     els['sp-thresholds'].onchange = (e) => {
       const f = e.target.closest('[data-limit]'); if (!f) return;
       const v = Number(f.value); if (!Number.isFinite(v) || v < 0) { renderThresholds(); return; }
@@ -826,7 +937,12 @@ export function createSouthPole(ctx) {
       if (best) { ui.selected = best.id; ctx.selectSite(best.id); renderAll(); }
       else if (y > els['sp-moon'].height * 0.68) { setTab('southpole'); }
     };
-    document.querySelector('.pole-atlas-actions').addEventListener('click', (e) => { const b = e.target.closest('[data-slot]'); if (b) saveSlot(b.dataset.slot); });
+    els['sp-abc'].addEventListener('click', (e) => { const b = e.target.closest('[data-slot]'); if (b) assignMapSlot(b.dataset.slot); });
+    document.querySelector('.pole-atlas-actions').addEventListener('click', (e) => { const b = e.target.closest('[data-slot]'); if (b) assignAtlasSlot(b.dataset.slot); });
+    els['sp-atlas'].addEventListener('load', () => {
+      const doc = els['sp-atlas'].contentDocument;
+      if (doc) doc.addEventListener('click', () => setTimeout(syncAtlasTarget, 180));
+    });
     els['sp-slots'].addEventListener('click', (e) => { const b = e.target.closest('[data-remove]'); if (!b) return; ui.slots[b.dataset.remove] = null; renderSlots(); drawMap(); });
     bindMap();
   }
@@ -844,7 +960,7 @@ export function createSouthPole(ctx) {
   }
 
   async function activate() {
-    build();
+    build(); fitPole();
     if (!ui.window.chosen) { els['sp-modal'].hidden = false; return; }
     await ensureGlobe();
     setStage(ui.stage);
@@ -852,7 +968,7 @@ export function createSouthPole(ctx) {
   }
 
   return {
-    mount() { build(); },
+    mount() { build(); fitPole(); window.addEventListener('resize', fitPole); const bar = document.querySelector('.appbar'); if (bar && window.ResizeObserver) new ResizeObserver(fitPole).observe(bar); },
     activate,
     onView(view) { if (view === 'pole') activate(); },
     render() { if (ui.built && ctx.view() === 'pole') { renderAll(); refreshScenario(); } },

@@ -1,5 +1,8 @@
 # LunaLens construction map
 
+- [x] Keep the top bar full width and scroll page content below it, preserving the transparent start-page header.
+- [x] Anchor the Explore timeline to the viewport bottom and keep the scrollable content above it.
+
 Implement the Expert planning workflow described in [Background](doc/Background.md#expert-planning-scenarios).
 The finish line is a runnable Explore screen where a newcomer can choose any supported
 UTC date or range, see why sites qualify, and compare two results without leaving the

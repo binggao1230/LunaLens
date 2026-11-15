@@ -57,7 +57,9 @@ export async function createPolar3d(env) {
       };
       const moonMap = loadMap('assets/moon_color_4k.webp');
       const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: moonMap, roughness: 1, metalness: 0 }));
-      scene.add(moon);
+      const moonGroup = new T.Group();
+      moonGroup.add(moon);
+      scene.add(moonGroup);
       // The lunar rotation axis: a thin line through both poles.
       const axis = new T.Line(
         new T.BufferGeometry().setFromPoints([new T.Vector3(0, -1.45, 0), new T.Vector3(0, 1.45, 0)]),
@@ -83,7 +85,7 @@ export async function createPolar3d(env) {
         for (let i = 0; i <= 90; i++) points.push(new T.Vector3(...unit(-90 + i, lon)).multiplyScalar(1.0015));
         graticule.add(new T.Line(new T.BufferGeometry().setFromPoints(points), gridLine(0x93a7bd, lon % 90 === 0 ? 0.3 : 0.12)));
       }
-      scene.add(graticule);
+      moonGroup.add(graticule);
 
       const glowTexture = (inner) => {
         const c = document.createElement('canvas'); c.width = c.height = 128;
@@ -140,7 +142,7 @@ export async function createPolar3d(env) {
       };
 
       const markerGroup = new T.Group();
-      scene.add(markerGroup);
+      moonGroup.add(markerGroup);
       // Earth-link pulse (prototype only): a dashed path from the selected site toward Earth.
       const pulseGroup = new T.Group();
       scene.add(pulseGroup);
@@ -161,6 +163,7 @@ export async function createPolar3d(env) {
           pulseState = null; pulseLine.visible = pulseDot.visible = false; stopPulse(); return;
         }
         pulseStart.set(...unit(site.lat, site.lon)).multiplyScalar(1.01);
+        moonGroup.localToWorld(pulseStart);
         pulseEnd.copy(earth.position);
         const attr = pulseGeometry.attributes.position;
         attr.setXYZ(0, pulseStart.x, pulseStart.y, pulseStart.z);
@@ -195,7 +198,7 @@ export async function createPolar3d(env) {
       };
       const pulseStart = new T.Vector3(), pulseEnd = new T.Vector3();
       const selectRing = new T.Mesh(new T.RingGeometry(1.7, 2.1, 32), new T.MeshBasicMaterial({ color: 0xffffff, side: T.DoubleSide }));
-      scene.add(selectRing);
+      moonGroup.add(selectRing);
       const sunSpot = new T.Mesh(new T.SphereGeometry(1, 12, 8), new T.MeshBasicMaterial({ color: 0xffe066 }));
       sunSpot.scale.setScalar(0.018);
       scene.add(sunSpot);
@@ -221,7 +224,7 @@ export async function createPolar3d(env) {
       };
       // Terrain at the picked site: the same generator Explore uses, heights at ×1 (no exaggeration).
       const reliefGroup = new T.Group();
-      scene.add(reliefGroup);
+      moonGroup.add(reliefGroup);
       let reliefKey = '', reliefDem = null, reliefLoading = false;
       const R_KM = 1737.4, DEG = Math.PI / 180;
       const buildRelief = () => {
@@ -271,9 +274,10 @@ export async function createPolar3d(env) {
       };
       const placeLabel = (position, normal) => {
         const label = $('m-label'), site = pickedSite();
-        const facing = normal.dot(camera.position.clone().normalize()) > 0.08;
+        const worldNormal = normal.clone().applyQuaternion(moonGroup.quaternion).normalize();
+        const facing = worldNormal.dot(camera.position.clone().normalize()) > 0.08;
         if (!facing || !site) { label.style.display = 'none'; return; }
-        const p = position.clone().project(camera);
+        const p = moonGroup.localToWorld(position.clone()).project(camera);
         label.style.display = 'block';
         label.style.left = `${(p.x * 0.5 + 0.5) * stage.clientWidth}px`;
         label.style.top = `${(-p.y * 0.5 + 0.5) * stage.clientHeight}px`;
@@ -300,7 +304,7 @@ export async function createPolar3d(env) {
         sunGlow.position.copy(sunBody.position);
         if (tms !== null && env.epochMs) {
           const days = (tms - env.epochMs) / 864e5;
-          moon.rotation.y = (days / 27.321661) * Math.PI * 2;
+          moonGroup.rotation.y = (days / 27.321661) * Math.PI * 2;
           earth.rotation.y = (days / 0.99727) * Math.PI * 2;
           sunBody.material.rotation = (days / 25.38) * Math.PI * 2;
         }
@@ -331,7 +335,7 @@ export async function createPolar3d(env) {
         selectRing.visible = Boolean(picked);
         if (picked) {
           selectRing.position.copy(picked.normal).multiplyScalar(1.006);
-          selectRing.lookAt(picked.normal.clone().multiplyScalar(2));
+          selectRing.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), picked.normal.clone().normalize());
           selectRing.scale.setScalar(Math.max(0.0016, camera.position.length() * 0.0016));
           placeLabel(picked.normal.clone().multiplyScalar(1.01), picked.normal);
         }
@@ -366,7 +370,8 @@ export async function createPolar3d(env) {
       const dirAt = (event) => {
         const box = canvas.getBoundingClientRect(), caster = new T.Raycaster();
         caster.setFromCamera(new T.Vector2(((event.clientX - box.left) / box.width) * 2 - 1, -((event.clientY - box.top) / box.height) * 2 + 1), camera);
-        return caster.intersectObject(moon)[0]?.point.clone().normalize() ?? null;
+        const hit = caster.intersectObject(moon)[0];
+        return hit ? moonGroup.worldToLocal(hit.point.clone()).normalize() : null;
       };
       canvas.addEventListener('pointerdown', (event) => { down = [event.clientX, event.clientY]; });
       canvas.addEventListener('pointermove', (event) => {
@@ -399,7 +404,7 @@ export async function createPolar3d(env) {
         if (!first) return;
         if (first.object === moon) {
           if (!env.onMoonTap) return;
-          const p = first.point.clone().normalize();
+          const p = moonGroup.worldToLocal(first.point.clone()).normalize();
           env.onMoonTap({ lat: Math.asin(clamp(p.y, -1, 1)) / (Math.PI / 180), lon: ((Math.atan2(-p.z, p.x) / (Math.PI / 180)) + 360) % 360 });
           return;
         }
@@ -410,7 +415,7 @@ export async function createPolar3d(env) {
         request: () => { if (!home) { setHome(); home = true; } request(); },
         reset: () => flyTo(homeDir(), 3.6),
         zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.05, MAX_DIST)); controls.update(); request(); },
-        focus: (site) => flyTo(new T.Vector3(...unit(site.lat, site.lon)), site.lat <= -75 ? 1.07 : undefined),
+        focus: (site) => { const dir = moonGroup.localToWorld(new T.Vector3(...unit(site.lat, site.lon))).normalize(); flyTo(dir, site.lat <= -75 ? 1.07 : undefined); },
       };
       resize();
     } catch (error) {
