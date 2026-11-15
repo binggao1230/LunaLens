@@ -52,6 +52,9 @@ const MESSAGES = {
   'Earth link available': ['Liaison Terre disponible', '可与地球通信'],
   'Sunlit, no Earth link': ['Éclairé, sans liaison Terre', '有日照，无地球通信'],
   'In shadow': ['À l’ombre', '处于阴影'],
+  'Earth link only': ['Liaison Terre seule', '仅地球通信'],
+  'Sunlit only': ['Éclairé seulement', '仅有日照'],
+  'Sun and Earth in view': ['Soleil et Terre visibles', '太阳与地球同时可见'],
   'Sunlit as well': ['Aussi éclairé', '同时有日照'],
   'Drag to rotate, scroll to zoom. Not to scale. Cyan ring: the Moon’s orbit around Earth; amber: Earth’s orbit around the Sun. Cyan line: 75°S, where the terrain model ends.': ['Faites glisser pour tourner, molette pour zoomer. Hors échelle. Anneau cyan : orbite de la Lune autour de la Terre ; ambre : orbite de la Terre autour du Soleil. Ligne cyan : 75°S, limite du modèle de relief.', '拖动旋转，滚轮缩放。未按比例。青色圈：月球绕地球轨道；琥珀色圈：地球绕太阳轨道。青色线：75°S，地形模型边界。'],
   'The Moon as seen from Earth. Tap a dot to select a site.': ['La Lune vue depuis la Terre. Touchez un point pour choisir un site.', '从地球看到的月球。点击圆点选择地点。'],
@@ -240,7 +243,8 @@ export function createMission(ctx) {
     const series = site.series;
     return { sun: series.sunVis[j] === 1, link: series.earthClr[j] > ctx.margin() };
   }
-  const colorOf = (status) => (status.link ? COLORS.link : status.sun ? COLORS.sun : COLORS.dark);
+  // Four categories: both (cyan), Earth link only (green), sunlit only (yellow), neither (grey).
+  const colorOf = (status) => (status.link && status.sun ? COLORS.both : status.link ? COLORS.link : status.sun ? COLORS.sun : COLORS.dark);
   function frame() {
     const ms = ctx.landing() + local.hour * HOUR;
     const eph = ctx.eph();
@@ -442,7 +446,7 @@ export function createMission(ctx) {
     historic?.relabel();
     $('m-reset').textContent = t('Reset view');
     $('m-reset').hidden = local.mode !== '3d';
-    $('m-legend').innerHTML = `<span><i style="background:${COLORS.link}"></i>${escapeHtml(t('Earth link available'))}</span><span><i style="background:${COLORS.sun}"></i>${escapeHtml(t('Sunlit, no Earth link'))}</span><span><i style="background:${COLORS.dark}"></i>${escapeHtml(t('In shadow'))}</span>`;
+    $('m-legend').innerHTML = `<span><i style="background:${COLORS.both}"></i>${escapeHtml(t('Sun and Earth in view'))}</span><span><i style="background:${COLORS.link}"></i>${escapeHtml(t('Earth link only'))}</span><span><i style="background:${COLORS.sun}"></i>${escapeHtml(t('Sunlit only'))}</span><span><i style="background:${COLORS.dark}"></i>${escapeHtml(t('In shadow'))}</span>`;
     $('m-cmp-all').textContent = t('All');
     $('m-cmp-all').title = t('Select all sites to compare');
     $('m-cmp-clear').textContent = t('Clear');
@@ -650,8 +654,8 @@ export function createMission(ctx) {
       const days = (SPAN / 24).toFixed(0);
       const activeSites = laneSites();
       const lanes = activeSites.length ? activeSites.map((site) => {
-        const sun = runsOf((s, i) => s.series.sunVis[i] === 1, site);
-        const link = runsOf((s, i) => s.series.earthClr[i] > ctx.margin(), site);
+        const sun = runsOf((s, i) => s.series.sunVis[i] === 1 && !(s.series.earthClr[i] > ctx.margin()), site);
+        const link = runsOf((s, i) => s.series.earthClr[i] > ctx.margin() && s.series.sunVis[i] !== 1, site);
         const both = runsOf((s, i) => s.series.sunVis[i] === 1 && s.series.earthClr[i] > ctx.margin(), site);
         const score = scoreOf(site);
         return `<div class="lane-site">
@@ -675,9 +679,10 @@ export function createMission(ctx) {
         <span></span>
         <div class="lane-legend">
           <button type="button" class="btn-ghost btn-xs lane-export" id="m-export" ${activeSites.length ? '' : 'disabled'}>${escapeHtml(t('Export CSV'))}</button>
-          <span style="color:${COLORS.sun}">■ ${escapeHtml(t('Sun'))}</span>
-          <span style="color:${COLORS.link}">■ ${escapeHtml(t('Earth link'))}</span>
-          <span style="color:${COLORS.both}">■ ${escapeHtml(t('Both'))}</span>
+          <span style="color:${COLORS.sun}">■ ${escapeHtml(t('Sunlit only'))}</span>
+          <span style="color:${COLORS.link}">■ ${escapeHtml(t('Earth link only'))}</span>
+          <span style="color:${COLORS.both}">■ ${escapeHtml(t('Sun and Earth in view'))}</span>
+          <span style="color:${COLORS.dark}">■ ${escapeHtml(t('In shadow'))}</span>
           <span style="margin-left:auto">${escapeHtml(t('Sun and Earth over the next {days} days', { days }))} <span class="pill2">${activeSites.length} ${escapeHtml(t('compared'))}</span></span>
         </div>
       </div>

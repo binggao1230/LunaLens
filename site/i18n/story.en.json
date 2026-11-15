@@ -74,7 +74,7 @@
         "Rule 1: sunlight. At the south pole the Sun stays low, near the horizon, so hills and crater walls can block it. Our landing site must be a place the Sun's rays can reach.",
         "Rule 2: Earth. Our lander talks to us by radio, and radio needs a clear path to Earth. From the south pole, Earth also sits low in the sky, so our site must be able to see it over the hills.",
         "Both rules depend on when we land. The Sun and Earth move across the sky, so the time you choose decides which sites pass. Drag the time bar at the top to see how they change.",
-        "This graph shows the next 30 days for this site. Yellow means Sunlight, green means Earth in view, and cyan means both at once. A good landing time is cyan.",
+        "This graph shows the next 30 days for this site. Yellow means only Sunlight, green means only Earth in view, cyan means both at once, and grey means neither. A good landing time is cyan.",
         "Click on the graph to move its bar and read the exact time. You can compare the different lunar sites at the same time here."
       ]
     },
