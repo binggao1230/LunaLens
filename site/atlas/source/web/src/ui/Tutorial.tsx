@@ -167,7 +167,7 @@ export const GUIDES: Guide[] = [
       {
         kind: 'pin',
         ask: ['Now pin somewhere very different: the dark floor of a crater.', 'Now pin somewhere very different: the dark floor of a crater.'],
-        hint: both('Each pin gets a letter and a colour: A, B, C.'),
+        hint: both('Each pin gets a number and a colour: #1, #2, #3.'),
         payoff: 'The panel is now a comparison. Read the sentence at its top: it names the better site and says why.',
         share: (c) => (c.pins >= 2 ? 1 : 0),
         skipIfMet: true,

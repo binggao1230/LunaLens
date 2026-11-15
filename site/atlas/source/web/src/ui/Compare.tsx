@@ -6,7 +6,7 @@ import { assumptionsText } from '../lib/assumptions'
 import { fmtAngle, fmtCoord, fmtDay, fmtElevation, fmtMeasure, fmtPeriod, fmtSpan } from '../lib/format'
 import { measures, type Measure, type SiteFacts } from '../lib/verdict'
 import { useAssumptions, useStore } from '../store'
-import { Badge, Segmented, SITE_LETTERS } from './controls'
+import { Badge, Segmented, SITE_LABELS } from './controls'
 import { CopyLink } from './CopyLink'
 import { exportScenario } from './exportCsv'
 import { isPhone } from './Sheet'
@@ -65,7 +65,7 @@ export function Compare({ sites }: { sites: SiteAnalysis[] }) {
   const setFigures = useStore((s) => s.setCompareFigures)
   // The terrain behind the figures: one name when every site uses the same, else one per site.
   const sameTerrain = sites.every((a) => TERRAIN[a.tier] === TERRAIN[sites[0].tier])
-  const terrainUsed = sameTerrain ? terrainTag(sites[0].tier) : `terrain ${sites.map((a) => `${SITE_LETTERS[a.pin.slot]} ${TERRAIN[a.tier]}`).join(', ')}`
+  const terrainUsed = sameTerrain ? terrainTag(sites[0].tier) : `terrain ${sites.map((a) => `${SITE_LABELS[a.pin.slot]} ${TERRAIN[a.tier]}`).join(', ')}`
   const wants = useWants()
   // The date tool follows the newest pin, so it never shows a site the user did not just choose.
   const newest = useStore((s) => s.pins.at(-1)?.id ?? null)
@@ -103,7 +103,7 @@ export function Compare({ sites }: { sites: SiteAnalysis[] }) {
     () =>
       verdictSentence(
         ms,
-        sites.map((a) => SITE_LETTERS[a.pin.slot]),
+        sites.map((a) => SITE_LABELS[a.pin.slot]),
         mission[0],
       ),
     [ms, sites, mission],

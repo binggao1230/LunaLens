@@ -28,6 +28,8 @@ const scoreBand = (cell) => {
   return score >= SCORE_GREEN ? 'green' : score >= SCORE_YELLOW ? 'yellow' : 'red';
 };
 const SLOT_COLOURS = { A: '#58c8ff', B: '#f5c542', C: '#ff9ad5' };
+const SLOT_LABELS = { A: '#1', B: '#2', C: '#3' };
+const slotLabel = (name) => SLOT_LABELS[name] ?? name;
 const scoreColour = (score) => Number.isFinite(score) ? `hsl(${clamp(score, 0, 100) * 1.2} 65% 65%)` : STATUS.unknown;
 const scoreBadge = (score) => `<b class="pole-score" style="--score:${scoreColour(score)}" aria-label="${escapeHtml(t('Screening score: {score} out of 100', { score: Number.isFinite(score) ? score : '—' }))}">${Number.isFinite(score) ? score : '—'}<small>/100</small></b>`;
 const barRow = (label, pct, colour) => `<div class="pole-bar"><span>${escapeHtml(label)}</span><i><u style="width:${clamp(pct, 0, 100)}%;background:${colour}"></u></i><b>${Math.round(pct)}%</b></div>`;
@@ -240,7 +242,7 @@ export function createSouthPole(ctx) {
         </div>
         <div class="pole-map-wrap" id="sp-map-wrap" hidden>
           <div class="pole-map-header">
-            <div class="pole-map-context"><p id="sp-map-context"></p><p class="sub">${escapeHtml(t('Click the map to choose a point, then save it as A, B or C.'))}</p></div>
+            <div class="pole-map-context"><p id="sp-map-context"></p><p class="sub">${escapeHtml(t('Click the map to choose a point, then save it as #1, #2 or #3.'))}</p></div>
             <div class="pole-tabs seg" role="tablist">
               <button type="button" data-tab="southpole" class="on" role="tab">${escapeHtml(t('South Pole · blocks'))}</button>
               <button type="button" data-tab="moon" role="tab">${escapeHtml(t('Whole Moon'))}</button>
@@ -265,8 +267,8 @@ export function createSouthPole(ctx) {
         <section class="pole-selection">
           <h3 class="pole-cards-title">${escapeHtml(t('Selected point'))}</h3>
           <div id="sp-picked"></div>
-          <div class="pole-save-actions" id="sp-abc" role="group" aria-label="${escapeHtml(t('Selected points A/B/C'))}">
-            ${['A', 'B', 'C'].map((name) => `<button type="button" data-slot="${name}" disabled>${escapeHtml(t('Save as {name}', { name }))}</button>`).join('')}
+          <div class="pole-save-actions" id="sp-abc" role="group" aria-label="${escapeHtml(t('Selected points #1/#2/#3'))}">
+            ${['A', 'B', 'C'].map((name) => `<button type="button" data-slot="${name}" disabled>${escapeHtml(t('Save as {name}', { name: slotLabel(name) }))}</button>`).join('')}
           </div>
           <button type="button" class="btn-ghost btn-xs pole-pick-atlas" id="sp-pick-atlas" disabled>${escapeHtml(t('Enter Atlas'))}</button>
         </section>
@@ -294,7 +296,7 @@ export function createSouthPole(ctx) {
           <ol class="pole-list" id="sp-list"></ol>
         </div>
         <label class="pole-label">${escapeHtml(t('Map point'))}<span class="pole-point" id="sp-point">${escapeHtml(t('None selected'))}</span></label>
-        <h3>${escapeHtml(t('Selected points A/B/C'))}</h3>
+        <h3>${escapeHtml(t('Selected points #1/#2/#3'))}</h3>
         <div id="sp-slots"></div>
         <div id="sp-compare"></div>
         <h3>${escapeHtml(t('Earth link at the selected hour'))}</h3>
@@ -338,9 +340,9 @@ export function createSouthPole(ctx) {
         <p class="sr-only" id="sp-target" aria-live="polite"></p>
         <button type="button" class="pole-atlas-nav" id="sp-atlas-back" aria-label="${escapeHtml(t('Back to the map'))}" title="${escapeHtml(t('Back to the map'))}">${icon('back')}</button>
         <div class="pole-atlas-actions">
-          <button type="button" data-slot="A">A</button>
-          <button type="button" data-slot="B">B</button>
-          <button type="button" data-slot="C">C</button>
+          <button type="button" data-slot="A">#1</button>
+          <button type="button" data-slot="B">#2</button>
+          <button type="button" data-slot="C">#3</button>
         </div>
       </div>
 
@@ -866,9 +868,9 @@ export function createSouthPole(ctx) {
     const saved = Object.entries(ui.slots).find(([, slot]) => sameSpot(slot, ui.draft));
     for (const b of els['sp-abc'].querySelectorAll('[data-slot]')) {
       const name = b.dataset.slot, slot = ui.slots[name];
-      b.textContent = t(saved?.[0] === name ? 'Saved as {name}' : slot ? 'Replace {name}' : 'Save as {name}', { name });
+      b.textContent = t(saved?.[0] === name ? 'Saved as {name}' : slot ? 'Replace {name}' : 'Save as {name}', { name: slotLabel(name) });
       b.disabled = !ui.draft || Boolean(saved);
-      b.title = slot ? `${name} · ${fmtLatLon(slot.lat, slot.lon, 3)}` : b.textContent;
+      b.title = slot ? `${slotLabel(name)} · ${fmtLatLon(slot.lat, slot.lon, 3)}` : b.textContent;
       b.setAttribute('aria-label', b.textContent);
     }
   }
@@ -879,7 +881,7 @@ export function createSouthPole(ctx) {
     selectMapPoint(slot);
     ui.map.cxKm = p.xKm; ui.map.cyKm = p.yKm; drawMap();
     pushAtlasCommand();
-    setNotice(t('Point {name}: {pos}.', { name, pos: fmtLatLon(slot.lat, slot.lon, 3) }));
+    setNotice(t('Point {name}: {pos}.', { name: slotLabel(name), pos: fmtLatLon(slot.lat, slot.lon, 3) }));
   }
 
   function assignMapSlot(name) {
@@ -912,7 +914,7 @@ export function createSouthPole(ctx) {
   function renderAtlasSlots() {
     for (const b of document.querySelectorAll('.pole-atlas-actions [data-slot]')) {
       const used = Boolean(ui.slots[b.dataset.slot]);
-      b.disabled = used; b.textContent = used ? `${b.dataset.slot} ✓` : b.dataset.slot;
+      b.disabled = used; b.textContent = used ? `${slotLabel(b.dataset.slot)} ✓` : slotLabel(b.dataset.slot);
       b.classList.toggle('filled', used);
     }
   }
@@ -932,7 +934,7 @@ export function createSouthPole(ctx) {
     const point = atlasPoint();
     const sites = point ? [{ lat: point.lat, lon: point.lon, label: point.label ?? point.name ?? t('Selected point') }] : [];
     const active = point ? { lat: point.lat, lon: point.lon } : null;
-    win.postMessage({ type: 'lunalens:atlas-command', sites, active, tMs: clockMs() }, location.origin);
+    win.postMessage({ type: 'lunalens:atlas-command', sites, active, layer: 'natural', tMs: clockMs() }, location.origin);
   }
 
   function focusAtlas() {
@@ -955,7 +957,7 @@ export function createSouthPole(ctx) {
     renderAtlasSlots();
     persistSlots();
     pushAtlasCommand();
-    setNotice(t('Saved point {name}: {pos}.', { name, pos: fmtLatLon(ui.target.lat, ui.target.lon, 3) }));
+    setNotice(t('Saved point {name}: {pos}.', { name: slotLabel(name), pos: fmtLatLon(ui.target.lat, ui.target.lon, 3) }));
   }
 
   function renderSlots() {
@@ -963,13 +965,13 @@ export function createSouthPole(ctx) {
     const colors = { A: '#58c8ff', B: '#f5c542', C: '#ff9ad5' };
     els['sp-slots'].innerHTML = names.map((n) => {
       const s = ui.slots[n];
-      if (!s) return `<p class="sub" style="margin:2px 0">${n} · ${escapeHtml(t('empty'))}</p>`;
+      if (!s) return `<p class="sub" style="margin:2px 0">${slotLabel(n)} · ${escapeHtml(t('empty'))}</p>`;
       const m = s.metrics;
-      return `<div class="pole-slot"><b style="color:${colors[n]}">${n}</b><span>${escapeHtml(fmtLatLon(s.lat, s.lon, 2))}</span>${scoreBadge(m?.score)}<button type="button" class="btn-ghost btn-xs" data-remove="${n}" aria-label="${escapeHtml(t('Remove {name}', { name: n }))}">×</button></div>`;
+      return `<div class="pole-slot"><b style="color:${colors[n]}">${slotLabel(n)}</b><span>${escapeHtml(fmtLatLon(s.lat, s.lon, 2))}</span>${scoreBadge(m?.score)}<button type="button" class="btn-ghost btn-xs" data-remove="${n}" aria-label="${escapeHtml(t('Remove {name}', { name: slotLabel(n) }))}">×</button></div>`;
     }).join('');
     const filled = names.map((n) => [n, ui.slots[n]]).filter(([, s]) => s && s.metrics);
     if (filled.length >= 2) {
-      els['sp-compare'].innerHTML = `<p class="sub">${escapeHtml(t('Screening values use the selected stay; Atlas shows 60-day windows.'))}</p><table class="pole-cmp"><thead><tr><th></th>${filled.map(([n]) => `<th style="color:${colors[n]}">${n}</th>`).join('')}</tr></thead><tbody>
+      els['sp-compare'].innerHTML = `<p class="sub">${escapeHtml(t('Screening values use the selected stay; Atlas shows 60-day windows.'))}</p><table class="pole-cmp"><thead><tr><th></th>${filled.map(([n]) => `<th style="color:${colors[n]}">${slotLabel(n)}</th>`).join('')}</tr></thead><tbody>
         <tr><th>${escapeHtml(t('Earth visibility'))}</th>${filled.map(([, s]) => `<td>${Math.round(s.metrics.earthPct)}%</td>`).join('')}</tr>
         <tr><th>${escapeHtml(t('Longest link'))}</th>${filled.map(([, s]) => `<td>${s.metrics.longestH} h</td>`).join('')}</tr>
         <tr><th>${escapeHtml(t('Sunlight'))}</th>${filled.map(([, s]) => `<td>${Math.round(s.metrics.sunPct)}%</td>`).join('')}</tr>
@@ -1149,11 +1151,11 @@ export function createSouthPole(ctx) {
     box.innerHTML = filled.length ? filled.map((name) => {
       const s = ui.slots[name], m = s.metrics;
       return `<div class="pole-saved"><button type="button" class="pole-card" data-focus="${name}">
-      <span class="pole-card-head"><b class="pole-badge" style="--badge:${SLOT_COLOURS[name]}">${name}</b><span>${escapeHtml(fmtLatLon(s.lat, s.lon, 2))}</span>${scoreBadge(m?.score)}</span>
+      <span class="pole-card-head"><b class="pole-badge" style="--badge:${SLOT_COLOURS[name]}">${slotLabel(name)}</b><span>${escapeHtml(fmtLatLon(s.lat, s.lon, 2))}</span>${scoreBadge(m?.score)}</span>
       ${m ? `${barRow(t('Sunlight'), m.sunPct, '#f5c542')}${barRow(t('Earth'), m.earthPct, '#58a6ff')}
       <span class="pole-card-foot">${escapeHtml(t('Longest link'))} ${m.longestH} h · ${escapeHtml(t('Slope'))} ${m.slopeDeg.toFixed(1)}° · ${escapeHtml(fmtDateTime(m.touchdownMs))}</span>${limitNote(m)}` : `<span class="pole-card-foot">${escapeHtml(t(s.measuringKey ? 'measuring…' : 'No terrain skyline for this point.'))}</span>`}
-    </button><button type="button" class="pole-saved-remove" data-remove="${name}" aria-label="${escapeHtml(t('Remove {name}', { name }))}">${icon('close')}</button></div>`;
-    }).join('') : `<p class="sub">${escapeHtml(t('Choose a point on the map and save it as A, B or C.'))}</p>`;
+    </button><button type="button" class="pole-saved-remove" data-remove="${name}" aria-label="${escapeHtml(t('Remove {name}', { name: slotLabel(name) }))}">${icon('close')}</button></div>`;
+    }).join('') : `<p class="sub">${escapeHtml(t('Choose a point on the map and save it as #1, #2 or #3.'))}</p>`;
   }
 
   function limitNote(metrics) {
@@ -1165,7 +1167,7 @@ export function createSouthPole(ctx) {
     const point = ui.draft;
     els['sp-pick-atlas'].disabled = !point;
     if (!point) {
-      els['sp-picked'].innerHTML = `<p class="sub">${escapeHtml(t('Choose a point on the map and save it as A, B or C.'))}</p>`;
+      els['sp-picked'].innerHTML = `<p class="sub">${escapeHtml(t('Choose a point on the map and save it as #1, #2 or #3.'))}</p>`;
       return;
     }
     const metrics = point.metrics;
