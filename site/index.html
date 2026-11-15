@@ -316,9 +316,14 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-abc button{width:32px;height:32px;border:1px dashed color-mix(in srgb,var(--slot) 55%,var(--border));border-radius:50%;background:transparent;color:var(--muted);font:700 12px/1 "Geist",system-ui,sans-serif;cursor:pointer;display:grid;place-items:center}
 .pole-abc button.filled{border-style:solid;border-color:var(--slot);background:color-mix(in srgb,var(--slot) 18%,transparent);color:var(--text)}
 .pole-abc button:hover{border-color:var(--slot);color:var(--text)}
-.pole-map-tools{display:flex;flex-direction:column;gap:2px;padding:4px;border:1px solid var(--border);border-radius:12px;background:rgba(15,17,19,.86);backdrop-filter:blur(10px)}
-.pole-map-tools button{width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:var(--text2);display:grid;place-items:center;cursor:pointer}
-.pole-map-tools button:hover{background:var(--surface-2);color:var(--text)}
+.pole-map-tools{display:flex;flex-direction:column;gap:2px;padding:4px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(9,12,16,.9);backdrop-filter:blur(10px);box-shadow:0 10px 28px rgba(0,0,0,.35)}
+.pole-map-tools button{width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:var(--text2);display:grid;place-items:center;cursor:pointer;transition:background .15s,color .15s}
+.pole-map-tools button:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.pole-map-tools button:active{transform:scale(.96)}
+.pole-map-tools button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pole-map-tools button:nth-child(3){position:relative;margin-top:3px}
+.pole-map-tools button:nth-child(3)::before{content:'';position:absolute;left:4px;right:4px;top:-2px;height:1px;background:var(--border)}
+.pole-map-tools .ico{width:17px;height:17px}
 .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #sp-map{width:auto;height:auto;max-width:100%;max-height:100%;background:#0f1113;cursor:crosshair}
 #sp-moon{width:auto;height:auto;max-width:100%;max-height:100%;margin:auto;object-fit:contain;background:#05070a}
@@ -403,6 +408,20 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-modal[hidden]{display:none}
 .pole-modal-card{width:min(680px,calc(100% - 32px));padding:18px 20px;border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:0 24px 80px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px}
 .pole-modal-card h2{margin:0;font-size:18px}
+.pole-detail-card{width:min(880px,calc(100% - 32px));max-height:min(82vh,760px);overflow:auto}
+.pole-detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pole-detail-head h2{font-size:18px}
+.pole-detail-table{width:100%;border-collapse:collapse;font-size:12px}
+.pole-detail-table th,.pole-detail-table td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+.pole-detail-table thead th{font-weight:600;color:var(--text2)}
+.pole-detail-table thead small{display:block;margin:2px 0 4px;font-weight:400;font-size:10px;color:var(--muted)}
+.pole-detail-table tbody th{font-weight:500;color:var(--muted);white-space:nowrap}
+.pole-detail-table .group th{padding-top:14px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pole-detail-badge{display:inline-block;margin-right:4px;color:var(--text)}
+.pole-detail-bar{display:inline-block;width:72px;height:6px;margin-right:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;vertical-align:middle}
+.pole-detail-bar i{display:block;height:100%;border-radius:3px}
+.pole-detail-warn{color:#f0b772;cursor:help}
+.pole-detail-ok{color:var(--good)}
 .pole-modal-card label{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
 .pole-modal-card input[type=range]{flex:1;accent-color:var(--accent)}
 .pole-modal-card input[type=date]{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px;min-height:30px}
@@ -444,7 +463,33 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-save-actions button{flex:1;min-height:34px;padding:5px 6px;border:1px solid var(--border);border-radius:7px;background:var(--surface-2);color:var(--text);font:inherit;font-size:11px;cursor:pointer}
 .pole-save-actions button:hover:not(:disabled){border-color:var(--accent)}
 .pole-save-actions button:disabled,.pole-pick-atlas:disabled{opacity:.5;cursor:default}
+.pole-slot-actions{display:flex;flex-direction:column;gap:2px}
+.pole-compare-action{width:100%;min-height:34px;padding:6px 10px;border-radius:7px;font:inherit;font-size:11.5px;font-weight:600}
+.pole-compare-action:disabled{opacity:.5;cursor:default}
+.pole-slot-row{display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:6px;padding:2px 0;border-bottom:1px solid var(--border);font-size:10.5px;color:var(--muted)}
+.pole-slot-row b{color:var(--text2);font-size:10.5px}
+.pole-slot-row>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pole-slot-row button{min-height:24px;padding:2px 8px;border:1px solid var(--border);border-radius:5px;background:transparent;color:var(--text);font:inherit;font-size:10px;cursor:pointer}
+.pole-slot-row button:hover:not(:disabled){border-color:var(--accent)}
+.pole-slot-row button:disabled{opacity:.5;cursor:default}
+.pole-slot-state{font-size:9px;color:var(--muted);white-space:nowrap}
+.pole-recommended{margin-top:10px}
+.pole-recommended h3{margin:0 0 4px;font-size:12.5px}
+.pole-recommended .pole-cardlist{gap:5px}
 .pole-atlas-entry{position:sticky;top:0;z-index:2;padding-bottom:12px;background:#101316}
+.pole-atlas-back-map{display:flex;align-items:center;gap:6px;align-self:flex-start;min-height:30px;padding:4px 8px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:11px;cursor:pointer}
+.pole-atlas-back-map:hover{color:var(--text);border-color:var(--accent)}
+.pole-atlas-back-map[hidden]{display:none}
+.pole-atlas-back-map .ico{width:14px;height:14px}
+.pole-atlas-head-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pole-atlas-collapse{display:grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer}
+.pole-atlas-collapse:hover{color:var(--text);border-color:var(--accent)}
+.pole-atlas-collapse[hidden]{display:none}
+.pole-atlas-collapse .ico{width:14px;height:14px}
+.pole-atlas-panel-open{position:absolute;right:16px;top:50%;transform:translateY(-50%);z-index:8;display:flex;align-items:center;gap:7px;min-height:38px;padding:7px 12px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(9,12,16,.92);color:var(--text);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;box-shadow:0 8px 28px rgba(0,0,0,.35);backdrop-filter:blur(8px)}
+.pole-atlas-panel-open:hover{border-color:var(--accent)}
+.pole-atlas-panel-open[hidden]{display:none}
+.pole-atlas-panel-open .ico{width:15px;height:15px}
 .pole-pick-atlas{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;padding:10px 14px;border-radius:10px;font:inherit;font-size:13px;font-weight:650}
 .pole-pick-atlas .ico{width:19px;height:19px;flex-shrink:0}
 .pole-pick-atlas:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
@@ -511,8 +556,8 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-cmp{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .pole-cmp th,.pole-cmp td{text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)}
 .pole-cmp thead th{color:var(--muted);font-weight:600}
-.pole-cmp thead th{position:relative;padding-right:18px}
-.pole-cmp-remove{position:absolute;right:0;top:50%;transform:translateY(-50%);width:16px;height:16px;min-height:0;padding:0;border:0;border-radius:4px;background:transparent;color:var(--muted);font:14px/1 var(--font-sans);cursor:pointer}
+.pole-cmp thead th{position:relative;padding-right:4px;white-space:nowrap}
+.pole-cmp-remove{display:inline-grid;place-items:center;width:14px;height:14px;min-height:0;margin-left:4px;padding:0;border:0;border-radius:4px;background:transparent;color:var(--muted);font:13px/1 var(--font-sans);vertical-align:middle;cursor:pointer}
 .pole-cmp-remove:hover{color:var(--text);background:rgba(255,255,255,.08)}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 .pole-atlas-pick{position:absolute;left:14px;top:50%;transform:translateY(-50%);z-index:8;display:flex;flex-direction:column;gap:6px;padding:6px;border:1px solid var(--border);border-radius:14px;background:rgba(15,17,19,.9);backdrop-filter:blur(10px)}
@@ -593,7 +638,8 @@ body[data-view=pole] main{max-width:none;padding:0}
   #sp-map{position:absolute;left:56px;top:0;width:calc(100% - 56px);height:100%}
   .pole .pole-map-rail,.pole.panel-collapsed .pole-map-rail{left:0;top:0}
   .pole-cards{top:16px;width:var(--results-panel);gap:10px;background:#101316}
-  .pole[data-stage="map"] .pole-panel-open{left:12px;top:16px;transform:none;border-left:1px solid var(--border);border-radius:10px}
+  .pole[data-stage="atlas"] .pole-cards{top:72px;bottom:80px;background:rgba(16,19,22,.96);box-shadow:0 16px 48px rgba(0,0,0,.45)}
+  .pole[data-stage="atlas"] .pole-slot-actions,.pole[data-stage="atlas"] .pole-pick-atlas{display:none}
   .pole-card-head span{font-size:11.5px}
   .pole-thresholds{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pole-thresholds input{min-width:0;width:100%}

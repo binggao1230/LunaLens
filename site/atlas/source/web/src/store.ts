@@ -138,6 +138,9 @@ interface State {
   setArrived: (seq: number) => void
   /** dates the clock may take: the ephemeris, less room for the 60-day analysis window; null until loaded */
   timeRange: [number, number] | null
+  /** the touchdown search window carried from Map; null until the parent sends it */
+  windowRange: [number, number] | null
+  setWindowRange: (r: [number, number] | null) => void
   setTimeRange: (r: [number, number]) => void
   setTime: (t: number) => void
   setPlaying: (p: boolean) => void
@@ -291,6 +294,8 @@ export const useStore = create<State>((set, get) => ({
   arrivedSeq: 0,
   setArrived: (arrivedSeq) => set({ arrivedSeq }),
   timeRange: null,
+  windowRange: null,
+  setWindowRange: (windowRange) => set({ windowRange }),
   setTimeRange: (timeRange) => set((s) => ({ timeRange, tMs: Math.min(Math.max(s.tMs, timeRange[0]), timeRange[1]) })),
   // A date outside the supported range is pulled back to its nearest end, never used as is:
   // beyond the ephemeris there are no Sun and Earth positions to compute from.

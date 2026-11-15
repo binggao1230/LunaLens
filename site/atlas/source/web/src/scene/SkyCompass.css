@@ -47,17 +47,20 @@
   left: 0;
   display: flex;
   align-items: center;
-  gap: var(--sp-1);
-  height: var(--sp-5);
-  padding: 0 var(--sp-2);
-  background: var(--surface-1);
-  border: var(--hairline) solid var(--border);
+  gap: 6px;
+  height: 26px;
+  padding: 0 9px 0 6px;
+  background: rgba(9, 12, 16, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--r-full);
   color: var(--text-1);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-sm);
-  font-weight: var(--fw-medium);
+  font-size: 10.5px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   white-space: nowrap;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(8px);
   visibility: hidden;
 }
 .sky-chip[data-on='true'] {
@@ -69,12 +72,26 @@
 .sky-chip[data-body='earth'] {
   --body: var(--data-earth);
 }
-.sky-chip-disc {
+.sky-chip-icon {
+  display: grid;
+  place-items: center;
   flex: none;
-  width: var(--sp-2);
-  height: var(--sp-2);
-  border-radius: var(--r-full);
-  background: var(--body);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--body) 18%, transparent);
+  color: var(--body);
+}
+.sky-chip-icon svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.sky-chip-label {
+  display: block;
 }
 /* Points along +x before the driver turns it; the driver also moves it out to the pill's edge. */
 .sky-chip-wedge {
