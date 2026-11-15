@@ -228,11 +228,11 @@ export function createEducation(ctx) {
       ? `<div class="edu-char edu-hero"><img src="assets/mascot/astronaut_dog_moon.svg" alt="" draggable="false"></div>`
       : `<div class="edu-char mood-${st.mood}">${CHARACTER_MARKUP}</div>`;
     // The "Why the south pole?" line is explained by a picture above the text (assets/mascot/south_pole_ice.svg).
-    const figure = st.step === 1 && st.sub === 1 ? `<img class="edu-figure" src="assets/mascot/south_pole_ice.svg" alt="" draggable="false">` : '';
+    const figure = st.step === STEP.objective && st.sub === 1 ? `<img class="edu-figure" src="assets/mascot/south_pole_ice.svg" alt="" draggable="false">` : '';
     root.innerHTML = `<aside class="edu-panel step-${st.step}${full ? ' full' : ''}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
       ${art}
       <div class="edu-bubble">
-        <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span>${[2, 4, 5].includes(st.step) ? verdictChip(r) : ''}</div>
+        <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span></div>
         ${figure}
         <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite"><b class="edu-speaker">${escapeHtml(get('character.name') ?? 'Lumi')}</b>${escapeHtml(text)}</p>
         ${st.step === STEP.fix ? leversHtml(r) : ''}
