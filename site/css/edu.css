@@ -408,3 +408,17 @@ body.edu-on .tabbar button[data-view=atlas],body.edu-on .tabbar button[data-view
 
 .edu-choice{margin:8px 0 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#f5c542;font-weight:600}
 .edu-panel.near-sites{bottom:auto}
+
+/* Mode switch: icons only, names stay in aria-label. */
+.seg-pill .long,.seg-pill .short{display:none!important}
+.appbar .seg-pill{height:32px;padding:2px;gap:2px;border-radius:9px}
+.seg-pill button,.seg-pill button[aria-pressed]{width:28px;min-height:0;height:26px;padding:0;justify-content:center;border-radius:7px}
+.seg-pill svg{width:16px;height:16px}
+@media (max-width:760px){
+  :root{--bar-h:56px}
+  .appbar{flex-wrap:nowrap}
+  .appbar .brand{order:1}
+  .appbar #mode-toggle{order:2;flex:none;margin-left:auto}
+  .appbar .lang-menu{order:3}
+  .appbar #mode-toggle button{flex:none}
+}
