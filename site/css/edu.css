@@ -485,3 +485,7 @@ body.edu-on :disabled,body.edu-on [aria-disabled=true]{cursor:not-allowed!import
 
 /* Shown when Confirm is pressed before any site is picked. */
 .edu-error{margin:8px 0 0;font-size:12px;letter-spacing:.04em;color:#ff8a8a;font-weight:600}
+
+/* The story points at the sunrise / Stays in view countdown line while it explains it: the same pulsing green glow. */
+#m-scenario.edu-point{border-radius:10px;box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 22px 5px rgba(67,217,138,.45);animation:edu-time-pulse 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){#m-scenario.edu-point{animation:none}}

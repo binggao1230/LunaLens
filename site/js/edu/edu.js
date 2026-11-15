@@ -18,6 +18,8 @@ const TIME_SEGMENT = 7;
 const GRAPH_SEGMENT = 8;
 // The objective segment about the south pole in 3D or 2D: the whole Moon view (#m-stage) pulses while it shows.
 const MODE_SEGMENT = 3;
+// The objective segment about sunrise / Stays in view: the sun and Earth countdown line (#m-scenario) pulses while it shows.
+const SCENARIO_SEGMENT = 10;
 // History segments: 1 and 2 point at the Historic sites switch; 3 is the explore line; 4 opens the failed IM-2 landing
 // (segment 5 explains it).
 const HISTORY_SWITCH = [1, 2], HISTORY_FAILED = 4;
@@ -247,6 +249,8 @@ export function createEducation(ctx) {
     document.getElementById('m-lanes')?.classList.toggle('edu-point', pointAtGraph);
     const pointAtMode = visible() && !st.skipped && st.step === STEP.objective && st.sub === MODE_SEGMENT;
     document.getElementById('m-stage')?.classList.toggle('edu-point', pointAtMode);
+    const pointAtScenario = visible() && !st.skipped && st.step === STEP.objective && st.sub === SCENARIO_SEGMENT;
+    document.getElementById('m-scenario')?.classList.toggle('edu-point', pointAtScenario);
     // The Historic sites switch gets a highlight ring while the history step points at it.
     const pointing = visible() && !st.skipped && st.step === STEP.history && HISTORY_SWITCH.includes(st.sub);
     document.getElementById('m-hist')?.classList.toggle('edu-point', pointing);
