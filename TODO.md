@@ -75,6 +75,8 @@ alternative dates at the same site". The second half is what the product cannot 
   the website; the app is a short, welcoming learning experience, not a smaller copy of every website view.
 - Let learners choose a curated site and date, then explain sunlight, direct-to-Earth visibility and their overlap
   in plain language with a clear timeline and a small number of readable results.
+- Add a simple offline daylight globe to the mobile lesson, with a UTC date/hour timeline and play/pause, using
+  the shared ephemeris and Moon texture.
 - Guide a simple comparison between a familiar landed site and a south-pole site, prompting learners to change
   either the location or date and observe what changes.
 - Reuse the website's calculation engine and data. Keep sources and accuracy limits visible, and link to the full

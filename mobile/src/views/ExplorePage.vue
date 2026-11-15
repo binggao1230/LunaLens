@@ -117,6 +117,55 @@
           </div>
           <p class="result-date">{{ dailyResult.date }} · 00:00–23:00 UTC</p>
 
+          <section class="globe-block" aria-labelledby="globe-title">
+            <div class="globe-heading">
+              <div>
+                <h3 id="globe-title">{{ t('Sunlight around the Moon') }}</h3>
+                <p>{{ t('The bright side faces the Sun. Local hills can still hide it.') }}</p>
+              </div>
+              <span class="globe-time">{{ hourLabel }}</span>
+            </div>
+            <canvas
+              ref="globeCanvas"
+              class="sunlight-globe"
+              role="img"
+              :aria-label="globeDescription"
+              width="420"
+              height="420"
+            ></canvas>
+            <div class="globe-legend" aria-hidden="true">
+              <span><i class="globe-day"></i>{{ t('Daylight') }}</span>
+              <span><i class="globe-night"></i>{{ t('Night') }}</span>
+              <span><i class="globe-site"></i>{{ t('Selected place') }}</span>
+            </div>
+            <div class="time-controls">
+              <ion-button
+                class="play-button"
+                shape="round"
+                :aria-label="t(isPlaying ? 'Pause' : 'Play')"
+                @click="togglePlayback"
+              >
+                <span aria-hidden="true">{{ isPlaying ? 'Ⅱ' : '▶' }}</span>
+              </ion-button>
+              <label class="time-slider-wrap" for="hour-slider">
+                <span class="sr-only">{{ t('Select hour of lunar day') }}</span>
+                <input
+                  id="hour-slider"
+                  v-model.number="currentHour"
+                  class="time-slider"
+                  type="range"
+                  min="0"
+                  max="23"
+                  step="1"
+                  :aria-valuetext="hourLabel"
+                  @input="pausePlayback"
+                />
+                <span class="time-endpoints"><span>00:00</span><span>23:00 UTC</span></span>
+              </label>
+            </div>
+            <p class="globe-note">{{ t('Change the date above to explore another day.') }}</p>
+          </section>
+
           <div class="result-grid">
             <article class="result-item sunlight-result">
               <span class="result-icon" aria-hidden="true">☼</span>
@@ -273,9 +322,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { IonButton, IonContent, IonInput, IonItem, IonLabel, IonPage, IonSelect, IonSelectOption } from '@ionic/vue';
-import { getDailyResult, getLearningSites, type DailyResult } from '../services/learning-science';
+import moonTextureUrl from '../../../site/assets/moon_1024.jpg?url';
+import {
+  getDailyResult,
+  getLearningSites,
+  getLunarFrame,
+  type DailyResult,
+  type LunarFrame,
+} from '../services/learning-science';
 import { useLanguage } from '../i18n';
 
 const { language, setLanguage, t } = useLanguage();
@@ -285,9 +341,24 @@ const selectedDate = ref('2027-01-01');
 const dailyResult = ref<DailyResult | null>(null);
 const loading = ref(false);
 const errorMessage = ref('');
+const currentHour = ref(0);
+const isPlaying = ref(false);
+const globeCanvas = ref<HTMLCanvasElement | null>(null);
+const lunarFrame = ref<LunarFrame>({ sunLat: 0, sunLon: 0 });
+let moonTexture: HTMLImageElement | null = null;
+let moonPixels: ImageData | null = null;
+let playbackTimer: ReturnType<typeof setInterval> | undefined;
 
 const selectedSiteInfo = computed(() => learningSites.find((site) => site.id === selectedSite.value));
 const displaySiteName = computed(() => dailyResult.value?.site.id ?? selectedSite.value);
+const hourLabel = computed(() =>
+  t('Hour {hour} UTC').replace('{hour}', `${String(currentHour.value).padStart(2, '0')}:00`),
+);
+const globeDescription = computed(() =>
+  t('Moon daylight at {time} for {place}. Bright means sunlit; dark means night.')
+    .replace('{time}', hourLabel.value)
+    .replace('{place}', t(displaySiteName.value)),
+);
 const siteCoordinates = computed(() => {
   const site = selectedSiteInfo.value;
   if (!site) return '';
@@ -325,6 +396,8 @@ async function openLesson(): Promise<void> {
   loading.value = true;
   errorMessage.value = '';
   try {
+    pausePlayback();
+    currentHour.value = 0;
     dailyResult.value = await getDailyResult(selectedSite.value, selectedDate.value);
   } catch (error) {
     errorMessage.value = getErrorMessage(error);
@@ -332,6 +405,122 @@ async function openLesson(): Promise<void> {
     loading.value = false;
   }
 }
+
+watch([selectedDate, selectedSite], () => {
+  if (dailyResult.value) void openLesson();
+});
+
+watch([selectedDate, currentHour, dailyResult], async () => {
+  if (!dailyResult.value) return;
+  try {
+    lunarFrame.value = await getLunarFrame(selectedDate.value, currentHour.value);
+    drawGlobe();
+  } catch (error) {
+    errorMessage.value = getErrorMessage(error);
+  }
+});
+
+watch([lunarFrame, selectedSite], drawGlobe);
+
+function drawGlobe(): void {
+  const canvas = globeCanvas.value;
+  const image = moonTexture;
+  if (!canvas || !image?.complete || !moonPixels) return;
+
+  const context = canvas.getContext('2d');
+  if (!context) return;
+  const size = canvas.width;
+  const center = size / 2;
+  const radius = size * 0.47;
+  const frame = context.createImageData(size, size);
+  const sunLat = (lunarFrame.value.sunLat * Math.PI) / 180;
+  const sunLon = (lunarFrame.value.sunLon * Math.PI) / 180;
+  const texWidth = image.naturalWidth;
+  const texHeight = image.naturalHeight;
+
+  for (let y = 0; y < size; y++) {
+    const ny = (center - y) / radius;
+    for (let x = 0; x < size; x++) {
+      const nx = (x - center) / radius;
+      const depthSquared = 1 - nx * nx - ny * ny;
+      if (depthSquared < 0) continue;
+      const depth = Math.sqrt(depthSquared);
+      const latitude = Math.asin(ny);
+      const longitude = Math.atan2(nx, depth);
+      const texX = Math.min(texWidth - 1, Math.floor(((((longitude * 180) / Math.PI + 180) % 360) / 360) * texWidth));
+      const texY = Math.min(texHeight - 1, Math.max(0, Math.floor((0.5 - latitude / Math.PI) * texHeight)));
+      const sourceOffset = (texY * texWidth + texX) * 4;
+      const dot =
+        Math.sin(latitude) * Math.sin(sunLat) + Math.cos(latitude) * Math.cos(sunLat) * Math.cos(longitude - sunLon);
+      const light = dot > 0.035 ? 1 : dot < -0.035 ? 0.22 : 0.22 + (0.78 * (dot + 0.035)) / 0.07;
+      const targetOffset = (y * size + x) * 4;
+      frame.data[targetOffset] = moonPixels.data[sourceOffset] * light;
+      frame.data[targetOffset + 1] = moonPixels.data[sourceOffset + 1] * light;
+      frame.data[targetOffset + 2] = moonPixels.data[sourceOffset + 2] * light;
+      frame.data[targetOffset + 3] = 255;
+    }
+  }
+  context.clearRect(0, 0, size, size);
+  context.putImageData(frame, 0, 0);
+
+  const site = selectedSiteInfo.value;
+  if (!site) return;
+  const latitude = (site.lat * Math.PI) / 180;
+  const longitude = (((((site.lon + 180) % 360) + 360) % 360) - 180) * (Math.PI / 180);
+  const depth = Math.cos(latitude) * Math.cos(longitude);
+  if (depth <= 0) return;
+  const x = center + radius * Math.cos(latitude) * Math.sin(longitude);
+  const y = center - radius * Math.sin(latitude);
+  context.beginPath();
+  context.arc(x, y, size * 0.022, 0, Math.PI * 2);
+  context.fillStyle = '#182638';
+  context.fill();
+  context.beginPath();
+  context.arc(x, y, size * 0.012, 0, Math.PI * 2);
+  context.fillStyle = '#ffcf55';
+  context.fill();
+}
+
+function pausePlayback(): void {
+  isPlaying.value = false;
+  if (playbackTimer) clearInterval(playbackTimer);
+  playbackTimer = undefined;
+}
+
+function togglePlayback(): void {
+  if (isPlaying.value) {
+    pausePlayback();
+    return;
+  }
+  if (currentHour.value >= 23) currentHour.value = 0;
+  isPlaying.value = true;
+  const delay = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 1200 : 750;
+  playbackTimer = setInterval(() => {
+    if (currentHour.value >= 23) {
+      pausePlayback();
+      return;
+    }
+    currentHour.value += 1;
+  }, delay);
+}
+
+onMounted(() => {
+  moonTexture = new Image();
+  moonTexture.onload = () => {
+    const source = document.createElement('canvas');
+    source.width = moonTexture?.naturalWidth ?? 0;
+    source.height = moonTexture?.naturalHeight ?? 0;
+    const context = source.getContext('2d', { willReadFrequently: true });
+    if (context && source.width && source.height) {
+      context.drawImage(moonTexture as HTMLImageElement, 0, 0);
+      moonPixels = context.getImageData(0, 0, source.width, source.height);
+    }
+    drawGlobe();
+  };
+  moonTexture.src = moonTextureUrl;
+});
+
+onBeforeUnmount(pausePlayback);
 </script>
 
 <style scoped>
@@ -717,6 +906,128 @@ h2 {
   color: #4d5867;
   font-size: 14px;
   font-weight: 650;
+}
+
+.globe-block {
+  margin: 18px 0 24px;
+  padding: 18px 14px 14px;
+  border: 1px solid #dce0e4;
+  border-radius: 16px;
+  background: radial-gradient(ellipse at 50% 34%, #fffefa 0, #f0f3f5 72%);
+}
+.globe-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.globe-heading h3 {
+  margin: 0;
+  color: #1f2d40;
+  font-size: 17px;
+}
+.globe-heading p,
+.globe-note {
+  margin: 5px 0 0;
+  color: #536071;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.globe-time {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #e6ebf1;
+  color: #24354e;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+.sunlight-globe {
+  display: block;
+  width: min(100%, 320px);
+  height: auto;
+  margin: 8px auto 0;
+  filter: drop-shadow(0 12px 15px #17233718);
+}
+.globe-legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 17px;
+  color: #465365;
+  font-size: 12px;
+}
+.globe-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.globe-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.globe-day {
+  background: #dbb56c;
+}
+.globe-night {
+  background: #273343;
+}
+.globe-site {
+  background: #ffcf55;
+  border: 2px solid #182638;
+}
+.time-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 460px;
+  margin: 14px auto 0;
+}
+.play-button {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  margin: 0;
+  --background: #203b62;
+  --background-activated: #142b4d;
+  --box-shadow: none;
+  --color: white;
+}
+.time-slider-wrap {
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+.time-slider {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  margin: 0;
+  accent-color: #315c89;
+  touch-action: pan-x;
+}
+.time-endpoints {
+  display: flex;
+  justify-content: space-between;
+  color: #536071;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.globe-note {
+  text-align: center;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .result-grid {

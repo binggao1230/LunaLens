@@ -26,6 +26,8 @@ export type DailyResult = {
   coverage: { start: string; end: string };
 };
 
+export type LunarFrame = { sunLat: number; sunLon: number };
+
 type EphemerisMetadata = { start: string; stepSeconds: number; count: number };
 type SitesMetadata = { sites: LearningSite[] };
 
@@ -87,4 +89,12 @@ export async function getDailyResult(siteId: string, date: string): Promise<Dail
     overlapHours,
     coverage: { start: metadata.start.slice(0, 10), end: new Date(dataEnd).toISOString().slice(0, 10) },
   };
+}
+
+export async function getLunarFrame(date: string, hour: number): Promise<LunarFrame> {
+  const startMs = Date.parse(`${date}T00:00:00Z`);
+  if (!Number.isFinite(startMs)) throw new Error('Choose a valid calendar date.');
+  const ephemeris = await loadEphemeris();
+  const state = ephemeris.stateAt(ephemeris.indexOf(startMs + hour * 60 * 60 * 1000));
+  return { sunLon: state[0], sunLat: state[1] };
 }
