@@ -427,19 +427,19 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-card-head em{font-style:normal;font-weight:700}
 .pole-score{display:inline-flex;align-items:baseline;justify-content:center;gap:2px;flex-shrink:0;padding:4px 6px;border-radius:6px;background:var(--score);color:#0f1113;font-size:13px;font-weight:750;font-variant-numeric:tabular-nums}
 .pole-score small{font-size:9px;font-weight:500}
-.pole-selection{display:flex;flex-direction:column;gap:10px;padding-bottom:14px;margin-bottom:4px;border-bottom:1px solid var(--border)}
-.pole-selection #sp-picked{display:flex;flex-direction:column;gap:8px}
-.pole-selection-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-variant-numeric:tabular-nums}
-.pole-selection .sub,.pole-score-key{margin:0;font-size:11px;line-height:1.5;color:var(--muted)}
+.pole-score-key{margin:0;font-size:11px;line-height:1.5;color:var(--muted)}
 .pole-save-actions{display:flex;gap:6px}
 .pole-save-actions button{flex:1;min-height:34px;padding:5px 6px;border:1px solid var(--border);border-radius:7px;background:var(--surface-2);color:var(--text);font:inherit;font-size:11px;cursor:pointer}
 .pole-save-actions button:hover:not(:disabled){border-color:var(--accent)}
 .pole-save-actions button:disabled,.pole-pick-atlas:disabled{opacity:.5;cursor:default}
-.pole-pick-atlas{align-self:flex-start}
+.pole-atlas-entry{position:sticky;top:0;z-index:2;padding-bottom:12px;background:#101316}
+.pole-pick-atlas{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;padding:10px 14px;border-radius:10px;font:inherit;font-size:13px;font-weight:650}
+.pole-pick-atlas .ico{width:19px;height:19px;flex-shrink:0}
+.pole-pick-atlas:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .pole-limit-note{margin:0;font-size:11px;line-height:1.45;color:#f0b772}
 .pole-saved{position:relative}
 .pole-saved .pole-card{padding-bottom:32px}
-.pole-saved-remove{position:absolute;bottom:5px;right:7px;display:grid;place-items:center;width:26px;height:24px;padding:0;border:0;border-radius:5px;background:transparent;color:var(--muted);cursor:pointer}
+.pole-saved-remove{position:absolute;bottom:5px;right:7px;display:grid;place-items:center;width:26px;height:24px;min-height:0;padding:0;border:0;border-radius:5px;background:transparent;color:var(--muted);cursor:pointer}
 .pole-saved-remove:hover{color:var(--text);background:var(--surface)}
 .pole-card:focus-visible,.pole-save-actions button:focus-visible,.pole-saved-remove:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pole-badge{display:grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--badge);color:#0f1113;font-size:11px;font-weight:700}
@@ -532,6 +532,13 @@ body[data-view=pole] main{max-width:none;padding:0}
   .pole-cards{top:16px;width:var(--results-panel);gap:10px;background:#101316}
   .pole[data-stage="map"] .pole-panel-open{left:12px;top:16px;transform:none;border-left:1px solid var(--border);border-radius:10px}
   .pole-card-head span{font-size:11.5px}
+  .pole-thresholds{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pole-thresholds input{min-width:0;width:100%}
+  .pole-cmp{table-layout:fixed}
+  .pole-cmp th:first-child{width:34%;overflow-wrap:anywhere}
+  .pole-cmp th,.pole-cmp td{padding:5px 3px}
+  .pole-cmp .pole-score{gap:0;padding:3px;font-size:11px}
+  .pole-cmp .pole-score small{font-size:8px}
 }
 @media(max-width:900px){
   .pole-stage{left:0}
