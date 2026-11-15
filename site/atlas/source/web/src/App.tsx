@@ -211,13 +211,14 @@ function TimeBar({ ephem }: { ephem: Ephem }) {
 function PinMarkers({ elevation }: { elevation: (lat: number, lon: number) => number }) {
   const pins = useStore((s) => s.pins)
   const active = useStore((s) => s.activePin)
-  const maps = useMemo(() => SITE_COLORS.map((c) => badgeTexture(c)), [])
   return (
     <>
       {pins.map((p) => (
-        <sprite key={p.id} position={sitePosKm(p.lat, p.lon, elevation(p.lat, p.lon) + 250)} scale={p.id === active ? [0.05, 0.05, 1] : [0.04, 0.04, 1]}
+        <mesh
+          key={p.id}
+          position={sitePosKm(p.lat, p.lon, elevation(p.lat, p.lon) + 250)}
+          scale={p.id === active ? 1.25 : 1}
           renderOrder={6}
-          // Clicking a site's badge selects that site (not a new point beside it).
           userData={MARKER}
           onClick={(e) => {
             if (e.delta > 4 || !insideDisc(e)) return
@@ -225,14 +226,9 @@ function PinMarkers({ elevation }: { elevation: (lat: number, lon: number) => nu
             useStore.getState().setActivePin(p.id)
           }}
         >
-          <spriteMaterial
-            map={maps[p.slot]}
-            opacity={p.id === active ? 1 : 0.8}
-            sizeAttenuation={false}
-            depthTest={false}
-            transparent
-          />
-        </sprite>
+          <sphereGeometry args={[0.018, 16, 12]} />
+          <meshBasicMaterial color={SITE_COLORS[p.slot]} depthTest={false} transparent opacity={p.id === active ? 1 : 0.8} />
+        </mesh>
       ))}
     </>
   )
@@ -434,27 +430,8 @@ function SitesPanel({ pins, activePin, ephem, terrain, patchOf, pending, global,
     </aside>
   )
 }
-
-/** A pinned site's marker: a coloured diamond with a dark outline, without a slot letter. */
-function badgeTexture(color: string): THREE.Texture {
-  const c = document.createElement('canvas')
-  c.width = c.height = 96
-  const g = c.getContext('2d')!
-  g.translate(48, 48)
-  g.rotate(Math.PI / 4)
-  g.fillStyle = color
-  g.fillRect(-28, -28, 56, 56)
-  g.lineWidth = 8
-  g.strokeStyle = ON_ACCENT
-  g.strokeRect(-28, -28, 56, 56)
-  g.fillStyle = ON_ACCENT
-  g.beginPath()
-  g.arc(0, 0, 9, 0, Math.PI * 2)
-  g.fill()
-  return new THREE.CanvasTexture(c)
-}
-
 export default function App() {
+
   const { ephem, terrain, error, missions, patchIndex } = useData()
   useClock(ephem)
   const globeMap = useGlobeMap(BASE)
