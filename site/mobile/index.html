@@ -3,56 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#101318">
-  <meta name="description" content="Explore lunar sunlight and Earth visibility with LunaLens.">
-  <title>LunaLens · Mobile explorer</title>
-  <link rel="icon" href="../assets/lunalens-logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./mobile.css">
+  <meta name="theme-color" content="#070b14">
+  <meta name="description" content="Explore lunar landing sites with the LunaLens guided mission.">
+  <base href="../">
+  <title>LunaLens · Education mission</title>
+  <link rel="icon" href="assets/lunalens-logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/mission.css">
+  <link rel="stylesheet" href="css/edu.css">
+  <link rel="stylesheet" href="/mobile/mobile.css">
 </head>
-<body>
-  <header class="topbar">
-    <a class="brand" href="../" aria-label="LunaLens home"><img src="../assets/lunalens-logo.svg" alt=""><span>LunaLens</span><small>MOBILE</small></a>
-    <label class="language"><span class="sr-only">Language</span><select id="language"><option value="en">EN</option><option value="fr">FR</option><option value="zh">中文</option></select></label>
-    <a class="desktop-link" href="../">Full navigator <span aria-hidden="true">↗</span></a>
+<body class="mobile-app" data-view="start">
+  <header class="mobile-topbar">
+    <a class="brand" href="#/start/education" aria-label="LunaLens · Education"><img src="assets/lunalens-logo.svg" alt=""><span>LunaLens</span></a>
+    <button class="mobile-back" id="mobile-back" type="button" aria-label="Return to probe choice">‹</button>
+    <span class="mobile-mode" id="mode-label">Education</span>
+    <label class="language-picker"><span class="sr-only">Language</span><select id="language" aria-label="Language"><option value="en">EN</option><option value="fr">FR</option><option value="zh">中文</option></select></label>
   </header>
 
-  <main class="shell">
-    <section class="intro" aria-labelledby="title">
-      <div class="intro-copy"><p class="eyebrow" data-t="eyebrow">A closer look at the Moon</p><h1 id="title" data-t="title">Choose a place.<br>See its sky.</h1><p class="lead" data-t="lead">Explore how the Sun and Earth appear from lunar landing sites.</p></div>
-      <div class="moon-art" role="img" aria-label="The Moon beneath a starry sky with Earth on the horizon"><span class="earth"><i></i></span><span class="orbit"></span><span class="ridge ridge-a"></span><span class="ridge ridge-b"></span><span class="ground"></span><span class="art-label">MOON · SOUTH POLE</span></div>
-    </section>
-
-    <section class="panel chooser" aria-labelledby="choose-title">
-      <div class="panel-title"><span class="step">01</span><div><p class="eyebrow" data-t="start">Start exploring</p><h2 id="choose-title" data-t="placeDate">Choose a place and day</h2></div></div>
-      <div class="form-grid"><label><span data-t="lunarPlace">Lunar place</span><select id="site" disabled><option>Loading sites…</option></select></label><label><span data-t="dayUtc">Day · UTC</span><input id="date" type="date" value="2027-01-01" disabled></label></div>
-      <button class="primary" id="show" type="button" disabled><span data-t="showDay">Show this lunar day</span><span aria-hidden="true">→</span></button>
-      <p class="hint" id="coverage" data-t="loading">Loading local lunar data…</p>
-    </section>
-
-    <section class="results" id="results" aria-live="polite" aria-busy="true">
-      <div class="section-heading"><div><p class="eyebrow" data-t="skyReadout">SKY READOUT</p><h2 id="result-title">—</h2></div><span class="utc-badge">UTC</span></div>
-      <div class="metrics">
-        <article class="metric sun"><div class="metric-head"><span class="symbol" aria-hidden="true">☼</span><h3 data-t="sunlight">Sunlight</h3></div><p class="metric-value" id="sun-hours">—</p><p data-t="sunDesc">Hours when the Sun clears the modeled horizon.</p></article>
-        <article class="metric earth-metric"><div class="metric-head"><span class="symbol" aria-hidden="true">◎</span><h3 data-t="earthView">Earth in view</h3></div><p class="metric-value" id="earth-hours">—</p><p data-t="earthDesc">Hours when Earth's centre clears the modeled horizon.</p></article>
-        <article class="metric overlap"><div class="metric-head"><span class="symbol" aria-hidden="true">↗</span><h3 data-t="together">Together</h3></div><p class="metric-value" id="overlap-hours">—</p><p data-t="togetherDesc">Hours when sunlight and Earth view happen at once.</p></article>
-      </div>
-    </section>
-
-    <section class="panel timeline-panel" aria-labelledby="timeline-title">
-      <div class="section-heading"><div><p class="eyebrow" data-t="oneDay">ONE LUNAR DAY</p><h2 id="timeline-title" data-t="whenVisible">When can you see them?</h2></div><output id="hour-label" for="hour">00:00</output></div>
-      <div class="timeline-legend"><span><i class="key sun-key"></i><span data-t="sunlight">Sunlight</span></span><span><i class="key earth-key"></i><span data-t="earthView">Earth in view</span></span><span><i class="key both-key"></i><span data-t="together">Together</span></span></div>
-      <div id="timeline" class="timeline" role="img" aria-label="Hourly sunlight and Earth visibility timeline"></div>
-      <div class="time-ends"><span>00:00</span><span>12:00</span><span>23:00</span></div>
-      <label class="sr-only" for="hour" data-t="moveHour">Move through the hours of this day</label><input id="hour" class="hour-slider" type="range" min="0" max="23" step="1" value="0" aria-valuetext="00:00 UTC">
-      <div class="hour-controls"><button id="previous-hour" type="button" aria-label="Previous hour">−</button><span id="hour-summary" data-t="timelineHint">Choose an hour to inspect the lunar sky.</span><button id="next-hour" type="button" aria-label="Next hour">+</button></div>
-    </section>
-
-    <details class="panel explain" id="why"><summary><span><span class="step">02</span><b data-t="why">What do these results mean?</b></span><span class="expand" aria-hidden="true">＋</span></summary><div class="explain-body"><h3 data-t="sunlight">Sunlight</h3><p data-t="sunExplain">The Sun counts as visible when its upper edge clears the local terrain horizon.</p><h3 data-t="earthView">Earth in view</h3><p data-t="earthExplain">This is a direct geometric view to Earth's centre. It does not check antennas or a complete radio link.</p><h3 data-t="together">Together</h3><p data-t="togetherExplain">The overlap shows hours when both conditions are true. It is a useful planning clue, not a landing or power guarantee.</p><p class="source-note" data-t="accuracy">Terrain horizons are regional estimates. Local rocks and landing-point details may differ.</p></div></details>
-
-    <section class="compare-callout"><div><p class="eyebrow" data-t="nextStep">NEXT STEP</p><h2 data-t="compareTitle">Try another place</h2><p data-t="compareText">Change the location to see how the same lunar day changes.</p></div><button id="change-place" type="button" data-t="changePlace">Change place</button></section>
-    <footer><a href="../" data-t="fullExperience">Open the full LunaLens navigator</a><span data-t="offline">Calculations use local project data.</span></footer>
-  </main>
-  <nav class="bottom-nav" aria-label="Main navigation"><a class="active" href="#title"><span>◉</span><small data-t="explore">Explore</small></a><a href="#timeline-title"><span>◷</span><small data-t="timeline">Timeline</small></a><a href="#why"><span>ⓘ</span><small data-t="learn">Learn</small></a><a href="../"><span>↗</span><small data-t="fullSite">Full site</small></a></nav>
-  <script type="module" src="./mobile.js"></script>
+  <div id="page-scroll">
+    <main>
+      <section class="view" id="v-start"></section>
+      <section class="view" id="v-mission"></section>
+    </main>
+  </div>
+  <div id="edu"></div>
+  <div id="flight"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/mobile/mobile.js"></script>
 </body>
 </html>

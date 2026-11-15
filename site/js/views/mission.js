@@ -236,6 +236,9 @@ export function createMission(ctx) {
   function renderStart() {
     disposePreview();
     const selected = probe(), edu = isEducation();
+    const mobile = document.body.classList.contains('mobile-app');
+    const visibleProbes = mobile ? [selected] : PROBES;
+    const probeIndex = PROBES.indexOf(selected);
     startEl.innerHTML = `<div class="start">
       <h1 aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt=""><span>Lens</span></h1>
       <p class="lede">${escapeHtml(t(edu ? LEDE_SIMPLE : LEDE))}</p>
@@ -243,7 +246,7 @@ export function createMission(ctx) {
       <div class="guide-row" id="guide"${edu ? '' : ' hidden'}><div class="edu-char mood-happy" aria-hidden="true">${CHARACTER_MARKUP}</div>
         <p class="guide-bubble" role="status">${escapeHtml(t('Hi! I\'m Lumi, and I\'ll be your mission guide. Pick a lander and press Validate to go to the Moon!'))}</p></div>
       <div class="probe-grid" data-model-error="${escapeHtml(t('Model unavailable. Select another probe or continue.'))}">
-        ${PROBES.map(p => {
+        ${visibleProbes.map(p => {
           return `<section class="probe-choice" data-probe-card="${p.id}" data-selected="${p.id === selected.id}">
             <div class="probe-viewport">
               <canvas data-model="${p.id}" aria-label="${escapeHtml(t(p.name))}" aria-description="${escapeHtml(t('Drag to rotate · scroll to zoom'))}"></canvas>
@@ -256,6 +259,11 @@ export function createMission(ctx) {
           </section>`;
         }).join('')}
       </div>
+      ${mobile ? `<div class="mobile-probe-carousel" aria-label="${escapeHtml(t('Choose your probe'))}">
+        <button type="button" data-probe-step="-1" aria-label="${escapeHtml(t('Previous probe'))}">‹</button>
+        <span aria-live="polite">${probeIndex + 1} / ${PROBES.length}</span>
+        <button type="button" data-probe-step="1" aria-label="${escapeHtml(t('Next probe'))}">›</button>
+      </div>` : ''}
       <div class="start-actions"><button class="btn-primary" id="validate">${escapeHtml(t(edu ? 'Start the mission' : 'Validate'))}<span aria-hidden="true">→</span></button></div></div>`;
     disposePreview = mountProbePreviews(startEl.querySelector('.probe-grid'));
   }
@@ -997,6 +1005,14 @@ export function createMission(ctx) {
   }
 
   startEl.addEventListener('click', (event) => {
+    const step = event.target.closest('[data-probe-step]');
+    if (step) {
+      const index = (PROBES.indexOf(probe()) + Number(step.dataset.probeStep) + PROBES.length) % PROBES.length;
+      local.probe = PROBES[index].id; local.picked = null; local.open = null; local.compared = defaultCompared();
+      ctx.onProbePick?.(local.probe);
+      renderStart();
+      return;
+    }
     const card = event.target.closest('[data-probe]');
     if (card) {
       local.probe = card.dataset.probe; local.picked = null; local.open = null;

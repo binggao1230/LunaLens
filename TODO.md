@@ -1,6 +1,7 @@
 # LunaLens construction map
 
-- [x] Add the mobile-first companion at `site/mobile/`: place and UTC day pickers, hourly Sun/Earth/overlap readout, timeline and EN/FR/ZH copy, linked from the main header.
+- [x] Add the initial mobile companion at `site/mobile/` with local-data day exploration and EN/FR/ZH support.
+- [ ] Extend the mobile companion with the main site's Education journey: a probe carousel, compact Mission visualizer, accessible guide and mobile-specific interactions. Keep the Expert workflow for a later slice.
 
 - [x] Keep the top bar full width and scroll page content below it, preserving the transparent start-page header.
 - [x] Anchor the Explore timeline to the viewport bottom and keep the scrollable content above it.
