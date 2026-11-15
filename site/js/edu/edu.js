@@ -73,6 +73,8 @@ export function createEducation(ctx) {
   function activate() {
     st.active = true;
     document.body.classList.add('edu-on');
+    // Education starts on the Mission page: the start page (probe picker) is skipped.
+    if (ctx.view() === 'start') ctx.showView('mission');
     if (ctx.view() === 'mission') startTour(); else render();
   }
   function deactivate() {
@@ -322,7 +324,11 @@ export function createEducation(ctx) {
   });
   root.addEventListener('input', (event) => { if (event.target.id === 'edu-name') { st.name = event.target.value; st.key = ''; const el = root.querySelector('.edu-badge span'); if (el) el.textContent = ui('final.awarded', { name: st.name.trim() || ui('final.namePlaceholder') }); } });
 
-  load(ctx.language()).then((story) => { st.story = story; if (st.active && st.step === 0 && ctx.view() === 'mission') startTour(); else render(); });
+  load(ctx.language()).then((story) => {
+    st.story = story;
+    if (st.active && ctx.view() === 'start') ctx.showView('mission'); // the probe picker is skipped in Education mode
+    if (st.active && st.step === 0 && ctx.view() === 'mission') startTour(); else render();
+  });
 
   return {
     get active() { return st.active; },
