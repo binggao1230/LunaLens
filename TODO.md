@@ -40,6 +40,7 @@ Map → Atlas → Map. One shared preview time, one saved A/B/C set, no second A
 
 - [x] Keep the top bar full width and scroll page content below it, preserving the transparent start-page header.
 - [x] Anchor the Explore timeline to the viewport bottom and keep the scrollable content above it.
+- [x] Expert Windows: export hourly A/B touchdown comparisons as CSV, including the displayed metrics, conditions and aligned hourly Sun/Earth visibility data.
 
 Implement the Expert planning workflow described in [Background](doc/Background.md#expert-planning-scenarios).
 The finish line is a runnable Explore screen where a newcomer can choose any supported

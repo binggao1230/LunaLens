@@ -194,6 +194,61 @@ export function createExpert(ctx) {
       <span class="ex-tl-scale">${escapeHtml(t('elapsed hours'))} 0 → ${h}</span></figure>`;
   }
 
+  function csvCell(value) {
+    const text = String(value ?? '');
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+
+  function comparisonCsv(a, b) {
+    const headers = ['record_type', 'elapsed_hour', 'metric', 'unit', 'A_value', 'B_value', 'B_minus_A',
+      'A_utc', 'B_utc', 'A_site', 'B_site', 'A_sun_visible', 'B_sun_visible',
+      'A_earth_above_margin', 'B_earth_above_margin', 'A_sun_elevation_deg', 'B_sun_elevation_deg',
+      'A_earth_elevation_deg', 'B_earth_elevation_deg', 'earth_margin_deg', 'stay_hours',
+      'required_continuous_sun_hours', 'earth_at_touchdown_required'];
+    const rows = [headers];
+    const put = (values) => rows.push(headers.map((key) => csvCell(values[key] ?? '')).join(','));
+    const summary = [
+      [t('Sun+Earth overlap'), a.st.bothH, b.st.bothH],
+      [t('Sunlight in the stay'), a.st.sunH, b.st.sunH],
+      [t('Earth link in the stay'), a.st.earthH, b.st.earthH],
+      [t('Continuous sun from touchdown'), a.st.sunFromTouchdownH, b.st.sunFromTouchdownH],
+      [t('Longest darkness'), a.st.longestDarkH, b.st.longestDarkH],
+      [t('Longest no-Earth gap'), a.st.longestNoEarthH, b.st.longestNoEarthH],
+    ];
+    for (const [metric, av, bv] of summary) put({ record_type: 'summary', metric, unit: 'h', A_value: av, B_value: bv, B_minus_A: bv - av });
+    const conditions = a.conditions;
+    const n = Math.min(conditions.stayH, a.site.series.n - a.index, b.site.series.n - b.index);
+    for (let elapsed = 0; elapsed < n; elapsed++) {
+      const ai = a.index + elapsed, bi = b.index + elapsed;
+      const as = a.site.series, bs = b.site.series;
+      put({
+        record_type: 'hourly', elapsed_hour: elapsed,
+        A_utc: new Date(a.pin.ms + elapsed * HOUR_MS).toISOString(),
+        B_utc: new Date(b.pin.ms + elapsed * HOUR_MS).toISOString(),
+        A_site: t(a.site.name), B_site: t(b.site.name),
+        A_sun_visible: as.sunVis[ai] === 1, B_sun_visible: bs.sunVis[bi] === 1,
+        A_earth_above_margin: as.earthClr[ai] > conditions.marginDeg,
+        B_earth_above_margin: bs.earthClr[bi] > conditions.marginDeg,
+        A_sun_elevation_deg: as.sunEl[ai].toFixed(4), B_sun_elevation_deg: bs.sunEl[bi].toFixed(4),
+        A_earth_elevation_deg: as.earthEl[ai].toFixed(4), B_earth_elevation_deg: bs.earthEl[bi].toFixed(4),
+        earth_margin_deg: conditions.marginDeg, stay_hours: conditions.stayH,
+        required_continuous_sun_hours: conditions.requiredSunH,
+        earth_at_touchdown_required: conditions.requireEarthAtTouchdown,
+      });
+    }
+    return `\uFEFF${rows.join('\r\n')}`;
+  }
+
+  function exportComparison(a, b) {
+    const blob = new Blob([comparisonCsv(a, b)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `lunalens-comparison-${isoDate(a.pin.ms)}-vs-${isoDate(b.pin.ms)}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
   function stayCompare(a, b) {
     const rows = [
       [t('Sun+Earth overlap'), a.st.bothH, b.st.bothH, t('h')],
@@ -217,6 +272,7 @@ export function createExpert(ctx) {
       <table class="ex-table"><thead><tr><th></th><th>A · ${escapeHtml(t(a.site.name))}<br><span class="sub">${escapeHtml(fmtDateTime(a.pin.ms))}</span></th>
       <th>B · ${escapeHtml(t(b.site.name))}<br><span class="sub">${escapeHtml(fmtDateTime(b.pin.ms))}</span></th><th>${escapeHtml(t('B − A'))}</th></tr></thead>
       <tbody>${rows.map(([name, x, y, unit]) => `<tr><th>${escapeHtml(name)}</th><td>${num(x)} ${unit}</td><td>${num(y)} ${unit}</td><td class="${y - x < 0 ? 'neg' : 'pos'}">${signed(y - x, ` ${unit}`)}</td></tr>`).join('')}</tbody></table>
+      <div class="ex-compare-actions"><button type="button" class="ex-export" data-act="export-csv">${escapeHtml(t('Export hourly comparison CSV'))}</button></div>
       <div class="ex-tls">${timeline(a.site, a.index, a.conditions, `A · ${t(a.site.name)} · ${fmtDateTime(a.pin.ms)}`)}${timeline(b.site, b.index, b.conditions, `B · ${t(b.site.name)} · ${fmtDateTime(b.pin.ms)}`)}</div>`;
   }
 
@@ -352,7 +408,12 @@ export function createExpert(ctx) {
       if (!act) return;
       const a = act.dataset.act;
       if (ui.searching && ['pinA', 'pinB', 'open', 'choose'].includes(a)) return;
-      if (a === 'pinA') pin('A', act);
+      if (a === 'export-csv') {
+        const { A, B } = ui.pins;
+        const left = A && pinData(A), right = B && pinData(B);
+        if (left && right) exportComparison(left, right);
+      }
+      else if (a === 'pinA') pin('A', act);
       else if (a === 'pinB') pin('B', act);
       else if (a === 'clearA') { ui.pins.A = null; renderCompare(); }
       else if (a === 'clearB') { ui.pins.B = null; renderCompare(); }
