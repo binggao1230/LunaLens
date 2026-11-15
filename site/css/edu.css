@@ -277,7 +277,8 @@ body[data-view=start] .appbar{background:transparent;border-bottom-color:transpa
   .appbar #mode-toggle{order:3;flex:1 0 100%}
   .appbar #mode-toggle button{flex:1;justify-content:center}
   .appbar .tabs,.appbar .side{display:none}
-/* Story intro: every line before "pick a site" fills the page, with the guide above a large centred card. */
+}
+/* Story intro: the first intro line fills the page, with the guide above a large centred card. */
 .edu-panel.full{inset:0;width:auto;max-height:none;z-index:70;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px 16px;overflow:auto;pointer-events:auto;background:rgba(5,4,10,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .edu-panel.full .edu-char{position:static;width:150px;height:150px;flex:none}
 body.edu-on .edu-panel.full .edu-bubble{width:min(680px,100%);max-height:none;overflow:visible;border-radius:22px;padding:26px 30px;text-align:center}
