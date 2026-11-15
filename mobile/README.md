@@ -13,21 +13,42 @@ npm run dev -- --host 0.0.0.0
 
 The Vite development server listens on all network interfaces so a phone on the same local network can open the preview. The first prototype is in `src/views/HomePage.vue`.
 
-Create a production web build with:
+Create a production web build and synchronize it into the generated native projects with:
 
 ```sh
 npm run build
-```
-
-Add native platforms after the web build is ready:
-
-```sh
-npx cap add android
-npx cap add ios
 npx cap sync
 ```
 
-Android builds require Android Studio. Local iOS builds require macOS and Xcode. Native projects are generated from the app configuration and should be checked in when created; never commit signing keys or release binaries.
+The Android and iOS projects are already generated in `android/` and `ios/`. Open them with:
+
+```sh
+npx cap open android
+npx cap open ios
+```
+
+Android builds require Android Studio and an installed Android SDK. Local iOS builds require macOS and Xcode. Keep the generated native projects checked in; never commit signing keys, private provisioning profiles, or release binaries. See [`../MOBILE_RELEASE_PLAN.md`](../MOBILE_RELEASE_PLAN.md) for device review and future store publication steps.
+
+### Build Android test packages
+
+From the repository root, rebuild the web assets and synchronize them first:
+
+```sh
+cd mobile
+npm run build
+npx cap sync
+cd android
+./gradlew assembleDebug bundleRelease
+```
+
+If the terminal uses an incompatible Java version on macOS, select Android Studio's bundled JDK before running Gradle:
+
+```sh
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+```
+
+The debug APK is written to `mobile/android/app/build/outputs/apk/debug/app-debug.apk` and can be installed for local testing. Android automatically signs this debug APK with the debug key so devices can install it; this is not a store signing key. The release AAB is written to `mobile/android/app/build/outputs/bundle/release/app-release.aab` and this build is unsigned. These build outputs are ignored by Git. For a store upload, configure an owner-controlled upload key outside the repository and rebuild the AAB.
 
 ## Current prototype boundary
 

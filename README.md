@@ -76,6 +76,7 @@ section above do that by hand.
 
 1. **`TODO.md`** is what is left to do, measured against the challenge text in `doc/`.
 2. Read `CONTRIBUTING.md` once: branches and pull requests.
+3. **`MOBILE_RELEASE_PLAN.md`** explains web/mobile ownership, native builds, device review, and future store release preparation.
 
 If you work with an AI agent, point it at `AGENTS.md` too.
 

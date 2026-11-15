@@ -77,6 +77,8 @@ alternative dates at the same site". The second half is what the product cannot 
   in plain language with a clear timeline and a small number of readable results.
 - Add a simple offline daylight globe to the mobile lesson, with UTC hour playback and a date scrubber across
   the data period, using the shared ephemeris and Moon texture.
+- Review the generated Capacitor Android and iOS projects, LunaLens app icons and launch screens on real devices.
+- Maintain `MOBILE_RELEASE_PLAN.md` as the checklist for web, Android, iOS development, release records, and future store publication.
 - Guide a simple comparison between a familiar landed site and a south-pole site, prompting learners to change
   either the location or date and observe what changes.
 - Reuse the website's calculation engine and data. Keep sources and accuracy limits visible, and link to the full

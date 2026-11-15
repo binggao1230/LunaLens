@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LunaLens Learn</string>
+    <string name="title_activity_main">LunaLens Learn</string>
+    <string name="package_name">org.lunalens.learn</string>
+    <string name="custom_url_scheme">org.lunalens.learn</string>
+</resources>
