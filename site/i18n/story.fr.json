@@ -80,7 +80,7 @@
       "intro": "Des humains et des robots se sont déjà posés sur la Lune ! Touche un drapeau pour découvrir leur histoire."
     },
     "site": {
-      "pick": "Choisis maintenant un site dans la liste ou sur la carte. Les points verts voient la Terre, les ambrés ne voient que le Soleil, les gris sont dans l'ombre.",
+      "pick": "C'est l'heure de ta première mission ! Nous voulons nous poser sur la Lune le 16/11/2026. Choisis un site d'atterrissage dans la liste ou clique dessus sur la carte.",
       "good": "Excellent choix ! {site} reçoit le Soleil pour les panneaux et voit la Terre pour nous parler. Cet atterrisseur va vivre.",
       "noLink": "{site} reçoit le Soleil, mais la Terre est cachée par le relief. L'atterrisseur aurait de l'énergie, mais personne ne l'entendrait. Essaie un autre site.",
       "noSun": "{site} voit la Terre, mais le Soleil ne l'atteint pas. Sans énergie, l'atterrisseur se tairait. Essaie un autre site.",
