@@ -41,4 +41,7 @@ jobs:
           command: deploy
 
       - name: Preflight the deployed site
-        run: node site/tools/preflight.mjs
+        run: |
+          # Workers deployments can take a few seconds to replace the cached edge copy.
+          sleep 12
+          node site/tools/preflight.mjs
