@@ -41,6 +41,10 @@
       "night": "Nuit la plus longue",
       "days": "{n} jours",
       "underDay": "moins d'un jour",
+      "nextSteps": [
+        "Maintenant que tu connais les bases, essaie de trouver le moment parfait pour lancer une sonde vers d'autres cratères.",
+        "Ou passe au mode expert pour voir encore plus d'informations."
+      ],
       "learnedTitle": "Ce que tu as appris",
       "learned": [
         "Un atterrisseur a besoin du Soleil et de voir la Terre.",

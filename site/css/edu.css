@@ -493,3 +493,7 @@ body.edu-on :disabled,body.edu-on [aria-disabled=true]{cursor:not-allowed!import
 /* While the probe flies, the story bubble moves above the flight caption (bottom left) so both can be read. */
 body.flight-on .edu-panel:not(.full){top:120px;bottom:auto;left:24px;right:auto;transform:none;width:min(420px,calc(100vw - 48px))}
 @media (max-width:760px){body.flight-on .edu-panel:not(.full){top:110px;left:12px;right:12px;transform:none;width:auto;max-height:45vh}}
+
+/* Mission complete card: the two suggestions for what to do next. */
+.edu-next-steps{margin:14px 0 4px;font-size:13px;line-height:1.5;color:#c9d6e6}
+.edu-next-steps p{margin:0 0 6px}

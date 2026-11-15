@@ -240,6 +240,7 @@ export function createEducation(ctx) {
         <div><b>${escapeHtml(ui('final.badge'))}</b><span>${escapeHtml(ui('final.awarded', { name: st.name.trim() || ui('final.namePlaceholder') }))}</span></div>
       </div>
       <label class="edu-name">${escapeHtml(ui('final.namePrompt'))}<input type="text" id="edu-name" maxlength="40" value="${escapeHtml(st.name)}" placeholder="${escapeHtml(ui('final.namePlaceholder'))}" autocomplete="given-name"></label>
+      <div class="edu-next-steps">${(get('ui.final.nextSteps') ?? []).map((item) => `<p>${escapeHtml(item)}</p>`).join('')}</div>
       <p class="edu-note">${escapeHtml(ui('final.note'))}</p>
       <div class="edu-actions"><button type="button" class="btn-primary" data-act="again">${escapeHtml(ui('playAgain'))}</button><button type="button" class="btn-ghost" data-act="expert">${escapeHtml(ui('expert'))}</button></div>
     </section></div>`;
