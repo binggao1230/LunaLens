@@ -10,6 +10,7 @@
     "skip": "Skip story",
     "replay": "Replay story",
     "continue": "Continue",
+    "sendProbe": "Send probe",
     "whatHappened": "What happened?",
     "fixIt": "Let's fix it",
     "complete": "Complete mission",
@@ -80,7 +81,7 @@
       ]
     },
     "history": {
-      "intro": ["So many probes have landed on the Moon before, and some carried people too!", "Switch on Historic sites to see where people landed before.", "Click here to see all the missions that went to the Moon before.", "You can explore the different sites. Tap any flag to read its story.", "Look at IM-2 Athena. It missed its target by only about 250 meters.", "It came down inside a cold, dark crater, lying on its side. With no sunlight on its panels, it could not recharge."]
+      "intro": ["Just like your mission, so many probes have landed on the Moon before, and some carried people too!", "Switch on Historic sites to see where people landed before.", "Click here to see all the missions that went to the Moon before.", "You can explore the different sites. Tap any flag to read its story.", "Look at IM-2 Athena. It missed its target by only about 250 meters.", "It came down inside a cold, dark crater, lying on its side. With no sunlight on its panels, it could not recharge."]
     },
     "site": {
       "pick": "It's time for your first mission! We want to land on the Moon on 16/11/2026. Pick a landing site in the list or click on it on the map.",

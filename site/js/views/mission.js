@@ -53,6 +53,7 @@ const MESSAGES = {
   'Sunlit, no Earth link': ['Éclairé, sans liaison Terre', '有日照，无地球通信'],
   'In shadow': ['À l’ombre', '处于阴影'],
   'Earth link only': ['Liaison Terre seule', '仅地球通信'],
+  'Landed · back to the Mission page': ['Atterri · retour à la page Mission', '已着陆 · 正在返回任务页面'],
   'Sunlit only': ['Éclairé seulement', '仅有日照'],
   'Sun and Earth in view': ['Soleil et Terre visibles', '太阳与地球同时可见'],
   'Sunlit as well': ['Aussi éclairé', '同时有日照'],
@@ -1055,7 +1056,8 @@ export function createMission(ctx) {
       probe: selected.id, site: { lat: site.lat, lon: site.lon }, reduced,
       startAt: reduced ? 0 : deadline,
       onComplete: () => {
-        phase.textContent = t('Landed · exit when you are ready');
+        phase.textContent = t('Landed · back to the Mission page');
+        setTimeout(() => { if (!done) finish(); }, 2500); // the story takes over on the Mission page
       },
       onError: () => {
         phase.textContent = t('Model unavailable. Select another probe or continue.');

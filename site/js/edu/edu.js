@@ -144,13 +144,13 @@ export function createEducation(ctx) {
       if (st.sub < introLines().length - 1) { st.sub++; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); } else enterSite();
     } else if (st.step === STEP.site) {
       if (!st.revealed) { if (st.chosen && st.picked) reveal(); else { st.noPick = true; st.focus = true; st.key = ''; render(); } }
-      else if (st.revealed === 'good') enterHistory();
+      else if (st.revealed === 'good') enterLaunch(); // Send probe: the flight plays, then the story comes back to the Mission page
       else { st.revealed = null; st.focus = true; say('site.pick', {}, 'happy'); render(); }
     } else if (st.step === STEP.history) {
       if (st.sub < historyLines().length - 1) moveHistory(st.sub + 1);
-      else { ctx.mission.closeFlag?.(); enterLaunch(); }
+      else { ctx.mission.closeFlag?.(); enterAnomaly(); }
     }
-    else if (st.step === STEP.launch && st.landed) enterAnomaly();
+    else if (st.step === STEP.launch && st.landed) enterHistory(0); // after the landing: the history bubbles, then the anomaly
     else if (st.step === STEP.anomaly) {
       if (st.anomaly.kind !== 'contact' && st.sub === 0) { st.sub = 1; st.focus = true; say(`anomaly.${st.anomaly.kind}`, { site: st.picked.short }, 'worried'); render(); }
       else enterFix();
@@ -281,7 +281,7 @@ export function createEducation(ctx) {
     const btn = (act, label, enabled) => `<button type="button" class="${act === 'next' ? 'edu-next' : 'btn-ghost'}" data-act="${act}" ${enabled ? '' : 'disabled aria-disabled="true"'}>${act === 'next' && !enabled ? LOCK : ''}${escapeHtml(label)}</button>`;
     const canBack = (st.step === STEP.objective && st.sub > 0) || st.step === STEP.history || st.step === STEP.site;
     let nextLabel = ui('next'), canNext = true;
-    if (st.step === STEP.site) { nextLabel = !st.revealed ? ui('confirm') : st.revealed === 'good' ? ui('continue') : ui('tryAgain'); canNext = Boolean(st.picked); }
+    if (st.step === STEP.site) { nextLabel = !st.revealed ? ui('confirm') : st.revealed === 'good' ? ui('sendProbe') : ui('tryAgain'); canNext = Boolean(st.picked); }
     else if (st.step === STEP.launch) canNext = Boolean(st.landed); // after landing: Next goes on to the anomaly
     else if (st.step === STEP.anomaly) nextLabel = st.anomaly.kind !== 'contact' && st.sub === 0 ? ui('whatHappened') : ui('fixIt');
     else if (st.step === STEP.fix) { nextLabel = ui('complete'); canNext = canComplete(); }
