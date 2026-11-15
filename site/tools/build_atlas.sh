@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-# Rebuild site/atlas from the upstream open-source Lunar Landing Site Navigator.
-# The only local change is the parent bridge in bridge.patch; site/atlas/data is kept.
+# Rebuild site/atlas from the vendored upstream source in site/atlas/source/web.
+# The only source change is the parent bridge (bridge.patch); site/atlas/data is reused.
 set -euo pipefail
-UPSTREAM=https://github.com/daniel27-space/lunar-navigator.git
-COMMIT=3866a6f2ef2c6009489b5b94bd927ecbcddb8276
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+SOURCE="$ROOT/site/atlas/source/web"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
-git clone --quiet "$UPSTREAM" "$WORK/atlas"
-git -C "$WORK/atlas" checkout --quiet "$COMMIT"
-git -C "$WORK/atlas" apply "$ROOT/site/atlas/bridge.patch"
-(cd "$WORK/atlas/web" && npm install --no-audit --no-fund && npm run build)
-cp "$WORK/atlas/web/dist/index.html" "$ROOT/site/atlas/index.html"
-cp -a "$WORK/atlas/web/dist/assets/." "$ROOT/site/atlas/assets/"
-cp -a "$WORK/atlas/web/dist/welcome" "$ROOT/site/atlas/"
-cp "$WORK/atlas/web/dist/favicon.svg" "$WORK/atlas/web/dist/icons.svg" "$ROOT/site/atlas/"
+cp -a "$SOURCE/." "$WORK/"
+mkdir -p "$WORK/public"
+rm -rf "$WORK/public/data"
+ln -s "$ROOT/site/atlas/data" "$WORK/public/data"
+(cd "$WORK" && npm ci --no-audit --no-fund && npm run build)
+cp "$WORK/dist/index.html" "$ROOT/site/atlas/index.html"
+cp -a "$WORK/dist/assets/." "$ROOT/site/atlas/assets/"
+cp -a "$WORK/dist/welcome" "$ROOT/site/atlas/"
+cp -a "$WORK/dist/draco/." "$ROOT/site/atlas/draco/"
+cp "$WORK/dist/favicon.svg" "$WORK/dist/icons.svg" "$ROOT/site/atlas/"
