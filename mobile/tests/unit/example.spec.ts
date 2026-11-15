@@ -4,8 +4,8 @@ import { describe, expect, test } from 'vitest';
 import HomePage from '@/views/HomePage.vue';
 
 describe('HomePage.vue', () => {
-  test('renders home vue', () => {
+  test('renders the LunaLens welcome', () => {
     const wrapper = mount(HomePage);
-    expect(wrapper.text()).toMatch('Ready to create an app?');
+    expect(wrapper.text()).toContain('Explore the Moon');
   });
 });
