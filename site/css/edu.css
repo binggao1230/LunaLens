@@ -149,16 +149,25 @@ body.edu-on[data-view=mission] main{padding-bottom:260px}
   .guide-row{gap:8px;margin-bottom:10px}
   .guide-row .edu-char{width:56px;height:56px}
   .guide-bubble{font-size:13px;padding:10px 12px}
-  body.edu-on[data-view=mission] main{padding-bottom:52vh}
-  .edu-panel{left:0;right:0;bottom:54px;width:auto;grid-template-columns:1fr;gap:0;max-height:50vh}
+  body.edu-on[data-view=mission] main{padding-bottom:calc(180px + env(safe-area-inset-bottom, 0px))}
+  .edu-panel{left:0;right:0;bottom:calc(var(--bottom-nav-h,0px) + env(safe-area-inset-bottom, 0px));width:auto;grid-template-columns:1fr;gap:0;max-height:50vh}
   .edu-panel .edu-char{position:absolute;left:12px;bottom:calc(100% - 14px);width:64px;height:64px;z-index:1}
   .edu-panel{padding-top:0}
   .edu-bubble{border-radius:18px 18px 0 0;padding:14px 16px 14px;max-height:50vh;overflow:auto;position:relative;padding-top:18px}
   .edu-top{padding-left:68px;min-height:28px}
   .edu-levers{grid-template-columns:1fr}
-  .edu-mini{left:12px;bottom:66px}
+  .edu-mini{left:12px;bottom:calc(16px + var(--bottom-nav-h,0px) + env(safe-area-inset-bottom, 0px))}
   .edu-final{padding:18px 16px}
   .edu-final h2{font-size:28px}
+}
+@media (max-width:480px){
+  .edu-panel .edu-char{width:52px;height:52px;bottom:calc(100% - 10px)}
+  .edu-top{padding-left:56px;min-height:26px}
+  .edu-bubble{padding:12px 14px 14px;font-size:13.5px}
+  .edu-actions{gap:6px;margin-top:10px}
+  .edu-actions .btn-primary{min-height:36px;padding:6px 14px;font-size:12px}
+  .edu-actions .btn-ghost{min-height:36px;padding:6px 12px;font-size:12px}
+  .edu-next{min-height:36px;padding:6px 14px;font-size:10.5px}
 }
 
 /* ---- Education mode look (after the team's mockup): deep navy, hairline dividers, thin tracked labels, blue pills ---- */
@@ -214,6 +223,13 @@ body.edu-on[data-view=mission] .lanes{border-top:1px solid var(--border);border-
 body.edu-on[data-view=mission] .lane-axis,body.edu-on[data-view=mission] .lane-legend{font-family:inherit;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 body.edu-on[data-view=mission] .lane-site .nm{font-size:16px;font-weight:400}
 body.edu-on[data-view=mission] .lane-site svg{height:40px}
+@media (max-width:520px){
+  body.edu-on[data-view=mission] .lanes{padding:14px 4px 8px;gap:10px}
+  body.edu-on[data-view=mission] .lane-site{grid-template-columns:1fr;gap:4px}
+  body.edu-on[data-view=mission] .lane-site .nm{font-size:13.5px}
+  body.edu-on[data-view=mission] .lane-site svg{height:44px}
+  body.edu-on[data-view=mission] .lane-axis{grid-template-columns:1fr;gap:3px}
+}
 /* story panel */
 body.edu-on .edu-bubble{background:rgba(11,17,28,.96);border-color:rgba(90,167,240,.4);box-shadow:0 0 30px rgba(90,167,240,.15),0 18px 50px -20px rgba(0,0,0,.8)}
 body.edu-on .edu-step{letter-spacing:.18em}
@@ -232,13 +248,20 @@ body.edu-on .edu-final .btn-primary{background:#5aa7f0;color:#07111c;border-radi
   body.edu-on[data-view=mission] .side-panel{padding-left:0;padding-top:18px}
 }
 @media (max-width:760px){
-  body.edu-on[data-view=mission] main{padding:0 14px 260px}
-  body.edu-on[data-view=mission] .side-panel{height:min(54svh,460px);min-height:320px;margin-bottom:0}
-  body.edu-on[data-view=mission] #m-send{position:sticky;bottom:64px;z-index:56}
-  body.edu-on[data-view=mission] .datebar{padding:14px 4px 16px}
+  body.edu-on[data-view=mission] main{padding:0 12px 220px}
+  body.edu-on[data-view=mission] .side-panel{height:auto;max-height:48vh;min-height:260px;margin-bottom:0}
+  body.edu-on[data-view=mission] #m-send{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom, 0px));z-index:56;width:100%;min-height:48px}
+  body.edu-on[data-view=mission] .datebar{padding:12px 4px 14px}
   body.edu-on[data-view=mission] .stage h2{font-size:20px}
-  body.edu-on[data-view=mission] .side-head h3{font-size:24px}
+  body.edu-on[data-view=mission] .side-head h3{font-size:22px}
   body.edu-on[data-view=mission] .stage .hint{font-size:9px}
+}
+@media (max-width:480px){
+  body.edu-on[data-view=mission] main{padding:0 8px 200px}
+  body.edu-on[data-view=mission] .side-head h3{font-size:18px}
+  body.edu-on[data-view=mission] .stage h2{font-size:17px}
+  body.edu-on[data-view=mission] .srow-top>button{padding:12px 8px;min-height:44px}
+  body.edu-on[data-view=mission] .srow .nm{font-size:14px}
 }
 
 /* ---- Education mode: historic landing-site flags, their cards and the off-map list ---- */
@@ -424,8 +447,8 @@ body.edu-on :disabled,body.edu-on [aria-disabled=true]{cursor:not-allowed!import
 .seg-pill button,.seg-pill button[aria-pressed]{width:28px;min-height:0;height:26px;padding:0;justify-content:center;border-radius:7px}
 .seg-pill svg{width:16px;height:16px}
 @media (max-width:760px){
-  :root{--bar-h:56px}
-  .appbar{flex-wrap:nowrap}
+  :root{--bar-h:calc(52px + env(safe-area-inset-top, 0px))}
+  .appbar{flex-wrap:nowrap;height:var(--bar-h);padding-top:env(safe-area-inset-top, 0px);padding-left:max(10px,env(safe-area-inset-left, 0px));padding-right:max(10px,env(safe-area-inset-right, 0px));gap:8px}
   .appbar .brand{order:1}
   .appbar #mode-toggle{order:2;flex:none;margin-left:auto}
   .appbar .lang-menu{order:3}
@@ -447,3 +470,7 @@ body.edu-on :disabled,body.edu-on [aria-disabled=true]{cursor:not-allowed!import
 /* The story points at the whole Moon view while it explains the south pole in 3D or 2D: the same pulsing green glow. */
 #m-stage.edu-point{box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 26px 6px rgba(67,217,138,.5);animation:edu-time-pulse 1.4s ease-in-out infinite}
 @media (prefers-reduced-motion: reduce){#m-stage.edu-point{animation:none}}
+@media (max-width:400px){
+  .appbar .brand span{display:none}
+  .appbar .brand img{margin:0}
+}

@@ -822,7 +822,23 @@ function bind() {
   }, { rootMargin: '120px' }).observe($('scene-viewport'));
 
   let lastW = 0;
-  new ResizeObserver(() => { const w = document.documentElement.clientWidth; if (w !== lastW && sims.length) { lastW = w; renderAll(); } }).observe(document.documentElement);
+  function updateScreenMode() {
+    const w = window.innerWidth || document.documentElement.clientWidth;
+    const isMobile = w <= 768;
+    const isNarrow = w <= 480;
+    document.documentElement.classList.toggle('screen-mobile', isMobile);
+    document.documentElement.classList.toggle('screen-narrow', isNarrow);
+    document.body.dataset.screen = isNarrow ? 'narrow' : (isMobile ? 'mobile' : 'desktop');
+  }
+  updateScreenMode();
+  window.addEventListener('resize', updateScreenMode, { passive: true });
+  window.addEventListener('orientationchange', updateScreenMode, { passive: true });
+
+  new ResizeObserver(() => {
+    const w = document.documentElement.clientWidth;
+    updateScreenMode();
+    if (w !== lastW && sims.length) { lastW = w; renderAll(); }
+  }).observe(document.documentElement);
   const scrub = document.querySelector('.scrub');
   new ResizeObserver(() => {
     document.documentElement.style.setProperty('--scrub-h', `${scrub.getBoundingClientRect().height}px`);

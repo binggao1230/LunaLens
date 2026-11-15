@@ -8,6 +8,7 @@
 - [ ] Expert Map: render detailed, higher-contrast terrain from the existing 240 m DEM at the displayed resolution after zooming or panning; keep the screening grid and coordinates aligned.
 - [ ] Expert language switching: register static text using English keys so controls update immediately after an initial Chinese or French load.
 
+- [x] Mobile and small-screen responsiveness: adapt main web app content, element sizes, probe cards, and controls for narrow mobile screens (~390 px), add automatic screen size mode detection, and drop redundant standalone mobile subpage link.
 - [ ] Drop the Explore and Data tabs: Atlas gets an Explore entry button and Explore ends with a Data entry button.
 - [x] Ask for Expert or Education mode on the first screen; Expert mode drops the Mission page; Education mode shows the Mission page only (no Data, Atlas, Explore, South Pole or mobile link).
 - [x] Add the mobile-first companion at `site/mobile/`: place and UTC day pickers, hourly Sun/Earth/overlap readout, timeline and EN/FR/ZH copy, linked from the main header.
