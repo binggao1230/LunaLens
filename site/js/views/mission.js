@@ -376,7 +376,7 @@ export function createMission(ctx) {
       if (event.target.closest('.srow-chk')) return;
       const row = event.target.closest('[data-id]'); if (!row) return;
       const same = local.picked === row.dataset.id;
-      local.picked = row.dataset.id; if (isEducation()) local.compared.add(row.dataset.id); ctx.onSitePick?.(local.picked);
+      local.picked = row.dataset.id; if (isEducation()) eduCompare(row.dataset.id); ctx.onSitePick?.(local.picked);
       local.open = same && local.open === row.dataset.id ? null : row.dataset.id;
       refresh(true);
       focusSite();
@@ -564,12 +564,18 @@ export function createMission(ctx) {
     }
   }
 
+  /** Education: the first click starts from the three sites on the graph, then the clicked site is added. */
+  function eduCompare(id) {
+    if (!local.eduTouched) { local.compared = new Set(sites().map((s) => s.id)); local.eduTouched = true; }
+    local.compared.add(id);
+  }
   function laneSites() {
     const highlighted = ctx.eduHighlight?.()?.id ?? null; // Education mode always shows the site it is talking about
     // Education mode: the timeline shows the sites the user picked (compared) and the picked one.
-    // The three sites are graphed from the start, however the Mission page was opened (reload, mode switch, or Validate).
-    if (isEducation() && (!local.compared || local.compared.size === 0)) local.compared = defaultCompared();
-    if (isEducation()) { const picked = pickedSite()?.id; return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === picked || s.id === highlighted); }
+    if (isEducation()) {
+      const picked = pickedSite()?.id, base = local.eduTouched ? local.compared : new Set(sites().map((s) => s.id));
+      return orderedSites().filter((s) => base.has(s.id) || s.id === picked || s.id === highlighted);
+    }
     return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === highlighted);
   }
   function runsOf(test, site) {
@@ -917,7 +923,7 @@ export function createMission(ctx) {
       const moved = drag?.moved; drag = null;
       if (moved) return;
       const box = canvas.getBoundingClientRect(), hit = nearest(event.clientX - box.left, event.clientY - box.top);
-      if (hit) { local.picked = hit.site.id; if (isEducation()) local.compared.add(hit.site.id); ctx.onSitePick?.(local.picked); refresh(true); }
+      if (hit) { local.picked = hit.site.id; if (isEducation()) eduCompare(hit.site.id); ctx.onSitePick?.(local.picked); refresh(true); }
     });
     canvas.addEventListener('wheel', (event) => {
       event.preventDefault();
@@ -1075,7 +1081,7 @@ export function createMission(ctx) {
     ctx.onValidate?.();
     local.picked = orderedSites()[0]?.id ?? null;
     local.open = null;
-    local.hour = 0;
+    local.hour = 0; local.eduTouched = false;
     if (!local.compared || local.compared.size === 0) local.compared = defaultCompared();
     local.flat = (pickedSite()?.lat ?? 0) < -75 ? 'pole' : 'moon'; view2d.z = 1; view2d.x = 0; view2d.y = 0;
     ctx.go('mission');
