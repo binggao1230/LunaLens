@@ -413,7 +413,7 @@ export function createMission(ctx) {
     b3.textContent = t('3D'); b2.textContent = t('2D');
     b3.classList.toggle('on', local.mode === '3d'); b2.classList.toggle('on', local.mode === '2d');
     b3.disabled = view3dFailed;
-    $('m-hist').innerHTML = `<img src="assets/historic-flag.svg" alt=""><span class="hswitch-label">${escapeHtml(t('Historic sites'))}</span><span class="hswitch-track" aria-hidden="true"><span class="hswitch-knob"></span></span>`;
+    $('m-hist').innerHTML = `<span class="hswitch-label">${escapeHtml(t('Historic sites'))}</span><span class="hswitch-track" aria-hidden="true"><span class="hswitch-knob"></span></span>`;
     $('m-hist').title = t('Show historic landing sites');
     $('m-hist').setAttribute('aria-checked', String(local.historic));
     historic?.relabel();
@@ -541,6 +541,8 @@ export function createMission(ctx) {
 
   function laneSites() {
     const highlighted = ctx.eduHighlight?.()?.id ?? null; // Education mode always shows the site it is talking about
+    // Education mode does not compare: the timeline shows only the picked site.
+    if (isEducation()) { const picked = pickedSite()?.id; return orderedSites().filter((s) => s.id === picked || s.id === highlighted); }
     return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === highlighted);
   }
   function runsOf(test, site) {
@@ -607,7 +609,7 @@ export function createMission(ctx) {
   }
   function renderLanes(force) {
     const hl = ctx.eduHighlight?.() ?? null;
-    const key = [local.probe, local.picked, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(','), JSON.stringify(hl)].join('|');
+    const key = [local.probe, local.picked, getLanguage(), ctx.margin(), ctx.landing(), sites().length, Array.from(local.compared).sort().join(','), JSON.stringify(hl), isEducation()].join('|');
     const el = $('m-lanes');
     if (force || key !== local.laneKey) {
       local.laneKey = key;
@@ -680,6 +682,8 @@ export function createMission(ctx) {
       getFrame: () => lastFrame,
       setFailed: (value) => { view3dFailed = value; },
       onFrame: () => historic?.place(),
+      // Education mode: zoom out at most to 6 Moon radii, so the Moon stays the subject instead of the Earth-Moon system.
+      maxDistance: () => (isEducation() ? 6 : null),
     });
     view3dLoading = false;
     refresh(true);
