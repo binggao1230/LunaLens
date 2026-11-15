@@ -73,12 +73,44 @@ export function gridGeometry(cells = REGION.fineCells) {
   };
 }
 
-/** Interpolate a 0.5°-step skyline profile at an azimuth. */
+/** Interpolate a skyline profile (any uniform azimuth step) at an azimuth. */
 export function horizonAt(horizonDeg, azDeg) {
   const n = horizonDeg.length;
   const x = (((azDeg % 360) + 360) % 360) / (360 / n);
   const i0 = Math.floor(x) % n, i1 = (i0 + 1) % n, f = x - Math.floor(x);
   return horizonDeg[i0] * (1 - f) + horizonDeg[i1] * f;
+}
+
+export const POLE_CELL_KM = 24;
+
+/**
+ * Whole study area in square blocks. Cells whose centre is north of 85°S are dropped, so the
+ * boundary is a ragged circle; the block size is rounded so the square closes exactly.
+ */
+export function studyCellCenters(cellKm = POLE_CELL_KM) {
+  const halfKm = 2 * R_KM * Math.tan((90 + STUDY_LAT) * DEG / 2);
+  const n = Math.max(1, Math.ceil((2 * halfKm) / cellKm));
+  const step = (2 * halfKm) / n;
+  const out = [];
+  for (let row = 0; row < n; row++) {
+    for (let col = 0; col < n; col++) {
+      const xKm = -halfKm + (col + 0.5) * step;
+      const yKm = halfKm - (row + 0.5) * step;
+      const { lat, lon } = unproject(xKm, yKm);
+      if (lat <= STUDY_LAT) out.push({ row, col, xKm, yKm, lat, lon, cellKm: step });
+    }
+  }
+  return out;
+}
+
+export function poleGeometry(cellKm = POLE_CELL_KM) {
+  const cells = studyCellCenters(cellKm);
+  const halfKm = 2 * R_KM * Math.tan((90 + STUDY_LAT) * DEG / 2);
+  return {
+    boundsKm: { xMin: -halfKm, xMax: halfKm, yMin: -halfKm, yMax: halfKm },
+    cells: cells.length, cellKm: cells[0]?.cellKm ?? cellKm, demResM: DEM_RES_M,
+    corners: [unproject(-halfKm, halfKm), unproject(halfKm, halfKm), unproject(-halfKm, -halfKm), unproject(halfKm, -halfKm)],
+  };
 }
 
 /**

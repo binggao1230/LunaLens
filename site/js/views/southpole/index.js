@@ -4,7 +4,7 @@ import { t } from '../../i18n.js';
 import { escapeHtml, fmtLatLon, fmtDateTime, fmtTime, isoDate } from '../../format.js';
 import { createPolar3d } from '../polar3d/index.js';
 import { computeHorizon } from '../../engine/dem.js';
-import { project, unproject, STUDY_LAT, DEM_FOOTPRINT_LAT, REGION, cellCenters, gridGeometry, earthStats, classify, normalizeThresholds, DEFAULT_LIMITS, DEFAULT_TARGETS, DEFAULT_WEIGHTS, REASON_TEXT, R_KM } from '../../engine/grid.js';
+import { project, unproject, STUDY_LAT, DEM_FOOTPRINT_LAT, REGION, cellCenters, gridGeometry, studyCellCenters, poleGeometry, POLE_CELL_KM, earthStats, classify, normalizeThresholds, DEFAULT_LIMITS, DEFAULT_TARGETS, DEFAULT_WEIGHTS, REASON_TEXT, R_KM } from '../../engine/grid.js';
 import { STAY_CHOICES } from '../../engine/scenario.js';
 
 const HOUR = 36e5;
@@ -20,7 +20,7 @@ export function createSouthPole(ctx) {
   const ui = {
     built: false, mode: 'globe', selected: null, outside: null, notice: '',
     map: { scale: 8, cxKm: project(REGION.centerLat, REGION.centerLon).xKm, cyKm: project(REGION.centerLat, REGION.centerLon).yKm, dragging: null },
-    grid: { level: null, cells: [], token: 0, done: false, startedMs: 0, ms: 0 },
+    grid: { scope: 'pole', cells: [], token: 0, done: false, startedMs: 0, ms: 0 },
     cell: null, limits: { ...DEFAULT_LIMITS }, targets: { ...DEFAULT_TARGETS }, weights: { ...DEFAULT_WEIGHTS },
     base: null, baseDem: null, detail: null, detailKey: '', globe: null, globeFailed: false, loadNotice: '',
     mapApp: 'atlas', atlasRev: 0, atlasKey: '',
@@ -51,6 +51,10 @@ export function createSouthPole(ctx) {
             <div class="site-label" data-p3d="m-label" id="sp-label"></div>
             <div class="m-readout" data-p3d="m-readout" id="sp-readout"></div>
             <p class="pole-globe-hint">${escapeHtml(t('Drag the globe: the point follows the pointer. Scroll or pinch to zoom. Tap the Moon to open the map.'))}<br>${escapeHtml(t('Cyan line: 75°S terrain edge. Pink line: 85°S study boundary. Cyan dashed ring: Moon around Earth. Amber dashed ring: Earth around the Sun. Rings and distances are schematic.'))}</p>
+            <div class="pole-globe-zoom" role="group" aria-label="${escapeHtml(t('Globe zoom'))}">
+              <button type="button" id="sp-gzin" aria-label="${escapeHtml(t('Zoom in'))}">+</button>
+              <button type="button" id="sp-gzout" aria-label="${escapeHtml(t('Zoom out'))}">−</button>
+            </div>
           </div>
           <div class="pole-map-wrap" id="sp-map-wrap" hidden>
             <div class="pole-map-tabs seg" role="group" aria-label="${escapeHtml(t('Map source'))}">
@@ -82,6 +86,7 @@ export function createSouthPole(ctx) {
           <p class="pole-link" id="sp-link"></p>
           <h3>${escapeHtml(t('Pilot grid'))}</h3>
           <p class="sub" id="sp-geom"></p>
+          <label class="pole-label">${escapeHtml(t('Grid scope'))}<select id="sp-scope"><option value="pole">${escapeHtml(t('South pole · 24 km blocks'))}</option><option value="pilot">${escapeHtml(t('Shackleton pilot · 2 km cells'))}</option></select></label>
           <div class="pole-thresholds" id="sp-thresholds"></div>
           <div class="pole-grid-actions"><button type="button" class="btn-ghost btn-xs" id="sp-refine">${escapeHtml(t('Refine to 2 km cells'))}</button><button type="button" class="btn-ghost btn-xs" id="sp-restart">${escapeHtml(t('Restart grid'))}</button></div>
           <p class="pole-grid-actions"><button type="button" class="btn-ghost btn-xs" id="sp-probe">${escapeHtml(t('Test an unknown cell'))}</button></p>
@@ -94,7 +99,7 @@ export function createSouthPole(ctx) {
       </div>
       <p class="ex-note">${escapeHtml(t('Regional screening only. Cells are sampled at their centres on the 240 m LOLA raster; sub-cell terrain, landing hazards and radio performance are not modelled. Atlas long-term layers are not used in this native grid.'))}</p>
     </div>`;
-    for (const id of ['sp-open', 'sp-back', 'sp-reset', 'sp-notice', 'sp-globe', 'sp-map-wrap', 'sp-map', 'sp-zin', 'sp-zout', 'sp-center', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-stage-wrap', 'sp-touchdown', 'sp-stay', 'sp-margin', 'sp-probe', 'sp-atlas', 'sp-native', 'sp-atlas-note']) els[id] = document.getElementById(id);
+    for (const id of ['sp-open', 'sp-back', 'sp-reset', 'sp-notice', 'sp-globe', 'sp-map-wrap', 'sp-map', 'sp-zin', 'sp-zout', 'sp-center', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-stage-wrap', 'sp-touchdown', 'sp-stay', 'sp-margin', 'sp-probe', 'sp-atlas', 'sp-native', 'sp-atlas-note', 'sp-gzin', 'sp-gzout', 'sp-scope']) els[id] = document.getElementById(id);
     bind();
     ui.built = true;
   }
@@ -135,7 +140,7 @@ export function createSouthPole(ctx) {
       t, escapeHtml, fmtLatLon, unit, dot3, clamp, COLORS,
       getFrame: () => frameNow(),
       setFailed: (failed) => { ui.globeFailed = failed; if (failed) showMap(null, t('3D is not available on this device. The 2D map below stays usable.')); },
-      controlsMode: 'grab',
+      controlsMode: 'grab', maxPixelRatio: 1.5,
       studyLat: STUDY_LAT,
       onMoonTap: (point) => openFromGlobe(point),
       pulse: () => pulseState(),
@@ -263,6 +268,9 @@ export function createSouthPole(ctx) {
         g.beginPath(); g.setLineDash(dash); g.strokeStyle = color; g.lineWidth = 1.4; g.arc(cx, cy, r, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
       }
     } catch (error) { ui.loadNotice = t('Terrain data could not be loaded; the map cannot draw relief.'); }
+    const clipR = 2 * R_KM * Math.tan((90 + STUDY_LAT) * D2R / 2) * pxPerKm();
+    const [pcx, pcy] = screenOf(0, 0);
+    g.save(); g.beginPath(); g.arc(pcx, pcy, clipR, 0, Math.PI * 2); g.clip();
     // Grid cells
     for (const cell of ui.grid.cells) {
       const [x0, y0] = screenOf(cell.xKm - cell.cellKm / 2, cell.yKm + cell.cellKm / 2);
@@ -279,6 +287,7 @@ export function createSouthPole(ctx) {
         }
       }
     }
+    g.restore();
     // Markers
     for (const site of studySites()) {
       const p = project(site.lat, site.lon), [x, y] = screenOf(p.xKm, p.yKm);
@@ -373,10 +382,11 @@ export function createSouthPole(ctx) {
     drawMap();
   }
 
-  async function buildGrid(level = 'coarse') {
+  async function buildGrid(scope = ui.grid.scope ?? 'pole') {
     const token = ++ui.grid.token;
-    const n = level === 'fine' ? REGION.fineCells : REGION.coarseCells;
-    ui.grid = { level, cells: cellCenters(n).map((c) => ({ ...c, class: { status: 'pending' } })), token, done: false, startedMs: performance.now(), ms: 0, scenarioKey: scenarioKey() };
+    const cells = scope === 'pole' ? studyCellCenters(POLE_CELL_KM) : cellCenters(REGION.fineCells);
+    const azStep = scope === 'pole' ? 1 : 0.5;
+    ui.grid = { scope, cells: cells.map((c) => ({ ...c, class: { status: 'pending' } })), token, done: false, startedMs: performance.now(), ms: 0, scenarioKey: scenarioKey() };
     ui.cell = null;
     renderGrid();
     const dem = await ctx.dem();
@@ -385,11 +395,10 @@ export function createSouthPole(ctx) {
       if (idx >= ui.grid.cells.length) {
         ui.grid.done = true; ui.grid.ms = performance.now() - ui.grid.startedMs;
         renderGrid(); drawMap();
-        if (ui.grid.level === 'coarse' && ui.map.scale >= 18) setTimeout(() => { if (token === ui.grid.token) buildGrid('fine'); }, 50);
         return;
       }
       const c = ui.grid.cells[idx];
-      const key = `${n}:${c.row}:${c.col}`;
+      const key = `${scope}:${c.cellKm}:${c.row}:${c.col}`;
       let st = staticCache.get(key);
       if (!st) {
         const ground = dem.height(c.lat * D2R, c.lon * D2R);
@@ -403,7 +412,7 @@ export function createSouthPole(ctx) {
           renderProgress();
           setTimeout(() => {
             if (token !== ui.grid.token) return;
-            const h = computeHorizonLocal(dem, c.lat, c.lon);
+            const h = computeHorizonLocal(dem, c.lat, c.lon, azStep);
             st.horizon = h?.horizon ?? null; st.groundM = h?.groundM ?? ground; st.slopeDeg = h?.slopeDeg ?? r; st.pending = false;
             if (token === ui.grid.token) {
               ui.grid.cells[idx] = applyScenario({ ...c, static: st });
@@ -423,14 +432,18 @@ export function createSouthPole(ctx) {
   }
 
   // Import is static in the module; this keeps the call site short.
-  function computeHorizonLocal(dem, lat, lon) {
-    return computeHorizon(dem, lat, lon, { minRangeM: 480 });
+  function computeHorizonLocal(dem, lat, lon, azStepDeg = 0.5) {
+    return computeHorizon(dem, lat, lon, { minRangeM: 480, azStepDeg });
   }
 
-  function maybeRefine() {
-    if (ui.map.scale >= 18 && ui.grid.level !== 'fine' && !ui.grid.done) return;
-    if (ui.map.scale >= 18 && ui.grid.level !== 'fine') buildGrid('fine');
+  function centreForScope(scope) {
+    if (scope === 'pole') { ui.map.cxKm = 0; ui.map.cyKm = 0; ui.map.scale = 2.8; }
+    else { const p = project(REGION.centerLat, REGION.centerLon); ui.map.cxKm = p.xKm; ui.map.cyKm = p.yKm; ui.map.scale = 36; }
+    drawMap();
   }
+
+  // Refinement is explicit: the scope selector switches between pole blocks and the pilot.
+  function maybeRefine() {}
 
   /* ---------- rendering ---------- */
 
@@ -445,8 +458,12 @@ export function createSouthPole(ctx) {
     els['sp-native'].hidden = atlas;
     els['sp-atlas-note'].hidden = !atlas;
     for (const b of els['sp-map-wrap'].querySelectorAll('[data-mapapp]')) b.classList.toggle('on', b.dataset.mapapp === ui.mapApp);
-    if (ui.mode === 'map') { if (atlas) syncAtlas(); else drawMap(); }
-    else ui.globe?.request();
+    if (ui.mode === 'map' && atlas) syncAtlas();
+    else {
+      if (els['sp-atlas'].getAttribute('src') !== 'about:blank') { els['sp-atlas'].src = 'about:blank'; ui.atlasKey = ''; }
+      if (ui.mode === 'map') drawMap();
+      else ui.globe?.request();
+    }
     renderSites(); renderLink(); renderGrid(); renderDetail(); renderPreviewRange(); renderScenarioInputs();
   }
 
@@ -502,12 +519,20 @@ export function createSouthPole(ctx) {
   }
 
   function renderGrid() {
-    const n = ui.grid.level === 'fine' ? 8 : 4;
-    const g = gridGeometry(n);
-    els['sp-geom'].textContent = t('{cells} × {cells} cells, {km} km each, {w} × {h} km around {centre}. Native raster {res} m; values are cell-centre samples.', {
-      cells: n, km: g.cellKm, w: g.boundsKm.xMax - g.boundsKm.xMin, h: g.boundsKm.yMax - g.boundsKm.yMin,
-      centre: fmtLatLon(REGION.centerLat, REGION.centerLon, 1), res: g.demResM,
-    });
+    const scope = ui.grid.scope ?? 'pole';
+    if (scope === 'pole') {
+      const g = poleGeometry();
+      els['sp-geom'].textContent = t('Whole study area: {n} blocks of {km} km south of 85°S. Native raster {res} m; values are block-centre samples.', {
+        n: g.cells, km: Number(g.cellKm.toFixed(1)), res: g.demResM,
+      });
+    } else {
+      const g = gridGeometry(8);
+      els['sp-geom'].textContent = t('{cells} × {cells} cells, {km} km each, {w} × {h} km around {centre}. Native raster {res} m; values are cell-centre samples.', {
+        cells: 8, km: g.cellKm, w: g.boundsKm.xMax - g.boundsKm.xMin, h: g.boundsKm.yMax - g.boundsKm.yMin,
+        centre: fmtLatLon(REGION.centerLat, REGION.centerLon, 1), res: g.demResM,
+      });
+    }
+    els['sp-scope'].value = scope;
     els['sp-legend'].innerHTML = ['green', 'yellow', 'red', 'unknown'].map((s) =>
       `<span><i class="pole-sw" style="background:${STATUS[s]}"></i>${escapeHtml(t(s === 'green' ? 'all limits and targets met' : s === 'yellow' ? 'limits met, target missed' : s === 'red' ? 'hard limit failed' : 'unknown or not computed'))}</span>`).join('')
       + `<span class="sub">${escapeHtml(t('Grey hatching: no evaluated terrain, never red.'))}</span>`;
@@ -520,8 +545,8 @@ export function createSouthPole(ctx) {
     const cells = ui.grid.cells;
     const done = cells.filter((c) => c.class?.status && c.class.status !== 'pending').length;
     const count = (s) => cells.filter((c) => c.class?.status === s).length;
-    const status = cells.length ? t('{level} grid: {done}/{total} cells evaluated ({green} green, {yellow} yellow, {red} red, {unknown} unknown). Geometry built in {ms} ms; scenario recompute {s} ms.', {
-      level: t(ui.grid.level === 'fine' ? 'fine' : 'coarse'), done, total: cells.length,
+    const status = cells.length ? t('{level}: {done}/{total} blocks evaluated ({green} green, {yellow} yellow, {red} red, {unknown} unknown). Geometry built in {ms} ms; scenario recompute {s} ms.', {
+      level: t(ui.grid.scope === 'pole' ? 'South pole blocks' : 'Shackleton pilot'), done, total: cells.length,
       green: count('green'), yellow: count('yellow'), red: count('red'), unknown: count('unknown'),
       ms: Math.round(ui.grid.ms || (performance.now() - ui.grid.startedMs)), s: Math.round(ui.grid.scenarioMs ?? 0),
     }) : t('Grid not started.');
@@ -570,12 +595,14 @@ export function createSouthPole(ctx) {
 
   function bind() {
     els['sp-open'].onclick = () => showMap(null);
+    els['sp-gzin'].onclick = () => ui.globe?.zoom?.(0.8);
+    els['sp-gzout'].onclick = () => ui.globe?.zoom?.(1.25);
     els['sp-map-wrap'].addEventListener('click', (e) => {
       const b = e.target.closest('[data-mapapp]');
       if (!b) return;
       ui.mapApp = b.dataset.mapapp;
       renderAll();
-      if (ui.mapApp === 'native' && !ui.grid.cells.length) buildGrid('coarse');
+      if (ui.mapApp === 'native' && !ui.grid.cells.length) buildGrid(ui.grid.scope);
     });
     els['sp-back'].onclick = () => { ui.mode = 'globe'; renderAll(); ui.globe?.request(); };
     els['sp-reset'].onclick = () => { ui.globe?.reset(); };
@@ -612,8 +639,9 @@ export function createSouthPole(ctx) {
       refreshScenario(true);
       renderThresholds();
     };
-    els['sp-refine'].onclick = () => buildGrid('fine');
-    els['sp-restart'].onclick = () => buildGrid(ui.grid.level ?? 'coarse');
+    els['sp-refine'].onclick = () => { ui.grid.scope = 'pilot'; els['sp-scope'].value = 'pilot'; centreForScope('pilot'); buildGrid('pilot'); };
+    els['sp-restart'].onclick = () => buildGrid(ui.grid.scope);
+    els['sp-scope'].onchange = (e) => { ui.grid.scope = e.target.value; centreForScope(e.target.value); buildGrid(e.target.value); };
     els['sp-list'].onclick = (e) => {
       const b = e.target.closest('[data-cell]'); if (!b) return;
       const [row, col] = b.dataset.cell.split('-').map(Number);
@@ -635,9 +663,10 @@ export function createSouthPole(ctx) {
       const p = project(point.lat, point.lon);
       ui.map.cxKm = p.xKm; ui.map.cyKm = p.yKm;
       ui.map.scale = Math.max(ui.map.scale, 10);
-    } else if (ui.map.scale < 18) ui.map.scale = 36;
+    } else if (!ui.map.opened) centreForScope(ui.grid.scope);
+    ui.map.opened = true;
     renderAll();
-    if (ui.mapApp === 'native' && !ui.grid.cells.length) buildGrid('coarse');
+    if (ui.mapApp === 'native' && !ui.grid.cells.length) buildGrid(ui.grid.scope);
     if (ui.mapApp === 'native') els['sp-map'].focus?.();
   }
 
@@ -655,7 +684,7 @@ export function createSouthPole(ctx) {
   async function activate() {
     build();
     if (ui.mode === 'globe') { await ensureGlobe(); ui.globe?.request(); }
-    else { renderAll(); if (!ui.grid.cells.length) buildGrid('coarse'); }
+    else { renderAll(); if (!ui.grid.cells.length) buildGrid(ui.grid.scope); }
     renderAll();
   }
 

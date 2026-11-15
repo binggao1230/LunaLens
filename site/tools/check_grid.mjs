@@ -12,6 +12,7 @@ import { Site } from '../js/engine/site.js';
 import { Dem, computeHorizon } from '../js/engine/dem.js';
 import {
   REGION, STUDY_LAT, DEM_FOOTPRINT_LAT, project, unproject, cellCenters, gridGeometry,
+  studyCellCenters, poleGeometry, POLE_CELL_KM,
   earthStats, classify, normalizeThresholds, DEFAULT_LIMITS, DEFAULT_TARGETS,
 } from '../js/engine/grid.js';
 
@@ -123,6 +124,17 @@ check('date and margin change the scenario fields, not the terrain fields', () =
   const again = computeHorizon(dem, centre.lat, centre.lon, { minRangeM: 480 });
   assert.equal(again.groundM, hor.groundM, 'terrain fields stay fixed');
   assert.deepEqual(Array.from(again.horizon), Array.from(hor.horizon));
+});
+
+check('whole-pole blocks stay inside the 85°S study area', () => {
+  const cells = studyCellCenters(POLE_CELL_KM);
+  assert.ok(cells.length > 100, `expected a full study area, got ${cells.length}`);
+  assert.ok(cells.every((c) => c.lat <= STUDY_LAT), 'every block centre is south of 85°S');
+  const g = poleGeometry(POLE_CELL_KM);
+  assert.equal(g.cells, cells.length);
+  assert.ok(g.boundsKm.xMin < -150 && g.boundsKm.xMax > 150, 'bounds cover the 85°S circle');
+  assert.ok(Math.abs(g.cellKm - POLE_CELL_KM) < 1, 'reported block size stays near 24 km');
+  console.log(`     ${cells.length} blocks of ${g.cellKm.toFixed(1)} km cover the study area`);
 });
 
 console.log(`\n${checks.length} checks passed. Region ${REGION.centerLat}°, ${REGION.centerLon}°E ±${REGION.halfKm} km.`);

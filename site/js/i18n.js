@@ -432,6 +432,14 @@ const messages = {
   'Native screening map': ['Carte de tri native', '原生筛选地图'],
   'Atlas regional map': ['Carte régionale Atlas', 'Atlas 区域地图'],
   'Atlas is a separate application with its own ephemeris and terrain; its numbers are not native LunaLens. Redistribution permission is still pending, so keep it out of a judged build until confirmed. The native screening grid is the LunaLens calculation. Atlas selections do not sync back to LunaLens.': ['Atlas est une application distincte avec ses propres éphémérides et relief ; ses chiffres ne sont pas ceux de LunaLens. L\u2019autorisation de redistribution est encore en attente : ne l\u2019incluez pas dans une version jugée avant confirmation. La grille de tri native est le calcul LunaLens. Les sélections Atlas ne reviennent pas dans LunaLens.', 'Atlas 是独立应用，使用自己的星历与地形，其数字不是 LunaLens 原生结果。再分发许可尚未确认，确认前不要放入参赛构建。原生筛选网格才是 LunaLens 的计算。Atlas 中的选择不会回传到 LunaLens。'],
+  'Globe zoom': ['Zoom du globe', '球体缩放'],
+  'Grid scope': ['Étendue de la grille', '网格范围'],
+  'South pole · 24 km blocks': ['Pôle Sud · blocs de 24 km', '南极 · 24 km 分块'],
+  'Shackleton pilot · 2 km cells': ['Pilote Shackleton · cellules de 2 km', '沙克尔顿试点 · 2 km 网格'],
+  'South pole blocks': ['Blocs du pôle Sud', '南极分块'],
+  'Shackleton pilot': ['Pilote Shackleton', '沙克尔顿试点'],
+  'Whole study area: {n} blocks of {km} km south of 85°S. Native raster {res} m; values are block-centre samples.': ['Toute la zone d\u2019étude : {n} blocs de {km} km au sud de 85°S. Raster natif {res} m ; valeurs au centre des blocs.', '整个研究区：85°S 以南 {n} 个 {km} km 分块。原生栅格 {res} m；数值为分块中心采样。'],
+  '{level}: {done}/{total} blocks evaluated ({green} green, {yellow} yellow, {red} red, {unknown} unknown). Geometry built in {ms} ms; scenario recompute {s} ms.': ['{level} : {done}/{total} blocs évalués ({green} verts, {yellow} jaunes, {red} rouges, {unknown} inconnus). Géométrie en {ms} ms ; recalcul du scénario {s} ms.', '{level}：已评估 {done}/{total} 块（绿 {green}、黄 {yellow}、红 {red}、未知 {unknown}）。几何构建 {ms} ms；场景重算 {s} ms。'],
 };
 
 let language = 'en';

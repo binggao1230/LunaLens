@@ -133,6 +133,7 @@ body[data-view=compare] .appbar .tray,body[data-view=slip] .appbar .tray{display
 [data-fake]{border-style:dashed;cursor:help}
 .scrub{position:sticky;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--border);
   padding:8px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+body[data-view=pole] .scrub{display:none}
 .scrub button{min-height:36px;padding:6px 10px;font-size:13px;white-space:nowrap}
 .scrub input[type=range]{flex:1;min-width:140px;accent-color:var(--earth);height:30px}
 .scrub #now{flex-basis:100%;grid-column:auto}
@@ -294,6 +295,8 @@ dl.kv dt{font-weight:600}dl.kv dd{margin:0;color:var(--text2)}
 .pole-globe-hint{position:absolute;left:10px;right:10px;bottom:8px;margin:0;color:var(--muted);font-size:12px;pointer-events:none}
 .pole-map-tools{position:absolute;right:10px;top:10px;display:flex;gap:6px}
 .pole-map-tools .btn-ghost{background:rgba(15,17,19,.78)}
+.pole-globe-zoom{position:absolute;right:10px;top:10px;display:flex;gap:6px}
+.pole-globe-zoom button{min-width:36px;min-height:36px;font-size:16px;border-radius:9px;border:1px solid var(--border);background:rgba(15,17,19,.78);color:var(--text);cursor:pointer}
 .pole-side{display:flex;flex-direction:column;gap:8px}
 .pole-side h3{margin:6px 0 0;font-size:14px}
 .pole-site{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;padding:7px 9px;margin:4px 0;border:1px solid var(--border);border-radius:9px;background:var(--surface-2);color:var(--text);font:inherit;font-size:12.5px;cursor:pointer}

@@ -18,7 +18,7 @@ export async function createPolar3d(env) {
       const { OrbitControls } = await import('../../vendor/three/OrbitControls.js');
       const canvas = $('m-3d'), stage = $('m-stage');
       const renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setPixelRatio(Math.min(devicePixelRatio, env.maxPixelRatio ?? 2));
       const scene = new T.Scene();
       const camera = new T.PerspectiveCamera(42, 1, 0.01, 200);
       const controls = new OrbitControls(camera, canvas);
@@ -134,6 +134,7 @@ export async function createPolar3d(env) {
       let pulseState = null, pulsePhase = 0, pulseLoop = 0;
       let pulseKey = '';
       const stopPulse = () => { if (pulseLoop) cancelAnimationFrame(pulseLoop); pulseLoop = 0; };
+      let lastPulse = 0;
       const updatePulse = () => {
         const info = env.pulse?.();
         const site = pickedSite();
@@ -162,12 +163,14 @@ export async function createPolar3d(env) {
         pulseLine.material.opacity = 0.9;
         pulseDot.visible = true;
         if (!pulseLoop) {
-          const step = () => {
+          const step = (now) => {
             if (pulseState !== 'visible' || reducedMotion) { pulseLoop = 0; return; }
+            pulseLoop = requestAnimationFrame(step);
+            if (now - lastPulse < 40) return;
+            lastPulse = now;
             pulsePhase = (pulsePhase + 0.008) % 1;
             pulseDot.position.lerpVectors(pulseStart, pulseEnd, pulsePhase);
             renderer.render(scene, camera);
-            pulseLoop = requestAnimationFrame(step);
           };
           pulseLoop = requestAnimationFrame(step);
         }
@@ -341,12 +344,13 @@ export async function createPolar3d(env) {
         caster.setFromCamera(new T.Vector2(((event.clientX - box.left) / box.width) * 2 - 1, -((event.clientY - box.top) / box.height) * 2 + 1), camera);
         return caster.intersectObject(moon)[0]?.point.clone().normalize() ?? null;
       };
+      let lastX = 0, lastY = 0;
       canvas.addEventListener('pointerdown', (event) => {
         down = [event.clientX, event.clientY];
         if (!grab) return;
         pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
         if (pointers.size === 1) {
-          grabId = event.pointerId; grabDir = dirAt(event);
+          grabId = event.pointerId; lastX = event.clientX; lastY = event.clientY;
           canvas.setPointerCapture?.(event.pointerId);
         } else {
           grabDir = null;
@@ -367,14 +371,23 @@ export async function createPolar3d(env) {
           pinchDist = d;
           return;
         }
-        if (!grabDir || event.pointerId !== grabId) return;
-        const dir = dirAt(event);
-        if (!dir) return;
-        const q = new T.Quaternion().setFromUnitVectors(grabDir, dir);
-        camera.position.applyQuaternion(q);
-        camera.up.applyQuaternion(q).normalize();
+        if (event.pointerId !== grabId) return;
+        const dx = event.clientX - lastX, dy = event.clientY - lastY;
+        lastX = event.clientX; lastY = event.clientY;
+        if (!dx && !dy) return;
+        // Screen-space orbit: the surface follows the pointer. One event is clamped so a pointer
+        // that leaves and re-enters the canvas cannot spin the view.
+        const SENS = 0.0042;
+        const ax = clamp(dx * SENS, -0.2, 0.2), ay = clamp(dy * SENS, -0.2, 0.2);
+        const upAxis = new T.Vector3().setFromMatrixColumn(camera.matrix, 1).normalize();
+        const rightAxis = new T.Vector3().setFromMatrixColumn(camera.matrix, 0).normalize();
+        const before = camera.position.clone().normalize();
+        camera.position.applyAxisAngle(upAxis, -ax);
+        camera.position.applyAxisAngle(rightAxis, ay);
+        const next = camera.position.clone().normalize();
+        // Stop before crossing the far pole; the prototype is a south-pole view, not a full spin.
+        if (next.y > 0.9 && next.y > before.y) camera.position.copy(before.multiplyScalar(camera.position.length()));
         camera.lookAt(0, 0, 0);
-        grabDir = dir;
         request();
       });
       const endPointer = (event) => {
@@ -409,6 +422,7 @@ export async function createPolar3d(env) {
       view3d = {
         request: () => { if (!home) { setHome(); home = true; } request(); },
         reset: () => flyTo(homeDir(), 3.6),
+        zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.03, 14)); request(); },
         focus: (site) => flyTo(new T.Vector3(...unit(site.lat, site.lon)), site.lat <= -75 ? 1.07 : undefined),
       };
       resize();
