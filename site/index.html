@@ -101,10 +101,16 @@ main{max-width:1280px;padding:12px}
   background:var(--surface);color:var(--muted);font-size:14px;line-height:1}
 .chip-x:hover{color:var(--critical);border-color:var(--critical)}
 .view{display:none}
-body[data-view=explore] #v-explore,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=data] #v-data,body[data-view=build] #v-build,body[data-view=atlas] #v-atlas,body[data-view=pole] #v-pole{display:block}
+body[data-view=explore] #v-explore,body[data-view=data] #v-data,body[data-view=compare] #v-compare,body[data-view=slip] #v-slip,body[data-view=build] #v-build,body[data-view=atlas] #v-atlas,body[data-view=pole] #v-pole{display:block}
 /* Atlas is a full-bleed tool: it escapes the page's reading width and sits edge to edge. */
 body[data-view=atlas] main{max-width:none;padding:0}
-#v-atlas{height:calc(100svh - var(--bar-h,56px))}
+#v-atlas{position:relative;height:calc(100svh - var(--bar-h,56px))}
+.atlas-explore{position:absolute;right:16px;bottom:18px;z-index:3;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 18px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.page-link{margin:14px 0 4px}
+.btn-link{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 18px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.btn-link:hover{border-color:var(--earth)}
+.atlas-explore:hover{border-color:var(--earth)}
+.atlas-explore:focus-visible{outline:2px solid #f5c542;outline-offset:2px}
 #v-atlas iframe{display:block;width:100%;height:100%;border:0;background:#05070a}
 /* The scenario tray is the compare workspace, not global chrome: it only appears where scenarios are
    compared or slipped. */
@@ -144,7 +150,7 @@ body[data-view=pole] .scrub{display:none}
   .explore,.grid2{grid-template-columns:1fr}
   body{padding-bottom:54px}
   .scrub{bottom:54px;padding:6px 10px}
-  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;height:54px;z-index:7;
+  .tabbar{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:fixed;left:0;right:0;bottom:0;height:54px;z-index:7;
     background:var(--surface);border-top:1px solid var(--border);padding:4px}
   .tabbar button{padding:4px;font-size:12px}
   .fields{grid-template-columns:1fr 1fr}
@@ -482,7 +488,7 @@ body[data-view=pole] main{max-width:none;padding:0}
     <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="pole">Expert</button>
   </nav>
   <div class="tray" id="tray"></div>
-  <nav class="side" data-nav><button data-view="data">Data</button><a class="mobile-entry" href="mobile/">Mobile</a></nav>
+  <nav class="side" data-nav><a class="mobile-entry" href="mobile/">Mobile</a></nav>
   <div class="seg-pill" id="mode-toggle" role="group" aria-label="Mode">
     <button type="button" data-mode="expert" aria-pressed="true" aria-label="Expert mode"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="long">Expert mode</span><span class="short">Expert</span></button>
     <button type="button" data-mode="education" aria-pressed="false" aria-label="Education mode"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5M22 9v5"/></svg><span class="long">Education mode</span><span class="short">Learn</span></button>
@@ -599,13 +605,16 @@ body[data-view=pole] main{max-width:none;padding:0}
         </section>
       </div>
     </div>
+  
+  <!-- ================= View 4: Data & accuracy ================= -->
+    <div class="page-link"><button type="button" class="btn-link" data-go="data">Data and accuracy<span aria-hidden="true">→</span></button></div>
   </section>
 
   <!-- ================= South Pole prototype: 3D globe plus detailed map ================= -->
   <section class="view" id="v-pole"></section>
 
   <!-- ================= Atlas: the layer map page, in its own frame ================= -->
-  <section class="view" id="v-atlas"></section>
+  <section class="view" id="v-atlas"><button type="button" class="atlas-explore" data-go="explore">Explore<span aria-hidden="true">→</span></button></section>
 
 
   <!-- ================= View 2: Compare ================= -->
@@ -654,6 +663,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 
   <!-- ================= View 4: Data & accuracy ================= -->
   <section class="view" id="v-data">
+    <div class="page-link"><button type="button" class="btn-link" data-go="explore"><span aria-hidden="true">←</span>Explore</button></div>
     <section class="card">
       <h2>What is computed</h2>
       <p>For every hour from 2026 to 2030, LunaLens takes the points on the Moon directly beneath the Sun and Earth from JPL Horizons and converts them to azimuth and elevation at each site. A site's skyline is the highest terrain in each direction, sampled every 0.5° out to 460 km over LOLA elevation data, seen from 2 m above the ground on a curved Moon. The Sun counts as in view when its upper limb clears the skyline, and Earth when its centre does. Positions between hourly samples are interpolated, and rise and set times are refined by bisection.</p>
@@ -747,7 +757,6 @@ body[data-view=pole] main{max-width:none;padding:0}
 </div>
 <nav class="tabbar" data-nav>
   <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="pole">Expert</button>
-  <button data-view="data">Data</button>
 </nav>
 <div id="edu"></div>
 <div id="mode-wipe" aria-hidden="true"></div>

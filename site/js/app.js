@@ -469,7 +469,7 @@ function showView(v) {
   if (getMode() !== 'education' && ['start', 'mission'].includes(v)) v = 'explore';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}${formatHash(v)}`);
-  document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
+  document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v || (['explore', 'data'].includes(v) && b.dataset.view === 'atlas')));
   $('page-scroll').scrollTo(0, 0);
   if (v === 'atlas') showAtlas();
   renderAll();
