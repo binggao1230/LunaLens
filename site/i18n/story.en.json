@@ -59,6 +59,9 @@
         "Now pick a landing site in the list or on the map. Green dots see Earth, amber dots see only the Sun, grey dots sit in shadow."
       ]
     },
+    "history": {
+      "intro": "People have landed on the Moon before! Tap a flag to discover their stories."
+    },
     "site": {
       "intro": "Here the Sun never climbs high. It rolls along the horizon like a slow golden ball.",
       "happy": "Sun on the panels and Earth in the sky. This spot feels right.",

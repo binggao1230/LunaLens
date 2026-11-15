@@ -6,20 +6,13 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0f1113">
 <title>LunaLens · Lunar landing site navigator</title>
+<link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="vendor/noUiSlider/nouislider.min.css">
 <style>
-:root{
-  color-scheme:dark;
-  --page:#0f1113; --surface:#171a1e; --border:#353a42;
-  --text:#f0f1f3; --text2:#c3c7ce; --muted:#a0a7b2; --grid:#292e35;
-  --sun:#f5c542; --earth:#71a9ef; --accent:#8ab4f8;
-  --terrain:#3a3e44; --terrain-line:#a0a7b2;
-  --good:#43d98a; --critical:#ff7373;
-  --warn-bg:#352c17; --warn-text:#f3d58a;
-}
+/* Design tokens live in css/tokens.css (linked above); shared components in css/ui.css (linked last). */
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--text);
-  font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  font:15px/1.45 var(--font-sans)}
 main{max-width:1100px;margin:0 auto;padding:12px 12px 48px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:6px 0 10px}
 h1{font-size:22px;margin:0;letter-spacing:.2px}
@@ -410,6 +403,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 </style>
 <link rel="stylesheet" href="css/mission.css">
 <link rel="stylesheet" href="css/edu.css">
+<link rel="stylesheet" href="css/ui.css">
 </head>
 <body data-view="start">
 <div id="loading" role="status">Loading…</div>
@@ -666,7 +660,7 @@ body[data-view=pole] main{max-width:none;padding:0}
       <ul>
         <li>LunaLens is an independent project, not affiliated with or endorsed by NASA. Naming NASA, JPL and mission data identifies sources only.</li>
         <li>Data and coordinate sources are linked above; their provider notices apply. Wikipedia source text is attributed under CC BY-SA 4.0.</li>
-        <li>Fonts: Geist, Geist Mono and Newsreader, SIL Open Font License 1.1.</li>
+        <li>Fonts: Geist and Geist Mono, SIL Open Font License 1.1.</li>
         <li>Three.js r170 and OrbitControls: MIT licence, hosted locally.</li>
         <li>A licence for the LunaLens code has not yet been selected by the team.</li>
       </ul>

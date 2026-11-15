@@ -59,6 +59,9 @@
         "Choisis maintenant un site dans la liste ou sur la carte. Les points verts voient la Terre, les ambrés ne voient que le Soleil, les gris sont dans l'ombre."
       ]
     },
+    "history": {
+      "intro": "Des humains et des robots se sont déjà posés sur la Lune ! Touche un drapeau pour découvrir leur histoire."
+    },
     "site": {
       "intro": "Ici, le Soleil ne monte jamais haut. Il roule le long de l'horizon comme une lente boule dorée.",
       "happy": "Du soleil sur les panneaux et la Terre dans le ciel. Cet endroit semble parfait.",

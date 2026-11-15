@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="800" height="900" viewBox="0 0 800 900" role="img" aria-label="Soft blue lunar site flag with an ivory North Star, without a base, on a transparent background">
+  <title>LunaLens North Star Flag</title>
+  <desc>Matte pastel blue triangular pennant with three four-point star sparkles, attached to a rounded blue-gray pole with no pedestal or base. All components are editable vector paths. Transparent background.</desc>
+  <defs>
+    <linearGradient id="fabricBlue" x1="0" y1="0" x2="1" y2="0.9" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#85B9D6"/>
+      <stop offset=".54" stop-color="#79AFD0"/>
+      <stop offset="1" stop-color="#5C9CC4"/>
+    </linearGradient>
+    <linearGradient id="poleBlue" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#AFC7D1"/>
+      <stop offset=".63" stop-color="#95B0BE"/>
+      <stop offset="1" stop-color="#829FAC"/>
+    </linearGradient>
+    <clipPath id="pennantClip">
+      <path d="M186 177 L698 352 Q748 368 748 397 Q748 423 696 443 L186 606 Z"/>
+    </clipPath>
+  </defs>
+  <!-- Pastel pennant -->
+  <g id="pennant">
+    <path d="M186 177 L698 352 Q748 368 748 397 Q748 423 696 443 L186 606 Z" fill="url(#fabricBlue)"/>
+    <g clip-path="url(#pennantClip)">
+      <path d="M185 174 C313 214 536 300 725 357 L743 388 C574 350 388 290 185 205 Z" fill="#B1D3E4" opacity=".17"/>
+      <path d="M186 519 C267 448 340 421 439 425 C556 431 639 452 748 397 L751 465 L183 643 Z" fill="#4D89B2" opacity=".43"/>
+    </g>
+    <!-- Classic elongated four-point North Star -->
+    <path id="north-star" d="M424 276 C437 340 451 355 509 388 C451 400 437 416 424 484 C411 417 397 400 339 388 C397 375 411 355 424 276 Z" fill="#FFF7E5"/>
+    <path id="small-star-right" d="M577 331 C582 348 590 357 607 362 C590 367 582 375 577 392 C572 375 564 367 547 362 C564 357 572 348 577 331 Z" fill="#FFF7E5"/>
+    <path id="small-star-left" d="M313 460 C317 473 322 479 335 483 C322 487 317 492 313 505 C309 492 303 487 290 483 C303 479 309 473 313 460 Z" fill="#FFF7E5"/>
+  </g>
+  <!-- Pole drawn last so the pennant visually connects behind it -->
+  <g id="pole">
+    <rect x="133" y="100" width="60" height="705" rx="30" fill="url(#poleBlue)"/>
+    <path d="M135 136 C135 113 148 101 165 101 C154 111 153 132 153 158 L153 777 Q152 793 162 803 C146 804 135 789 135 772 Z" fill="#D1E0E7" opacity=".30"/>
+  </g>
+</svg>

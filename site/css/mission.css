@@ -1,17 +1,7 @@
 @font-face{font-family:"Geist";src:url("../fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
 @font-face{font-family:"Geist Mono";src:url("../fonts/geist-mono-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
-@font-face{font-family:"Newsreader";src:url("../fonts/newsreader-latin-opsz-wght-normal.woff2") format("woff2");font-weight:200 800;font-display:swap}
 
-body[data-view=start],body[data-view=mission]{
-  color-scheme:dark;
-  --page:#0f1113;--surface:#171a1e;--border:#353a42;
-  --text:#f0f1f3;--text2:#c3c7ce;--muted:#a0a7b2;--grid:rgba(255,255,255,.08);
-  --sun:#f5c542;--earth:#5aa2ff;--good:#43d98a;--critical:#ff6b6b;
-  --serif:"Newsreader","Songti SC","Noto Serif SC",Georgia,serif;
-  --mono:"Geist Mono",ui-monospace,Menlo,monospace;
-  font-family:"Geist","PingFang SC","Noto Sans SC",system-ui,-apple-system,sans-serif;
-  background:var(--page);
-}
+body[data-view=start],body[data-view=mission]{background:var(--page)} /* tokens: css/tokens.css */
 body[data-view=start]::before,body[data-view=mission]::before{
   content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:var(--page);
@@ -28,7 +18,7 @@ body[data-view=start] #v-start,body[data-view=mission] #v-mission{display:block}
 .start-moon{position:absolute;left:50%;bottom:-46vmin;width:96vmin;height:96vmin;transform:translateX(-50%);border-radius:50%;pointer-events:none;
   background:radial-gradient(circle at 30% 24%,#d9d6e6 0%,#8d89a4 38%,#3b3750 72%,#14111f 100%);
   box-shadow:0 0 120px 20px rgba(150,110,255,.22),inset -30px -20px 80px rgba(0,0,0,.55);opacity:.32}
-.start h1{font-family:var(--serif);font-weight:400;font-size:clamp(54px,9vw,112px);line-height:.95;letter-spacing:-.02em;margin:0;text-align:center}
+.start h1{font-weight:300;font-size:clamp(54px,9vw,112px);line-height:.95;letter-spacing:-.02em;margin:0;text-align:center}
 .start .lede{max-width:560px;text-align:center;color:var(--text2);font-size:clamp(15px,1.6vw,18px);line-height:1.5;margin:18px 0 0}
 .start .pick{margin:clamp(28px,5vh,52px) 0 14px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-family:var(--mono)}
 .cards{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;width:min(1080px,100%)}
@@ -46,7 +36,7 @@ body[data-view=start] #v-start,body[data-view=mission] #v-mission{display:block}
 .pcard .tick{position:absolute;top:22px;right:22px;width:22px;height:22px;border-radius:50%;background:var(--sun);color:#1a1200;display:none;align-items:center;justify-content:center;font-size:13px;font-weight:700}
 .pcard.on .tick{display:flex}
 .start .go{position:relative;width:min(1080px,100%);display:flex;justify-content:flex-end;margin-top:22px}
-.btn-primary{font-size:15px;font-weight:600;padding:12px 26px;min-height:46px;border-radius:99px;border:none;color:#1a1200;background:linear-gradient(180deg,#ffd964,#f0b429);cursor:pointer;box-shadow:0 10px 30px -10px rgba(245,197,66,.7);transition:transform .15s ease,filter .15s ease}
+.btn-primary{font-size:15px;font-weight:600;padding:12px 26px;min-height:46px;border-radius:99px;border:none;color:#1a1200;background:var(--primary);cursor:pointer;box-shadow:0 10px 30px -10px rgba(245,197,66,.7);transition:transform .15s ease,filter .15s ease}
 .btn-primary:hover{transform:translateY(-1px);filter:brightness(1.06)}
 .btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .btn-ghost{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);border-radius:99px;padding:8px 16px;min-height:38px}
@@ -62,7 +52,7 @@ body[data-view=start] #v-start,body[data-view=mission] #v-mission{display:block}
 .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 .stage .overlay-tl{position:absolute;left:16px;top:14px;right:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;pointer-events:none}
 .stage .overlay-tl>*{pointer-events:auto}
-.stage h2{font-family:var(--serif);font-weight:400;font-size:26px;margin:0;letter-spacing:-.01em}
+.stage h2{font-weight:300;font-size:26px;margin:0;letter-spacing:-.01em}
 .stage .hint{font-size:12px;color:var(--muted);margin-top:2px}
 .mseg{display:inline-flex;padding:3px;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid var(--border)}
 .mseg button{border:none;background:none;color:var(--text2);border-radius:99px;padding:6px 14px;min-height:32px;font-weight:600;font-size:13px}
@@ -140,7 +130,7 @@ body[data-view=start] #v-start,body[data-view=mission] #v-mission{display:block}
 .flight-skip{display:flex;align-items:center;gap:20px;background:rgba(3,6,9,.7);min-height:44px}
 .flight-caption{position:absolute;bottom:max(32px,env(safe-area-inset-bottom));left:4vw;right:4vw;z-index:1;max-width:440px;pointer-events:none}
 .flight-phase{font-size:14px;color:#f5c542;margin:0 0 6px}
-.flight-caption h2{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,42px);line-height:1.15;margin:0 0 20px;text-wrap:balance;color:#fff}
+.flight-caption h2{font-weight:300;font-size:clamp(28px,4vw,42px);line-height:1.15;margin:0 0 20px;text-wrap:balance;color:#fff}
 .flight-track{height:2px;background:#42474d;overflow:hidden}
 .flight-track-fill{display:block;height:100%;background:#f5c542;transform:scaleX(0);transform-origin:left}
 .flight-route{display:flex;justify-content:space-between;margin-top:9px;font-size:12px;color:#d6dce4}
@@ -190,10 +180,9 @@ body[data-view=start] .start{min-height:calc(100svh - var(--bar-h,56px));padding
 .probe-choice[data-selected=true] .probe-check{border-color:#f5c542;background:#f5c542}
 .probe-choice[data-selected=true] .probe-check svg{visibility:visible}
 .start-actions{position:fixed;bottom:0;left:0;right:0;z-index:8;display:flex;align-items:center;justify-content:flex-end;gap:20px;padding:16px max(4vw,20px) calc(16px + env(safe-area-inset-bottom));background:transparent;border-top:0}
-.start .btn-primary{display:flex;align-items:center;justify-content:space-between;gap:32px;min-width:172px;flex-shrink:0;background:#f7bb42;box-shadow:none;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.start .btn-primary{display:flex;align-items:center;justify-content:space-between;gap:32px;min-width:172px;flex-shrink:0;box-shadow:none;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
 .start .btn-primary span{font-size:22px}
-.start button:focus-visible,.start canvas:focus-visible{outline:2px solid #f7bb42;outline-offset:4px}
-.start ::selection{background:#f7bb42;color:#091520}
+.start ::selection{color:#091520}
 @media(max-width:760px){
   body[data-view=start] .start{padding:16px 16px 116px}
   .start .lede{font-size:11px;line-height:1.5}
