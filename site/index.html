@@ -166,8 +166,6 @@ body[data-view=pole] .scrub{display:none}
 .side{display:flex}
 .side button{border:none;background:none;color:var(--muted);font-size:13px;padding:6px 8px;min-height:32px}
 .side button.on{color:var(--text);font-weight:650}
-.mobile-entry{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;padding:5px 9px;color:var(--text2);font-size:12px;text-decoration:none;white-space:nowrap}
-.mobile-entry:hover{border-color:var(--earth);color:var(--text)}
 .scrub .chart{flex:1;min-width:220px}
 .scrub #now{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
 body.owners [data-owner]{position:relative;outline:1.5px dashed var(--muted);outline-offset:-1px}
@@ -352,7 +350,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-window-dates{display:flex;align-items:center;gap:7px;font-size:13px;font-variant-numeric:tabular-nums}
 .pole-window-dates b{font-weight:600}
 .pole-window-dates .arrow{color:var(--muted)}
-.pole-window-stay{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.pole-window-stay{margin-left:18px;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);white-space:nowrap}
 .pole-window-stay select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:11.5px}
 .pole-window-edit{font:inherit;font-size:11.5px;padding:5px 9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;white-space:nowrap}
 .pole-window-edit:hover{border-color:var(--accent);color:var(--text)}
@@ -372,7 +370,14 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-window-slider .noUi-pips-horizontal{top:44px;height:14px;padding:0}
 .pole-window-slider .noUi-value-horizontal{transform:translate(-50%,0);font-size:9.5px;color:var(--muted);font-variant-numeric:tabular-nums}
 .pole-window-slider .noUi-marker-horizontal.noUi-marker{display:none}
-.pole-modal-slider{margin:0}
+.pole-modal-slider{margin:0 8px;height:64px}
+.pole-length-row{flex-wrap:wrap}
+.pole-modal-row{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--muted)}
+.pole-modal-row>span{min-width:48px}
+.pole-days{display:flex;align-items:center;gap:8px}.pole-days input{width:90px}.pole-days em{font-style:normal}
+.pole-modal-card input[type=number]{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px;min-height:30px}
+.pole-modal-row .seg{flex-wrap:wrap}
+.pole-modal-row .seg button[aria-pressed=true]{background:var(--surface-2)}
 .pole-windowbar p{margin:0;font-size:11px;line-height:1.35;color:var(--muted)}
 .pole[data-stage="atlas"] .pole-stages{display:none}
 .pole-restore{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;z-index:8;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:rgba(15,17,19,.95);color:var(--text);font:inherit;font-size:12px;cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.45)}
@@ -384,7 +389,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-atlas-actions button[disabled]{opacity:.55;cursor:default}
 .pole-modal{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(5,7,10,.72);backdrop-filter:blur(4px)}
 .pole-modal[hidden]{display:none}
-.pole-modal-card{width:min(560px,calc(100% - 32px));padding:18px 20px;border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:0 24px 80px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px}
+.pole-modal-card{width:min(680px,calc(100% - 32px));padding:18px 20px;border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:0 24px 80px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px}
 .pole-modal-card h2{margin:0;font-size:18px}
 .pole-modal-card label{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
 .pole-modal-card input[type=range]{flex:1;accent-color:var(--accent)}
@@ -392,7 +397,14 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-modal-card select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:5px 7px}
 .pole-modal-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
 .pole-modal-dates label{display:flex;flex-direction:column;align-items:stretch;gap:4px;font-size:11.5px;color:var(--muted)}
+.pole-modal-card .pole-modal-field{display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-size:11.5px;color:var(--muted)}
+.pole-modal-card .pole-modal-field,.pole-modal-dates label{width:260px;text-align:left;justify-self:start}
+.pole-modal-field select,.pole-modal-dates input{width:100%;box-sizing:border-box}
+.pole-modal-dates{grid-template-columns:260px}
 .pole-modal-actions{display:flex;justify-content:flex-end;margin-top:4px}
+.pole-modal-actions .btn-ghost,.pole-modal-actions .btn-primary{min-height:34px;padding:6px 14px;font-size:12.5px;border-radius:8px;box-shadow:none}
+.pole-modal-actions .btn-ghost{background:transparent}
+.pole-modal-actions{gap:12px}
 .pole-popup{position:absolute;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;background:rgba(5,7,10,.45)}
 .pole-popup[hidden]{display:none}
 .pole-popup-card{width:min(420px,calc(100% - 32px));padding:14px 16px;border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:0 18px 60px rgba(0,0,0,.5)}
@@ -455,8 +467,16 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-technical summary{cursor:pointer;font-size:11.5px;color:var(--muted)}
 .pole-technical[open] summary{color:var(--text2)}
 .pole-map-native{width:100%;height:100%}
-#sp-map{width:100%;height:100%;max-width:none;object-fit:fill}
-.pole-map-rail,.pole-abc,.pole-map-tools,.pole-globe-zoom,.pole-time,.pole-globe-hint,.pole-atlas-pick,.pole-panel-open{display:none!important}
+#sp-map{width:100%;height:100%;max-width:none;object-fit:contain}
+.pole-atlas-pick{display:none!important}
+.pole-globe-zoom,.pole-time{right:16px}
+.pole-globe-hint{left:calc(var(--expert-panel) + 28px);bottom:176px}
+.pole-map-rail{left:calc(var(--expert-panel) + 28px);top:96px}
+.pole-tabs{left:auto;right:16px;top:12px;transform:none}
+.pole-globe-hint{left:auto;right:16px;top:112px;bottom:auto;max-width:340px;text-align:right}
+.pole-hud{right:auto;width:fit-content;max-width:calc(100% - var(--expert-panel) - 44px)}
+.pole.panel-collapsed .pole-globe-hint,.pole.panel-collapsed .pole-map-rail{left:16px}
+.pole.panel-collapsed .pole-hud{max-width:calc(100% - 32px)}
 .pole-hud .m-readout{position:static;margin-top:5px;max-width:none;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;line-height:1.35}
 .pole-map-key{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:10.5px;color:var(--muted)}
 .pole-map-key span{display:inline-flex;align-items:center;gap:5px}
@@ -473,6 +493,7 @@ body[data-view=pole] main{max-width:none;padding:0}
   .pole-hud{left:8px;right:8px}
   .pole-windowbar{left:8px;right:8px}
   .pole.panel-collapsed .pole-hud,.pole.panel-collapsed .pole-windowbar{left:8px}
+  .pole-globe-zoom,.pole-time{right:8px;top:auto;bottom:268px}.pole-time{bottom:222px}.pole-globe-hint{display:none}.pole-map-rail{left:8px;top:150px}.pole-tabs{right:8px;top:8px}.pole-hud{width:auto;right:8px}
 }
 </style>
 <link rel="stylesheet" href="css/mission.css">
@@ -488,7 +509,6 @@ body[data-view=pole] main{max-width:none;padding:0}
     <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="pole">Expert</button>
   </nav>
   <div class="tray" id="tray"></div>
-  <nav class="side" data-nav><a class="mobile-entry" href="mobile/">Mobile</a></nav>
   <div class="seg-pill" id="mode-toggle" role="group" aria-label="Mode">
     <button type="button" data-mode="expert" aria-pressed="true" aria-label="Expert mode"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="long">Expert mode</span><span class="short">Expert</span></button>
     <button type="button" data-mode="education" aria-pressed="false" aria-label="Education mode"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5M22 9v5"/></svg><span class="long">Education mode</span><span class="short">Learn</span></button>
