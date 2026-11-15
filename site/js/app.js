@@ -465,7 +465,7 @@ function showView(v) {
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}${formatHash(v)}`);
   document.querySelectorAll('[data-nav] button').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
-  window.scrollTo(0, 0);
+  $('page-scroll').scrollTo(0, 0);
   if (v === 'atlas') showAtlas();
   renderAll();
   edu?.onView(v);
@@ -798,6 +798,10 @@ function bind() {
 
   let lastW = 0;
   new ResizeObserver(() => { const w = document.documentElement.clientWidth; if (w !== lastW && sims.length) { lastW = w; renderAll(); } }).observe(document.documentElement);
+  const scrub = document.querySelector('.scrub');
+  new ResizeObserver(() => {
+    document.documentElement.style.setProperty('--scrub-h', `${scrub.getBoundingClientRect().height}px`);
+  }).observe(scrub);
   mapPick('polar', PN, PN, polarXY, polarLL, (s) => s.lat < -75);
   mapPick('globe', GW, GH, globeXY, (x, y) => ({ lat: 90 - y / GH * 180, lon: ((x / GW * 360 - 180) % 360 + 360) % 360 }), () => true);
 }

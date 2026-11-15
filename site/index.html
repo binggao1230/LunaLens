@@ -131,7 +131,7 @@ body[data-view=compare] .appbar .tray,body[data-view=slip] .appbar .tray{display
 .fields input,.fields select{width:100%;font:inherit;color:var(--text);background:var(--page);border:1px solid var(--border);border-radius:8px;padding:7px 9px;min-height:38px;margin-top:3px}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 [data-fake]{border-style:dashed;cursor:help}
-.scrub{position:sticky;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--border);
+.scrub{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--border);
   padding:8px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 body[data-view=pole] .scrub{display:none}
 .scrub button{min-height:36px;padding:6px 10px;font-size:13px;white-space:nowrap}
@@ -167,7 +167,7 @@ body[data-view=pole] .scrub{display:none}
 .scrub .chart{flex:1;min-width:220px}
 .scrub #now{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
 body.owners [data-owner]{position:relative;outline:1.5px dashed var(--muted);outline-offset:-1px}
-body.owners .scrub[data-owner]{position:sticky}
+body.owners .scrub[data-owner]{position:fixed}
 body.owners [data-owner]::after{content:attr(data-owner);position:absolute;top:-9px;right:10px;background:var(--text);color:var(--surface);
   font-size:11px;line-height:1.5;padding:0 8px;border-radius:99px;white-space:nowrap;z-index:4;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis}
 .wrap{overflow-x:auto}
@@ -413,6 +413,7 @@ body[data-view=pole] main{max-width:none;padding:0}
   </div>
 </header>
 
+<div id="page-scroll">
 <main>
   <section class="view" id="v-start"></section>
   <section class="view" id="v-mission"></section>
@@ -647,6 +648,7 @@ body[data-view=pole] main{max-width:none;padding:0}
     </section>
   </section>
   </main>
+</div>
 
 <div class="scrub">
   <button id="play" aria-label="Play one lunar day">▶ Play</button>
