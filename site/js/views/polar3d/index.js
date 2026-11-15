@@ -55,6 +55,12 @@ export async function createPolar3d(env) {
       const moonMap = loadMap('assets/moon_color_4k.webp');
       const moon = new T.Mesh(new T.SphereGeometry(1, 96, 64), new T.MeshStandardMaterial({ map: moonMap, roughness: 1, metalness: 0 }));
       scene.add(moon);
+      // The lunar rotation axis: a thin line through both poles.
+      const axis = new T.Line(
+        new T.BufferGeometry().setFromPoints([new T.Vector3(0, -1.45, 0), new T.Vector3(0, 1.45, 0)]),
+        new T.LineBasicMaterial({ color: 0x9be7ff, transparent: true, opacity: 0.85 }),
+      );
+      scene.add(axis);
 
       // Graticule: parallels every 10° and meridians every 30°, with 75°S — where the terrain model ends —
       // picked out in cyan so the polar cap has a reference instead of being an anonymous patch.
@@ -270,8 +276,13 @@ export async function createPolar3d(env) {
         label.style.top = `${(-p.y * 0.5 + 0.5) * stage.clientHeight}px`;
         label.textContent = labelText(site);
       };
+      let animBase = null, animOffset = 0, lastAnim = 0;
       function draw() {
-        const f = getFrame();
+        const base = env.baseMs ? env.baseMs() : null;
+        if (base !== null && animBase !== null && base !== animBase) { animBase = base; animOffset = 0; lastAnim = 0; }
+        if (base !== null && animBase === null) animBase = base;
+        const tms = animBase !== null ? animBase + animOffset : null;
+        const f = tms !== null && env.frameAt ? env.frameAt(tms) : getFrame();
         if (!active() || local.mode !== '3d' || !f) return;
         buildMarkers();
         buildRelief();
@@ -284,6 +295,12 @@ export async function createPolar3d(env) {
         earth.lookAt(0, 0, 0);
         sunBody.position.set(...f.sun).multiplyScalar(SCALE.sunD);
         sunGlow.position.copy(sunBody.position);
+        if (tms !== null && env.epochMs) {
+          const days = (tms - env.epochMs) / 864e5;
+          moon.rotation.y = (days / 27.321661) * Math.PI * 2;
+          earth.rotation.y = (days / 0.99727) * Math.PI * 2;
+          sunBody.material.rotation = (days / 25.38) * Math.PI * 2;
+        }
         const earthDir = new T.Vector3(...f.earth).normalize(), sunDir = new T.Vector3(...f.sun).normalize();
         const ecliptic = new T.Vector3().crossVectors(earthDir, sunDir);
         if (ecliptic.lengthSq() < 1e-8) ecliptic.set(0, 0, 1); else ecliptic.normalize();
@@ -356,7 +373,19 @@ export async function createPolar3d(env) {
         canvas.style.cursor = lat !== null && lat <= (env.studyLat ?? -90) ? 'pointer' : 'grab';
       });
       // Damping needs a frame loop; only request a draw when the camera actually moved.
-      const tick = () => { if (grab && controls.update()) request(); requestAnimationFrame(tick); };
+      const tick = () => {
+        const a = env.animation?.();
+        const now = performance.now();
+        if (grab && controls.update()) request();
+        if (a?.running) {
+          if (animBase === null) animBase = env.baseMs?.() ?? null;
+          if (lastAnim) animOffset += ((now - lastAnim) / 1000) * 3600e3 * a.speed;
+          lastAnim = now;
+          if (animBase !== null) env.onTime?.(animBase + animOffset);
+          request();
+        } else lastAnim = 0;
+        requestAnimationFrame(tick);
+      };
       tick();
       canvas.addEventListener('pointerup', (event) => {
         if (!down || Math.hypot(event.clientX - down[0], event.clientY - down[1]) > 5) return;

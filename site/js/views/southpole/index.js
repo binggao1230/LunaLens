@@ -32,6 +32,7 @@ export function createSouthPole(ctx) {
     slots: { A: null, B: null, C: null }, target: null,
     limits: { ...DEFAULT_LIMITS }, targets: { ...DEFAULT_TARGETS }, weights: { ...DEFAULT_WEIGHTS },
     globe: null, globeFailed: false, atlasSrc: '', atlasKey: '', atlasRev: 0, moonReady: false,
+    animRunning: false, animSpeed: 1,
   };
   const staticCache = new Map();
   const els = {};
@@ -66,13 +67,18 @@ export function createSouthPole(ctx) {
     if (els['sp-range2-fill']) { els['sp-range2-fill'].style.left = `${s}%`; els['sp-range2-fill'].style.width = `${Math.max(0, e - s)}%`; }
     const start = dayMs(ui.window.startDay), end = dayMs(ui.window.endDay);
     const days = ui.window.endDay - ui.window.startDay + 1;
-    const text = t('Window: {from} → {to} · {days} days · stay {stay} h · latest complete touchdown {cutoff}.', {
-      from: isoDate(start), to: isoDate(end), days, stay: ctx.stayH(), cutoff: fmtDateTime(eph().tEnd - ctx.stayH() * HOUR),
+    const text = t('{days} days selected · stay {stay} h · latest complete touchdown {cutoff}.', {
+      days, stay: ctx.stayH(), cutoff: fmtDateTime(eph().tEnd - ctx.stayH() * HOUR),
     });
     for (const id of ['sp-windowinfo', 'sp-mwindowinfo']) if (els[id]) els[id].textContent = text;
-    if (els['sp-windowhud']) els['sp-windowhud'].textContent = `${isoDate(start)} → ${isoDate(end)}`;
-    if (els['sp-range2-start']) { els['sp-range2-start'].textContent = isoDate(start); els['sp-range2-start'].style.left = `${s}%`; }
-    if (els['sp-range2-end']) { els['sp-range2-end'].textContent = isoDate(end); els['sp-range2-end'].style.left = `${e}%`; }
+    if (els['sp-windowhud']) els['sp-windowhud'].textContent = t('{days} days in the launch window', { days }) + ` · ${ctx.stayH()} h`;
+    if (els['sp-win-start']) els['sp-win-start'].textContent = isoDate(start);
+    if (els['sp-win-end']) els['sp-win-end'].textContent = isoDate(end);
+    if (els['sp-range2-ticks'] && !els['sp-range2-ticks'].childElementCount) {
+      const y0 = new Date(eph().t0).getUTCFullYear(), y1 = new Date(dayMs(latest)).getUTCFullYear();
+      els['sp-range2-ticks'].innerHTML = Array.from({ length: y1 - y0 + 1 }, (_, i) => y0 + i)
+        .map((y) => `<span style="left:${Math.min(100, Math.max(0, ((Date.UTC(y, 0, 1) - eph().t0) / DAY) / Math.max(1, latest) * 100))}%">${y}</span>`).join('');
+    }
   }
 
   function setWindow(startDay, endDay) {
@@ -112,6 +118,11 @@ export function createSouthPole(ctx) {
             <button type="button" id="sp-gzin" aria-label="${escapeHtml(t('Zoom in'))}">+</button>
             <button type="button" id="sp-gzout" aria-label="${escapeHtml(t('Zoom out'))}">−</button>
           </div>
+          <div class="pole-time" role="group" aria-label="${escapeHtml(t('Time speed'))}">
+            ${[1, 2, 3, 5, 10].map((s) => `<button type="button" data-speed="${s}"${s === 1 ? ' class="on"' : ''}>${s}×</button>`).join('')}
+            <button type="button" id="sp-pause" aria-label="${escapeHtml(t('Pause'))}">⏸</button>
+            <span>${escapeHtml(t('1× = 1 h/s'))}</span>
+          </div>
           <p class="pole-globe-hint">${escapeHtml(t('Drag to rotate, scroll or pinch to zoom. Move over the south cap: it is selectable; click opens the 2D map.'))}</p>
         </div>
         <div class="pole-map-wrap" id="sp-map-wrap" hidden>
@@ -141,7 +152,7 @@ export function createSouthPole(ctx) {
       <aside class="pole-side" id="sp-panel">
         <div class="pole-side-head">
           <h3>${escapeHtml(t('Study area'))}</h3>
-          <button type="button" class="btn-ghost btn-xs" id="sp-panel-toggle" aria-label="${escapeHtml(t('Collapse panel'))}">×</button>
+          <button type="button" class="pole-min" id="sp-panel-toggle" aria-label="${escapeHtml(t('Minimize panel'))}" title="${escapeHtml(t('Minimize panel'))}">–</button>
         </div>
         <div id="sp-sites"></div>
         <label class="pole-label">${escapeHtml(t('Map point'))}<span class="pole-point" id="sp-point">${escapeHtml(t('None selected'))}</span></label>
@@ -164,19 +175,23 @@ export function createSouthPole(ctx) {
       </aside>
 
       <div class="pole-windowbar" id="sp-windowbar" hidden>
+        <div class="pole-window-head">
+          <span class="pole-window-title">${escapeHtml(t('Launch window'))}</span>
+          <span class="pole-window-dates"><b id="sp-win-start"></b><span class="arrow">→</span><b id="sp-win-end"></b></span>
+          <label class="pole-window-stay">${escapeHtml(t('Stay'))}<select id="sp-stay"></select></label>
+          <button type="button" class="pole-window-close" id="sp-window-hide" aria-label="${escapeHtml(t('Minimize the window bar'))}" title="${escapeHtml(t('Minimize the window bar'))}">–</button>
+        </div>
         <div class="pole-range2" id="sp-range2" role="group" aria-label="${escapeHtml(t('Launch window'))}">
           <div class="pole-range2-track"></div>
           <div class="pole-range2-fill" id="sp-range2-fill"></div>
           <button type="button" class="pole-range2-thumb" data-handle="start" id="sp-thumb-start" aria-label="${escapeHtml(t('Window start'))}"></button>
           <button type="button" class="pole-range2-thumb" data-handle="end" id="sp-thumb-end" aria-label="${escapeHtml(t('Window end'))}"></button>
-          <span class="pole-range2-date" id="sp-range2-start"></span>
-          <span class="pole-range2-date" id="sp-range2-end"></span>
+          <div class="pole-range2-ticks" id="sp-range2-ticks"></div>
         </div>
-        <label>${escapeHtml(t('Stay'))}<select id="sp-stay"></select></label>
-        <button type="button" class="btn-ghost btn-xs" id="sp-window-hide" aria-label="${escapeHtml(t('Hide the window bar'))}">×</button>
         <p id="sp-windowinfo"></p>
       </div>
-      <button type="button" class="btn-ghost btn-xs" id="sp-window-show" hidden>${escapeHtml(t('Window'))}</button>
+      <button type="button" class="pole-restore" id="sp-window-show" hidden>${escapeHtml(t('Launch window'))} <span>▲</span></button>
+      <button type="button" class="pole-panel-open" id="sp-panel-open" hidden aria-label="${escapeHtml(t('Show the study panel'))}">${escapeHtml(t('Study'))}</button>
 
       <div class="pole-modal" id="sp-modal" role="dialog" aria-modal="true" aria-labelledby="sp-mtitle" hidden>
         <div class="pole-modal-card">
@@ -203,7 +218,7 @@ export function createSouthPole(ctx) {
         <div class="pole-popup-card" id="sp-popup-card"></div>
       </div>
     </div>`;
-    for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-start', 'sp-end', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-modal', 'sp-mstart', 'sp-mend', 'sp-mstay', 'sp-mwindowinfo', 'sp-confirm', 'sp-popup', 'sp-popup-card', 'sp-panel-show', 'sp-window-hide', 'sp-window-show', 'sp-range2-start', 'sp-range2-end', 'sp-gzin', 'sp-gzout', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target', 'sp-back-map']) els[id] = document.getElementById(id);
+    for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-start', 'sp-end', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-modal', 'sp-mstart', 'sp-mend', 'sp-mstay', 'sp-mwindowinfo', 'sp-confirm', 'sp-popup', 'sp-popup-card', 'sp-panel-show', 'sp-panel-open', 'sp-window-hide', 'sp-window-show', 'sp-win-start', 'sp-win-end', 'sp-range2-ticks', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target', 'sp-back-map']) els[id] = document.getElementById(id);
     for (const id of ['sp-range2', 'sp-range2-fill', 'sp-thumb-start', 'sp-thumb-end']) els[id] = document.getElementById(id);
     bind();
     initWindow();
@@ -220,8 +235,8 @@ export function createSouthPole(ctx) {
 
   /* ---------- globe ---------- */
 
-  function frameNow() {
-    const e = eph(), ms = ctx.landing() + ctx.previewHour() * HOUR, index = clamp(e.indexOf(ms), 0, e.n - 1), state = e.stateAt(index);
+  function frameNow(atMs = null) {
+    const e = eph(), ms = atMs ?? (ctx.landing() + ctx.previewHour() * HOUR), index = clamp(e.indexOf(ms), 0, e.n - 1), state = e.stateAt(index);
     const status = new Map(ctx.sites().map((site) => [site.id, { sun: site.series.sunVis[Math.round(index)] === 1, link: site.series.earthClr[Math.round(index)] > ctx.margin() }]));
     return { ms, index, j: Math.round(index), sun: unit(state[1], state[0]), earth: unit(state[4], state[3]), earthLat: state[4], earthLon: state[3], sunLat: state[1], sunLon: state[0], sunDistKm: state[2], earthDistKm: state[5], status };
   }
@@ -251,6 +266,14 @@ export function createSouthPole(ctx) {
       getFrame: frameNow,
       setFailed: (failed) => { ui.globeFailed = failed; if (failed) setStage('map'); },
       controlsMode: 'grab', maxPixelRatio: 1.5,
+      baseMs: () => ctx.landing() + ctx.previewHour() * HOUR,
+      frameAt: (ms) => frameNow(ms),
+      epochMs: eph().t0,
+      animation: () => ({ running: ui.animRunning && ui.stage === 'globe', speed: ui.animSpeed }),
+      onTime: (ms) => {
+        const site = selectedSite();
+        els['sp-hud'].textContent = `${site ? site.label ?? site.name : t('No site selected')} · ${fmtDateTime(ms)}`;
+      },
       studyLat: STUDY_LAT,
       onMoonTap: (point) => { if (point.lat > STUDY_LAT) { setStage('map'); setNotice(t('That point is north of 85°S; the map stays on the pole.')); centrePole(); } else { setStage('map'); ui.map.cxKm = project(point.lat, point.lon).xKm; ui.map.cyKm = project(point.lat, point.lon).yKm; ui.map.scale = 24; drawMap(); } },
       pulse: pulseState,
@@ -611,18 +634,14 @@ export function createSouthPole(ctx) {
       const site = selectedSite();
       els['sp-hud'].textContent = `${site ? site.label ?? site.name : t('No site selected')} · ${fmtDateTime(ctx.landing())}`;
     }
-    els['sp-windowhud'].textContent = `${isoDate(dayMs(ui.window.startDay))} → ${isoDate(dayMs(ui.window.endDay))}`;
+    els['sp-windowhud'].textContent = t('{days} days in the launch window', { days: ui.window.endDay - ui.window.startDay + 1 }) + ` · ${ctx.stayH()} h`;
   }
 
   function renderAll() {
     if (!ui.built) return;
-    renderStaySelects(); syncWindowInputs(); renderSites(); renderLink(); renderGrid(); renderDetail(); renderPreviewRange(); renderHud(); renderSlots(); renderPanelToggle();
+    renderStaySelects(); syncWindowInputs(); renderSites(); renderLink(); renderGrid(); renderDetail(); renderPreviewRange(); renderHud(); renderSlots();
     if (ui.stage === 'map') { if (ui.tab === 'moon') drawMoon(); else drawMap(); }
     if (ui.stage === 'atlas') syncAtlas(ui.popupCell ?? ui.cell);
-  }
-
-  function renderPanelToggle() {
-    els['sp-panel-toggle'].onclick = () => { els['sp-panel'].classList.toggle('collapsed'); };
   }
 
   function renderSites() {
@@ -749,6 +768,12 @@ export function createSouthPole(ctx) {
   function bind() {
     els['sp-gzin'].onclick = () => ui.globe?.zoom?.(0.8);
     els['sp-gzout'].onclick = () => ui.globe?.zoom?.(1.25);
+    for (const b of document.querySelectorAll('.pole-time [data-speed]')) b.onclick = () => {
+      ui.animSpeed = Number(b.dataset.speed); ui.animRunning = true;
+      for (const x of document.querySelectorAll('.pole-time [data-speed]')) x.classList.toggle('on', x === b);
+      els['sp-pause'].textContent = '⏸';
+    };
+    els['sp-pause'].onclick = () => { ui.animRunning = !ui.animRunning; els['sp-pause'].textContent = ui.animRunning ? '⏸' : '▶'; };
     els['sp-zin'].onclick = () => { ui.map.scale = clamp(ui.map.scale * 1.5, 1.5, 60); drawMap(); };
     els['sp-zout'].onclick = () => { ui.map.scale = clamp(ui.map.scale / 1.5, 1.5, 60); drawMap(); };
     els['sp-center'].onclick = centrePole;
@@ -759,8 +784,11 @@ export function createSouthPole(ctx) {
     bindRange();
     for (const id of ['sp-stay', 'sp-mstay']) els[id].onchange = (e) => { ctx.setStay(e.target.value); renderStaySelects(); setWindow(ui.window.startDay, ui.window.endDay); };
     els['sp-confirm'].onclick = confirmWindow;
-    els['sp-panel-toggle'].onclick = () => els['sp-panel'].classList.toggle('collapsed');
-    els['sp-panel-show'].onclick = () => els['sp-panel'].classList.toggle('collapsed');
+    const syncPanel = () => { const collapsed = els['sp-panel'].classList.contains('collapsed'); if (els['sp-panel-open']) els['sp-panel-open'].hidden = !collapsed; };
+    els['sp-panel-toggle'].onclick = () => { els['sp-panel'].classList.toggle('collapsed'); syncPanel(); };
+    els['sp-panel-show'].onclick = () => { els['sp-panel'].classList.toggle('collapsed'); syncPanel(); };
+    els['sp-panel-open'].onclick = () => { els['sp-panel'].classList.remove('collapsed'); syncPanel(); };
+    syncPanel();
     els['sp-window-hide'].onclick = () => { els['sp-windowbar'].hidden = true; els['sp-window-show'].hidden = false; };
     els['sp-window-show'].onclick = () => { els['sp-windowbar'].hidden = false; els['sp-window-show'].hidden = true; };
     els['sp-thresholds'].onchange = (e) => {
