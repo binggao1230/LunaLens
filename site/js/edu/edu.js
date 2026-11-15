@@ -235,11 +235,9 @@ export function createEducation(ctx) {
         <div><b>${escapeHtml(night)}</b><span>${escapeHtml(ui('final.night'))}</span></div>
       </div>
       <h3>${escapeHtml(ui('final.learnedTitle'))}</h3><ul>${learned}</ul>
-        <div><b>${escapeHtml(ui('final.badge'))}</b><span>${escapeHtml(ui('final.awarded', { name: st.name.trim() || ui('final.namePlaceholder') }))}</span></div>
-      </div>
       <div class="edu-next-steps">${(get('ui.final.nextSteps') ?? []).map((item) => `<p>${escapeHtml(item)}</p>`).join('')}</div>
-      <p class="edu-note">${escapeHtml(ui('final.note'))}</p>
       <div class="edu-actions"><button type="button" class="btn-primary" data-act="again">${escapeHtml(ui('playAgain'))}</button><button type="button" class="btn-ghost" data-act="expert">${escapeHtml(ui('expert'))}</button></div>
+      <p class="edu-note">${escapeHtml(ui('final.note'))}</p>
     </section></div>`;
   }
 
@@ -319,7 +317,7 @@ export function createEducation(ctx) {
     else if (act === 'back') back();
     else if (act === 'skip') { st.skipped = true; ctx.mission.unframeChoices?.(); render(); }
     else if (act === 'replay') startTour();
-    else if (act === 'again') { reset(); ctx.showView('start'); } // choose a lander again; the story restarts on the Mission page
+    else if (act === 'again') { reset(); ctx.showView('mission'); startTour(); } // the story starts again on the Mission page // choose a lander again; the story restarts on the Mission page
     else if (act === 'expert') switchMode('expert', event.target.closest('[data-act]'));
   });
 
