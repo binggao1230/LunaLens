@@ -28,12 +28,15 @@ export async function createPolar3d(env) {
       let pending = false;
       // Hoisted so texture loads that finish before the rest of the scene is built can still request a frame.
       function request() { if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; draw(); }); }
+      // The orbit axis is the Earth-facing axis (+x) unless the grab control asks for the polar axis. From the
+      // opening view over the south pole, orbiting around the axis you look along only spins the globe in place
+      // and jams against the polar clamp. OrbitControls reads camera.up once, in its constructor, so set it first.
+      camera.up.set(...(grab ? [0, 1, 0] : [1, 0, 0]));
       const controls = new OrbitControls(camera, canvas);
       controls.enablePan = false; controls.minDistance = 1.05; controls.maxDistance = MAX_DIST;
       controls.enableDamping = true; controls.dampingFactor = 0.08;
       controls.rotateSpeed = 0.5; controls.zoomSpeed = 0.8;
       controls.minPolarAngle = 0.02; controls.maxPolarAngle = Math.PI - 0.02;
-      camera.up.set(...(grab ? [0, 1, 0] : [1, 0, 0]));
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
       // The south pole is always within about 1.5° of the terminator, so the Sun alone leaves the terrain
@@ -338,6 +341,7 @@ export async function createPolar3d(env) {
         }
         updatePulse();
         renderer.render(scene, camera);
+        env.onFrame?.();
       }
       const resize = () => {
         const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
@@ -413,6 +417,17 @@ export async function createPolar3d(env) {
         reset: () => flyTo(homeDir(), 3.6),
         zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.05, MAX_DIST)); controls.update(); request(); },
         focus: (site) => { const dir = moonGroup.localToWorld(new T.Vector3(...unit(site.lat, site.lon))).normalize(); flyTo(dir, site.lat <= -75 ? 1.07 : undefined); },
+        /** Fly the camera over any point; used by the historic-site cards. */
+        look: (lat, lon, distance) => flyTo(moonGroup.localToWorld(new T.Vector3(...unit(lat, lon))).normalize(), distance),
+        /** Screen position of a surface point for HTML overlays: hidden on the far hemisphere, fading towards the limb. */
+        project: (lat, lon) => {
+          const normal = moonGroup.localToWorld(new T.Vector3(...unit(lat, lon))).normalize();
+          const toward = normal.dot(camera.position.clone().normalize()); // 1 at the centre of the disc, 0 at the limb
+          const p = normal.clone().multiplyScalar(1.004).project(camera);
+          const dist = camera.position.length();
+          return { x: (p.x * 0.5 + 0.5) * stage.clientWidth, y: (-p.y * 0.5 + 0.5) * stage.clientHeight, visible: toward > 0.08 && p.z < 1,
+            scale: Math.sqrt(3.6 / Math.max(1.05, dist)), fade: clamp(0.35 + (toward - 0.08) / 0.5, 0.35, 1) };
+        },
       };
       resize();
     } catch (error) {

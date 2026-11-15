@@ -9,7 +9,9 @@ import { switchMode } from '../mode-transition.js';
 import { CHARACTER_MARKUP } from './character.js';
 import { assess, isOk, findBreakingDelay, findGoDelay, bestNearby, BATTERY_H, BATTERY_BONUS_H } from './verdict.js';
 
-const DAY = 864e5, TOTAL = 6;
+// Steps of the story; history (the flags of past landings) sits between the objective and the site pick.
+const STEP = { objective: 1, history: 2, site: 3, launch: 4, anomaly: 5, fix: 6, done: 7 };
+const DAY = 864e5, TOTAL = 7;
 const fmt = (s, v = {}) => String(s ?? '').replace(/\{(\w+)\}/g, (m, k) => (v[k] ?? m));
 
 /** ctx: { mission, sites, eph, landing, setLanding, margin, showView, view, language, toast } */
@@ -72,8 +74,9 @@ export function createEducation(ctx) {
 
   /* ---------- story steps ---------- */
 
+  function enterHistory() { setStep(STEP.history); say('history.intro', {}, 'happy'); render(); ctx.mission.flags?.(); }
   function enterSite() {
-    setStep(2);
+    setStep(STEP.site); ctx.mission.flags?.();
     const o = opts(), list = ctx.sites(), ok = (ms) => list.some((s) => isOk(assess(s, idx(ms), o).verdict));
     if (!ok(ctx.landing())) {
       for (let d = 1; d <= 30; d++) {
@@ -84,13 +87,13 @@ export function createEducation(ctx) {
   }
   function enterLaunch() {
     st.base = ctx.landing();
-    setStep(3); say('launch.cheer', {}, 'celebrating'); render();
+    setStep(STEP.launch); say('launch.cheer', {}, 'celebrating'); render();
     ctx.mission.send();
   }
   function enterAnomaly() {
     const hit = findBreakingDelay(st.picked, idx(st.base), opts());
     // Step and anomaly are set first so the timeline redraw below already carries the highlight.
-    setStep(4); say(hit ? 'anomaly.delay' : 'anomaly.contact', {}, 'worried');
+    setStep(STEP.anomaly); say(hit ? 'anomaly.delay' : 'anomaly.contact', {}, 'worried');
     if (hit) {
       st.delay = hit.days;
       st.anomaly = { kind: hit.result.reason === 'earth' ? 'earth' : 'night', days: hit.days };
@@ -101,21 +104,23 @@ export function createEducation(ctx) {
     }
     render();
   }
-  function enterFix() { setStep(5); say('fix.intro', {}, 'worried'); render(); }
-  function enterDone() { setStep(6); say('done.cheer', {}, 'celebrating'); render(); }
+  function enterFix() { setStep(STEP.fix); say('fix.intro', {}, 'worried'); render(); }
+  function enterDone() { setStep(STEP.done); say('done.cheer', {}, 'celebrating'); render(); }
 
   function next() {
     if (st.step === 1) {
-      if (st.sub < introLines().length - 1) { st.sub++; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); } else enterSite();
-    } else if (st.step === 2) { if (isOk(current()?.verdict)) enterLaunch(); }
-    else if (st.step === 4) {
+      if (st.sub < introLines().length - 1) { st.sub++; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); } else enterHistory();
+    } else if (st.step === STEP.history) enterSite();
+    else if (st.step === STEP.site) { if (isOk(current()?.verdict)) enterLaunch(); }
+    else if (st.step === STEP.anomaly) {
       if (st.anomaly.kind !== 'contact' && st.sub === 0) { st.sub = 1; st.focus = true; say(`anomaly.${st.anomaly.kind}`, { site: st.picked.short }, 'worried'); render(); }
       else enterFix();
-    } else if (st.step === 5) { if (canComplete()) enterDone(); }
+    } else if (st.step === STEP.fix) { if (canComplete()) enterDone(); }
   }
   function back() {
     if (st.step === 1 && st.sub > 0) { st.sub--; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); }
-    else if (st.step === 2) { const last = Math.max(0, introLines().length - 1); setStep(1, last); say(`objective.intro.${last}`, {}, 'happy'); render(); }
+    else if (st.step === STEP.history) { const last = Math.max(0, introLines().length - 1); setStep(STEP.objective, last); say(`objective.intro.${last}`, {}, 'happy'); render(); }
+    else if (st.step === STEP.site) enterHistory();
   }
   const canComplete = () => current()?.verdict === 'go' && (st.anomaly?.kind !== 'contact' || st.tried);
 
@@ -147,7 +152,6 @@ export function createEducation(ctx) {
   /* ---------- rendering ---------- */
 
   const visible = () => st.active && st.story && st.step > 0 && ctx.view() === 'mission';
-  const verdictChip = (r) => (r ? `<span class="edu-verdict v-${r.verdict}" role="status">${escapeHtml(ui(`verdict.${r.verdict}`))}</span>` : '');
 
   function leversHtml(r) {
     const best = st.moved ? null : bestNearby(ctx.sites(), st.picked, idx(ctx.landing()), opts());
@@ -187,7 +191,7 @@ export function createEducation(ctx) {
 
   function render() {
     if (!visible()) { root.innerHTML = ''; st.key = ''; return; }
-    const r = st.step >= 2 ? current() : null;
+    const r = st.step >= STEP.site ? current() : null;
     if (st.skipped) {
       const key = `skip|${ctx.language()}`;
       if (key !== st.key) {
@@ -198,28 +202,32 @@ export function createEducation(ctx) {
       }
       return;
     }
-    if (st.step === 6) {
+    if (st.step === STEP.done) {
       const key = `final|${ctx.language()}|${st.name}`;
       if (key !== st.key) { st.key = key; root.innerHTML = finalHtml(r); if (st.focus) { st.focus = false; root.querySelector('#edu-final-title')?.focus({ preventScroll: true }); } }
       return;
     }
     const text = line(st.say.path, st.say.values);
-    const key = [st.step, st.sub, text, st.mood, r?.verdict, st.relay, st.bonus, st.delay, st.moved?.to, st.waited, st.picked?.id, ctx.language(), st.step === 5 && canComplete()].join('|');
+    const key = [st.step, st.sub, text, st.mood, r?.verdict, st.relay, st.bonus, st.delay, st.moved?.to, st.waited, st.picked?.id, ctx.language(), st.step === STEP.fix && canComplete()].join('|');
     if (key === st.key) return;
     st.key = key;
-    const btn = (act, label, extra = '') => `<button type="button" class="${act === 'next' ? 'btn-primary' : 'btn-ghost'}" data-act="${act}" ${extra}>${escapeHtml(label)}</button>`;
-    let actions = '';
-    if (st.step === 1) actions = btn('back', ui('back'), st.sub === 0 ? 'disabled' : '') + btn('next', ui('next'));
-    else if (st.step === 2) actions = btn('back', ui('back')) + btn('next', ui('continue'), isOk(r?.verdict) ? '' : 'disabled');
-    else if (st.step === 4) actions = btn('next', st.anomaly.kind !== 'contact' && st.sub === 0 ? ui('whatHappened') : ui('fixIt'));
-    else if (st.step === 5) actions = btn('next', ui('complete'), canComplete() ? '' : 'disabled');
-    const skip = st.step === 3 ? '' : `<button type="button" class="edu-skip" data-act="skip">${escapeHtml(ui('skip'))}</button>`;
+    // Back and Next are on every step. Next is green when the story can move on, grey and locked when not.
+    const LOCK = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>';
+    const btn = (act, label, enabled) => `<button type="button" class="${act === 'next' ? 'edu-next' : 'btn-ghost'}" data-act="${act}" ${enabled ? '' : 'disabled aria-disabled="true"'}>${act === 'next' && !enabled ? LOCK : ''}${escapeHtml(label)}</button>`;
+    const canBack = (st.step === STEP.objective && st.sub > 0) || st.step === STEP.history || st.step === STEP.site;
+    let nextLabel = ui('next'), canNext = true;
+    if (st.step === STEP.site) { nextLabel = ui('continue'); canNext = isOk(r?.verdict); }
+    else if (st.step === STEP.launch) canNext = false;
+    else if (st.step === STEP.anomaly) nextLabel = st.anomaly.kind !== 'contact' && st.sub === 0 ? ui('whatHappened') : ui('fixIt');
+    else if (st.step === STEP.fix) { nextLabel = ui('complete'); canNext = canComplete(); }
+    const actions = btn('back', ui('back'), canBack) + btn('next', nextLabel, canNext);
+    const skip = st.step === STEP.launch ? '' : `<button type="button" class="edu-skip" data-act="skip">${escapeHtml(ui('skip'))}</button>`;
     root.innerHTML = `<aside class="edu-panel step-${st.step}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
       <div class="edu-char mood-${st.mood}">${CHARACTER_MARKUP}</div>
       <div class="edu-bubble">
-        <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span>${[2, 4, 5].includes(st.step) ? verdictChip(r) : ''}</div>
-        <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite">${escapeHtml(text)}</p>
-        ${st.step === 5 ? leversHtml(r) : ''}
+        <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span></div>
+        <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite"><b class="edu-speaker">${escapeHtml(get('character.name') ?? 'Lumi')}</b>${escapeHtml(text)}</p>
+        ${st.step === STEP.fix ? leversHtml(r) : ''}
         <div class="edu-actions">${actions}${skip}</div>
       </div>
     </aside>`;
@@ -254,21 +262,30 @@ export function createEducation(ctx) {
     onMissionRefresh(site, frame) {
       st.picked = site; st.status = site ? frame.status.get(site.id) ?? null : null;
       if (!st.active || st.skipped || !st.story) return;
-      if (st.step === 2) {
+      if (st.step === STEP.site) {
         if (st.hold) { st.hold = false; return; }
         const r = current(); let mood = moodFor(), path = `site.${mood}`;
         if (r?.neverLit) { path = 'site.shadow'; mood = 'sleeping'; } else if (isOk(r?.verdict)) path = 'site.ready';
         say(path, { site: site.short }, mood); render();
-      } else if (st.step === 4 || st.step === 5) render();
+      } else if (st.step === STEP.anomaly || st.step === STEP.fix) render();
     },
-    onArrived() { if (st.active && !st.skipped && st.step === 3) enterAnomaly(); },
+    onArrived() { if (st.active && !st.skipped && st.step === STEP.launch) enterAnomaly(); },
     highlight() {
-      if (!st.active || st.skipped || st.step < 4 || st.step > 5 || !st.picked || !st.anomaly) return null;
+      if (!st.active || st.skipped || st.step < STEP.anomaly || st.step > STEP.fix || !st.picked || !st.anomaly) return null;
       const r = current();
       if (!r || r.verdict === 'go') return null;
       const run = st.anomaly.kind === 'night' ? [r.nightFrom, r.nightH] : [r.quietFrom, r.quietH];
       return run[1] ? { id: st.picked.id, from: run[0], to: run[0] + run[1] } : null;
     },
     async setLanguage(lang) { st.story = await load(lang); st.key = ''; render(); },
+    /** A historic-site card opened (lesson) or closed (null): Lumi's pose follows the lesson. */
+    react(lesson) {
+      if (!st.active) return;
+      if (lesson === null) { if (st.moodBase) { st.mood = st.moodBase; st.moodBase = null; } }
+      else { st.moodBase ??= st.mood; st.mood = lesson === 'sun' || lesson === 'night' ? 'worried' : 'happy'; }
+      st.key = ''; render();
+    },
+    /** Flags the history step points at. */
+    highlightFlags() { return st.active && !st.skipped && st.step === STEP.history ? ['apollo11', 'im2'] : []; },
   };
 }

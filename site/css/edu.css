@@ -212,6 +212,69 @@ body.edu-on .edu-final .btn-primary{background:#5aa7f0;color:#07111c;border-radi
   body.edu-on[data-view=mission] .stage .hint{font-size:9px}
 }
 
+/* ---- Education mode: historic landing-site flags, their cards and the off-map list ---- */
+/* Colours of this layer, defined here so it does not depend on a shared token file. */
+.hflags,.hcard,.hpanel{--primary:#f5c542;--accent:#5aa7f0;--accent-soft:rgba(90,167,240,.14);--accent-line:rgba(90,167,240,.45)}
+.hflags{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hflag{--ax:20.4%;--ay:89.4%;position:absolute;left:0;top:0;width:28px;height:32px;padding:0;margin:0;border:0;background:none;cursor:pointer;pointer-events:auto;min-height:0;border-radius:0;
+  transform:translate(calc(-1 * var(--ax)),calc(-1 * var(--ay))) scale(var(--s,1));transform-origin:var(--ax) var(--ay);transition:transform .15s ease,filter .15s ease,opacity .2s ease}
+.hflag img{display:block;width:100%;height:100%;pointer-events:none}
+.hflag::after{content:"";position:absolute;left:var(--ax);top:var(--ay);width:22px;height:9px;border-radius:50%;transform:translate(-50%,-50%);border:1.5px solid transparent;pointer-events:none}
+.hflag.hover,.hflag:hover{transform:translate(calc(-1 * var(--ax)),calc(-1 * var(--ay))) scale(calc(var(--s,1) * 1.15));filter:drop-shadow(0 0 8px rgba(115,168,203,.75))}
+.hflag.sel{transform:translate(calc(-1 * var(--ax)),calc(-1 * var(--ay))) scale(calc(var(--s,1) * 1.25));filter:drop-shadow(0 0 10px rgba(255,255,255,.55))}
+.hflag.sel::after{border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.6)}
+.hflag.planned::after{border:1.5px dashed rgba(255,255,255,.7)}
+.hflag.hl::after{border-color:var(--primary);animation:hflag-pulse 1.4s ease-in-out infinite}
+.hflag:focus-visible{outline:2px solid var(--primary);outline-offset:4px;border-radius:6px}
+@keyframes hflag-pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,197,66,.6)}50%{box-shadow:0 0 0 8px rgba(245,197,66,0)}}
+.hcard{position:absolute;z-index:4;width:min(320px,calc(100% - 24px));background:rgba(11,17,28,.97);border:1px solid var(--accent-line);border-radius:16px;padding:14px 16px;color:var(--text);box-shadow:0 0 30px rgba(90,167,240,.15),0 18px 50px -20px rgba(0,0,0,.8)}
+.hcard[hidden]{display:none}
+.hcard-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.hcard h3{margin:0;font-size:17px;font-weight:600;outline:none}
+.hcard-meta{margin:2px 0 0;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.hchip{flex:none;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;border-radius:99px;padding:3px 9px;border:1px solid transparent}
+.hchip.s-success{background:rgba(67,217,138,.18);color:var(--good);border-color:rgba(67,217,138,.45)}
+.hchip.s-partial{background:rgba(245,197,66,.16);color:var(--sun);border-color:rgba(245,197,66,.45)}
+.hchip.s-failed{background:rgba(255,107,107,.16);color:var(--critical);border-color:rgba(255,107,107,.45)}
+.hchip.s-planned{background:transparent;color:var(--muted);border:1px dashed var(--muted)}
+.hcard-title{margin:10px 0 4px;font-size:15px;font-weight:600}
+.hcard-fact{margin:0;font-size:13px;line-height:1.5;color:var(--text2)}
+.hcard-lesson{display:flex;align-items:flex-start;gap:8px;margin:10px 0 0;padding:8px 10px;border-radius:10px;background:var(--accent-soft);font-size:12px;line-height:1.45;color:var(--text)}
+.hcard-lesson i{flex:none;width:18px;height:18px;color:var(--accent)}
+.hcard-lesson svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.hcard-note{margin:8px 0 0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hcard-x{position:absolute;top:8px;right:8px;width:28px;height:28px;min-height:0;padding:0;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+.hcard-x:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.hcard-top{padding-right:28px}
+.hpanel{position:absolute;right:16px;bottom:64px;z-index:3;width:min(260px,calc(100% - 32px));max-height:46%;overflow:auto;background:rgba(7,11,20,.85);border:1px solid var(--border);border-radius:12px;padding:10px 10px 6px}
+.hpanel[hidden]{display:none}
+.hpanel-head{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 2px 6px;display:flex;justify-content:space-between;gap:8px}
+.hpanel-list{display:grid;gap:2px}
+.hpanel-list button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:none;color:var(--text);padding:6px 6px;min-height:0;border-radius:8px;font-size:13px;cursor:pointer}
+.hpanel-list button:hover,.hpanel-list button.on{background:rgba(255,255,255,.06)}
+.hpanel-list img{width:13px;height:15px;flex:none}
+.hpanel-list span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hpanel-list small{color:var(--muted);margin-left:4px}
+.hpanel-list i{font-style:normal;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:1px 7px;flex:none}
+/* The "Historic sites" switch: label, then a track whose knob slides right and lights up when on. */
+#m-hist{display:none}
+body.edu-on #m-hist{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 10px 0 12px;border-radius:99px;border:1px solid var(--border);
+  background:transparent;color:var(--text2);font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;cursor:pointer;transition:color .15s ease,border-color .15s ease}
+body.edu-on #m-hist:hover{color:var(--text);border-color:rgba(200,220,240,.35)}
+#m-hist img{width:11px;height:13px;opacity:.55;transition:opacity .15s ease}
+.hswitch-track{position:relative;flex:none;width:30px;height:18px;border-radius:99px;background:rgba(255,255,255,.14);transition:background-color .2s ease}
+.hswitch-knob{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#c3c7ce;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:transform .2s ease,background-color .2s ease}
+#m-hist[aria-checked=true]{color:var(--text)}
+#m-hist[aria-checked=true] img{opacity:1}
+#m-hist[aria-checked=true] .hswitch-track{background:#5aa7f0;box-shadow:0 0 12px rgba(90,167,240,.4)}
+#m-hist[aria-checked=true] .hswitch-knob{transform:translateX(12px);background:#fff}
+#m-hist:focus-visible{outline:2px solid #f5c542;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.hswitch-track,.hswitch-knob{transition:none}}
+@media (max-width:760px){body.edu-on #m-hist .hswitch-label{display:none}}
+@media (max-width:760px){
+  .hpanel{right:10px;bottom:120px;max-height:38%}
+  .hcard{width:min(300px,calc(100% - 20px))}
+}
 :root{--bar-h:56px;--bottom-nav-h:0px;--scrub-h:0px}
 html,body{height:100%;overflow:hidden}
 body{padding-bottom:0}
@@ -278,3 +341,13 @@ body[data-view=start] .appbar{background:transparent;border-bottom-color:transpa
   .appbar #mode-toggle button{flex:1;justify-content:center}
   .appbar .tabs,.appbar .side{display:none}
 }
+
+/* ---- story panel: speaker name, and Back / Next on every step ---- */
+.edu-speaker{display:block;margin-bottom:2px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:#5aa7f0}
+.edu-next{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:8px 18px;border-radius:99px;border:1px solid transparent;font:inherit;font-size:11px;
+  letter-spacing:.16em;text-transform:uppercase;font-weight:600;background:#43d98a;color:#062014;box-shadow:0 0 18px rgba(67,217,138,.35);cursor:pointer;transition:filter .15s ease,background-color .15s ease}
+.edu-next:hover{filter:brightness(1.06)}
+.edu-next:disabled{background:rgba(255,255,255,.08);color:var(--muted);border-color:var(--border);box-shadow:none;cursor:not-allowed;filter:none}
+.edu-next svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.edu-next:focus-visible{outline:2px solid #f5c542;outline-offset:3px}
+.edu-actions .btn-ghost:disabled{opacity:.4;cursor:not-allowed}
