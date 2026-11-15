@@ -1,5 +1,6 @@
 # LunaLens construction map
 
+- [ ] Drop the Explore and Data tabs: Atlas gets an Explore entry button and Explore ends with a Data entry button.
 - [x] Ask for Expert or Education mode on the first screen; Expert mode drops the Mission page; Education mode shows the Mission page only (no Data, Atlas, Explore, South Pole or mobile link).
 - [x] Add the mobile-first companion at `site/mobile/`: place and UTC day pickers, hourly Sun/Earth/overlap readout, timeline and EN/FR/ZH copy, linked from the main header.
 - [ ] South Pole: make the search-window end date drive the grid (best touchdown per block, one sample per UTC day), refresh A/B/C on scenario change, add sunlight to the screening score, sync the 3D clock with the Earth-link readout, centre Refine on the selected block, add an edit-search-window action with UTC date fields, and fix the mobile map aspect ratio.
