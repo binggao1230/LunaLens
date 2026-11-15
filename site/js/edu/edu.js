@@ -14,6 +14,8 @@ const STEP = { objective: 1, site: 2, history: 3, launch: 4, anomaly: 5, fix: 6,
 const DAY = 864e5, TOTAL = 7;
 // The objective segment about the time of landing: the date bar on top of the Mission page pulses while it shows.
 const TIME_SEGMENT = 6;
+// The objective segment that explains the 30-day graph: the graph (#m-lanes) pulses while it shows.
+const GRAPH_SEGMENT = 7;
 const fmt = (s, v = {}) => String(s ?? '').replace(/\{(\w+)\}/g, (m, k) => (v[k] ?? m));
 
 /** ctx: { mission, sites, eph, landing, setLanding, margin, showView, view, language, toast } */
@@ -219,6 +221,8 @@ export function createEducation(ctx) {
   function render() {
     const pointAtTime = visible() && !st.skipped && st.step === STEP.objective && st.sub === TIME_SEGMENT;
     document.querySelector('.datebar')?.classList.toggle('edu-point', pointAtTime);
+    const pointAtGraph = visible() && !st.skipped && st.step === STEP.objective && st.sub === GRAPH_SEGMENT;
+    document.getElementById('m-lanes')?.classList.toggle('edu-point', pointAtGraph);
     if (!visible()) { root.innerHTML = ''; st.key = ''; return; }
     const r = st.step >= STEP.site ? current() : null;
     if (st.skipped) {
