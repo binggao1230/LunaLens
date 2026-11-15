@@ -410,9 +410,12 @@ export async function createPolar3d(env) {
           // Markers keep roughly the same screen size: they are 60 km wide on the ground, which is only a few
           // pixels from far away and a wall across the view once the camera is down at the relief.
           const markerScale = clamp(camera.position.length() * 0.0012, 0.0009, 0.03);
-          m.dotMesh.scale.setScalar(selected ? markerScale * 1.4 : markerScale);
+          // Education: bigger dots that gently pulse, so the choices are easy to see and tap.
+          // (about 8 px whatever the zoom, pulsing ±25%; Expert keeps its smaller markers)
+          const edu = env.markerBoost?.(), base = edu ? camera.position.length() * 0.0042 * (1 + 0.25 * Math.sin(performance.now() / 260)) : markerScale;
+          m.dotMesh.scale.setScalar(selected ? base * 1.3 : base);
           m.ring.visible = status.link && status.sun;
-          m.ring.scale.setScalar(selected ? markerScale * 1.4 : markerScale);
+          m.ring.scale.setScalar(selected ? base * 1.3 : base);
         }
         const picked = markers.find((m) => m.site === chosen);
         selectRing.visible = Boolean(picked);
@@ -426,9 +429,16 @@ export async function createPolar3d(env) {
         renderer.render(scene, camera);
         env.onFrame?.();
       }
+      // shift = where the Moon's centre sits on screen, in normalised device coordinates (null = centred). It is a
+      // projection offset, so picking, labels and flags all follow it; Education uses it to keep the choices clear
+      // of the guide's bubble.
+      let shift = null;
+      const applyShift = (cam, w, h) => {
+        if (shift) cam.setViewOffset(w, h, -shift[0] * w / 2, shift[1] * h / 2, w, h); else cam.clearViewOffset();
+      };
       const resize = () => {
         const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
-        renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); request();
+        renderer.setSize(w, h, false); camera.aspect = w / h; applyShift(camera, w, h); camera.updateProjectionMatrix(); request();
       };
       new ResizeObserver(resize).observe(stage);
       controls.addEventListener('change', request);
@@ -539,6 +549,7 @@ export async function createPolar3d(env) {
         const a = env.animation?.();
         const now = performance.now();
         if (grab && controls.update()) request();
+        if (env.markerBoost?.() && active() && local.mode === '3d') request(); // keep the pulse moving
         if (a?.running) {
           if (animBase === null) animBase = env.baseMs?.() ?? null;
           if (lastAnim) animOffset += ((now - lastAnim) / 1000) * 3600e3 * a.speed;
@@ -569,7 +580,46 @@ export async function createPolar3d(env) {
         request: () => { if (!home) { setHome(); home = true; } request(); },
         reset: () => flyTo(homeDir(), 3.6),
         zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.05, maxDist())); syncUp(); controls.update(); request(); },
-        focus: (site) => { const dir = moonGroup.localToWorld(new T.Vector3(...unit(site.lat, site.lon))).normalize(); flyTo(dir, site.lat <= -75 ? 1.07 : undefined); },
+        // The caller may choose how close to fly; 'keep' turns to the site without changing the zoom (Education).
+        focus: (site) => { const dir = moonGroup.localToWorld(new T.Vector3(...unit(site.lat, site.lon))).normalize(); const d = env.focusDistance?.(site); flyTo(dir, d === 'keep' ? undefined : d ?? (site.lat <= -75 ? 1.07 : undefined)); },
+        /** Turn and zoom so every given site is in view (Education: the three choices). */
+        /** Turn and zoom so every given site is in view, with the Moon moved on screen so the group sits clear of a
+         *  box. aim: where the group should sit, in normalised device coordinates (-1..1); avoid: [x0, y0, x1, y1]
+         *  in the same units (Education: the guide's bubble). Tries the spot, then gentler spots, zooming out
+         *  until every site faces the camera, lies in the view and stays outside the box. */
+        frame: (list, { aim = [0, 0], avoid = null } = {}) => {
+          const dirs = list.map((site) => moonGroup.localToWorld(new T.Vector3(...unit(site.lat, site.lon))).normalize());
+          if (!dirs.length) return;
+          const centre = dirs.reduce((a, d) => a.add(d), new T.Vector3()).normalize();
+          const spread = Math.max(...dirs.map((d) => Math.acos(clamp(d.dot(centre), -1, 1))));
+          const base = clamp(1.45 + spread * 2.6, 1.6, maxDist());
+          const w = stage.clientWidth, h = stage.clientHeight;
+          let up = camera.up.clone().sub(centre.clone().multiplyScalar(camera.up.dot(centre)));
+          if (up.lengthSq() < 1e-6) up = new T.Vector3(1, 0, 0).sub(centre.clone().multiplyScalar(centre.x));
+          up.normalize();
+          const probe = new T.PerspectiveCamera(camera.fov, w / h, 0.01, 100);
+          const fits = (spot, dist) => {
+            shift = spot; applyShift(probe, w, h); probe.updateProjectionMatrix();
+            probe.position.copy(centre).multiplyScalar(dist); probe.up.copy(up); probe.lookAt(0, 0, 0); probe.updateMatrixWorld();
+            return dirs.every((d) => {
+              if (d.dot(centre) < 0.15) return false;
+              const p = d.clone().project(probe);
+              if (Math.abs(p.x) > 0.9 || Math.abs(p.y) > 0.86) return false;
+              return !(avoid && p.x > avoid[0] - 0.06 && p.x < avoid[2] + 0.06 && p.y > avoid[1] - 0.06 && p.y < avoid[3] + 0.06);
+            });
+          };
+          const spots = [aim, [aim[0] * 1.2, aim[1] * 0.6], [aim[0] * 0.7, aim[1] * 1.3], [aim[0] * 0.5, aim[1] * 0.5], [0, 0]];
+          let best = null;
+          search: for (const spot of spots) for (const zoom of [1, 1.2, 1.45, 1.75, 2.1]) {
+            const dist = Math.min(maxDist(), base * zoom);
+            if (fits(spot, dist)) { best = [spot, dist]; break search; }
+          }
+          if (!best) best = [aim, Math.min(maxDist(), base * 2.1)];
+          shift = best[0][0] || best[0][1] ? best[0] : null; applyShift(camera, w, h); camera.updateProjectionMatrix();
+          flyTo(centre, best[1]);
+        },
+        /** Put the Moon back in the middle of the stage. */
+        unframe: () => { if (!shift) return; shift = null; applyShift(camera, stage.clientWidth, stage.clientHeight); camera.updateProjectionMatrix(); request(); },
         /** Fly the camera over any point; used by the historic-site cards. */
         look: (lat, lon, distance) => flyTo(moonGroup.localToWorld(new T.Vector3(...unit(lat, lon))).normalize(), distance),
         /** Screen position of a surface point for HTML overlays: hidden on the far hemisphere, fading towards the limb. */
