@@ -2,7 +2,7 @@
 // Globe -> 2D map (South Pole blocks / Whole Moon) -> Atlas for the chosen cell.
 // The launch window is chosen in a dialog, then kept in a persistent bottom bar.
 import { t } from '../../i18n.js';
-import { escapeHtml, fmtLatLon, fmtDateTime, fmtTime, isoDate } from '../../format.js';
+import { escapeHtml, fmtLatLon, fmtDateTime, fmtTime, isoDate, compass } from '../../format.js';
 import { createPolar3d } from '../polar3d/index.js';
 import { computeHorizon } from '../../engine/dem.js';
 import {
@@ -358,6 +358,9 @@ export function createSouthPole(ctx) {
         <div id="sp-compare"></div>
         <h3>${escapeHtml(t('Earth link at the preview time'))}</h3>
         <p class="pole-link" id="sp-link"></p>
+        <h3>${escapeHtml(t('Terrain skyline'))}</h3>
+        <canvas id="sp-sky" class="pole-sky" width="720" height="150" role="img"></canvas>
+        <p class="pole-sky-read" id="sp-sky-read"></p>
         <h3>${escapeHtml(t('Preview time'))}</h3>
         <div class="pole-clock">
           <label>${escapeHtml(t('UTC'))}<input type="datetime-local" id="sp-utc" step="3600"></label>
@@ -423,7 +426,7 @@ export function createSouthPole(ctx) {
       </div>
     </div>`;
     for (const id of ['sp-stage', 'sp-globe', 'sp-map-wrap', 'sp-native', 'sp-map', 'sp-moon', 'sp-atlas', 'sp-hud', 'sp-windowhud', 'sp-panel', 'sp-panel-toggle', 'sp-sites', 'sp-point', 'sp-preview', 'sp-link', 'sp-geom', 'sp-scope', 'sp-thresholds', 'sp-refine', 'sp-restart', 'sp-probe', 'sp-progress', 'sp-legend', 'sp-list', 'sp-cell', 'sp-start', 'sp-end', 'sp-stay', 'sp-windowinfo', 'sp-windowbar', 'sp-range2', 'sp-window-now', 'sp-abc', 'sp-modal', 'sp-mstay', 'sp-mslider', 'sp-mwindowinfo', 'sp-confirm', 'sp-popup', 'sp-popup-card', 'sp-panel-open', 'sp-window-hide', 'sp-window-show', 'sp-win-start', 'sp-win-end', 'sp-window-count', 'sp-atlas-back', 'sp-gzin', 'sp-gzout', 'sp-pause', 'sp-zin', 'sp-zout', 'sp-center', 'sp-slots', 'sp-compare', 'sp-atlas-pick', 'sp-target', 'sp-back-map']) els[id] = document.getElementById(id);
-    for (const id of ['sp-play', 'sp-utc', 'sp-clock-read', 'sp-task-title', 'sp-task-next', 'sp-save-slots', 'sp-map-key']) els[id] = document.getElementById(id);
+    for (const id of ['sp-play', 'sp-utc', 'sp-clock-read', 'sp-task-title', 'sp-task-next', 'sp-save-slots', 'sp-map-key', 'sp-sky', 'sp-sky-read']) els[id] = document.getElementById(id);
     bind();
     initWindow();
     const site = selectedSite();
@@ -461,6 +464,16 @@ export function createSouthPole(ctx) {
     return { state: site.series.earthVis[index] === 1 ? 'visible' : 'blocked' };
   }
 
+  function skylineState() {
+    const site = selectedSite();
+    if (!site?.hasTerrain) return null;
+    const index = Math.round(eph().indexOf(previewMs()));
+    if (index < 0 || index >= eph().n) return null;
+    const sky = site.skyAt(index);
+    const horizon = sky.earth.horizon ?? site.horizonAt(sky.earth.az);
+    return { lat: site.lat, lon: site.lon, az: sky.earth.az, el: sky.earth.el, horizon, blocked: sky.earth.el <= horizon };
+  }
+
   async function ensureGlobe() {
     if (ui.globe || ui.globeFailed) return ui.globe;
     ui.globe = await createPolar3d({
@@ -490,6 +503,7 @@ export function createSouthPole(ctx) {
       onMoonTap: (point) => { if (point.lat > STUDY_LAT) { setStage('map'); setNotice(t('That point is north of 85°S; the map stays on the pole.')); centrePole(); } else { setStage('map'); ui.map.cxKm = project(point.lat, point.lon).xKm; ui.map.cyKm = project(point.lat, point.lon).yKm; ui.map.scale = 24; drawMap(); } },
       pulse: pulseState,
       target: () => ui.target,
+      skyline: skylineState,
     });
     ui.globe?.request();
     return ui.globe;
@@ -1029,6 +1043,63 @@ export function createSouthPole(ctx) {
     const text = st === 'visible' ? t('Visible from the site across the local skyline.') : st === 'blocked' ? t('Blocked at this sample: Earth is below the terrain horizon.') : t('Unknown: no usable skyline for this point.');
     const duration = site?.hasTerrain ? longestLink(site) : null;
     els['sp-link'].innerHTML = `<b class="pole-${st}">${escapeHtml(t(st === 'visible' ? 'Visible' : st === 'blocked' ? 'Blocked' : 'Unknown'))}</b> · ${escapeHtml(fmtDateTime(previewMs()))}<br><span class="sub">${escapeHtml(text)}${duration ? ' ' + escapeHtml(t('Longest continuous link in this stay: {h} h.', { h: duration })) : ''} ${escapeHtml(t('Geometric line of sight; the {margin}° margin is separate.', { margin: ctx.margin() }))}</span>`;
+    renderSkyline();
+  }
+
+  function renderSkyline() {
+    const cv = els['sp-sky'], out = els['sp-sky-read'];
+    if (!cv) return;
+    const g = cv.getContext('2d'), site = selectedSite();
+    const W = cv.width, H = cv.height, padL = 28, padR = 10, padT = 12, padB = 22;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = 'rgba(12,15,19,.72)'; g.fillRect(0, 0, W, H);
+    g.strokeStyle = 'rgba(190,210,235,.18)'; g.lineWidth = 1;
+    g.font = '10px Geist, system-ui, sans-serif'; g.fillStyle = 'rgba(210,225,245,.7)';
+    if (!site?.horizonDeg?.length) {
+      out.textContent = t('No terrain skyline for this point.');
+      cv.setAttribute('aria-label', out.textContent);
+      return;
+    }
+    const h = site.horizonDeg, step = site.azStep || 0.5;
+    const idx = clamp(Math.round(eph().indexOf(previewMs())), 0, eph().n - 1), sky = site.skyAt(idx);
+    const az = sky.earth.az, earthEl = sky.earth.el;
+    const hz = sky.earth.horizon ?? site.horizonAt(az);
+    let maxEl = Math.max(10, earthEl + 5);
+    for (const v of h) maxEl = Math.max(maxEl, v + 2);
+    const minEl = Math.min(0, earthEl - 2), span = Math.max(1, maxEl - minEl);
+    const xOf = (a) => padL + (a / 360) * (W - padL - padR);
+    const yOf = (v) => padT + (maxEl - v) / span * (H - padT - padB);
+    for (let v = 0; v <= maxEl; v += 10) {
+      const y = yOf(v); g.beginPath(); g.moveTo(padL, y); g.lineTo(W - padR, y); g.stroke();
+      g.fillText(`${v}°`, 3, y + 3);
+    }
+    g.beginPath(); g.moveTo(xOf(0), yOf(0));
+    for (let i = 0; i < h.length; i++) g.lineTo(xOf(i * step), yOf(h[i]));
+    g.lineTo(xOf(360), yOf(0)); g.closePath();
+    g.fillStyle = 'rgba(116,129,145,.42)'; g.fill();
+    g.strokeStyle = 'rgba(210,225,245,.55)'; g.stroke();
+    const nearby = [];
+    for (let d = -12; d <= 12; d += 0.5) {
+      const a = ((az + d) % 360 + 360) % 360;
+      if (site.horizonAt(a) > earthEl) nearby.push({ a, h: site.horizonAt(a) });
+    }
+    const blocked = earthEl <= hz;
+    if (blocked) {
+      const lo = xOf(nearby[0]?.a ?? az), hi = xOf(nearby.length ? nearby[nearby.length - 1].a : az);
+      g.fillStyle = 'rgba(239,107,91,.20)'; g.fillRect(lo, padT, Math.max(2, hi - lo), H - padT - padB);
+    } else {
+      g.fillStyle = 'rgba(88,200,255,.18)'; g.fillRect(xOf(az - 1.5), padT, Math.max(2, xOf(az + 1.5) - xOf(az - 1.5)), H - padT - padB);
+    }
+    g.beginPath(); g.moveTo(xOf(az), padT); g.lineTo(xOf(az), H - padB); g.strokeStyle = '#58c8ff'; g.stroke();
+    g.beginPath(); g.arc(xOf(az), yOf(earthEl), 4, 0, Math.PI * 2); g.fillStyle = blocked ? '#ef6b5b' : '#58c8ff'; g.fill();
+    g.fillStyle = 'rgba(210,225,245,.8)'; g.textAlign = 'center';
+    for (const [a, label] of [[0, 'N'], [90, 'E'], [180, 'S'], [270, 'W']]) g.fillText(t(label), xOf(a), H - 6);
+    g.textAlign = 'left';
+    const peak = blocked ? nearby.reduce((best, v) => v.h > best.h ? v : best, nearby[0]) : null;
+    out.textContent = blocked
+      ? t('Blocked toward {dir}: terrain peaks at {horizon}°; Earth is {earth}°.', { dir: compass(peak.a), horizon: peak.h.toFixed(1), earth: earthEl.toFixed(1) })
+      : t('Earth at {earth}° clears the {horizon}° skyline toward {dir}.', { earth: earthEl.toFixed(1), horizon: Math.max(0, hz).toFixed(1), dir: compass(az) });
+    cv.setAttribute('aria-label', `${t('Terrain skyline')}. ${out.textContent}`);
   }
 
   function longestLink(site) {

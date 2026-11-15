@@ -278,6 +278,32 @@ export async function createPolar3d(env) {
         dot.position.copy(normal).multiplyScalar(1.012);
         targetGroup.add(dot, ring);
       };
+      // A short region-to-horizon ray at the selected site: the same azimuth and
+      // terrain angle as the 2D profile, so a blocked event has one direction on both.
+      const skyGroup = new T.Group();
+      moonGroup.add(skyGroup);
+      let skyKey = '';
+      const updateSkylineMarker = () => {
+        const s = env.skyline?.();
+        const key = !s ? '' : `${s.lat.toFixed(4)}:${s.lon.toFixed(4)}:${s.az.toFixed(2)}:${s.horizon.toFixed(2)}:${s.blocked}`;
+        if (key === skyKey) return;
+        skyKey = key;
+        skyGroup.clear();
+        if (!key) return;
+        const basis = siteBasis(s.lat, s.lon);
+        const up = new T.Vector3(...basis.up), north = new T.Vector3(...basis.north), east = new T.Vector3(...basis.east);
+        const az = s.az * Math.PI / 180, hz = s.horizon * Math.PI / 180;
+        const tangent = new T.Vector3().addScaledVector(north, Math.cos(az)).addScaledVector(east, Math.sin(az)).normalize();
+        const origin = up.clone().multiplyScalar(1.008);
+        const dir = tangent.multiplyScalar(Math.cos(hz)).addScaledVector(up, Math.sin(hz));
+        const end = origin.clone().addScaledVector(dir, 0.18);
+        const color = s.blocked ? 0xef6b5b : 0x58c8ff;
+        skyGroup.add(new T.Line(new T.BufferGeometry().setFromPoints([origin, end]), new T.LineBasicMaterial({ color, transparent: true, opacity: 0.95 })));
+        const dot = new T.Mesh(sphereGeometry, new T.MeshBasicMaterial({ color }));
+        dot.scale.setScalar(0.004);
+        dot.position.copy(origin);
+        skyGroup.add(dot);
+      };
       // Terrain at the picked site: the same generator Explore uses, heights at ×1 (no exaggeration).
       const reliefGroup = new T.Group();
       moonGroup.add(reliefGroup);
@@ -510,6 +536,7 @@ export async function createPolar3d(env) {
       canvas.addEventListener('pointerleave', () => { if (hoverCap.visible) { hoverCap.visible = false; request(); } });
       const tick = () => {
         updateTargetMarker();
+        updateSkylineMarker();
         const a = env.animation?.();
         const now = performance.now();
         if (grab && controls.update()) request();
