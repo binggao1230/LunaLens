@@ -1,0 +1,23 @@
+diff --git a/web/src/App.tsx b/web/src/App.tsx
+index ba2dd3c..64f1763 100644
+--- a/web/src/App.tsx
++++ b/web/src/App.tsx
+@@ -726,9 +726,17 @@ export default function App() {
+         : ''
+       const url = location.pathname + location.search + (hash ? `#${hash}` : '')
+       if (url !== location.pathname + location.search + location.hash) history.replaceState(history.state, '', url)
++      // LunaLens bridge: the parent workspace keeps the same three slots and the active point.
++      const active = st.pins.find((p) => p.id === st.activePin)
++      window.parent?.postMessage({
++        type: 'lunalens:atlas-state',
++        sites: sorted.map((p) => ({ lat: p.lat, lon: p.lon, label: p.label })),
++        active: active ? { lat: active.lat, lon: active.lon, label: active.label } : null,
++        tMs: st.tMs,
++      }, location.origin)
+     }, 400)
+     return () => clearTimeout(timer)
+-  }, [restoredLink, clockRunning, pins, layer, preset, baselines, finderLimits, criteria, observerM, clockMs])
++  }, [restoredLink, clockRunning, pins, activePin, layer, preset, baselines, finderLimits, criteria, observerM, clockMs])
+ 
+   const pickCandidates = useCallback(
+     (ks: Candidate[], fly = true) => later(() => ks.forEach((k) => {
