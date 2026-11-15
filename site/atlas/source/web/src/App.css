@@ -3422,3 +3422,31 @@ body[data-over='marker'] .viewport canvas {
 .pano .extent {
   opacity: 0.45;
 }
+
+/* Embedded Expert workspace: the parent owns the clock and the guidance. */
+.app[data-embed='on'] .timebar .play,
+.app[data-embed='on'] .timebar .rates,
+.app[data-embed='on'] .credit-line,
+.app[data-embed='on'] .layer-note,
+.app[data-embed='on'] .mainmenu,
+.app[data-embed='on'] .help {
+  display: none !important;
+}
+.app[data-embed='on'] .panel.sites .empty,
+.app[data-embed='on'] .intro {
+  display: none !important;
+}
+
+/* Embedded Atlas is a scene, not a second site: no site header or card tutorial. */
+.app[data-embed='on'] header.top > h1,
+.app[data-embed='on'] header.top > .menu,
+.app[data-embed='on'] header.top > .layers-btn,
+.app[data-embed='on'] header.top > .btn.ghost,
+.app[data-embed='on'] header.top > .brk,
+.app[data-embed='on'] header.top .find-btn,
+.app[data-embed='on'] .card-help,
+.app[data-embed='on'] .welcome,
+.app[data-embed='on'] .tour,
+.app[data-embed='on'] .status {
+  display: none !important;
+}

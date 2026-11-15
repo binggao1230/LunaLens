@@ -402,6 +402,63 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-atlas-actions button[data-slot=C]{--slot:#ff9ad5}
 .pole-atlas-actions button.filled{border-style:solid;border-color:var(--slot);background:color-mix(in srgb,var(--slot) 18%,transparent);color:var(--text)}
 @media(max-width:900px){.pole-windowbar{left:8px;right:8px;bottom:62px;width:auto;padding:9px 12px 7px;gap:4px}.pole-window-head{gap:8px}.pole-window-title,.pole-window-stay,.pole-windowbar p{display:none}.pole-side{left:8px;right:8px;top:auto;bottom:200px;width:auto;max-height:38%}.pole-hud{left:8px;right:8px;top:56px;max-width:none}.pole-tabs{left:8px;top:8px;transform:none}.pole-globe-zoom{right:8px;top:8px}.pole-time{right:8px;top:52px}.pole-restore{bottom:62px}.pole-globe-hint{display:none}}
+/* Expert workspace: the panel is a column beside the stage, not a floating card. */
+.pole{--expert-panel:360px}
+.pole-stage{left:var(--expert-panel);right:0}
+.pole-side{left:0;right:auto;top:0;bottom:0;width:var(--expert-panel);max-height:none;border-radius:0;border-top:0;border-left:0;border-bottom:0;background:#11151a;padding:14px 14px 18px;z-index:6;gap:8px}
+.pole-hud{left:calc(var(--expert-panel) + 16px);right:16px;max-width:none}
+.pole-windowbar{left:calc(var(--expert-panel) + 16px);right:16px;width:auto}
+.pole-panel-handle{position:absolute;left:calc(var(--expert-panel) - 18px);top:50%;transform:translateY(-50%);z-index:9;width:36px;height:36px;padding:0;border:1px solid var(--border);border-radius:10px;background:#11151a;color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.pole-panel-handle:hover{color:var(--text);border-color:var(--accent)}
+.pole.panel-collapsed .pole-stage{left:0}
+.pole.panel-collapsed .pole-side{display:none}
+.pole.panel-collapsed .pole-panel-handle{left:4px}
+.pole.panel-collapsed .pole-hud{left:16px}
+.pole.panel-collapsed .pole-windowbar{left:16px}
+.pole-eyebrow{margin:0 0 3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pole-side-head h3{margin:0;font-size:16px;font-weight:550}
+.pole-task-next{margin:0 0 6px;font-size:12px;line-height:1.4;color:var(--muted)}
+.pole-side .pole-stages,.pole[data-stage="atlas"] .pole-stages{display:flex;position:static;padding:4px;border:1px solid var(--border);border-radius:10px;background:var(--page)}
+.pole-side .pole-stages button{flex:1;min-width:0;padding:6px 4px}
+.pole-stages button:disabled{opacity:.38;cursor:not-allowed}
+.pole-side h3{margin:10px 0 0;font-size:12.5px;letter-spacing:.03em}
+.pole-side .pole-label{margin-top:2px}
+.pole-clock{display:flex;flex-direction:column;gap:6px;padding:9px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025)}
+.pole-clock label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted)}
+.pole-clock input{font:inherit;font-size:12px;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;padding:6px 7px}
+.pole-clock-row{display:flex;align-items:center;gap:8px}
+.pole-clock-value{flex:1;font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
+.pole-rates{display:flex;gap:4px}
+.pole-rates button{flex:1;min-height:28px;font:inherit;font-size:11px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer}
+.pole-rates button.on{color:var(--text);border-color:var(--accent);background:var(--surface-2)}
+.pole-panel-tools{display:flex;gap:6px;margin-top:2px}
+.pole-panel-tools button{flex:1;min-height:34px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text2);display:grid;place-items:center;cursor:pointer}
+.pole-panel-tools button:hover{background:var(--surface-2);color:var(--text)}
+.pole-save-slots{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:7px;border:1px solid var(--border);border-radius:9px;background:rgba(255,255,255,.025)}
+.pole-save-slots p{width:100%;margin:0 0 2px;font-size:11px;color:var(--muted)}
+.pole-save-slots button{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text2);font-weight:700;cursor:pointer}
+.pole-save-slots button.filled{border-color:var(--good);color:var(--text)}
+.pole-technical{display:flex;flex-direction:column;gap:6px;padding-top:8px;border-top:1px solid var(--border)}
+.pole-technical summary{cursor:pointer;font-size:11.5px;color:var(--muted)}
+.pole-technical[open] summary{color:var(--text2)}
+.pole-map-native{width:100%;height:100%}
+#sp-map{width:100%;height:100%;max-width:none;object-fit:fill}
+.pole-map-rail,.pole-abc,.pole-map-tools,.pole-globe-zoom,.pole-time,.pole-globe-hint,.pole-atlas-pick,.pole-panel-open{display:none!important}
+.pole-hud .m-readout{position:static;margin-top:5px;max-width:none;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;line-height:1.35}
+.pole-map-key{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:10.5px;color:var(--muted)}
+.pole-map-key span{display:inline-flex;align-items:center;gap:5px}
+.pole-map-key i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.pole-orbit-note{margin:4px 0 0;font-size:10px;color:var(--muted)}
+.pole button,.pole summary,.pole .pole-stages,.pole .pole-window-head{user-select:none;-webkit-user-select:none}
+@media(max-width:900px){
+  .pole-stage{left:0}
+  .pole-side{left:8px;right:8px;top:auto;bottom:200px;width:auto;max-height:38%;border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+  .pole-panel-handle{left:auto;right:8px;top:50%}
+  .pole.panel-collapsed .pole-side{display:none}
+  .pole-hud{left:8px;right:8px}
+  .pole-windowbar{left:8px;right:8px}
+  .pole.panel-collapsed .pole-hud,.pole.panel-collapsed .pole-windowbar{left:8px}
+}
 </style>
 <link rel="stylesheet" href="css/mission.css">
 <link rel="stylesheet" href="css/edu.css">
@@ -412,7 +469,7 @@ body[data-view=pole] main{max-width:none;padding:0}
 <header class="appbar">
   <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span></b>
   <nav class="tabs" data-nav>
-    <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="pole">South Pole</button>
+    <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="pole">Expert</button>
   </nav>
   <div class="tray" id="tray"></div>
   <nav class="side" data-nav><button data-view="data">Data</button><a class="mobile-entry" href="mobile/">Mobile</a></nav>
@@ -679,7 +736,7 @@ body[data-view=pole] main{max-width:none;padding:0}
   <div id="now"></div>
 </div>
 <nav class="tabbar" data-nav>
-  <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="pole">South Pole</button>
+  <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="pole">Expert</button>
   <button data-view="data">Data</button>
 </nav>
 <div id="edu"></div>

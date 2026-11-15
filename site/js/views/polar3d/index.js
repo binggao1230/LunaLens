@@ -103,6 +103,20 @@ export async function createPolar3d(env) {
         for (let i = 0; i <= 90; i++) points.push(new T.Vector3(...unit(-90 + i, lon)).multiplyScalar(1.0015));
         graticule.add(new T.Line(new T.BufferGeometry().setFromPoints(points), gridLine(0x93a7bd, lon % 90 === 0 ? 0.3 : 0.12)));
       }
+
+      // Hover/touch highlight for the south-cap study area. It uses the same study latitude as the click
+      // test, so the visible highlight and the accepted tap can never disagree.
+      const capLat = Number.isFinite(env.studyLat) ? env.studyLat : -85;
+      const capColat = (90 + capLat) * Math.PI / 180;
+      const capR = Math.sin(capColat) * 1.004;
+      const hoverCap = new T.Mesh(
+        new T.CircleGeometry(capR, 64),
+        new T.MeshBasicMaterial({ color: env.studyColor ?? 0x58c8ff, transparent: true, opacity: 0.16, side: T.DoubleSide, depthWrite: false }),
+      );
+      hoverCap.position.set(0, -Math.cos(capColat) * 1.004, 0);
+      hoverCap.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), new T.Vector3(0, -1, 0));
+      hoverCap.visible = false;
+      moonGroup.add(hoverCap);
       moonGroup.add(graticule);
 
       const glowTexture = (inner) => {
@@ -453,14 +467,25 @@ export async function createPolar3d(env) {
         const hit = caster.intersectObject(moon)[0];
         return hit ? moonGroup.worldToLocal(hit.point.clone()).normalize() : null;
       };
-      canvas.addEventListener('pointerdown', (event) => { down = [event.clientX, event.clientY]; });
+      canvas.addEventListener('pointerdown', (event) => {
+        down = [event.clientX, event.clientY];
+        if (grab) {
+          const hover = dirAt(event);
+          if (hover && Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) <= (env.studyLat ?? -90)) {
+            hoverCap.visible = true;
+            request();
+          }
+        }
+      });
       canvas.addEventListener('pointermove', (event) => {
         if (!grab || event.buttons) return;
         const hover = dirAt(event);
         const lat = hover ? Math.asin(clamp(hover.y, -1, 1)) / (Math.PI / 180) : null;
-        canvas.style.cursor = lat !== null && lat <= (env.studyLat ?? -90) ? 'pointer' : 'grab';
+        const inside = lat !== null && lat <= (env.studyLat ?? -90);
+        if (hoverCap.visible !== inside) { hoverCap.visible = inside; request(); }
+        canvas.style.cursor = inside ? 'pointer' : 'grab';
       });
-      // Damping needs a frame loop; only request a draw when the camera actually moved.
+      canvas.addEventListener('pointerleave', () => { if (hoverCap.visible) { hoverCap.visible = false; request(); } });
       const tick = () => {
         const a = env.animation?.();
         const now = performance.now();

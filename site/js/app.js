@@ -676,6 +676,7 @@ function bind() {
   onMode((m) => {
     renderChrome();
     if (m === 'education' && ['atlas', 'explore', 'pole'].includes(document.body.dataset.view)) { showView('mission'); return; }
+    if (m === 'expert' && document.body.dataset.view !== 'pole') { showView('pole'); return; }
     history.replaceState(null, '', `${location.search}${formatHash(document.body.dataset.view)}`);
   });
   // A pasted or edited hash on the open page: apply its mode and view (showView uses replaceState, so no loop).

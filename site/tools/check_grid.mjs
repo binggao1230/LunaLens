@@ -13,7 +13,7 @@ import { Dem, computeHorizon } from '../js/engine/dem.js';
 import {
   REGION, STUDY_LAT, DEM_FOOTPRINT_LAT, project, unproject, cellCenters, gridGeometry,
   studyCellCenters, poleGeometry, POLE_CELL_KM,
-  earthStats, classify, normalizeThresholds, DEFAULT_LIMITS, DEFAULT_TARGETS,
+  earthStats, classify, normalizeThresholds, DEFAULT_LIMITS, DEFAULT_TARGETS, R_KM,
 } from '../js/engine/grid.js';
 
 const checks = [];
@@ -126,15 +126,24 @@ check('date and margin change the scenario fields, not the terrain fields', () =
   assert.deepEqual(Array.from(again.horizon), Array.from(hor.horizon));
 });
 
-check('whole-pole blocks stay inside the 85°S study area', () => {
+check('whole-pole blocks include clipped edge cells with representative points', () => {
   const cells = studyCellCenters(POLE_CELL_KM);
+  const edgePoint = project(STUDY_LAT, 0);
+  const halfKm = Math.hypot(edgePoint.xKm, edgePoint.yKm);
   assert.ok(cells.length > 100, `expected a full study area, got ${cells.length}`);
-  assert.ok(cells.every((c) => c.lat <= STUDY_LAT), 'every block centre is south of 85°S');
+  assert.ok(cells.every((c) => c.lat <= STUDY_LAT + 1e-9), 'every representative point is inside 85°S');
+  assert.ok(cells.every((c) => Math.hypot(project(c.lat, c.lon).xKm, project(c.lat, c.lon).yKm) <= halfKm + 1e-6), 'representatives are inside the circle');
+  const full = cells.find((c) => !c.clipped);
+  assert.ok(full && Math.abs(full.lat - full.centreLat) < 1e-9 && Math.abs(full.lon - full.centreLon) < 1e-9, 'full blocks use their geometric centre');
+  const edge = cells.find((c) => c.representative);
+  assert.ok(edge, 'at least one clipped block has its centre outside the circle');
+  assert.ok(edge.centreLat > STUDY_LAT, 'the clipped block centre is north of 85°S');
+  assert.ok(edge.lat <= STUDY_LAT, 'its representative point is inside the study circle');
   const g = poleGeometry(POLE_CELL_KM);
   assert.equal(g.cells, cells.length);
   assert.ok(g.boundsKm.xMin < -150 && g.boundsKm.xMax > 150, 'bounds cover the 85°S circle');
   assert.ok(Math.abs(g.cellKm - POLE_CELL_KM) < 1, 'reported block size stays near 24 km');
-  console.log(`     ${cells.length} blocks of ${g.cellKm.toFixed(1)} km cover the study area`);
+  console.log(`     ${cells.length} blocks of ${g.cellKm.toFixed(1)} km cover the study area; ${cells.filter((c) => c.representative).length} use clipped representatives`);
 });
 
 console.log(`\n${checks.length} checks passed. Region ${REGION.centerLat}°, ${REGION.centerLon}°E ±${REGION.halfKm} km.`);
