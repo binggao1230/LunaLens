@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/mission.css">
 <link rel="stylesheet" href="css/edu.css">
+<link rel="stylesheet" href="css/ui.css">
 <style>
 /* The kit renders the real components with the real stylesheets; only the page scaffold is defined here. */
 body{margin:0;background:var(--page);color:var(--text);font:15px/1.5 var(--font-sans)}
@@ -50,7 +51,7 @@ body[data-view=mission]::before{display:none}
     <div>
       <b class="brand" aria-label="LunaLens"><span>Luna</span><img src="assets/lunalens-logo.svg" alt="" width="26" height="26"><span>Lens</span></b>
       <h1 style="margin-top:10px">UI kit</h1>
-      <p class="note" style="margin:6px 0 0">Everything on this page is the live component with the live stylesheets. Tokens are defined once in <code>css/tokens.css</code>; if a component here looks wrong, fix the stylesheet, not this page.</p>
+      <p class="note" style="margin:6px 0 0">Everything on this page is the live component with the live stylesheets. Tokens are defined once in <code>css/tokens.css</code> and components once in <code>css/ui.css</code>; if a component here looks wrong, fix those files, not this page.</p>
     </div>
     <div class="seg-pill" id="kit-mode" role="group" aria-label="Preview mode">
       <button type="button" data-kit-mode="expert" aria-pressed="true">Expert mode</button>
@@ -69,7 +70,7 @@ body[data-view=mission]::before{display:none}
   <div class="type-sample"><span class="label">Numbers</span><span class="num" style="font-size:13px">89.78°S 155.22°W · 14 Nov 2026, 00:00 UTC · 446 h</span><span class="mono-note">Geist Mono · tabular figures</span></div>
 
   <h2>Colours <small>tokens</small></h2>
-  <p class="note">Amber (<code>--primary</code>) is the one button colour, focus ring and selection colour in both modes. Blue (<code>--accent</code>) is the Education theme: the guide, its panel, the switch wipe. Amber, blue and green are also <em>data</em> colours, meaning Sun, Earth and link.</p>
+  <p class="note"><b>Main colour</b>: amber (<code>--primary</code>), for the main button, focus rings and selection in both modes. <b>Secondary colour</b>: one blue (<code>--accent</code>), for secondary emphasis and the Education theme. Amber, blue and green are also <em>data</em> colours, meaning Sun, Earth and link.</p>
   <div class="sw-grid" id="swatches"></div>
 
   <h2>Buttons <small>pills</small></h2>
@@ -80,6 +81,7 @@ body[data-view=mission]::before{display:none}
       <div class="seg-pill" role="group" aria-label="Mode sample"><button type="button" aria-pressed="true">Expert mode</button><button type="button" aria-pressed="false">Education mode</button></div>
       <div class="seg-pill" role="group" aria-label="Language sample"><button type="button" aria-pressed="true">EN</button><button type="button" aria-pressed="false">FR</button><button type="button" aria-pressed="false">中文</button></div>
       <div class="mseg"><button class="on">3D</button><button>2D</button></div>
+      <div class="seg"><button class="on">South pole</button><button>Whole Moon</button></div>
     </div>
   </div>
 
@@ -109,11 +111,11 @@ body[data-view=mission]::before{display:none}
   <h2>Form controls <small>inputs</small></h2>
   <div class="demo">
     <div class="row">
-      <label class="label" style="display:flex;flex-direction:column;gap:6px">Landing date (UTC)<input type="date" value="2026-11-14" style="font:inherit;color:var(--text);background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:var(--r-control);padding:8px 10px;min-height:40px;color-scheme:dark"></label>
-      <label class="label" style="display:flex;flex-direction:column;gap:6px">Stay length<select style="font:inherit;color:var(--text);background:var(--page);border:1px solid var(--border);border-radius:var(--r-control);padding:8px 10px;min-height:40px"><option>1 lunar day</option><option>14 Earth days</option></select></label>
+      <label class="label" style="display:flex;flex-direction:column;gap:6px">Landing date (UTC)<input type="date" value="2026-11-14" style="padding:8px 10px;min-height:36px;color-scheme:dark"></label>
+      <label class="label" style="display:flex;flex-direction:column;gap:6px">Stay length (dropdown)<select><option>1 lunar day</option><option>14 Earth days</option></select></label>
       <label class="label" style="display:flex;flex-direction:column;gap:6px;min-width:220px">Time<input type="range" min="0" max="709" value="200" style="accent-color:var(--accent)"></label>
       <label class="srow-chk" style="padding:0"><input type="checkbox" class="site-chk" checked aria-label="Compare"></label>
-      <input type="search" placeholder="Search sites" style="font:inherit;color:var(--text);background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:var(--r-control);padding:9px 12px;min-height:40px">
+      <input type="search" placeholder="Search sites" style="padding:8px 12px;min-height:36px">
     </div>
   </div>
 
@@ -127,7 +129,7 @@ body[data-view=mission]::before{display:none}
     <tr><td>Use <code>var(--primary)</code> for anything pressable or selected; <code>var(--accent)</code> only for the Education theme.</td><td>Give a button a colour of its own, or make Education's primary button differ from Expert's.</td></tr>
     <tr><td>Use <code>var(--font-sans)</code> and <code>var(--font-mono)</code>; inherit from <code>body</code>.</td><td>Add a new font family or a serif title.</td></tr>
     <tr><td>Write the name as LunaLens, and use the wordmark component for the logo.</td><td>Write "Luna Lens" or set the name in another style.</td></tr>
-    <tr><td>Pills for buttons and toggles; <code>--r-card</code> for cards; <code>--r-control</code> for inputs.</td><td>Mix 7, 8, 9 and 10 px corners on controls.</td></tr>
+    <tr><td>Pills for buttons; the quiet segmented style for every toggle; the chevron field for every dropdown.</td><td>Style a toggle or a dropdown inside a page stylesheet.</td></tr>
     <tr><td>Keep Sun amber, Earth blue, link green, shadow grey as data colours.</td><td>Reuse a data colour to decorate.</td></tr>
   </table>
 </main>

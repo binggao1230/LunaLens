@@ -1,8 +1,47 @@
-diff --git a/web/src/App.tsx b/web/src/App.tsx
-index ba2dd3c..64f1763 100644
---- a/web/src/App.tsx
-+++ b/web/src/App.tsx
-@@ -726,9 +726,17 @@ export default function App() {
+--- a/web/src/App.tsx	2026-11-15 11:13:02.065935744 +0100
++++ b/web/src/App.tsx	2026-11-15 11:10:10.493747357 +0100
+@@ -90,10 +90,9 @@
+ }
+ 
+ const RATES: readonly (readonly [number, string, string])[] = [
+-  [3600, '1 h/s', 'One hour of Moon time per second'],
+-  [6 * 3600, '6 h/s', 'Six hours per second'],
+-  [86400, '1 d/s', 'One day per second'],
+-  [7 * 86400, '7 d/s', 'One week per second'],
++  [3600, '1×', 'One hour of Moon time per second'],
++  [5 * 3600, '5×', 'Five hours of Moon time per second'],
++  [10 * 3600, '10×', 'Ten hours of Moon time per second'],
+ ]
+ /** `hint` is the one-line description in the phone's layer list; `legend` the full note with sources. */
+ const LAYERS: { label: string; full?: string; value: LayerMode; hint: string; legend: string; ramp?: string; ends?: [string, string] }[] = [
+@@ -611,6 +610,26 @@
+     },
+     [terrain, globeRelief, patchOf],
+   )
++  // LunaLens command channel: the parent workspace can set the three slots and the clock
++  // without reloading this frame.
++  useEffect(() => {
++    const onCommand = (event: MessageEvent) => {
++      if (event.origin !== location.origin || event.data?.type !== 'lunalens:atlas-command') return
++      const raw = event.data
++      const sites = (Array.isArray(raw.sites) ? raw.sites : [])
++        .filter((s: { lat?: number; lon?: number }) => Number.isFinite(s.lat) && Number.isFinite(s.lon))
++        .slice(0, 3)
++        .map((s: { lat: number; lon: number; label?: string }) => ({ lat: s.lat, lon: s.lon, label: String(s.label ?? ''), hM: elevation(s.lat, s.lon) }))
++      const store = useStore.getState()
++      store.replacePins(sites, raw.active ?? null)
++      if (Number.isFinite(raw.tMs)) {
++        store.setPlaying(false)
++        store.setTime(raw.tMs)
++      }
++    }
++    window.addEventListener('message', onCommand)
++    return () => window.removeEventListener('message', onCommand)
++  }, [elevation])
+   const pick = useCallback(
+     (lat: number, lon: number, label?: string) => addPin({ lat, lon, hM: elevation(lat, lon), label }),
+     [addPin, elevation],
+@@ -726,9 +745,17 @@
          : ''
        const url = location.pathname + location.search + (hash ? `#${hash}` : '')
        if (url !== location.pathname + location.search + location.hash) history.replaceState(history.state, '', url)
@@ -21,3 +60,53 @@ index ba2dd3c..64f1763 100644
  
    const pickCandidates = useCallback(
      (ks: Candidate[], fly = true) => later(() => ks.forEach((k) => {
+--- a/web/src/store.ts	2026-11-15 11:13:02.077180552 +0100
++++ b/web/src/store.ts	2026-11-15 11:10:10.494118234 +0100
+@@ -59,7 +59,7 @@
+ }
+ 
+ /** One colour per pinned site (A, B, C), used for its 3D marker; panels use the CSS tokens --site-a/b/c. */
+-export const SITE_COLORS = ['#6afbcb', '#826afb', '#cb4dcb']
++export const SITE_COLORS = ['#58c8ff', '#f5c542', '#ff9ad5']
+ 
+ /** Phone layout: how far the bottom sheet is pulled up, and which panel it shows. */
+ export type SheetState = 'peek' | 'half' | 'full'
+@@ -146,6 +146,8 @@
+   /** Turns the site finder off if it is on; any other map layer is left alone. */
+   leaveFinder: () => void
+   addPin: (p: Omit<Pin, 'id' | 'label' | 'slot'> & { label?: string }) => void
++  /** Replace the pinned sites from the parent workspace without animating or replacing notices. */
++  replacePins: (sites: { lat: number; lon: number; hM: number; label: string }[], active?: { lat: number; lon: number } | null) => void
+   removePin: (id: number) => void
+   setActivePin: (id: number | null) => void
+   /** interface only: bottom sheet height (phone) and the panel in view (phone and tablet) */
+@@ -261,7 +263,7 @@
+   setMoving: (moving) => set({ moving }),
+   compareFigures: false,
+   setCompareFigures: (compareFigures) => set({ compareFigures }),
+-  rate: 6 * 3600,
++  rate: 5 * 3600,
+   layer: 'natural',
+   quality: initialQuality(),
+   setQuality: (quality) => {
+@@ -321,6 +323,20 @@
+           : null
+       return { pins, activePin: id, replaced: replaced && replaced.removed.length ? replaced : null }
+     }),
++  replacePins: (sites, active) =>
++    set((s) => {
++      const pins: Pin[] = sites.slice(0, MAX_PINS).map((site, slot) => {
++        const match = s.pins.find((p) => Math.abs(p.lat - site.lat) < 1e-6 && Math.abs(((p.lon - site.lon + 540) % 360) - 180) < 1e-6)
++        return match
++          ? { ...match, slot, lat: site.lat, lon: site.lon, hM: site.hM, label: site.label }
++          : { id: nextId++, slot, lat: site.lat, lon: site.lon, hM: site.hM, label: site.label }
++      })
++      const wanted = active
++        ? pins.find((p) => Math.abs(p.lat - active.lat) < 1e-6 && Math.abs(((p.lon - active.lon + 540) % 360) - 180) < 1e-6)
++        : null
++      const activePin = wanted?.id ?? (pins.some((p) => p.id === s.activePin) ? s.activePin : pins.at(-1)?.id ?? null)
++      return { pins, activePin, replaced: null }
++    }),
+   removePin: (id) =>
+     set((s) => {
+       const pins = s.pins.filter((p) => p.id !== id)

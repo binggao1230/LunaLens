@@ -59,7 +59,7 @@ function initialQuality(): Quality {
 }
 
 /** One colour per pinned site (A, B, C), used for its 3D marker; panels use the CSS tokens --site-a/b/c. */
-export const SITE_COLORS = ['#6afbcb', '#826afb', '#cb4dcb']
+export const SITE_COLORS = ['#58c8ff', '#f5c542', '#ff9ad5']
 
 /** Phone layout: how far the bottom sheet is pulled up, and which panel it shows. */
 export type SheetState = 'peek' | 'half' | 'full'
@@ -146,6 +146,8 @@ interface State {
   /** Turns the site finder off if it is on; any other map layer is left alone. */
   leaveFinder: () => void
   addPin: (p: Omit<Pin, 'id' | 'label' | 'slot'> & { label?: string }) => void
+  /** Replace the pinned sites from the parent workspace without animating or replacing notices. */
+  replacePins: (sites: { lat: number; lon: number; hM: number; label: string }[], active?: { lat: number; lon: number } | null) => void
   removePin: (id: number) => void
   setActivePin: (id: number | null) => void
   /** interface only: bottom sheet height (phone) and the panel in view (phone and tablet) */
@@ -261,7 +263,7 @@ export const useStore = create<State>((set, get) => ({
   setMoving: (moving) => set({ moving }),
   compareFigures: false,
   setCompareFigures: (compareFigures) => set({ compareFigures }),
-  rate: 6 * 3600,
+  rate: 5 * 3600,
   layer: 'natural',
   quality: initialQuality(),
   setQuality: (quality) => {
@@ -320,6 +322,20 @@ export const useStore = create<State>((set, get) => ({
           ? { ...batch, added: [...batch.added, id], at: now }
           : null
       return { pins, activePin: id, replaced: replaced && replaced.removed.length ? replaced : null }
+    }),
+  replacePins: (sites, active) =>
+    set((s) => {
+      const pins: Pin[] = sites.slice(0, MAX_PINS).map((site, slot) => {
+        const match = s.pins.find((p) => Math.abs(p.lat - site.lat) < 1e-6 && Math.abs(((p.lon - site.lon + 540) % 360) - 180) < 1e-6)
+        return match
+          ? { ...match, slot, lat: site.lat, lon: site.lon, hM: site.hM, label: site.label }
+          : { id: nextId++, slot, lat: site.lat, lon: site.lon, hM: site.hM, label: site.label }
+      })
+      const wanted = active
+        ? pins.find((p) => Math.abs(p.lat - active.lat) < 1e-6 && Math.abs(((p.lon - active.lon + 540) % 360) - 180) < 1e-6)
+        : null
+      const activePin = wanted?.id ?? (pins.some((p) => p.id === s.activePin) ? s.activePin : pins.at(-1)?.id ?? null)
+      return { pins, activePin, replaced: null }
     }),
   removePin: (id) =>
     set((s) => {

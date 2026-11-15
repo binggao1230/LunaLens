@@ -3,9 +3,10 @@
 
    Rules of the kit
    - One text family (Geist) for everything, Geist Mono for numbers and coordinates. No serif.
-   - One primary (amber) for the main button, focus rings and selection in both modes. Blue is the
-     Education accent (its theme, the guide, the switch wipe). Sun amber, Earth blue and link green are
-     also data colours and mean those things only.
+   - Main colour: amber (--primary) for the main button, focus rings and selection, in both modes.
+   - Secondary colour: one blue (--accent) for secondary emphasis, selected borders and the Education theme.
+     Sun amber, Earth blue and link green are also data colours and mean those things only.
+   - Components (buttons, toggles, dropdowns, focus) live in css/ui.css, loaded last.
    - Pills for buttons and toggles, 12 px corners for cards, 10 px for inputs. */
 :root{
   color-scheme:dark;
@@ -43,7 +44,7 @@
 
   /* data colours */
   --sun:#f5c542;
-  --earth:#5aa7f0;
+  --earth:#5aa7f0;   /* the Earth data colour is the same blue as the secondary */
   --good:#43d98a;
   --both:#9be7ff;
   --critical:#ff6b6b;
@@ -63,16 +64,3 @@ html{font-family:var(--font-sans)}
 body{font-family:var(--font-sans)}
 button,input,select,textarea{font-family:inherit}
 .num,.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
-
-/* Every focus ring and text selection uses the accent. */
-button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--primary);outline-offset:3px}
-::selection{background:var(--primary);color:var(--primary-ink)}
-
-/* The two button kinds and the tracked label, shared by both modes. */
-.btn-primary{font:inherit;font-size:15px;font-weight:600;padding:12px 26px;min-height:46px;border-radius:var(--r-pill);border:none;color:var(--primary-ink);background:var(--primary);box-shadow:var(--primary-glow);cursor:pointer;transition:transform .15s ease,filter .15s ease}
-.btn-primary:hover{transform:translateY(-1px);filter:brightness(1.06)}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.btn-ghost{font:inherit;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);border-radius:var(--r-pill);padding:8px 16px;min-height:38px;cursor:pointer}
-.btn-ghost:hover{background:rgba(255,255,255,.1)}
-.label{font-size:11px;letter-spacing:var(--tracking);text-transform:uppercase;color:var(--muted);font-weight:500}
-@media (prefers-reduced-motion:reduce){.btn-primary{transition:none}}

@@ -24,6 +24,8 @@ export async function createPolar3d(env) {
       const MOON_R_KM = 1737.4;
       const SCALE = { earthR: 6371 / MOON_R_KM, earthD: 384400 / MOON_R_KM, sunR: 695700 / MOON_R_KM, sunD: 149.6e6 / MOON_R_KM };
       const MAX_DIST = SCALE.sunD * 1.8;
+      // The caller can cap the zoom-out (Education mode keeps the Moon the subject); null means no cap.
+      const maxDist = () => Math.min(MAX_DIST, env.maxDistance?.() ?? MAX_DIST);
       const camera = new T.PerspectiveCamera(42, 1, 0.02, MAX_DIST * 4);
       let pending = false;
       // Hoisted so texture loads that finish before the rest of the scene is built can still request a frame.
@@ -37,6 +39,22 @@ export async function createPolar3d(env) {
       controls.enableDamping = true; controls.dampingFactor = 0.08;
       controls.rotateSpeed = 0.5; controls.zoomSpeed = 0.8;
       controls.minPolarAngle = 0.02; controls.maxPolarAngle = Math.PI - 0.02;
+      // Mission globe: free trackball rotation. OrbitControls keeps one fixed "up" and stops at the poles, so
+      // here it only zooms; a drag rotates the camera about its own screen axes (see bindTrackball below) and
+      // the surface under the pointer follows the pointer in any direction, over the poles too.
+      if (!grab) controls.enableRotate = false;
+      // OrbitControls caches the orientation of camera.up in its constructor (private _quat). After the camera
+      // rolls freely, re-derive a true up (perpendicular to the view) and refresh that cache, so a zoom or an
+      // update() never snaps the view back to the old up axis.
+      const syncUp = () => {
+        if (grab) return;
+        const dir = camera.position.clone().normalize();
+        const up = camera.up.clone().sub(dir.clone().multiplyScalar(camera.up.dot(dir)));
+        if (up.lengthSq() < 1e-8) up.set(1, 0, 0).sub(dir.clone().multiplyScalar(dir.x));
+        camera.up.copy(up.normalize());
+        controls._quat.setFromUnitVectors(camera.up, new T.Vector3(0, 1, 0));
+        controls._quatInverse.copy(controls._quat).invert();
+      };
       const sunLight = new T.DirectionalLight(0xfff1d6, 3.1);
       scene.add(sunLight, new T.AmbientLight(0x8da4ff, 0.07));
       // The south pole is always within about 1.5° of the terminator, so the Sun alone leaves the terrain
@@ -285,6 +303,8 @@ export async function createPolar3d(env) {
       };
       let animBase = null, animOffset = 0, lastAnim = 0;
       function draw() {
+        const cap = maxDist();
+        if (controls.maxDistance !== cap) { controls.maxDistance = cap; if (camera.position.length() > cap) { camera.position.setLength(cap); controls.update(); } }
         const base = env.baseMs ? env.baseMs() : null;
         if (base !== null && animBase !== null && base !== animBase) { animBase = base; animOffset = 0; lastAnim = 0; }
         if (base !== null && animBase === null) animBase = base;
@@ -352,7 +372,8 @@ export async function createPolar3d(env) {
       // The scene opens over the south pole, 0° meridian up, as the 2D map does.
       const homeDir = () => new T.Vector3(...unit(-84, 0)).normalize();
       const setHome = () => {
-        camera.position.copy(homeDir().multiplyScalar(3.6)); camera.lookAt(0, 0, 0); controls.update();
+        if (!grab) camera.up.set(1, 0, 0);
+        camera.position.copy(homeDir().multiplyScalar(3.6)); syncUp(); camera.lookAt(0, 0, 0); controls.update();
       };
       const flyTo = (dir, distance) => {
         cancelAnimationFrame(tween);
@@ -362,11 +383,69 @@ export async function createPolar3d(env) {
         const step = (now) => {
           const k = Math.min(1, (now - start) / 600), e = k < 0.5 ? 4 * k ** 3 : 1 - ((-2 * k + 2) ** 3) / 2;
           camera.position.copy(from.clone().applyQuaternion(identity.clone().slerp(rotation, e))).multiplyScalar(dist + (target - dist) * e);
-          camera.lookAt(0, 0, 0); controls.update(); draw();
+          syncUp(); camera.lookAt(0, 0, 0); controls.update(); draw();
           if (k < 1) tween = requestAnimationFrame(step);
         };
         tween = requestAnimationFrame(step);
       };
+      // Trackball drag for the Mission globe: horizontal motion turns the globe about the screen's vertical
+      // axis, vertical motion about its horizontal axis, so it can roll freely in any direction.
+      const bindTrackball = () => {
+        if (grab) return;
+        const pointers = new Set();
+        let last = null, velocity = { x: 0, y: 0, t: 0 }, glide = 0;
+        const turn = (dx, dy) => {
+          const speed = Math.PI / Math.max(1, canvas.clientHeight) * Math.min(1, camera.position.length() / 3.6 + 0.15);
+          const dir = camera.position.clone().normalize();
+          const right = new T.Vector3().crossVectors(camera.up, dir).normalize();
+          const q = new T.Quaternion()
+            .multiply(new T.Quaternion().setFromAxisAngle(camera.up, -dx * speed))
+            .multiply(new T.Quaternion().setFromAxisAngle(right, -dy * speed));
+          camera.position.applyQuaternion(q); camera.up.applyQuaternion(q);
+          syncUp(); camera.lookAt(0, 0, 0); controls.update(); request();
+        };
+        // Listen on the stage, not only the canvas, so a drag that starts on a historic-site flag also turns the
+        // globe. A press that does not move stays a tap: the flag's click still opens its card.
+        let moved = false;
+        stage.addEventListener('pointerdown', (event) => {
+          if (event.target !== canvas && !event.target.closest?.('.hflag')) return;
+          pointers.add(event.pointerId);
+          cancelAnimationFrame(glide); cancelAnimationFrame(tween);
+          last = pointers.size === 1 && event.button === 0 ? { x: event.clientX, y: event.clientY, x0: event.clientX, y0: event.clientY } : null;
+          moved = false;
+          velocity = { x: 0, y: 0, t: performance.now() };
+        });
+        window.addEventListener('pointermove', (event) => {
+          if (!last || pointers.size !== 1) return;
+          if (!moved && Math.hypot(event.clientX - last.x0, event.clientY - last.y0) < 4) return;
+          moved = true;
+          const dx = event.clientX - last.x, dy = event.clientY - last.y;
+          if (!dx && !dy) return;
+          last = { ...last, x: event.clientX, y: event.clientY };
+          const now = performance.now(), dt = Math.max(1, now - velocity.t);
+          velocity = { x: dx / dt, y: dy / dt, t: now };
+          turn(dx, dy);
+          canvas.style.cursor = 'grabbing';
+        });
+        const end = (event) => {
+          pointers.delete(event.pointerId);
+          if (!last) return;
+          last = null; canvas.style.cursor = '';
+          if (!moved || matchMedia('(prefers-reduced-motion: reduce)').matches || performance.now() - velocity.t > 80) return;
+          let vx = velocity.x * 16, vy = velocity.y * 16;
+          const step = () => {
+            vx *= 0.9; vy *= 0.9;
+            if (Math.hypot(vx, vy) < 0.05) return;
+            turn(vx, vy); glide = requestAnimationFrame(step);
+          };
+          glide = requestAnimationFrame(step);
+        };
+        window.addEventListener('pointerup', end);
+        window.addEventListener('pointercancel', end);
+        // A drag that ended on a flag must not also open it.
+        stage.addEventListener('click', (event) => { if (moved && event.target.closest?.('.hflag')) { event.stopPropagation(); event.preventDefault(); moved = false; } }, true);
+      };
+      bindTrackball();
       let down = null;
       const dirAt = (event) => {
         const box = canvas.getBoundingClientRect(), caster = new T.Raycaster();
@@ -415,7 +494,7 @@ export async function createPolar3d(env) {
       view3d = {
         request: () => { if (!home) { setHome(); home = true; } request(); },
         reset: () => flyTo(homeDir(), 3.6),
-        zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.05, MAX_DIST)); controls.update(); request(); },
+        zoom: (factor) => { camera.position.setLength(clamp(camera.position.length() * factor, 1.05, maxDist())); syncUp(); controls.update(); request(); },
         focus: (site) => { const dir = moonGroup.localToWorld(new T.Vector3(...unit(site.lat, site.lon))).normalize(); flyTo(dir, site.lat <= -75 ? 1.07 : undefined); },
         /** Fly the camera over any point; used by the historic-site cards. */
         look: (lat, lon, distance) => flyTo(moonGroup.localToWorld(new T.Vector3(...unit(lat, lon))).normalize(), distance),

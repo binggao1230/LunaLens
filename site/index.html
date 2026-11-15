@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0f1113">
-<link rel="stylesheet" href="css/tokens.css">
 <title>LunaLens · Lunar landing site navigator</title>
+<link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="vendor/noUiSlider/nouislider.min.css">
 <style>
-/* Design tokens (fonts, colours, radii) live in css/tokens.css, linked above. */
+/* Design tokens live in css/tokens.css (linked above); shared components in css/ui.css (linked last). */
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--text);
   font:15px/1.45 var(--font-sans)}
@@ -26,11 +26,11 @@ h2{font-size:15px;margin:0 0 2px}
 .controls{display:grid;grid-template-columns:1.4fr 1fr;gap:10px 14px}
 .controls label{display:block;font-size:12px;color:var(--text2);margin-bottom:3px}
 select,input[type=date]{width:100%;font:inherit;color:var(--text);background:var(--page);
-  border:1px solid var(--border);border-radius:var(--r-control);padding:8px 10px;min-height:40px}
+  border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-height:40px}
 .timeRow{grid-column:1/-1;display:flex;align-items:center;gap:10px}
 .timeRow input[type=range]{flex:1;min-width:0;accent-color:var(--earth);height:32px}
 button{font:inherit;color:var(--text);background:var(--page);border:1px solid var(--border);
-  border-radius:var(--r-control);padding:8px 14px;min-height:40px;cursor:pointer}
+  border-radius:8px;padding:8px 14px;min-height:40px;cursor:pointer}
 #now{grid-column:1/-1;font-size:13px;color:var(--text2);font-variant-numeric:tabular-nums}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
 .tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px}
@@ -158,6 +158,8 @@ body[data-view=pole] .scrub{display:none}
 .side{display:flex}
 .side button{border:none;background:none;color:var(--muted);font-size:13px;padding:6px 8px;min-height:32px}
 .side button.on{color:var(--text);font-weight:650}
+.mobile-entry{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;padding:5px 9px;color:var(--text2);font-size:12px;text-decoration:none;white-space:nowrap}
+.mobile-entry:hover{border-color:var(--earth);color:var(--text)}
 .scrub .chart{flex:1;min-width:220px}
 .scrub #now{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
 body.owners [data-owner]{position:relative;outline:1.5px dashed var(--muted);outline-offset:-1px}
@@ -192,7 +194,7 @@ table.bm tr:first-child th{color:var(--text2);font-weight:500}
 .scene-status[hidden]{display:none}
 .scene-gesture{position:absolute;left:12px;bottom:10px;margin:0;font-size:11px;color:#cfcfc8}
 .scene-scale{position:absolute;right:12px;bottom:8px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.6);color:#fff;border-radius:8px;padding:4px 10px;font-size:12px}
-.scene-scale input{width:110px;accent-color:var(--accent)}
+.scene-scale input{width:110px;accent-color:var(--sun)}
 .scene-scale[hidden]{display:none}
 .scene-foot p{margin:8px 0 0;font-size:12px;color:var(--text2)}
 dl.kv{display:grid;grid-template-columns:minmax(120px,220px) 1fr;gap:6px 14px;margin:0;font-size:13px}
@@ -346,6 +348,8 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-window-stay select{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:11.5px}
 .pole-window-close{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:0 2px}
 .pole-window-close:hover{color:var(--text)}
+.pole-window-track{position:relative}
+.pole-window-now{position:absolute;top:20px;width:2px;height:10px;margin-left:-1px;border-radius:1px;background:var(--text);box-shadow:0 0 0 2px rgba(0,0,0,.55);pointer-events:none;z-index:2}
 .pole-window-slider{height:58px;margin:2px 8px 0}
 .pole-window-slider.noUi-target{background:transparent;border:0;border-radius:0;box-shadow:none}
 .pole-window-slider .noUi-base{height:58px}
@@ -367,8 +371,6 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-min{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:0 3px}
 .pole-min:hover{color:var(--text)}
 .pole select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%238a93a0' stroke-width='1.5' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 9px center;background-size:10px 6px;padding-right:26px}
-.pole-atlas-actions button{min-width:30px;min-height:30px;border-radius:50%;padding:0;font-weight:700}
-.pole-atlas-actions button.filled{border-color:var(--earth);color:var(--text);background:rgba(113,169,239,.14)}
 .pole-atlas-actions button[disabled]{opacity:.55;cursor:default}
 .pole-modal{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(5,7,10,.72);backdrop-filter:blur(4px)}
 .pole-modal[hidden]{display:none}
@@ -389,13 +391,21 @@ body[data-view=pole] main{max-width:none;padding:0}
 .pole-cmp{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .pole-cmp th,.pole-cmp td{text-align:left;padding:4px 5px;border-bottom:1px solid var(--border)}
 .pole-cmp thead th{color:var(--muted);font-weight:600}
-.pole-atlas-pick{position:absolute;left:16px;top:118px;z-index:8;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:rgba(15,17,19,.92);backdrop-filter:blur(10px);max-width:420px}
-.pole-atlas-pick p{margin:0 0 8px;font-size:12.5px;color:var(--muted)}
-.pole-atlas-actions{display:flex;gap:6px;flex-wrap:wrap}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.pole-atlas-pick{position:absolute;left:14px;top:50%;transform:translateY(-50%);z-index:8;display:flex;flex-direction:column;gap:6px;padding:6px;border:1px solid var(--border);border-radius:14px;background:rgba(15,17,19,.9);backdrop-filter:blur(10px)}
+.pole-atlas-actions{display:flex;flex-direction:column;gap:5px}
+.pole-atlas-nav,.pole-atlas-actions button{width:32px;height:32px;padding:0;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--text2);display:grid;place-items:center;cursor:pointer}
+.pole-atlas-nav:hover,.pole-atlas-actions button:hover{border-color:var(--earth);color:var(--text)}
+.pole-atlas-actions button{font:700 12px/1 "Geist",system-ui,sans-serif}
+.pole-atlas-actions button[data-slot=A]{--slot:#58c8ff}
+.pole-atlas-actions button[data-slot=B]{--slot:#f5c542}
+.pole-atlas-actions button[data-slot=C]{--slot:#ff9ad5}
+.pole-atlas-actions button.filled{border-style:solid;border-color:var(--slot);background:color-mix(in srgb,var(--slot) 18%,transparent);color:var(--text)}
 @media(max-width:900px){.pole-windowbar{left:8px;right:8px;bottom:62px;width:auto;padding:9px 12px 7px;gap:4px}.pole-window-head{gap:8px}.pole-window-title,.pole-window-stay,.pole-windowbar p{display:none}.pole-side{left:8px;right:8px;top:auto;bottom:200px;width:auto;max-height:38%}.pole-hud{left:8px;right:8px;top:56px;max-width:none}.pole-tabs{left:8px;top:8px;transform:none}.pole-globe-zoom{right:8px;top:8px}.pole-time{right:8px;top:52px}.pole-restore{bottom:62px}.pole-globe-hint{display:none}}
 </style>
 <link rel="stylesheet" href="css/mission.css">
 <link rel="stylesheet" href="css/edu.css">
+<link rel="stylesheet" href="css/ui.css">
 </head>
 <body data-view="start">
 <div id="loading" role="status">Loading…</div>
@@ -405,7 +415,7 @@ body[data-view=pole] main{max-width:none;padding:0}
     <button data-view="mission">Mission</button><button data-view="atlas">Atlas</button><button data-view="explore">Explore</button><button data-view="pole">South Pole</button>
   </nav>
   <div class="tray" id="tray"></div>
-  <nav class="side" data-nav><button data-view="data">Data</button></nav>
+  <nav class="side" data-nav><button data-view="data">Data</button><a class="mobile-entry" href="mobile/">Mobile</a></nav>
   <div class="seg-pill" id="mode-toggle" role="group" aria-label="Mode">
     <button type="button" data-mode="expert" aria-pressed="true" aria-label="Expert mode"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="long">Expert mode</span><span class="short">Expert</span></button>
     <button type="button" data-mode="education" aria-pressed="false" aria-label="Education mode"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5M22 9v5"/></svg><span class="long">Education mode</span><span class="short">Learn</span></button>

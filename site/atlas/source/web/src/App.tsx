@@ -90,10 +90,9 @@ function useClock(ephem: Ephem | null) {
 }
 
 const RATES: readonly (readonly [number, string, string])[] = [
-  [3600, '1 h/s', 'One hour of Moon time per second'],
-  [6 * 3600, '6 h/s', 'Six hours per second'],
-  [86400, '1 d/s', 'One day per second'],
-  [7 * 86400, '7 d/s', 'One week per second'],
+  [3600, '1×', 'One hour of Moon time per second'],
+  [5 * 3600, '5×', 'Five hours of Moon time per second'],
+  [10 * 3600, '10×', 'Ten hours of Moon time per second'],
 ]
 /** `hint` is the one-line description in the phone's layer list; `legend` the full note with sources. */
 const LAYERS: { label: string; full?: string; value: LayerMode; hint: string; legend: string; ramp?: string; ends?: [string, string] }[] = [
@@ -611,6 +610,26 @@ export default function App() {
     },
     [terrain, globeRelief, patchOf],
   )
+  // LunaLens command channel: the parent workspace can set the three slots and the clock
+  // without reloading this frame.
+  useEffect(() => {
+    const onCommand = (event: MessageEvent) => {
+      if (event.origin !== location.origin || event.data?.type !== 'lunalens:atlas-command') return
+      const raw = event.data
+      const sites = (Array.isArray(raw.sites) ? raw.sites : [])
+        .filter((s: { lat?: number; lon?: number }) => Number.isFinite(s.lat) && Number.isFinite(s.lon))
+        .slice(0, 3)
+        .map((s: { lat: number; lon: number; label?: string }) => ({ lat: s.lat, lon: s.lon, label: String(s.label ?? ''), hM: elevation(s.lat, s.lon) }))
+      const store = useStore.getState()
+      store.replacePins(sites, raw.active ?? null)
+      if (Number.isFinite(raw.tMs)) {
+        store.setPlaying(false)
+        store.setTime(raw.tMs)
+      }
+    }
+    window.addEventListener('message', onCommand)
+    return () => window.removeEventListener('message', onCommand)
+  }, [elevation])
   const pick = useCallback(
     (lat: number, lon: number, label?: string) => addPin({ lat, lon, hM: elevation(lat, lon), label }),
     [addPin, elevation],
