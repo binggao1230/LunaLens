@@ -757,9 +757,10 @@ function bind() {
     const b = e.target.closest('button[data-lang]'); if (!b) return;
     setLangOpen(false); langBtn.focus();
     if (b.dataset.lang === getLanguage()) return;
-    setLanguage(b.dataset.lang); applyTranslations(); hideTip(); renderChrome(); renderAll(); renderSources();
-    edu?.setLanguage(getLanguage());
-    if (scene3d) render3d();
+    setLanguage(b.dataset.lang);
+    for (const step of [renderChrome, applyTranslations, hideTip, renderAll, renderSources, () => edu?.setLanguage(getLanguage()), () => { if (scene3d) render3d(); }, () => pole?.relocalize()]) {
+      try { step(); } catch (error) { console.error('language switch step failed', error); }
+    }
   };
 
   $('pano').addEventListener('pointermove', (e) => {

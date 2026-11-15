@@ -21,6 +21,7 @@ Map → Atlas → Map. One shared preview time, one saved A/B/C set, no second A
 - [ ] Responsive map, circle-clipped edge blocks and local imagery fallback.
 - [ ] Atlas entry gate, tutorial removal, real A/B/C round trip.
 - [ ] Desktop and 390 px end-to-end evidence; checks and checkpoint log.
+- [ ] Expert Globe and Map stage fixes (Atlas stage and top menu untouched): restore the hidden zoom, time and A/B/C controls and the study-panel reopen button, reposition them for the left panel, keep the map square when clicking, key the pilot-grid cache by cell position, coalesce map redraws, and make the window dialog Cancel restore the previous window.
 
 - [x] Keep the top bar full width and scroll page content below it, preserving the transparent start-page header.
 - [x] Anchor the Explore timeline to the viewport bottom and keep the scrollable content above it.
@@ -413,3 +414,5 @@ demo passes.
   login and check submission separately from deployment. After the workflow is stable,
   remove the hidden markup, styles and handlers for Compare/Date slip and keep old
   hashes redirecting. Defer new flight effects, orbit mechanics and additional mobile work.
+
+- [ ] Launch countdown: show the digits over the Mission page (translucent backdrop) while the flight scene loads and renders in the background, keep the count on a wall-clock deadline with compositor-only animation so heavy loading cannot stall it, and start the flight the moment the count ends.

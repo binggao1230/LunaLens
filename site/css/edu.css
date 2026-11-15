@@ -322,7 +322,7 @@ body[data-view=start] .tabbar{display:none}
 .appbar .tabs button.on,.appbar .side button.on{background:none;color:var(--text);font-weight:500;box-shadow:inset 0 -2px 0 var(--text)}
 .appbar .tabs button:focus-visible,.appbar .side button:focus-visible{outline-offset:-4px}
 .appbar #mode-toggle,.appbar .lang-menu{flex:none;margin:0}
-.appbar .seg-pill,.lang-btn{height:36px;min-height:0;box-sizing:border-box}
+.appbar .seg-pill,.lang-btn{height:32px;min-height:0;box-sizing:border-box}
 
 body[data-view=start] .appbar{background:transparent;border-bottom-color:transparent}
 
@@ -409,9 +409,18 @@ body.edu-on .tabbar button[data-view=atlas],body.edu-on .tabbar button[data-view
 .edu-choice{margin:8px 0 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#f5c542;font-weight:600}
 .edu-panel.near-sites{bottom:auto}
 
+/* ---- Education mode cursor: a cute cartoon glove (assets/cursor/, original drawings) ----
+   The pointing glove everywhere, the closed glove while pressing on the globe or the map; text fields keep
+   the text caret. !important beats the inline cursors the 3D and 2D views set while hovering. */
+body.edu-on,body.edu-on *{cursor:url("../assets/cursor/glove-point.svg") 5 3,pointer!important}
+body.edu-on canvas:active,body.edu-on .stage:active{cursor:url("../assets/cursor/glove-grab.svg") 16 14,grabbing!important}
+body.edu-on input[type=text],body.edu-on input[type=search],body.edu-on textarea{cursor:text!important}
+body.edu-on :disabled,body.edu-on [aria-disabled=true]{cursor:not-allowed!important}
+
 /* Mode switch: icons only, names stay in aria-label. */
 .seg-pill .long,.seg-pill .short{display:none!important}
 .appbar .seg-pill{height:32px;padding:2px;gap:2px;border-radius:9px}
+.appbar .lang-btn{height:32px;border-radius:9px}
 .seg-pill button,.seg-pill button[aria-pressed]{width:28px;min-height:0;height:26px;padding:0;justify-content:center;border-radius:7px}
 .seg-pill svg{width:16px;height:16px}
 @media (max-width:760px){
@@ -422,3 +431,19 @@ body.edu-on .tabbar button[data-view=atlas],body.edu-on .tabbar button[data-view
   .appbar .lang-menu{order:3}
   .appbar #mode-toggle button{flex:none}
 }
+
+/* The story points at the date bar and its time slider while it explains the time of landing: a pulsing green glow. */
+.datebar.edu-point{box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 26px 6px rgba(67,217,138,.5);border-radius:14px;animation:edu-time-pulse 1.4s ease-in-out infinite}
+@keyframes edu-time-pulse{
+  0%,100%{box-shadow:0 0 0 2px rgba(67,217,138,.6),0 0 18px 2px rgba(67,217,138,.35)}
+  50%{box-shadow:0 0 0 3px rgba(67,217,138,.9),0 0 34px 10px rgba(67,217,138,.6)}
+}
+@media (prefers-reduced-motion: reduce){.datebar.edu-point{animation:none}}
+
+/* The story points at the 30-day graph while it explains the graph: the same pulsing green glow as the date bar. */
+#m-lanes.edu-point{border-radius:14px;box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 26px 6px rgba(67,217,138,.5);animation:edu-time-pulse 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){#m-lanes.edu-point{animation:none}}
+
+/* The story points at the whole Moon view while it explains the south pole in 3D or 2D: the same pulsing green glow. */
+#m-stage.edu-point{box-shadow:0 0 0 2px rgba(67,217,138,.7),0 0 26px 6px rgba(67,217,138,.5);animation:edu-time-pulse 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){#m-stage.edu-point{animation:none}}

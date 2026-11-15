@@ -229,6 +229,7 @@ export function createMission(ctx) {
     return list.find((s) => s.id === local.picked) ?? orderedSites()[0];
   }
   function defaultCompared() {
+    if (isEducation()) return new Set(); // Education: the graph shows the sites the user picks
     const list = sites();
     const probeSites = probe()?.sites?.filter((id) => list.some((s) => s.id === id)) ?? [];
     const initial = probeSites.length >= 2 ? probeSites.slice(0, 4) : orderedSites().slice(0, 3).map((s) => s.id);
@@ -292,7 +293,7 @@ export function createMission(ctx) {
     const validate = startEl.querySelector('#validate');
     if (validate) validate.firstChild.textContent = t(edu ? 'Start the mission' : 'Validate');
   }
-  onMode(() => { if (isEducation()) { local.historic = false; view2d.z = 1; view2d.x = 0; view2d.y = 0; } if (view() === 'start') applyStartMode(); else if (view() === 'mission') refresh(true); });
+  onMode(() => { if (!isEducation()) view3d?.unframe(); if (isEducation()) { local.historic = false; view2d.z = 1; view2d.x = 0; view2d.y = 0; } if (view() === 'start') applyStartMode(); else if (view() === 'mission') refresh(true); });
 
   /* ---------- mission page skeleton ---------- */
 
@@ -375,7 +376,7 @@ export function createMission(ctx) {
       if (event.target.closest('.srow-chk')) return;
       const row = event.target.closest('[data-id]'); if (!row) return;
       const same = local.picked === row.dataset.id;
-      local.picked = row.dataset.id; ctx.onSitePick?.(local.picked);
+      local.picked = row.dataset.id; if (isEducation()) local.compared.add(row.dataset.id); ctx.onSitePick?.(local.picked);
       local.open = same && local.open === row.dataset.id ? null : row.dataset.id;
       refresh(true);
       focusSite();
@@ -565,8 +566,8 @@ export function createMission(ctx) {
 
   function laneSites() {
     const highlighted = ctx.eduHighlight?.()?.id ?? null; // Education mode always shows the site it is talking about
-    // Education mode does not compare: the timeline shows only the picked site.
-    if (isEducation()) { const picked = pickedSite()?.id; return orderedSites().filter((s) => s.id === picked || s.id === highlighted); }
+    // Education mode: the timeline shows the sites the user picked (compared) and the picked one.
+    if (isEducation()) { const picked = pickedSite()?.id; return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === picked || s.id === highlighted); }
     return orderedSites().filter((s) => local.compared?.has(s.id) || s.id === highlighted);
   }
   function runsOf(test, site) {
@@ -720,6 +721,9 @@ export function createMission(ctx) {
       onFrame: () => historic?.place(),
       // Education mode: zoom out at most to 6 Moon radii, so the Moon stays the subject instead of the Earth-Moon system.
       maxDistance: () => (isEducation() ? 6 : null),
+      // Education: selecting a site turns the globe towards it and keeps the zoom, instead of diving onto it.
+      focusDistance: () => (isEducation() ? 'keep' : null),
+      markerBoost: () => isEducation(),
     });
     view3dLoading = false;
     refresh(true);
@@ -793,11 +797,15 @@ export function createMission(ctx) {
     g.putImageData(img, 0, 0);
   }
   function labelText(site) {
+    if (isEducation()) return site.short; // Education: just the name, so the label does not give the answer away
     const status = lastFrame.status.get(site.id);
     return `${site.short} · ${t(status.link ? (status.sun ? 'Sunlit as well' : 'Earth link available') : status.sun ? 'Sunlit, no Earth link' : 'In shadow')}`;
   }
   const wrapLon = (lon) => ((((lon + 180) % 360) + 360) % 360) - 180;
   // Where the 2D map sits in the stage: the same numbers for drawing and for centring a point.
+  let pulse2d = 0;
+  const pulseLoop = () => { if (isEducation() && view() === 'mission' && local.mode === '2d') draw2d(); pulse2d = requestAnimationFrame(pulseLoop); };
+  pulse2d = requestAnimationFrame(pulseLoop);
   function geometry2d() {
     const stage = $('m-stage'), w = stage.clientWidth, h = stage.clientHeight, pole = local.flat === 'pole';
     const size = pole ? Math.max(120, Math.min(w - 40, h - 90)) : Math.max(160, Math.min(w - 40, (h - 110) * 2));
@@ -863,10 +871,13 @@ export function createMission(ctx) {
       if (!inside) continue;
       const status = f.status.get(site.id), selected = site === chosen;
       hits2d.push({ site, x, y });
-      if (status.link && status.sun) { g.strokeStyle = COLORS.sun; g.lineWidth = 2; g.beginPath(); g.arc(x, y, selected ? 11 : 8.5, 0, 6.2832); g.stroke(); }
+      // Education: bigger dots with a soft pulsing halo, so the three choices stand out.
+      const k = isEducation() ? 1.7 : 1, pulse = isEducation() ? 0.5 + 0.5 * Math.sin(performance.now() / 260) : 0;
+      if (isEducation()) { g.fillStyle = colorOf(status); g.globalAlpha = 0.18 + 0.22 * pulse; g.beginPath(); g.arc(x, y, (9 + 7 * pulse) * k, 0, 6.2832); g.fill(); g.globalAlpha = 1; }
+      if (status.link && status.sun) { g.strokeStyle = COLORS.sun; g.lineWidth = 2; g.beginPath(); g.arc(x, y, (selected ? 11 : 8.5) * k, 0, 6.2832); g.stroke(); }
       g.fillStyle = colorOf(status); g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 1;
-      g.beginPath(); g.arc(x, y, selected ? 7 : 5.2, 0, 6.2832); g.fill(); g.stroke();
-      if (selected) { g.strokeStyle = '#fff'; g.lineWidth = 1.6; g.beginPath(); g.arc(x, y, 13, 0, 6.2832); g.stroke(); }
+      g.beginPath(); g.arc(x, y, (selected ? 7 : 5.2) * k, 0, 6.2832); g.fill(); g.stroke();
+      if (selected) { g.strokeStyle = '#fff'; g.lineWidth = 1.6; g.beginPath(); g.arc(x, y, 13 * k, 0, 6.2832); g.stroke(); }
     }
     const found = hits2d.find((hit) => hit.site === chosen), label = $('m-label');
     if (found) { label.style.display = 'block'; label.style.left = `${found.x}px`; label.style.top = `${found.y - 8}px`; label.textContent = labelText(chosen); }
@@ -904,7 +915,7 @@ export function createMission(ctx) {
       const moved = drag?.moved; drag = null;
       if (moved) return;
       const box = canvas.getBoundingClientRect(), hit = nearest(event.clientX - box.left, event.clientY - box.top);
-      if (hit) { local.picked = hit.site.id; ctx.onSitePick?.(local.picked); refresh(true); }
+      if (hit) { local.picked = hit.site.id; if (isEducation()) local.compared.add(hit.site.id); ctx.onSitePick?.(local.picked); refresh(true); }
     });
     canvas.addEventListener('wheel', (event) => {
       event.preventDefault();
@@ -978,7 +989,7 @@ export function createMission(ctx) {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const selected = PROBES.find(probe => probe.id === local.probe);
     flightEl.innerHTML = `<canvas class="flight-scene" aria-label="${escapeHtml(t(selected.name))}"></canvas>
-      <div class="flight-countdown" aria-hidden="true">5</div>
+      <div class="flight-countdown" aria-hidden="true">${[5, 4, 3, 2, 1].map((n, i) => `<span style="animation-delay:${i}s">${n}</span>`).join('')}</div>
       <div class="flight-top"><span>${escapeHtml(t(selected.name))}</span><button class="btn-ghost flight-skip">${escapeHtml(t('Exit flight'))}<span aria-hidden="true">↗</span></button></div>
       <div class="flight-caption"><p class="flight-phase" role="status">${escapeHtml(t('Preparing spacecraft…'))}</p>
         <h2>${escapeHtml(site.short)}</h2>
@@ -999,24 +1010,17 @@ export function createMission(ctx) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     let done = false, disposeFlight, lastPhase = '', countdownTimer = null;
-    const sceneCanvas = flightEl.querySelector('.flight-scene');
-    let countdownDone = reduced;
-    const revealFlight = () => {
-      if (countdownDone && sceneCanvas.dataset.ready === 'true') flightEl.classList.remove('is-counting');
-    };
+    const COUNTDOWN_MS = 5000;
+    const deadline = performance.now() + (reduced ? 0 : COUNTDOWN_MS);
     if (!reduced) {
-      let countdown = 5;
-      countdownTimer = setInterval(() => {
-        countdown -= 1;
-        if (countdown >= 0) countdownEl.textContent = String(countdown);
-        else { clearInterval(countdownTimer); countdownEl.remove(); countdownDone = true; revealFlight(); }
-      }, 1000);
+      // The digits are CSS animations on the compositor and the end is a wall-clock deadline, so a busy main thread (model decode, texture upload) cannot stall or skew the count.
+      countdownTimer = setTimeout(() => { countdownEl.remove(); flightEl.classList.remove('is-counting'); }, COUNTDOWN_MS);
     } else {
       countdownEl.remove();
     }
     const finish = () => {
       if (done) return; done = true; flying = false;
-      clearInterval(countdownTimer);
+      clearTimeout(countdownTimer);
       flightEl.classList.remove('is-counting');
       document.removeEventListener('keydown', handleKey);
       document.body.style.overflow = previousOverflow;
@@ -1038,7 +1042,7 @@ export function createMission(ctx) {
     skip.focus();
     disposeFlight = playProbeFlight(flightEl.querySelector('canvas'), {
       probe: selected.id, site: { lat: site.lat, lon: site.lon }, reduced,
-      startAt: reduced ? 0 : performance.now() + 6000,
+      startAt: reduced ? 0 : deadline,
       onComplete: () => {
         phase.textContent = t('Landed · exit when you are ready');
       },
@@ -1047,7 +1051,6 @@ export function createMission(ctx) {
         disposeFlight?.();
       },
       onProgress: (progress, key) => {
-        revealFlight();
         fill.style.transform = `scaleX(${progress})`;
         if (key !== lastPhase) { phase.textContent = t(key); lastPhase = key; }
       },
@@ -1097,6 +1100,24 @@ export function createMission(ctx) {
     setHour(h) { local.hour = clamp(Math.round(h), 0, SPAN); refresh(); },
     redraw: () => refresh(true),
     flags: () => historic?.place(),
+    // The three choices land left of centre and low, clear of Lumi's bubble at the top right of the stage.
+    frameChoices: () => {
+      if (local.mode !== '3d' || !view3d) return;
+      // Keep the choices out from under Lumi's bubble: pass its box in the canvas's normalised coordinates.
+      const c = $('m-3d').getBoundingClientRect(), b = document.querySelector('#edu .edu-panel')?.getBoundingClientRect();
+      const nx = (x) => ((x - c.left) / c.width) * 2 - 1, ny = (y) => 1 - ((y - c.top) / c.height) * 2;
+      const avoid = b && b.width ? [nx(b.left), ny(b.bottom), nx(b.right), ny(b.top)] : null;
+      view3d.frame(sites(), { aim: [-0.4, -0.25], avoid });
+    },
+    unframeChoices: () => view3d?.unframe(),
+    // Turn the globe so the given historic flags are in view (the flags step points at Apollo 11 and IM-2).
+    frameFlags: (ids) => {
+      if (local.mode !== '3d' || !view3d) return;
+      const list = (historic?.sites() ?? []).filter((x) => ids.includes(x.id));
+      const c = $('m-3d').getBoundingClientRect(), b = document.querySelector('#edu .edu-panel')?.getBoundingClientRect();
+      const nx = (x) => ((x - c.left) / c.width) * 2 - 1, ny = (y) => 1 - ((y - c.top) / c.height) * 2;
+      view3d.frame(list, { aim: [0, 0.1], avoid: b && b.width ? [nx(b.left), ny(b.bottom), nx(b.right), ny(b.top)] : null });
+    },
     openFlag: (id) => historic?.open(id),
   };
 }

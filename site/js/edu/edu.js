@@ -12,6 +12,12 @@ import { assess, isOk, findBreakingDelay, findGoDelay, bestNearby, BATTERY_H, BA
 // Steps of the story: objective, pick a site (confirm, then Lumi reveals), the flags of past landings, launch, …
 const STEP = { objective: 1, site: 2, history: 3, launch: 4, anomaly: 5, fix: 6, done: 7 };
 const DAY = 864e5, TOTAL = 7;
+// The objective segment about the time of landing: the date bar on top of the Mission page pulses while it shows.
+const TIME_SEGMENT = 7;
+// The objective segment that explains the 30-day graph: the graph (#m-lanes) pulses while it shows.
+const GRAPH_SEGMENT = 8;
+// The objective segment about the south pole in 3D or 2D: the whole Moon view (#m-stage) pulses while it shows.
+const MODE_SEGMENT = 3;
 const fmt = (s, v = {}) => String(s ?? '').replace(/\{(\w+)\}/g, (m, k) => (v[k] ?? m));
 
 /** ctx: { mission, sites, eph, landing, setLanding, margin, showView, view, language, toast } */
@@ -74,7 +80,7 @@ export function createEducation(ctx) {
 
   /* ---------- story steps ---------- */
 
-  function enterHistory() { setStep(STEP.history); say('history.intro', {}, 'happy'); render(); ctx.mission.flags?.(); }
+  function enterHistory() { ctx.mission.unframeChoices?.(); setStep(STEP.history); say('history.intro', {}, 'happy'); render(); ctx.mission.flags?.(); ctx.mission.frameFlags?.(['apollo11', 'im2']); }
   function enterSite() {
     setStep(STEP.site); ctx.mission.flags?.();
     const o = opts(), list = ctx.sites(), ok = (ms) => list.some((s) => isOk(assess(s, idx(ms), o).verdict));
@@ -84,6 +90,7 @@ export function createEducation(ctx) {
       }
     }
     st.revealed = null; say('site.pick', {}, 'happy'); render();
+    ctx.mission.frameChoices?.(); // zoom to where the possible choices are
   }
   // Confirm selection: Lumi says whether the picked site has the Sun and Earth at touchdown.
   function reveal() {
@@ -130,7 +137,7 @@ export function createEducation(ctx) {
   }
   function back() {
     if (st.step === 1 && st.sub > 0) { st.sub--; st.focus = true; say(`objective.intro.${st.sub}`, {}, 'happy'); render(); }
-    else if (st.step === STEP.site) { const last = Math.max(0, introLines().length - 1); setStep(STEP.objective, last); say(`objective.intro.${last}`, {}, 'happy'); render(); }
+    else if (st.step === STEP.site) { ctx.mission.unframeChoices?.(); const last = Math.max(0, introLines().length - 1); setStep(STEP.objective, last); say(`objective.intro.${last}`, {}, 'happy'); render(); }
     else if (st.step === STEP.history) { setStep(STEP.site); st.revealed = 'good'; say('site.good', { site: st.picked?.short ?? '' }, 'celebrating'); render(); }
   }
   const canComplete = () => current()?.verdict === 'go' && (st.anomaly?.kind !== 'contact' || st.tried);
@@ -215,6 +222,12 @@ export function createEducation(ctx) {
   }
 
   function render() {
+    const pointAtTime = visible() && !st.skipped && st.step === STEP.objective && st.sub === TIME_SEGMENT;
+    document.querySelector('.datebar')?.classList.toggle('edu-point', pointAtTime);
+    const pointAtGraph = visible() && !st.skipped && st.step === STEP.objective && st.sub === GRAPH_SEGMENT;
+    document.getElementById('m-lanes')?.classList.toggle('edu-point', pointAtGraph);
+    const pointAtMode = visible() && !st.skipped && st.step === STEP.objective && st.sub === MODE_SEGMENT;
+    document.getElementById('m-stage')?.classList.toggle('edu-point', pointAtMode);
     if (!visible()) { root.innerHTML = ''; st.key = ''; return; }
     const r = st.step >= STEP.site ? current() : null;
     if (st.skipped) {
@@ -275,7 +288,7 @@ export function createEducation(ctx) {
     if (!act) return;
     if (act === 'next') next();
     else if (act === 'back') back();
-    else if (act === 'skip') { st.skipped = true; render(); }
+    else if (act === 'skip') { st.skipped = true; ctx.mission.unframeChoices?.(); render(); }
     else if (act === 'replay') startTour();
     else if (act === 'again') { reset(); ctx.showView('start'); } // choose a lander again; the story restarts on the Mission page
     else if (act === 'expert') switchMode('expert', event.target.closest('[data-act]'));
