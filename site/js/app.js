@@ -12,7 +12,7 @@ import { CHARACTER_MARKUP } from './edu/character.js';
 import { evaluateSiteMcda } from './engine/metrics.js';
 import { createExpert } from './views/expert.js';
 import { createSouthPole } from './views/southpole/index.js';
-import { dataBounds, latestCompleteTouchdown } from './engine/scenario.js';
+import { dataBounds, latestCompleteTouchdown, STAY_CHOICES } from './engine/scenario.js';
 
 const D2R = Math.PI / 180, R2D = 180 / Math.PI, DAY = 864e5, HOUR = 36e5;
 // A site has a terrain model when its horizon came from LOLA rather than from a smooth sphere.
@@ -470,11 +470,11 @@ function syncNav() {
 
 function showView(v) {
   if (v === 'compare' || v === 'slip' || v === 'plan') v = 'explore';
-  if (!['start', 'mission', 'explore', 'data', 'build', 'atlas', 'pole'].includes(v)) v = 'start';
+  if (!['start', 'mission', 'windows', 'explore', 'data', 'build', 'atlas', 'pole'].includes(v)) v = 'start';
   // Education mode is the Mission page only (the start page is its probe picker); every other page is an Expert tool.
   if (getMode() === 'education' && !['start', 'mission'].includes(v)) v = 'mission';
   // Expert mode has no Mission page: the start page and the Mission page belong to Education mode.
-  if (getMode() !== 'education' && ['start', 'mission'].includes(v)) v = 'pole';
+  if (getMode() !== 'education' && ['start', 'mission'].includes(v)) v = 'windows';
   document.body.dataset.view = v;
   history.replaceState(null, '', `${location.search}${formatHash(v)}`);
   syncNav();
@@ -667,6 +667,20 @@ function setLanding(ms) {
   recompute();
 }
 
+function setPlanningScenario({ touchdownMs, conditions: selectedConditions, siteId }) {
+  const stay = STAY_CHOICES.find((choice) => choice.hours === selectedConditions.stayH);
+  if (!stay) return;
+  state.stayKey = stay.key;
+  state.margin = selectedConditions.marginDeg;
+  state.requiredSunH = selectedConditions.requiredSunH;
+  state.requireEarth = selectedConditions.requireEarthAtTouchdown;
+  state.hour = 0;
+  const siteIndex = SITES.findIndex((site) => site.id === siteId);
+  if (siteIndex >= 0) state.site = siteIndex;
+  setLanding(touchdownMs);
+  expert?.refreshInputs();
+}
+
 function bind() {
   $('sitelist').onclick = (e) => { const b = e.target.closest('.site'); if (b) selectSite(+b.dataset.k); };
   $('tray').onclick = (e) => {
@@ -693,7 +707,7 @@ function bind() {
   onMode((m) => {
     renderChrome();
     if (m === 'education' && !['start', 'mission'].includes(document.body.dataset.view)) { showView('mission'); return; }
-    if (m !== 'education' && ['start', 'mission'].includes(document.body.dataset.view)) { showView('pole'); return; }
+    if (m !== 'education' && ['start', 'mission'].includes(document.body.dataset.view)) { showView('windows'); return; }
     history.replaceState(null, '', `${location.search}${formatHash(document.body.dataset.view)}`);
   });
   // A pasted or edited hash on the open page: apply its mode and view (showView uses replaceState, so no loop).
@@ -915,7 +929,8 @@ async function start() {
     setRequireEarth: (b) => { state.requireEarth = b; recompute(); expert?.refreshInputs(); },
     setTouchdown: (ms) => setLanding(ms),
     selectSite: (id) => { const k = SITES.findIndex((s) => s.id === id); if (k >= 0) { state.site = k; renderAll(); } },
-    scrollToPanorama: () => document.getElementById('pano')?.scrollIntoView({ block: 'center', behavior: 'smooth' }),
+    scrollToPanorama: () => { showView('explore'); requestAnimationFrame(() => $('pano')?.scrollIntoView({ block: 'center', behavior: 'smooth' })); },
+    chooseWindow: (selection) => { pole.beginWindow(selection); showView('pole'); },
     toast,
   });
   expert.mount();
@@ -923,6 +938,8 @@ async function start() {
     sites: () => SITES, eph: () => eph, landing: () => state.landing,
     previewHour: () => state.hour, setPreviewHour: (h) => setHour(h),
     stayH: () => stayH(), stayKey: () => state.stayKey, margin: () => state.margin,
+    conditions, setScenario: setPlanningScenario,
+    backToWindows: () => showView('windows'),
     setStay: (key) => { state.stayKey = key; state.hour = 0; recompute(); expert?.refreshInputs(); },
     setMargin: (v) => { state.margin = v; recompute(); expert?.refreshInputs(); },
     selectedId: () => SITES[state.site]?.id ?? null,
