@@ -1,5 +1,5 @@
 {
-  "character": { "name": "Pico" },
+  "character": { "name": "Lumi" },
   "ui": {
     "panel": "Story guide",
     "step": "Step {n} of {total}",
@@ -50,8 +50,12 @@
   "steps": {
     "objective": {
       "intro": [
-        "Hello, explorer! I'm {name}. Our mission: land at the Moon's south pole, where ice hides in the cold.",
+        "Hello, explorer! I'm {name}, your mission guide. Today we're going to land on the Moon, at its south pole.",
+        "Why the Moon? It's the closest world to Earth, and a great place to learn how to live and work far from home.",
+        "Why the south pole? Some deep craters there never see the Sun, and they hide ice. Ice can become water to drink, air to breathe and fuel for rockets.",
         "Two golden rules keep a lander alive. It needs sunlight for power, and it must see Earth to talk to us.",
+        "Rule 1: sunlight. At the south pole the Sun stays low, near the horizon, so hills and crater walls can block it. Our landing site must be a place the Sun's rays can reach.",
+        "Rule 2: Earth. Our lander talks to us by radio, and radio needs a clear path to Earth. From the south pole, Earth also sits low in the sky, so our site must be able to see it over the hills.",
         "Now pick a landing site in the list or on the map. Green dots see Earth, amber dots see only the Sun, grey dots sit in shadow."
       ]
     },

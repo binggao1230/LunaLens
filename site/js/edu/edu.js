@@ -214,8 +214,14 @@ export function createEducation(ctx) {
     else if (st.step === 4) actions = btn('next', st.anomaly.kind !== 'contact' && st.sub === 0 ? ui('whatHappened') : ui('fixIt'));
     else if (st.step === 5) actions = btn('next', ui('complete'), canComplete() ? '' : 'disabled');
     const skip = st.step === 3 ? '' : `<button type="button" class="edu-skip" data-act="skip">${escapeHtml(ui('skip'))}</button>`;
-    root.innerHTML = `<aside class="edu-panel step-${st.step}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
-      <div class="edu-char mood-${st.mood}">${CHARACTER_MARKUP}</div>
+    // The intro lines before "pick a site" are read on their own, so they cover the whole page.
+    // Only the first intro line fills the page, and it shows the astronaut dog artwork instead of the mood poses.
+    const full = st.step === 1 && st.sub === 0;
+    const art = full
+      ? `<div class="edu-char edu-hero"><img src="assets/mascot/astronaut_dog_moon.svg" alt="" draggable="false"></div>`
+      : `<div class="edu-char mood-${st.mood}">${CHARACTER_MARKUP}</div>`;
+    root.innerHTML = `<aside class="edu-panel step-${st.step}${full ? ' full' : ''}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
+      ${art}
       <div class="edu-bubble">
         <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span>${[2, 4, 5].includes(st.step) ? verdictChip(r) : ''}</div>
         <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite">${escapeHtml(text)}</p>
