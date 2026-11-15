@@ -293,7 +293,11 @@ export function createMission(ctx) {
     const validate = startEl.querySelector('#validate');
     if (validate) validate.firstChild.textContent = t(edu ? 'Start the mission' : 'Validate');
   }
+<<<<<<< HEAD
   onMode(() => { if (isEducation()) { local.historic = false; view2d.z = 1; view2d.x = 0; view2d.y = 0; } if (view() === 'start') applyStartMode(); else if (view() === 'mission') refresh(true); });
+=======
+  onMode(() => { if (!isEducation()) view3d?.unframe(); if (isEducation()) { view2d.z = 1; view2d.x = 0; view2d.y = 0; } if (view() === 'start') applyStartMode(); else if (view() === 'mission') refresh(true); });
+>>>>>>> a5532b0 (Education: frame the three choices on "Now pick a landing site", with bigger pulsing dots)
 
   /* ---------- mission page skeleton ---------- */
 
@@ -722,6 +726,7 @@ export function createMission(ctx) {
       maxDistance: () => (isEducation() ? 6 : null),
       // Education: selecting a site turns the globe towards it and keeps the zoom, instead of diving onto it.
       focusDistance: () => (isEducation() ? 'keep' : null),
+      markerBoost: () => isEducation(),
     });
     view3dLoading = false;
     refresh(true);
@@ -800,6 +805,9 @@ export function createMission(ctx) {
   }
   const wrapLon = (lon) => ((((lon + 180) % 360) + 360) % 360) - 180;
   // Where the 2D map sits in the stage: the same numbers for drawing and for centring a point.
+  let pulse2d = 0;
+  const pulseLoop = () => { if (isEducation() && view() === 'mission' && local.mode === '2d') draw2d(); pulse2d = requestAnimationFrame(pulseLoop); };
+  pulse2d = requestAnimationFrame(pulseLoop);
   function geometry2d() {
     const stage = $('m-stage'), w = stage.clientWidth, h = stage.clientHeight, pole = local.flat === 'pole';
     const size = pole ? Math.max(120, Math.min(w - 40, h - 90)) : Math.max(160, Math.min(w - 40, (h - 110) * 2));
@@ -865,10 +873,13 @@ export function createMission(ctx) {
       if (!inside) continue;
       const status = f.status.get(site.id), selected = site === chosen;
       hits2d.push({ site, x, y });
-      if (status.link && status.sun) { g.strokeStyle = COLORS.sun; g.lineWidth = 2; g.beginPath(); g.arc(x, y, selected ? 11 : 8.5, 0, 6.2832); g.stroke(); }
+      // Education: bigger dots with a soft pulsing halo, so the three choices stand out.
+      const k = isEducation() ? 1.7 : 1, pulse = isEducation() ? 0.5 + 0.5 * Math.sin(performance.now() / 260) : 0;
+      if (isEducation()) { g.fillStyle = colorOf(status); g.globalAlpha = 0.18 + 0.22 * pulse; g.beginPath(); g.arc(x, y, (9 + 7 * pulse) * k, 0, 6.2832); g.fill(); g.globalAlpha = 1; }
+      if (status.link && status.sun) { g.strokeStyle = COLORS.sun; g.lineWidth = 2; g.beginPath(); g.arc(x, y, (selected ? 11 : 8.5) * k, 0, 6.2832); g.stroke(); }
       g.fillStyle = colorOf(status); g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 1;
-      g.beginPath(); g.arc(x, y, selected ? 7 : 5.2, 0, 6.2832); g.fill(); g.stroke();
-      if (selected) { g.strokeStyle = '#fff'; g.lineWidth = 1.6; g.beginPath(); g.arc(x, y, 13, 0, 6.2832); g.stroke(); }
+      g.beginPath(); g.arc(x, y, (selected ? 7 : 5.2) * k, 0, 6.2832); g.fill(); g.stroke();
+      if (selected) { g.strokeStyle = '#fff'; g.lineWidth = 1.6; g.beginPath(); g.arc(x, y, 13 * k, 0, 6.2832); g.stroke(); }
     }
     const found = hits2d.find((hit) => hit.site === chosen), label = $('m-label');
     if (found) { label.style.display = 'block'; label.style.left = `${found.x}px`; label.style.top = `${found.y - 8}px`; label.textContent = labelText(chosen); }
@@ -1091,6 +1102,24 @@ export function createMission(ctx) {
     setHour(h) { local.hour = clamp(Math.round(h), 0, SPAN); refresh(); },
     redraw: () => refresh(true),
     flags: () => historic?.place(),
+    // The three choices land left of centre and low, clear of Lumi's bubble at the top right of the stage.
+    frameChoices: () => {
+      if (local.mode !== '3d' || !view3d) return;
+      // Keep the choices out from under Lumi's bubble: pass its box in the canvas's normalised coordinates.
+      const c = $('m-3d').getBoundingClientRect(), b = document.querySelector('#edu .edu-panel')?.getBoundingClientRect();
+      const nx = (x) => ((x - c.left) / c.width) * 2 - 1, ny = (y) => 1 - ((y - c.top) / c.height) * 2;
+      const avoid = b && b.width ? [nx(b.left), ny(b.bottom), nx(b.right), ny(b.top)] : null;
+      view3d.frame(sites(), { aim: [-0.4, -0.25], avoid });
+    },
+    unframeChoices: () => view3d?.unframe(),
+    // Turn the globe so the given historic flags are in view (the flags step points at Apollo 11 and IM-2).
+    frameFlags: (ids) => {
+      if (local.mode !== '3d' || !view3d) return;
+      const list = (historic?.sites() ?? []).filter((x) => ids.includes(x.id));
+      const c = $('m-3d').getBoundingClientRect(), b = document.querySelector('#edu .edu-panel')?.getBoundingClientRect();
+      const nx = (x) => ((x - c.left) / c.width) * 2 - 1, ny = (y) => 1 - ((y - c.top) / c.height) * 2;
+      view3d.frame(list, { aim: [0, 0.1], avoid: b && b.width ? [nx(b.left), ny(b.bottom), nx(b.right), ny(b.top)] : null });
+    },
     openFlag: (id) => historic?.open(id),
   };
 }
