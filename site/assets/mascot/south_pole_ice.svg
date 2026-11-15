@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" width="800" height="560">
+  <title>South pole craters hide ice: water, air and fuel</title>
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Sun, low and blocked by the rim of the crater -->
+  <circle cx="700" cy="70" r="38" fill="#ffd166" opacity="0.25"/>
+  <circle cx="700" cy="70" r="26" fill="#ffd166" stroke="#2a3a4a" stroke-width="4"/>
+  <g stroke="#ffd166" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 10" fill="none">
+    <line x1="660" y1="100" x2="536" y2="222"/>
+    <line x1="690" y1="112" x2="580" y2="256"/>
+    <line x1="640" y1="124" x2="500" y2="246"/>
+  </g>
+
+  <!-- Lunar surface -->
+  <rect x="0" y="360" width="800" height="200" fill="#d9cfb8"/>
+  <path d="M0,360 L800,360" stroke="#2a3a4a" stroke-width="4"/>
+  <g fill="#bfb395">
+    <ellipse cx="60" cy="410" rx="16" ry="6"/>
+    <ellipse cx="520" cy="402" rx="12" ry="5"/>
+    <ellipse cx="770" cy="420" rx="18" ry="7"/>
+    <ellipse cx="230" cy="520" rx="22" ry="8"/>
+  </g>
+
+  <!-- Rim that blocks the Sun -->
+  <path d="M420,360 Q470,250 520,235 Q552,250 600,360 Z" fill="#e6dcc4" stroke="#2a3a4a" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- Deep south-pole crater, always in shadow -->
+  <path d="M290,360 Q298,450 355,450 Q412,450 420,360 Z" fill="#4a4466" stroke="#2a3a4a" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M300,372 Q316,428 355,428" fill="none" stroke="#6c6590" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+
+  <!-- Ice hidden in the shadow -->
+  <circle cx="355" cy="425" r="34" fill="#7fe0ff" opacity="0.35" filter="url(#glow)"/>
+  <g fill="#c9f5ff" stroke="#5ccbe8" stroke-width="2" stroke-linejoin="round">
+    <path d="M330,425 L338,415 L346,425 L338,435 Z"/>
+    <path d="M355,414 L366,402 L377,414 L366,428 Z"/>
+    <path d="M382,430 L390,422 L398,430 L390,438 Z"/>
+  </g>
+
+  <!-- Astronaut dog pointing at the crater -->
+  <path d="M150,133 L150,118" stroke="#2a3a4a" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="150" cy="104" r="14" fill="#7d8fa3" stroke="#2a3a4a" stroke-width="4"/>
+  <circle cx="150" cy="215" r="82" fill="#a8e6f2" fill-opacity="0.85" stroke="#2a3a4a" stroke-width="4"/>
+  <ellipse cx="122" cy="186" rx="22" ry="10" transform="rotate(-30 122 186)" fill="#ffffff" opacity="0.7"/>
+  <circle cx="150" cy="225" r="52" fill="#f08a3c" stroke="#2a3a4a" stroke-width="3"/>
+  <ellipse cx="118" cy="240" rx="18" ry="30" transform="rotate(20 118 240)" fill="#8a4a2a"/>
+  <circle cx="138" cy="220" r="5" fill="#2a1a14"/>
+  <circle cx="166" cy="216" r="5" fill="#2a1a14"/>
+  <ellipse cx="178" cy="238" rx="11" ry="8" fill="#5a2e1a"/>
+  <path d="M140,250 Q158,266 176,250" fill="none" stroke="#2a1a14" stroke-width="4" stroke-linecap="round"/>
+  <rect x="110" y="285" width="80" height="18" rx="9" fill="#7d8fa3" stroke="#2a3a4a" stroke-width="4"/>
+  <rect x="110" y="300" width="80" height="62" rx="28" fill="#f6e9ec" stroke="#2a3a4a" stroke-width="4"/>
+  <line x1="182" y1="316" x2="262" y2="284" stroke="#2a3a4a" stroke-width="34" stroke-linecap="round"/>
+  <line x1="182" y1="316" x2="262" y2="284" stroke="#f6e9ec" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="268" cy="280" r="15" fill="#7d8fa3" stroke="#2a3a4a" stroke-width="4"/>
+  <rect x="112" y="350" width="30" height="24" rx="12" fill="#7d8fa3" stroke="#2a3a4a" stroke-width="4"/>
+  <rect x="158" y="350" width="30" height="24" rx="12" fill="#7d8fa3" stroke="#2a3a4a" stroke-width="4"/>
+
+  <!-- Ice becomes water, air and fuel -->
+  <g fill="none" stroke="#2a3a4a" stroke-width="3" stroke-dasharray="6 8" stroke-linecap="round" opacity="0.7">
+    <path d="M372,436 Q430,500 496,492"/>
+    <path d="M372,436 Q470,520 596,492"/>
+    <path d="M372,436 Q560,520 696,492"/>
+  </g>
+
+  <!-- Water to drink -->
+  <circle cx="540" cy="490" r="42" fill="#fff6e0" stroke="#2a3a4a" stroke-width="4"/>
+  <path d="M540,462 C552,480 558,490 558,498 A18,18 0 0 1 522,498 C522,490 528,480 540,462 Z" fill="#4fb8e8" stroke="#2a3a4a" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- Air to breathe -->
+  <circle cx="640" cy="490" r="42" fill="#fff6e0" stroke="#2a3a4a" stroke-width="4"/>
+  <g fill="#bff0ff" stroke="#2a3a4a" stroke-width="3">
+    <circle cx="632" cy="500" r="10"/>
+    <circle cx="651" cy="486" r="8"/>
+    <circle cx="645" cy="472" r="5"/>
+  </g>
+
+  <!-- Fuel for rockets -->
+  <circle cx="740" cy="490" r="42" fill="#fff6e0" stroke="#2a3a4a" stroke-width="4"/>
+  <path d="M740,462 C750,470 752,482 752,494 L752,504 L728,504 L728,494 C728,482 730,470 740,462 Z" fill="#ffffff" stroke="#2a3a4a" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M728,492 L718,506 L728,504 Z M752,492 L762,506 L752,504 Z" fill="#7d8fa3" stroke="#2a3a4a" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M734,504 L746,504 L740,518 Z" fill="#ffb040" stroke="#2a3a4a" stroke-width="2" stroke-linejoin="round"/>
+</svg>
