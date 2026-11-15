@@ -229,7 +229,7 @@ export function createMission(ctx) {
     return list.find((s) => s.id === local.picked) ?? orderedSites()[0];
   }
   function defaultCompared() {
-    if (isEducation()) return new Set(); // Education: the graph shows the sites the user picks
+    if (isEducation()) return new Set(sites().map((s) => s.id)); // Education: all three sites are graphed from the start
     const list = sites();
     const probeSites = probe()?.sites?.filter((id) => list.some((s) => s.id === id)) ?? [];
     const initial = probeSites.length >= 2 ? probeSites.slice(0, 4) : orderedSites().slice(0, 3).map((s) => s.id);
