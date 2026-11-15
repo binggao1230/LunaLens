@@ -800,6 +800,7 @@ export function createMission(ctx) {
     g.putImageData(img, 0, 0);
   }
   function labelText(site) {
+    if (isEducation()) return site.short; // Education: just the name, so the label does not give the answer away
     const status = lastFrame.status.get(site.id);
     return `${site.short} · ${t(status.link ? (status.sun ? 'Sunlit as well' : 'Earth link available') : status.sun ? 'Sunlit, no Earth link' : 'In shadow')}`;
   }
