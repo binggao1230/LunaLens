@@ -187,7 +187,27 @@ export function createMission(ctx) {
   let historic = null, project2d = null; // Education mode: historic landing-site flags over the map and the globe
 
   const probe = () => PROBES.find((p) => p.id === local.probe);
-  const sites = () => ctx.sites();
+  // Education mode shows three sites, chosen from the real calculations for the landing date at touchdown:
+  // one with Sun and an Earth link, one with an Earth link but no Sun, one with neither. Expert mode shows all.
+  let trioKey = '', trio = [];
+  function eduTrio() {
+    const all = ctx.sites().filter((s) => !s.custom);
+    const j = Math.round(ctx.eph().indexOf(ctx.landing()));
+    const key = `${ctx.landing()}|${ctx.margin()}|${all.length}`;
+    if (key === trioKey) return trio;
+    const rows = all.map((site) => ({ site, ...statusOf(site, j), both: scoreOf(site).both }));
+    const byBest = (a, b) => b.both - a.both;
+    const take = (list, used) => list.find((r) => !used.has(r.site.id));
+    const used = new Set();
+    const pick = (...pools) => { for (const pool of pools) { const r = take(pool, used); if (r) { used.add(r.site.id); return r.site; } } return null; };
+    const good = pick(rows.filter((r) => r.sun && r.link).sort(byBest), [...rows].sort(byBest));
+    const noSun = pick(rows.filter((r) => r.link && !r.sun).sort(byBest), rows.filter((r) => r.sun && !r.link).sort(byBest), [...rows].sort(byBest));
+    const dark = pick(rows.filter((r) => !r.sun && !r.link).sort(byBest), [...rows].sort((a, b) => a.both - b.both));
+    trio = [good, noSun, dark].filter(Boolean);
+    trioKey = key;
+    return trio;
+  }
+  const sites = () => (isEducation() ? eduTrio() : ctx.sites());
   const view = () => document.body.dataset.view;
   const dur = (ms) => {
     const totalMin = Math.max(0, Math.round(ms / 60000));
@@ -199,6 +219,7 @@ export function createMission(ctx) {
 
   function orderedSites() {
     const list = sites();
+    if (isEducation()) return list; // the trio keeps its order: good, no Sun, neither
     const first = probe().sites.map((id) => list.find((s) => s.id === id)).filter(Boolean);
     return [...first, ...list.filter((s) => !first.includes(s))];
   }
@@ -497,11 +518,11 @@ export function createMission(ctx) {
       const rows = orderedSites()
         .filter((site) => !local.query || `${site.label} ${site.short}`.toLowerCase().includes(local.query))
         .map((site) => ({ site, score: scoreOf(site) }))
-        .sort((a, b) =>
+        .sort((a, b) => (isEducation() ? 0 : 1) * (
           (Number(hasModel(b.site)) - Number(hasModel(a.site))) ||
           (Number(b.score.viable) - Number(a.score.viable)) ||
           (b.score.score - a.score.score) ||
-          (b.score.both - a.score.both));
+          (b.score.both - a.score.both)));
       let viableRank = 0;
       listEl.innerHTML = rows.length ? rows.map(({ site, score }) => {
         const open = local.open === site.id;
@@ -970,7 +991,7 @@ export function createMission(ctx) {
         flightEl.classList.remove('show'); flightEl.innerHTML = '';
         if (document.activeElement === document.body || document.activeElement === skip) returnFocus?.focus();
       }, 240);
-      ctx.arrive(sites().indexOf(site));
+      ctx.arrive(ctx.sites().indexOf(site));
     };
     const handleKey = event => {
       if (event.key === 'Escape') { event.preventDefault(); finish(); }
