@@ -152,7 +152,6 @@ export function createEducation(ctx) {
   /* ---------- rendering ---------- */
 
   const visible = () => st.active && st.story && st.step > 0 && ctx.view() === 'mission';
-  const verdictChip = (r) => (r ? `<span class="edu-verdict v-${r.verdict}" role="status">${escapeHtml(ui(`verdict.${r.verdict}`))}</span>` : '');
 
   function leversHtml(r) {
     const best = st.moved ? null : bestNearby(ctx.sites(), st.picked, idx(ctx.landing()), opts());
@@ -212,19 +211,22 @@ export function createEducation(ctx) {
     const key = [st.step, st.sub, text, st.mood, r?.verdict, st.relay, st.bonus, st.delay, st.moved?.to, st.waited, st.picked?.id, ctx.language(), st.step === STEP.fix && canComplete()].join('|');
     if (key === st.key) return;
     st.key = key;
-    const btn = (act, label, extra = '') => `<button type="button" class="${act === 'next' ? 'btn-primary' : 'btn-ghost'}" data-act="${act}" ${extra}>${escapeHtml(label)}</button>`;
-    let actions = '';
-    if (st.step === 1) actions = btn('back', ui('back'), st.sub === 0 ? 'disabled' : '') + btn('next', ui('next'));
-    else if (st.step === STEP.history) actions = btn('back', ui('back')) + btn('next', ui('next'));
-    else if (st.step === STEP.site) actions = btn('back', ui('back')) + btn('next', ui('continue'), isOk(r?.verdict) ? '' : 'disabled');
-    else if (st.step === STEP.anomaly) actions = btn('next', st.anomaly.kind !== 'contact' && st.sub === 0 ? ui('whatHappened') : ui('fixIt'));
-    else if (st.step === STEP.fix) actions = btn('next', ui('complete'), canComplete() ? '' : 'disabled');
+    // Back and Next are on every step. Next is green when the story can move on, grey and locked when not.
+    const LOCK = '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>';
+    const btn = (act, label, enabled) => `<button type="button" class="${act === 'next' ? 'edu-next' : 'btn-ghost'}" data-act="${act}" ${enabled ? '' : 'disabled aria-disabled="true"'}>${act === 'next' && !enabled ? LOCK : ''}${escapeHtml(label)}</button>`;
+    const canBack = (st.step === STEP.objective && st.sub > 0) || st.step === STEP.history || st.step === STEP.site;
+    let nextLabel = ui('next'), canNext = true;
+    if (st.step === STEP.site) { nextLabel = ui('continue'); canNext = isOk(r?.verdict); }
+    else if (st.step === STEP.launch) canNext = false;
+    else if (st.step === STEP.anomaly) nextLabel = st.anomaly.kind !== 'contact' && st.sub === 0 ? ui('whatHappened') : ui('fixIt');
+    else if (st.step === STEP.fix) { nextLabel = ui('complete'); canNext = canComplete(); }
+    const actions = btn('back', ui('back'), canBack) + btn('next', nextLabel, canNext);
     const skip = st.step === STEP.launch ? '' : `<button type="button" class="edu-skip" data-act="skip">${escapeHtml(ui('skip'))}</button>`;
     root.innerHTML = `<aside class="edu-panel step-${st.step}" role="complementary" aria-label="${escapeHtml(ui('panel'))}">
       <div class="edu-char mood-${st.mood}">${CHARACTER_MARKUP}</div>
       <div class="edu-bubble">
-        <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span>${[STEP.site, STEP.anomaly, STEP.fix].includes(st.step) ? verdictChip(r) : ''}</div>
-        <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite">${escapeHtml(text)}</p>
+        <div class="edu-top"><span class="edu-step">${escapeHtml(ui('step', { n: st.step, total: TOTAL }))}</span></div>
+        <p class="edu-text" id="edu-text" tabindex="-1" aria-live="polite"><b class="edu-speaker">${escapeHtml(get('character.name') ?? 'Lumi')}</b>${escapeHtml(text)}</p>
         ${st.step === STEP.fix ? leversHtml(r) : ''}
         <div class="edu-actions">${actions}${skip}</div>
       </div>
