@@ -409,6 +409,14 @@ body.edu-on .tabbar button[data-view=atlas],body.edu-on .tabbar button[data-view
 .edu-choice{margin:8px 0 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#f5c542;font-weight:600}
 .edu-panel.near-sites{bottom:auto}
 
+/* ---- Education mode cursor: a cute cartoon glove (assets/cursor/, original drawings) ----
+   The pointing glove everywhere, the closed glove while pressing on the globe or the map; text fields keep
+   the text caret. !important beats the inline cursors the 3D and 2D views set while hovering. */
+body.edu-on,body.edu-on *{cursor:url("../assets/cursor/glove-point.svg") 5 3,pointer!important}
+body.edu-on canvas:active,body.edu-on .stage:active{cursor:url("../assets/cursor/glove-grab.svg") 16 14,grabbing!important}
+body.edu-on input[type=text],body.edu-on input[type=search],body.edu-on textarea{cursor:text!important}
+body.edu-on :disabled,body.edu-on [aria-disabled=true]{cursor:not-allowed!important}
+
 /* Mode switch: icons only, names stay in aria-label. */
 .seg-pill .long,.seg-pill .short{display:none!important}
 .appbar .seg-pill{height:32px;padding:2px;gap:2px;border-radius:9px}
